@@ -1,9 +1,11 @@
 package com.invision.pos.ui
 
 import android.os.SystemClock
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
@@ -13,7 +15,10 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -68,7 +73,8 @@ class BillingDeviceFlowTest {
             .fetchSemanticsNodes()
             .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
             .distinct()
-        return "Search box: ${search ?: "not shown"}. On screen: ${texts.joinToString(" | ").take(1_500)}"
+        return "In front: ${device.currentPackageName}. Search box: ${search ?: "not shown"}. " +
+            "On screen: ${texts.joinToString(" | ").take(1_500)}"
     }
 
     /**
@@ -84,21 +90,6 @@ class BillingDeviceFlowTest {
             if (accept(current)) return current
             if (SystemClock.uptimeMillis() > end) return null
             SystemClock.sleep(250)
-        }
-    }
-
-    /**
-     * Runs [block] with on-screen keyboards turned off, like a counter phone with a
-     * scanner attached: keys then go straight to the app instead of through a
-     * keyboard app that may be opening or closing.
-     */
-    private fun withoutOnScreenKeyboard(block: () -> Unit) {
-        device.executeShellCommand("ime list -s").lines().filter { it.isNotBlank() }
-            .forEach { device.executeShellCommand("ime disable ${it.trim()}") }
-        try {
-            block()
-        } finally {
-            device.executeShellCommand("ime reset")
         }
     }
 
@@ -142,8 +133,9 @@ class BillingDeviceFlowTest {
             .firstNotNullOfOrNull { summary -> billing.getInvoice(summary.id)?.takeIf { invoice -> invoice.lines.any { it.productName == productName } } }
     }
 
+    @OptIn(ExperimentalTestApi::class)
     @Test
-    fun sellShareAndPrintThenReturn() = withoutOnScreenKeyboard {
+    fun sellShareAndPrintThenReturn() {
         val barcode = DeviceFixtures.uniqueBarcode()
         val name = "Device Shirt ${barcode.takeLast(6)}"
         val productId = runBlocking {
@@ -158,10 +150,14 @@ class BillingDeviceFlowTest {
         waitForText("M · Navy · $barcode")
         composeRule.onNodeWithText("M · Navy · $barcode").performClick()
 
-        // A USB or Bluetooth scanner types the code and presses Enter.
-        composeRule.onNodeWithTag("billing_search").performTextInput(barcode)
-        composeRule.waitForIdle()
-        device.pressEnter()
+        // A USB or Bluetooth scanner works like a keyboard: it types the code as
+        // key presses, then presses Enter.
+        val digits = listOf(Key.Zero, Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six, Key.Seven, Key.Eight, Key.Nine)
+        composeRule.onNodeWithTag("billing_search").requestFocus()
+        composeRule.onNodeWithTag("billing_search").performKeyInput {
+            barcode.forEach { pressKey(digits[it - '0']) }
+            pressKey(Key.Enter)
+        }
         waitForText("998.00", substring = true)
 
         // Pay the full amount in cash and complete the sale.

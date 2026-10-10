@@ -111,7 +111,7 @@ Robolectric runs on Android 15 (API 35); see `app/src/test/resources/robolectric
 **Device tests** (`app/src/androidTest`, run on an Android 15 emulator in CI) cover what Robolectric can't:
 - Receipt PDFs for every paper size written with `PdfDocument` and read back with `PdfRenderer` (page count, page size, printed content), and long A5/A4 invoices continuing onto more pages.
 - Sharing: the PDF reaches the receiving app as a readable `content://` file through the FileProvider.
-- A full sale and return through the app: an item added from search and another by typing its barcode and pressing Enter (as a USB scanner does), cash payment, the system share sheet and print dialog opening, and a return; stock, invoice, payment and refund are checked in the database at each step.
+- A full sale and return through the app: an item added from search and another by sending its barcode digits and Enter as key presses (the way a USB or Bluetooth scanner types), cash payment, the system share sheet and print dialog opening, and a return; stock, invoice, payment and refund are checked in the database at each step.
 - The stock adjustment dialog (text fields in a dialog never report idle under Robolectric).
 
 Not covered by automated tests:
