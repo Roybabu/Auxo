@@ -44,6 +44,8 @@ android {
 tasks.withType<Test>().configureEach {
     // Robolectric and Compose UI tests need more than the default 512 MB.
     maxHeapSize = "2g"
+    // Robolectric's Android 16+ sandbox reads FileDescriptor internals by reflection.
+    jvmArgs("--add-opens=java.base/java.io=ALL-UNNAMED")
 }
 
 ksp {
