@@ -112,13 +112,15 @@ class RoomInventoryRepositoryTest {
         val stored = saveNew(TestData.tShirt())
         val large = stored.variants.first { it.size == "L" } // 1 in stock
 
-        val tooMany = StockMovement(variantId = large.id, quantityChange = -2, reason = StockChangeReason.SOLD, createdAtMillis = 5)
+        val later = TestData.clock.millis() + 60_000
+        val tooMany = StockMovement(variantId = large.id, quantityChange = -2, reason = StockChangeReason.SOLD, createdAtMillis = later)
         assertEquals(StockChangeResult.WouldGoNegative, repository.recordStockChange(tooMany))
         assertEquals(1, repository.getProduct(stored.id)!!.variants.first { it.id == large.id }.stockQuantity)
 
-        val received = StockMovement(variantId = large.id, quantityChange = 5, reason = StockChangeReason.RECEIVED, createdAtMillis = 6)
+        val received = StockMovement(variantId = large.id, quantityChange = 5, reason = StockChangeReason.RECEIVED, createdAtMillis = later)
         assertEquals(StockChangeResult.Applied, repository.recordStockChange(received))
         assertEquals(6, repository.getProduct(stored.id)!!.variants.first { it.id == large.id }.stockQuantity)
+        // Newest first.
         assertEquals(StockChangeReason.RECEIVED, repository.observeStockMovements(stored.id).first().first().reason)
     }
 
