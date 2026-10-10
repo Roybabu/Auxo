@@ -136,7 +136,7 @@ class RoomBillingRepositoryTest {
         val original = billing.getInvoice(saleId)!!
         val lineId = original.lines.single().id
 
-        val note = (ReturnBuilder.build(original, mapOf(lineId to 2), PaymentMethod.UPI, "Damaged", true, TestData.clock.millis()) as ReturnBuild.Ready).creditNote
+        val note = (ReturnBuilder.build(original, mapOf(lineId to 2), PaymentMethod.UPI, "Damaged", TestData.clock.millis()) as ReturnBuild.Ready).creditNote
         val result = billing.recordReturn(note, "CN") as ReturnResult.Recorded
         assertEquals("CN/26-27/00001", result.number)
 
@@ -166,7 +166,7 @@ class RoomBillingRepositoryTest {
         assertNull(invoice.lines.single().variantId)
 
         // The return still works; there is just no stock to put back.
-        val note = (ReturnBuilder.build(invoice, mapOf(invoice.lines.single().id to 1), PaymentMethod.CASH, "", true, 1) as ReturnBuild.Ready).creditNote
+        val note = (ReturnBuilder.build(invoice, mapOf(invoice.lines.single().id to 1), PaymentMethod.CASH, "", 1) as ReturnBuild.Ready).creditNote
         assertTrue(billing.recordReturn(note, "CN") is ReturnResult.Recorded)
     }
 
@@ -176,7 +176,7 @@ class RoomBillingRepositoryTest {
         val saleId = (billing.recordSale(sale(CartLine.from(biscuits, biscuits.variants[0], quantity = 10)), "INV") as SaleResult.Recorded).invoiceId
         billing.recordSale(sale(CartLine.from(biscuits, biscuits.variants[0], quantity = 1)), "INV")
         val original = billing.getInvoice(saleId)!!
-        val note = (ReturnBuilder.build(original, mapOf(original.lines.single().id to 2), PaymentMethod.CASH, "", true, TestData.clock.millis()) as ReturnBuild.Ready).creditNote
+        val note = (ReturnBuilder.build(original, mapOf(original.lines.single().id to 2), PaymentMethod.CASH, "", TestData.clock.millis()) as ReturnBuild.Ready).creditNote
         billing.recordReturn(note, "CN")
 
         val totals = billing.observeSalesTotals(0, Long.MAX_VALUE).first()
@@ -225,6 +225,32 @@ class RoomBillingRepositoryTest {
         ) as ProcessReturnResult.Completed
         assertEquals(total, returned.refund)
         assertEquals(8, stockOf(shirt))
+    }
+
+    @Test
+    fun partialReturnsOfARoundedBill_refundExactlyWhatWasPaid() = runTest {
+        settings.saveSettings(store)
+        // 3 x 99.50 = 298.50, billed as 299.00 after round-off.
+        val biscuits = TestData.biscuits().let { product ->
+            saveNew(product.copy(variants = product.variants.map { it.copy(sellingPrice = Money(99_50), mrp = null) }))
+        }
+        val cart = Cart().add(CartLine.from(biscuits, biscuits.variants[0], quantity = 3))
+        val sale = CheckoutUseCase(billing, settings, TestData.clock)(cart, listOf(PaymentDraft(1, PaymentMethod.CASH, "299"))) as CheckoutResult.Completed
+        val lineId = billing.getInvoice(sale.invoiceId)!!.lines.single().id
+
+        val processReturn = ProcessReturnUseCase(billing, settings, TestData.clock)
+        val refunds = List(3) {
+            (processReturn(sale.invoiceId, mapOf(lineId to 1), PaymentMethod.CASH, "") as ProcessReturnResult.Completed).refund
+        }
+        assertEquals(listOf(Money(100_00), Money(99_00), Money(100_00)), refunds)
+
+        val payments = billing.observePayments(0, Long.MAX_VALUE).first()
+        val paid = payments.filter { it.kind == PaymentKind.PAYMENT }.fold(Money.ZERO) { acc, p -> acc + p.amount }
+        val refunded = payments.filter { it.kind == PaymentKind.REFUND }.fold(Money.ZERO) { acc, p -> acc + p.amount }
+        assertEquals(paid, refunded)
+        assertEquals(Money.ZERO, billing.observeSalesTotals(0, Long.MAX_VALUE).first().net)
+        assertEquals(40, stockOf(biscuits))
+        assertTrue(billing.getInvoice(sale.invoiceId)!!.isFullyReturned)
     }
 
     @Test

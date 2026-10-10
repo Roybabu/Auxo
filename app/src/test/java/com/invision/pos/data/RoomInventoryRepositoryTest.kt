@@ -140,6 +140,14 @@ class RoomInventoryRepositoryTest {
     }
 
     @Test
+    fun findByBarcode_matchesUpcSentAsEan13() = runTest {
+        val juice = TestData.juice(stock = 3)
+        val stored = saveNew(juice.copy(variants = juice.variants.map { it.copy(barcode = "036000291452") }))
+        assertEquals(stored.id, repository.findByBarcode("0036000291452")?.product?.id)
+        assertEquals(stored.id, repository.findByBarcode("036000291452")?.product?.id)
+    }
+
+    @Test
     fun observeProducts_isSortedByName() = runTest {
         saveNew(TestData.juice())
         saveNew(TestData.tShirt())

@@ -85,6 +85,19 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun upcSentAsEan13_findsTheSameItem() {
+        val soap = TestData.biscuits(id = 5).let { p ->
+            p.copy(name = "Bath Soap", variants = listOf(p.variants.single().copy(id = 51, barcode = "036000291452")))
+        }
+        val store = FakeInventoryRepository(listOf(soap))
+        val viewModel = BillingViewModel(store, settings, CheckoutUseCase(FakeBillingRepository(store), settings, TestData.clock))
+        viewModel.onBarcodeScanned("0036000291452")
+        viewModel.onSearchTextChange("0036000291452")
+        viewModel.onSearchSubmitted()
+        assertEquals(2, viewModel.uiState.value.cart.lines.single().quantity)
+    }
+
+    @Test
     fun unknownBarcode_andOutOfStock_areReported() = runTest {
         val viewModel = createViewModel()
         viewModel.onBarcodeScanned("8901000000088")
@@ -251,7 +264,7 @@ class ReturnAndHistoryViewModelTest {
     }
 
     private fun returnViewModel(invoiceId: Long) =
-        ReturnViewModel(invoiceId, billing, settings, ProcessReturnUseCase(billing, settings, TestData.clock), TestData.clock)
+        ReturnViewModel(invoiceId, billing, ProcessReturnUseCase(billing, settings, TestData.clock), TestData.clock)
 
     @Test
     fun partialReturn_restocksAndIssuesCreditNote() = runTest {

@@ -25,12 +25,13 @@ data class PaperSpec(
 val ReceiptPaper.spec: PaperSpec
     get() = when (this) {
         ReceiptPaper.THERMAL_58 -> PaperSpec(paperWidthMm = 58f, paperHeightMm = null, marginMm = 5f, charsPerLine = 32)
+        ReceiptPaper.THERMAL_76 -> PaperSpec(paperWidthMm = 76f, paperHeightMm = null, marginMm = 6f, charsPerLine = 42)
         ReceiptPaper.THERMAL_80 -> PaperSpec(paperWidthMm = 80f, paperHeightMm = null, marginMm = 4f, charsPerLine = 48)
         ReceiptPaper.A5 -> PaperSpec(paperWidthMm = 148f, paperHeightMm = 210f, marginMm = 10f, charsPerLine = 0)
         ReceiptPaper.A4 -> PaperSpec(paperWidthMm = 210f, paperHeightMm = 297f, marginMm = 12f, charsPerLine = 0)
     }
 
-val ReceiptPaper.isThermal: Boolean get() = this == ReceiptPaper.THERMAL_58 || this == ReceiptPaper.THERMAL_80
+val ReceiptPaper.isThermal: Boolean get() = spec.paperHeightMm == null
 
 /** Fixed wording printed on receipts. */
 data class ReceiptLabels(

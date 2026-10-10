@@ -24,6 +24,7 @@ fun PaymentMethod.labelRes(): Int = when (this) {
 @StringRes
 fun ReceiptPaper.shortLabelRes(): Int = when (this) {
     ReceiptPaper.THERMAL_58 -> R.string.paper_58
+    ReceiptPaper.THERMAL_76 -> R.string.paper_76
     ReceiptPaper.THERMAL_80 -> R.string.paper_80
     ReceiptPaper.A5 -> R.string.paper_a5
     ReceiptPaper.A4 -> R.string.paper_a4
@@ -32,6 +33,7 @@ fun ReceiptPaper.shortLabelRes(): Int = when (this) {
 @StringRes
 fun ReceiptPaper.longLabelRes(): Int = when (this) {
     ReceiptPaper.THERMAL_58 -> R.string.settings_paper_58
+    ReceiptPaper.THERMAL_76 -> R.string.settings_paper_76
     ReceiptPaper.THERMAL_80 -> R.string.settings_paper_80
     ReceiptPaper.A5 -> R.string.settings_paper_a5
     ReceiptPaper.A4 -> R.string.settings_paper_a4

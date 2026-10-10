@@ -26,11 +26,15 @@ import java.io.IOException
 import java.io.OutputStream
 import java.time.ZoneId
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Writes receipts as PDF, renders previews, and hands them to print and share. */
 object ReceiptOutput {
 
     private const val RECEIPT_DIR = "receipts"
+    private const val STALE_AFTER_MILLIS = 24 * 60 * 60 * 1000L
+    const val PDF_MIME_TYPE = "application/pdf"
 
     fun writePdf(pages: List<ReceiptPage>, output: OutputStream) {
         val document = PdfDocument()
@@ -61,36 +65,62 @@ object ReceiptOutput {
     fun fileName(invoice: Invoice): String =
         invoice.number.ifEmpty { "receipt" }.replace(Regex("[^A-Za-z0-9-]"), "-") + ".pdf"
 
-    /** Writes the receipt PDF into the app's cache and returns the file. */
+    /**
+     * Writes the receipt PDF into the app's cache and returns the file. Receipts
+     * written more than a day ago are cleared out first.
+     */
     fun writePdfFile(context: Context, invoice: Invoice, options: ReceiptOptions, zone: ZoneId = ZoneId.systemDefault()): File {
         val dir = File(context.cacheDir, RECEIPT_DIR).apply { mkdirs() }
+        val cutoff = System.currentTimeMillis() - STALE_AFTER_MILLIS
+        dir.listFiles()?.filter { it.lastModified() < cutoff }?.forEach { it.delete() }
         val file = File(dir, fileName(invoice))
         FileOutputStream(file).use { writePdf(ReceiptRenderer.pages(invoice, options, zone), it) }
         return file
     }
 
-    /** Opens the share sheet for the receipt PDF. Returns false if no app can receive it. */
-    fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String): Boolean {
-        val file = writePdfFile(context, invoice, options)
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    /** Authority of the FileProvider declared in the manifest. */
+    fun fileProviderAuthority(context: Context): String = "${context.packageName}.fileprovider"
+
+    /** Share sheet for a receipt PDF written by [writePdfFile], with read access for the receiving app. */
+    fun shareIntent(context: Context, file: File, invoice: Invoice, chooserTitle: String): Intent {
+        val uri = FileProvider.getUriForFile(context, fileProviderAuthority(context), file)
         val send = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
+            type = PDF_MIME_TYPE
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, "${invoice.seller.name} ${invoice.number}")
             clipData = ClipData.newRawUri(invoice.number, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        return Intent.createChooser(send, chooserTitle)
+    }
+
+    /**
+     * Writes the PDF off the main thread and opens the share sheet. Returns false
+     * if the file couldn't be written or no app can receive it.
+     */
+    suspend fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String): Boolean {
+        val file = try {
+            withContext(Dispatchers.IO) { writePdfFile(context, invoice, options) }
+        } catch (e: IOException) {
+            return false
+        }
         return try {
-            context.startActivity(Intent.createChooser(send, chooserTitle))
+            context.startActivity(shareIntent(context, file, invoice, chooserTitle))
             true
         } catch (e: ActivityNotFoundException) {
+            false
+        } catch (e: IllegalArgumentException) {
+            // The file is outside the paths the FileProvider shares.
             false
         }
     }
 
-    /** Sends the receipt to the Android print system. Must be called with an Activity context. */
-    fun print(context: Context, invoice: Invoice, options: ReceiptOptions) {
-        val printManager = context.getSystemService(PrintManager::class.java) ?: return
+    /**
+     * Sends the receipt to the Android print system. Must be called with an
+     * Activity context. Returns false if printing couldn't be started.
+     */
+    fun print(context: Context, invoice: Invoice, options: ReceiptOptions): Boolean {
+        val printManager = context.getSystemService(PrintManager::class.java) ?: return false
         val pages = ReceiptRenderer.pages(invoice, options, ZoneId.systemDefault())
         val first = pages.first()
         val mediaSize = when (options.paper) {
@@ -107,7 +137,13 @@ object ReceiptOutput {
             .setMediaSize(mediaSize)
             .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
             .build()
-        printManager.print(invoice.number.ifEmpty { "Receipt" }, ReceiptPrintAdapter(pages, fileName(invoice)), attributes)
+        return try {
+            printManager.print(invoice.number.ifEmpty { "Receipt" }, ReceiptPrintAdapter(pages, fileName(invoice)), attributes)
+            true
+        } catch (e: IllegalStateException) {
+            // For example when the screen is closing.
+            false
+        }
     }
 
     private fun pointsToMils(points: Float): Int = (points / 72f * 1000f).roundToInt()

@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.ReceiptRenderer
+import com.invision.pos.core.receipt.isThermal
 import com.invision.pos.domain.model.InvoiceSummary
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.ReceiptPaper
@@ -122,12 +123,18 @@ fun InvoiceDetailScreen(
             is InvoiceDetailUiState.Ready -> InvoiceDetailContent(
                 state = state,
                 onPaperChange = viewModel::onPaperChange,
-                onPrint = { ReceiptOutput.print(context, state.invoice, state.receiptOptions) },
+                onPrint = {
+                    if (!ReceiptOutput.print(context, state.invoice, state.receiptOptions)) {
+                        scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.invoice_print_failed)) }
+                    }
+                },
                 onShare = {
-                    val shared = runCatching {
-                        ReceiptOutput.share(context, state.invoice, state.receiptOptions, resources.getString(R.string.invoice_share_title))
-                    }.getOrDefault(false)
-                    if (!shared) scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.invoice_share_failed)) }
+                    scope.launch {
+                        val title = resources.getString(R.string.invoice_share_title)
+                        if (!ReceiptOutput.share(context, state.invoice, state.receiptOptions, title)) {
+                            snackbarHostState.showSnackbar(resources.getString(R.string.invoice_share_failed))
+                        }
+                    }
                 },
                 onReturn = { onReturn(state.invoice.id) },
                 onOpenInvoice = onOpenInvoice,
@@ -220,9 +227,14 @@ fun InvoiceDetailContent(
         item(key = "preview_title") { SectionHeader(stringResource(R.string.invoice_preview)) }
         items(pages.indices.toList(), key = { "page_$it" }) { index ->
             val page = pages[index]
-            val widthPx = if (state.paper == ReceiptPaper.THERMAL_58 || state.paper == ReceiptPaper.THERMAL_80) 576 else 1240
+            val widthPx = if (state.paper.isThermal) 576 else 1240
             val bitmap = remember(page, widthPx) { ReceiptOutput.previewBitmap(page, widthPx).asImageBitmap() }
-            val maxWidth = if (state.paper == ReceiptPaper.THERMAL_58) 280.dp else if (state.paper == ReceiptPaper.THERMAL_80) 360.dp else 600.dp
+            val maxWidth = when (state.paper) {
+                ReceiptPaper.THERMAL_58 -> 280.dp
+                ReceiptPaper.THERMAL_76 -> 340.dp
+                ReceiptPaper.THERMAL_80 -> 360.dp
+                ReceiptPaper.A5, ReceiptPaper.A4 -> 600.dp
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Surface(
                     shape = MaterialTheme.shapes.extraSmall,

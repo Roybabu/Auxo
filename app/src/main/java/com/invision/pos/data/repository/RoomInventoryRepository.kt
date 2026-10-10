@@ -3,6 +3,7 @@ package com.invision.pos.data.repository
 import com.invision.pos.data.local.dao.InventoryDao
 import com.invision.pos.data.local.toDomain
 import com.invision.pos.data.local.toEntity
+import com.invision.pos.domain.barcode.BarcodeRules
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.StockMovement
 import kotlinx.coroutines.flow.Flow
@@ -26,7 +27,7 @@ class RoomInventoryRepository(
         dao.observeMovementsForProduct(productId, limit).map { rows -> rows.map { it.toDomain() } }
 
     override suspend fun findByBarcode(barcode: String): BarcodeMatch? {
-        val variant = dao.findVariantByBarcode(barcode.trim()) ?: return null
+        val variant = BarcodeRules.equivalents(barcode).firstNotNullOfOrNull { dao.findVariantByBarcode(it) } ?: return null
         val product = dao.getProduct(variant.productId)?.toDomain() ?: return null
         val match = product.variants.firstOrNull { it.id == variant.id } ?: return null
         return BarcodeMatch(product, match)

@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.ReceiptRenderer
+import com.invision.pos.core.receipt.isThermal
 import com.invision.pos.domain.billing.BillCalculator
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartLine
@@ -230,11 +231,12 @@ class BillingScreenTest {
 
     @Test
     fun receipts_renderForEveryPaper() {
-        val creditNote = (ReturnBuilder.build(namedSale, mapOf(namedSale.lines[0].id to 1), PaymentMethod.UPI, "Wrong size", true, TestData.clock.millis()) as ReturnBuild.Ready)
+        val creditNote = (ReturnBuilder.build(namedSale, mapOf(namedSale.lines[0].id to 1), PaymentMethod.UPI, "Wrong size", TestData.clock.millis()) as ReturnBuild.Ready)
             .creditNote.copy(id = 9, number = "CN/26-27/00001")
         val cases = listOf(
             "30_receipt_58mm" to (namedSale to ReceiptPaper.THERMAL_58),
             "31_receipt_80mm" to (namedSale to ReceiptPaper.THERMAL_80),
+            "31_receipt_76mm" to (namedSale to ReceiptPaper.THERMAL_76),
             "32_receipt_a5" to (namedSale to ReceiptPaper.A5),
             "33_receipt_a4" to (namedSale to ReceiptPaper.A4),
             "34_credit_note_80mm" to (creditNote to ReceiptPaper.THERMAL_80),
@@ -245,7 +247,7 @@ class BillingScreenTest {
             val pages = ReceiptRenderer.pages(invoice, settings.receipt.copy(paper = paper), ZoneOffset.UTC)
             assertTrue(pages.isNotEmpty())
             pages.forEachIndexed { index, page ->
-                val width = if (paper == ReceiptPaper.THERMAL_58 || paper == ReceiptPaper.THERMAL_80) 576 else 1240
+                val width = if (paper.isThermal) 576 else 1240
                 val bitmap = ReceiptOutput.previewBitmap(page, width)
                 assertTrue("$name page $index is blank", hasInk(bitmap))
                 save(bitmap, if (pages.size == 1) name else "${name}_p${index + 1}")
@@ -256,6 +258,8 @@ class BillingScreenTest {
         assertEquals(595.28f, a4.widthPt, 0.1f)
         val roll = ReceiptRenderer.pages(namedSale, ReceiptOptions(paper = ReceiptPaper.THERMAL_58), ZoneOffset.UTC).first()
         assertEquals(164.41f, roll.widthPt, 0.1f)
+        val roll76 = ReceiptRenderer.pages(namedSale, ReceiptOptions(paper = ReceiptPaper.THERMAL_76), ZoneOffset.UTC).first()
+        assertEquals(215.43f, roll76.widthPt, 0.1f)
 
         // PdfDocument has no native backend under Robolectric, so the PDF file itself
         // is only produced on a device; it draws these same pages.

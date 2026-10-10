@@ -91,7 +91,7 @@ class ProcessReturnUseCase(
     ): ProcessReturnResult {
         val original = billing.getInvoice(invoiceId) ?: return ProcessReturnResult.InvoiceNotFound
         val store = settings.getSettings()
-        val build = ReturnBuilder.build(original, quantities, refundMethod, reason, store.roundOffTotal, clock.millis())
+        val build = ReturnBuilder.build(original, quantities, refundMethod, reason, clock.millis())
         val creditNote = when (build) {
             is ReturnBuild.Rejected -> return ProcessReturnResult.Rejected(build.error)
             is ReturnBuild.Ready -> build.creditNote

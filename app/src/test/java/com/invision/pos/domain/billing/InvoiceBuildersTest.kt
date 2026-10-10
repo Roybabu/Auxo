@@ -69,8 +69,44 @@ class ReturnBuilderTest {
     private val sale = SampleSales.shirtsAndBiscuits()
     private val shirtLine = sale.lines[0]
 
-    private fun build(quantities: Map<Long, Int>, original: Invoice = sale, roundOff: Boolean = false) =
-        ReturnBuilder.build(original, quantities, PaymentMethod.CASH, "Wrong size", roundOff, TestData.clock.millis())
+    private fun build(quantities: Map<Long, Int>, original: Invoice = sale) =
+        ReturnBuilder.build(original, quantities, PaymentMethod.CASH, "Wrong size", TestData.clock.millis())
+
+    /** A bill for [quantity] packs at [unitPrice] paise each (5% GST, prices include GST). */
+    private fun saleOf(unitPrice: Long, quantity: Int, roundOff: Boolean = true): Invoice {
+        val biscuits = TestData.biscuits()
+        val variant = biscuits.variants.single().copy(sellingPrice = Money(unitPrice), mrp = null, stockQuantity = 10)
+        val cart = Cart().add(CartLine.from(biscuits.copy(variants = listOf(variant)), variant, quantity = quantity))
+        val settings = TestData.settings.copy(roundOffTotal = roundOff)
+        val totals = BillCalculator.calculate(cart, settings.taxModeFor(cart))
+        val payments = listOf(PaymentRecord(method = PaymentMethod.CASH, amount = totals.grandTotal))
+        val built = SaleBuilder.build(cart, totals, settings, payments, TestData.clock.millis())
+        return built.copy(id = 9, number = "INV/26-27/00009", lines = built.lines.mapIndexed { i, l -> l.copy(id = 200L + i) })
+    }
+
+    /** The original invoice as it is stored after [note] was saved. */
+    private fun afterReturn(original: Invoice, note: Invoice): Invoice = original.copy(
+        lines = original.lines.map { line ->
+            line.copy(returnedQuantity = line.returnedQuantity + note.lines.filter { it.originalLineId == line.id }.sumOf { it.quantity })
+        },
+    )
+
+    /** Returns one unit at a time until everything is back; gives the refund of each credit note. */
+    private fun refundsOneByOne(original: Invoice): List<Money> {
+        var invoice = original
+        val refunds = mutableListOf<Money>()
+        while (!invoice.isFullyReturned) {
+            val line = invoice.lines.first { it.returnableQuantity > 0 }
+            val note = (build(mapOf(line.id to 1), invoice) as ReturnBuild.Ready).creditNote
+            assertEquals(note.taxableTotal + note.taxTotal + note.roundOff, note.grandTotal)
+            assertEquals(note.grandTotal, note.payments.fold(Money.ZERO) { acc, p -> acc + p.amount })
+            refunds += note.grandTotal
+            invoice = afterReturn(invoice, note)
+        }
+        return refunds
+    }
+
+    private fun List<Money>.total(): Money = fold(Money.ZERO) { acc, m -> acc + m }
 
     @Test
     fun partialReturn_takesAProportionalShare() {
@@ -102,8 +138,50 @@ class ReturnBuilderTest {
 
     @Test
     fun fullReturn_refundsTheBillTotal() {
-        val note = (build(sale.lines.associate { it.id to it.quantity }, roundOff = true) as ReturnBuild.Ready).creditNote
+        val note = (build(sale.lines.associate { it.id to it.quantity }) as ReturnBuild.Ready).creditNote
         assertEquals(sale.grandTotal, note.grandTotal)
+        assertEquals(sale.grandTotal, note.payments.single().amount)
+    }
+
+    @Test
+    fun partialReturnsOnARoundedBill_addUpToWhatWasPaid() {
+        // 3 x 99.50 = 298.50, rounded to 299.00.
+        val sale = saleOf(unitPrice = 99_50, quantity = 3)
+        assertEquals(Money(299_00), sale.grandTotal)
+        // Each refund is rounded too, but they still add up to the bill.
+        assertEquals(listOf(Money(100_00), Money(99_00), Money(100_00)), refundsOneByOne(sale))
+    }
+
+    @Test
+    fun partialReturnsOnAnUnroundedBill_refundTheExactAmounts() {
+        val sale = saleOf(unitPrice = 99_50, quantity = 3, roundOff = false)
+        assertEquals(Money(298_50), sale.grandTotal)
+        assertEquals(List(3) { Money(99_50) }, refundsOneByOne(sale))
+    }
+
+    @Test
+    fun refundsNeverGoNegativeAndAlwaysAddUpToTheBill() {
+        for (price in listOf(1L, 30L, 49L, 50L, 51L, 99L, 99_50L, 123_45L, 2_624_99L)) {
+            for (quantity in 1..4) {
+                for (roundOff in listOf(true, false)) {
+                    val sale = saleOf(price, quantity, roundOff)
+                    val refunds = refundsOneByOne(sale)
+                    val case = "price $price x $quantity, round off $roundOff"
+                    assertTrue(case, refunds.all { it >= Money.ZERO })
+                    assertEquals(case, sale.grandTotal, refunds.total())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun refundDue_followsTheBillsRounding() {
+        val sale = saleOf(unitPrice = 99_50, quantity = 3)
+        val line = sale.lines.single().id
+        assertEquals(Money.ZERO, ReturnBuilder.refundDue(sale, emptyMap()))
+        assertEquals(Money(100_00), ReturnBuilder.refundDue(sale, mapOf(line to 1)))
+        assertEquals(Money(199_00), ReturnBuilder.refundDue(sale, mapOf(line to 2)))
+        assertEquals(sale.grandTotal, ReturnBuilder.refundDue(sale, mapOf(line to 3)))
     }
 
     @Test

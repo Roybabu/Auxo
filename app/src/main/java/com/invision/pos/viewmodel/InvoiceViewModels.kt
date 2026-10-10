@@ -275,7 +275,6 @@ sealed interface ReturnEvent {
 class ReturnViewModel(
     private val invoiceId: Long,
     private val billing: BillingRepository,
-    private val settingsRepository: SettingsRepository,
     private val processReturn: ProcessReturnUseCase,
     private val clock: Clock,
 ) : ViewModel() {
@@ -285,8 +284,6 @@ class ReturnViewModel(
 
     private val eventChannel = Channel<ReturnEvent>(Channel.BUFFERED)
     val events: Flow<ReturnEvent> = eventChannel.receiveAsFlow()
-
-    private var roundOff = true
 
     init {
         load()
@@ -298,7 +295,6 @@ class ReturnViewModel(
         _uiState.update { it.copy(isLoading = true, loadFailed = false) }
         viewModelScope.launch {
             val invoice = runCatching { billing.getInvoice(invoiceId) }.getOrNull()
-            roundOff = runCatching { settingsRepository.getSettings().roundOffTotal }.getOrDefault(true)
             if (invoice == null || invoice.type != InvoiceType.SALE) {
                 _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             } else {
@@ -348,7 +344,7 @@ class ReturnViewModel(
     private fun preview() {
         val state = _uiState.value
         val invoice = state.invoice ?: return
-        val build = ReturnBuilder.build(invoice, state.quantities, state.refundMethod, state.reason, roundOff, clock.millis())
+        val build = ReturnBuilder.build(invoice, state.quantities, state.refundMethod, state.reason, clock.millis())
         _uiState.update { it.copy(refund = (build as? ReturnBuild.Ready)?.creditNote?.grandTotal) }
     }
 
@@ -362,7 +358,6 @@ class ReturnViewModel(
                 ReturnViewModel(
                     invoiceId = createSavedStateHandle().get<Long>(ARG_INVOICE_ID) ?: 0L,
                     billing = container.billingRepository,
-                    settingsRepository = container.settingsRepository,
                     processReturn = container.processReturn,
                     clock = container.clock,
                 )

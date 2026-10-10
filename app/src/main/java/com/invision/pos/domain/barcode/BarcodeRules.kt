@@ -41,4 +41,18 @@ object BarcodeRules {
             BarcodeCheck.Invalid(BarcodeError.INVALID_CHARACTERS)
         }
     }
+
+    /**
+     * Forms a scanner may send for the same product. Many scanners send a 12-digit
+     * UPC-A as a 13-digit EAN-13 with a leading 0, or the other way round; GS1 check
+     * digits are the same for both.
+     */
+    fun equivalents(scanned: String): Set<String> {
+        val code = scanned.trim()
+        return when {
+            code.length == 13 && code.startsWith('0') && Gs1.isValid(code) -> setOf(code, code.drop(1))
+            code.length == 12 && Gs1.isValid(code) -> setOf(code, "0$code")
+            else -> setOf(code)
+        }
+    }
 }
