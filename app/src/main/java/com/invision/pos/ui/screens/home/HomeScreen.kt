@@ -146,11 +146,6 @@ private fun HomeDashboard(
                     modifier = Modifier.weight(1f),
                 )
             }
-            Text(
-                text = stringResource(R.string.home_sales_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
 
         // Inventory

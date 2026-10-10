@@ -10,11 +10,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.invision.pos.domain.inventory.StockFilter
+import com.invision.pos.ui.screens.billing.BillingScreen
+import com.invision.pos.ui.screens.billing.BillingSettingsScreen
+import com.invision.pos.ui.screens.billing.InvoiceDetailScreen
+import com.invision.pos.ui.screens.billing.InvoiceHistoryScreen
+import com.invision.pos.ui.screens.billing.ReturnScreen
 import com.invision.pos.ui.screens.home.HomeScreen
 import com.invision.pos.ui.screens.inventory.InventoryListScreen
 import com.invision.pos.ui.screens.inventory.LabelPrintScreen
 import com.invision.pos.ui.screens.inventory.ProductDetailScreen
 import com.invision.pos.ui.screens.inventory.ProductEditorScreen
+import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.placeholder.ComingSoonScreen
 
 @Composable
@@ -35,8 +41,56 @@ fun InvisionNavHost(
                 onOpenInventory = { filter -> navController.navigateToInventory(filter) },
             )
         }
-        composable(TopLevelDestination.BILLING.route) {
-            ComingSoonScreen(destination = TopLevelDestination.BILLING)
+        navigation(
+            startDestination = BillingRoutes.POS,
+            route = TopLevelDestination.BILLING.route,
+        ) {
+            composable(BillingRoutes.POS) {
+                BillingScreen(
+                    onSaleCompleted = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onOpenHistory = { navController.navigate(BillingRoutes.HISTORY) },
+                    onOpenSettings = { navController.navigate(BillingRoutes.SETTINGS) },
+                    onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
+                )
+            }
+            composable(
+                route = BillingRoutes.INVOICE,
+                arguments = listOf(navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType }),
+            ) {
+                InvoiceDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onReturn = { navController.navigate(BillingRoutes.returnFor(it)) },
+                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onNewBill = {
+                        navController.navigate(BillingRoutes.POS) {
+                            popUpTo(BillingRoutes.POS) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
+            composable(BillingRoutes.HISTORY) {
+                InvoiceHistoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                )
+            }
+            composable(
+                route = BillingRoutes.RETURN,
+                arguments = listOf(navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType }),
+            ) {
+                ReturnScreen(
+                    onBack = { navController.popBackStack() },
+                    onCompleted = { creditNoteId ->
+                        navController.navigate(BillingRoutes.invoice(creditNoteId)) {
+                            popUpTo(BillingRoutes.RETURN) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(BillingRoutes.SETTINGS) {
+                BillingSettingsScreen(onBack = { navController.popBackStack() })
+            }
         }
         navigation(
             startDestination = InventoryRoutes.LIST,
@@ -107,7 +161,10 @@ fun InvisionNavHost(
             ComingSoonScreen(destination = TopLevelDestination.CUSTOMERS)
         }
         composable(TopLevelDestination.MORE.route) {
-            ComingSoonScreen(destination = TopLevelDestination.MORE)
+            MoreScreen(
+                onOpenBillingSettings = { navController.navigate(BillingRoutes.SETTINGS) },
+                onOpenHistory = { navController.navigate(BillingRoutes.HISTORY) },
+            )
         }
     }
 }

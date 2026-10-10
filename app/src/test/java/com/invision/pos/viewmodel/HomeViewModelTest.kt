@@ -1,12 +1,12 @@
 package com.invision.pos.viewmodel
 
 import com.invision.pos.core.format.MoneyFormatter
-import com.invision.pos.data.repository.InMemoryStoreRepository
 import com.invision.pos.domain.model.Money
-import com.invision.pos.domain.model.StoreOverview
 import com.invision.pos.domain.usecase.ObserveInventorySummaryUseCase
 import com.invision.pos.domain.usecase.ObserveStoreOverviewUseCase
+import com.invision.pos.testutil.FakeBillingRepository
 import com.invision.pos.testutil.FakeInventoryRepository
+import com.invision.pos.testutil.FakeSettingsRepository
 import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,9 +29,10 @@ class HomeViewModelTest {
 
     private fun createViewModel(
         inventory: FakeInventoryRepository = FakeInventoryRepository(),
-        overview: StoreOverview = InMemoryStoreRepository.DEFAULT_OVERVIEW,
+        billing: FakeBillingRepository = FakeBillingRepository(inventory),
+        settings: FakeSettingsRepository = FakeSettingsRepository(),
     ) = HomeViewModel(
-        observeStoreOverview = ObserveStoreOverviewUseCase(InMemoryStoreRepository(overview)),
+        observeStoreOverview = ObserveStoreOverviewUseCase(settings, billing, TestData.clock),
         observeInventorySummary = ObserveInventorySummaryUseCase(inventory, TestData.clock),
         moneyFormatter = formatter,
     )
@@ -44,16 +45,13 @@ class HomeViewModelTest {
     @Test
     fun uiState_combinesSalesAndInventory() = runTest {
         val repository = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.juice(stock = 0)))
-        val viewModel = createViewModel(
-            inventory = repository,
-            overview = StoreOverview(storeName = "Roy Mart", salesToday = Money(125_050), billsToday = 12),
-        )
+        val viewModel = createViewModel(inventory = repository)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
 
         val state = viewModel.uiState.value as HomeUiState.Ready
         assertEquals("Roy Mart", state.storeName)
-        assertEquals(formatter.format(Money(125_050)), state.salesToday)
-        assertEquals(12, state.billsToday)
+        assertEquals(formatter.format(Money.ZERO), state.salesToday)
+        assertEquals(0, state.billsToday)
         assertEquals(2, state.inventory.productCount)
         assertEquals(1, state.inventory.outOfStockCount)
         assertEquals(formatter.format(Money(9 * 25_000L)), state.stockValueAtCost)

@@ -9,6 +9,8 @@ import com.invision.pos.domain.inventory.StockAdjustmentError
 import com.invision.pos.domain.inventory.StockAlertType
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.DietType
+import com.invision.pos.domain.model.GstRate
+import com.invision.pos.domain.model.formatRatePercent
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockStatus
@@ -106,6 +108,9 @@ fun FieldError.messageRes(): Int = when (this) {
     FieldError.SKU_IN_USE -> R.string.error_sku_in_use
     FieldError.DUPLICATE_VARIANT -> R.string.error_duplicate_variant
     FieldError.REMOVED_VARIANT_HAS_STOCK -> R.string.error_removed_variant_has_stock
+    FieldError.INVALID_GST_RATE -> R.string.error_invalid_gst_rate
+    FieldError.INVALID_HSN -> R.string.error_invalid_hsn
+    FieldError.APPAREL_RULE_GARMENTS_ONLY -> R.string.error_apparel_rule_garments
 }
 
 @StringRes
@@ -115,4 +120,13 @@ fun StockAdjustmentError.messageRes(): Int = when (this) {
     StockAdjustmentError.QUANTITY_TOO_LARGE -> R.string.adjust_error_too_large
     StockAdjustmentError.WOULD_GO_NEGATIVE -> R.string.adjust_error_negative
     StockAdjustmentError.NO_CHANGE -> R.string.adjust_error_no_change
+}
+
+/** "5%", "5% / 18% (apparel)" or "Not set". */
+@Composable
+@ReadOnlyComposable
+fun gstLabel(rate: GstRate?): String = when (rate) {
+    null -> androidx.compose.ui.res.stringResource(R.string.gst_not_set)
+    GstRate.Apparel -> androidx.compose.ui.res.stringResource(R.string.gst_apparel)
+    is GstRate.Fixed -> formatRatePercent(rate.basisPoints) + "%"
 }

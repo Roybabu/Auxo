@@ -73,7 +73,7 @@ class AppFlowTest {
         screenshot("10_app_home_empty")
 
         clickTab("Billing")
-        waitForText("Billing is on the way")
+        waitForText("Start a bill")
 
         clickTab("Inventory")
         waitForText("No products yet")

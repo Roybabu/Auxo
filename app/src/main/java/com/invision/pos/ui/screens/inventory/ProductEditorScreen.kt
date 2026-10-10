@@ -54,6 +54,9 @@ import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.validation.FieldError
 import com.invision.pos.domain.validation.FormField
 import com.invision.pos.domain.validation.GarmentVariants
+import com.invision.pos.domain.validation.GstChoice
+import com.invision.pos.domain.model.GstRate
+import com.invision.pos.domain.model.formatRatePercent
 import com.invision.pos.domain.validation.ProductForm
 import com.invision.pos.domain.validation.ProductFormErrors
 import com.invision.pos.domain.validation.VariantDefaults
@@ -84,6 +87,9 @@ interface ProductEditorActions {
     fun onDescriptionChange(value: String)
     fun onMaterialChange(value: String)
     fun onDietTypeChange(dietType: DietType?)
+    fun onGstChoiceChange(choice: GstChoice) = Unit
+    fun onCustomGstRateChange(value: String) = Unit
+    fun onHsnChange(value: String) = Unit
     fun onToggleSize(size: String)
     fun onAddColour(colour: String)
     fun onRemoveColour(colour: String)
@@ -141,6 +147,9 @@ fun ProductEditorScreen(
             override fun onDescriptionChange(value: String) = viewModel.onDescriptionChange(value)
             override fun onMaterialChange(value: String) = viewModel.onMaterialChange(value)
             override fun onDietTypeChange(dietType: DietType?) = viewModel.onDietTypeChange(dietType)
+            override fun onGstChoiceChange(choice: GstChoice) = viewModel.onGstChoiceChange(choice)
+            override fun onCustomGstRateChange(value: String) = viewModel.onCustomGstRateChange(value)
+            override fun onHsnChange(value: String) = viewModel.onHsnChange(value)
             override fun onToggleSize(size: String) = viewModel.toggleSize(size)
             override fun onAddColour(colour: String) = viewModel.addColour(colour)
             override fun onRemoveColour(colour: String) = viewModel.removeColour(colour)
@@ -240,6 +249,8 @@ fun ProductEditorContent(
         }
 
         item(key = "details") { DetailsSection(form, errors, actions) }
+
+        item(key = "tax") { TaxSection(form, errors, actions) }
 
         if (form.category.usesSizeAndColour) {
             item(key = "sizes") { SizesSection(form, errors, actions) }
@@ -355,6 +366,81 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                 capitalization = KeyboardCapitalization.Sentences,
                 singleLine = false,
                 minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+    InvisionCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            SectionHeader(stringResource(R.string.editor_tax))
+            Text(
+                text = stringResource(R.string.editor_gst_rate),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            val choices = buildList {
+                add(GstChoice.NotSet)
+                if (form.category == ProductCategory.GARMENT) add(GstChoice.Apparel)
+                GstRate.STANDARD_BASIS_POINTS.forEach { add(GstChoice.Standard(it)) }
+                add(GstChoice.Custom)
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                choices.forEach { choice ->
+                    FilterChip(
+                        selected = form.gst == choice,
+                        onClick = { actions.onGstChoiceChange(choice) },
+                        label = {
+                            Text(
+                                when (choice) {
+                                    GstChoice.NotSet -> stringResource(R.string.gst_not_set)
+                                    GstChoice.Apparel -> stringResource(R.string.gst_apparel)
+                                    GstChoice.Custom -> stringResource(R.string.gst_custom)
+                                    is GstChoice.Standard -> formatRatePercent(choice.basisPoints) + "%"
+                                },
+                            )
+                        },
+                    )
+                }
+            }
+            if (form.gst == GstChoice.Apparel) {
+                Text(
+                    text = stringResource(R.string.gst_apparel_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (form.gst == GstChoice.NotSet) {
+                Text(
+                    text = stringResource(R.string.gst_not_set_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (form.gst == GstChoice.Custom) {
+                InvisionTextField(
+                    value = form.customGstRate,
+                    onValueChange = actions::onCustomGstRateChange,
+                    label = stringResource(R.string.gst_custom_rate),
+                    error = errors.fields[FormField.GST_RATE]?.let { stringResource(it.messageRes()) },
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                errors.fields[FormField.GST_RATE]?.let {
+                    Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            InvisionTextField(
+                value = form.hsnCode,
+                onValueChange = actions::onHsnChange,
+                label = stringResource(R.string.editor_hsn),
+                error = errors.fields[FormField.HSN]?.let { stringResource(it.messageRes()) },
+                supportingText = stringResource(R.string.editor_hsn_hint),
+                keyboardType = KeyboardType.Number,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

@@ -3,7 +3,9 @@ package com.invision.pos.domain.validation
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeError
 import com.invision.pos.domain.barcode.BarcodeRules
+import com.invision.pos.domain.model.GstRate
 import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.parseRatePercent
 import com.invision.pos.domain.model.NetQuantity
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
@@ -29,9 +31,12 @@ enum class FieldError {
     SKU_IN_USE,
     DUPLICATE_VARIANT,
     REMOVED_VARIANT_HAS_STOCK,
+    INVALID_GST_RATE,
+    INVALID_HSN,
+    APPAREL_RULE_GARMENTS_ONLY,
 }
 
-enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SIZES, COLOURS, VARIANTS }
+enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SIZES, COLOURS, VARIANTS, GST_RATE, HSN }
 
 enum class VariantField {
     SIZE, COLOUR, NET_QUANTITY, UNIT, SELLING_PRICE, MRP, COST_PRICE,
@@ -74,6 +79,9 @@ object ProductFormValidator {
 
     private val SKU_PATTERN = Regex("""[A-Za-z0-9\-_]+""")
 
+    /** HSN codes are 4, 6 or 8 digits. */
+    private val HSN_PATTERN = Regex("""\d{4}|\d{6}|\d{8}""")
+
     /**
      * @param originalVariants variants saved before editing; removing one that still
      *   has stock is not allowed, so stock is never lost silently.
@@ -91,6 +99,22 @@ object ProductFormValidator {
         if (form.brand.trim().length > BRAND_MAX) fieldErrors[FormField.BRAND] = FieldError.TOO_LONG
         if (form.description.trim().length > DESCRIPTION_MAX) fieldErrors[FormField.DESCRIPTION] = FieldError.TOO_LONG
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
+
+        val gstRate: GstRate? = when (val choice = form.gst) {
+            GstChoice.NotSet -> null
+            GstChoice.Apparel -> {
+                if (form.category != ProductCategory.GARMENT) fieldErrors[FormField.GST_RATE] = FieldError.APPAREL_RULE_GARMENTS_ONLY
+                GstRate.Apparel
+            }
+            is GstChoice.Standard -> GstRate.Fixed(choice.basisPoints)
+            GstChoice.Custom -> {
+                val basisPoints = parseRatePercent(form.customGstRate)
+                if (basisPoints == null) fieldErrors[FormField.GST_RATE] = FieldError.INVALID_GST_RATE
+                basisPoints?.let { GstRate.Fixed(it) }
+            }
+        }
+        val hsn = form.hsnCode.trim()
+        if (hsn.isNotEmpty() && !HSN_PATTERN.matches(hsn)) fieldErrors[FormField.HSN] = FieldError.INVALID_HSN
 
         if (form.category.usesSizeAndColour) {
             if (form.sizes.isEmpty()) fieldErrors[FormField.SIZES] = FieldError.REQUIRED
@@ -126,6 +150,8 @@ object ProductFormValidator {
             description = form.description.trim().ifEmpty { null },
             material = if (form.category == ProductCategory.GARMENT) form.material.trim().ifEmpty { null } else null,
             dietType = if (form.category == ProductCategory.PACKAGED_FOOD) form.dietType else null,
+            hsnCode = hsn.ifEmpty { null },
+            gstRate = gstRate,
             variants = validVariants,
             createdAtMillis = form.createdAtMillis,
         )
