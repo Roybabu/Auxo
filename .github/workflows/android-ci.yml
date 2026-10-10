@@ -119,10 +119,15 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          cores: 4
+          ram-size: 4096M
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: bash -c 'set -o pipefail; ./gradlew connectedDebugAndroidTest 2>&1 | tee -a build-logs/device.log'
+          # Error dialogs from the emulator's own apps would take focus during the tests.
+          script: |
+            adb shell settings put global hide_error_dialogs 1 || true
+            bash -c 'set -o pipefail; ./gradlew connectedDebugAndroidTest 2>&1 | tee -a build-logs/device.log'
 
       - name: Summarize results
         if: always()

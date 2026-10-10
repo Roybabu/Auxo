@@ -22,6 +22,7 @@ import androidx.compose.ui.test.requestFocus
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import com.invision.pos.DeviceFixtures
 import com.invision.pos.InvisionApplication
@@ -86,10 +87,23 @@ class BillingDeviceFlowTest {
         val end = SystemClock.uptimeMillis() + timeoutMillis
         while (true) {
             composeRule.waitForIdle()
+            dismissNotRespondingDialogs()
             val current = device.currentPackageName
             if (accept(current)) return current
             if (SystemClock.uptimeMillis() > end) return null
             SystemClock.sleep(250)
+        }
+    }
+
+    /**
+     * A busy emulator sometimes shows "… isn't responding" for one of its own
+     * system apps. The dialog takes focus, so it is answered with Wait.
+     */
+    private fun dismissNotRespondingDialogs() {
+        repeat(5) {
+            val wait = device.findObject(By.res("android:id/aerr_wait")) ?: return
+            wait.click()
+            SystemClock.sleep(500)
         }
     }
 
