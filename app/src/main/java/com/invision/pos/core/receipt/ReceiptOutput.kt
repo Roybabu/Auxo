@@ -26,6 +26,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.time.ZoneId
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -99,11 +100,9 @@ object ReceiptOutput {
      * if the file couldn't be written or no app can receive it.
      */
     suspend fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String): Boolean {
-        val file = try {
-            withContext(Dispatchers.IO) { writePdfFile(context, invoice, options) }
-        } catch (e: IOException) {
-            return false
-        }
+        val file = runCatching { withContext(Dispatchers.IO) { writePdfFile(context, invoice, options) } }
+            .onFailure { if (it is CancellationException) throw it }
+            .getOrNull() ?: return false
         return try {
             context.startActivity(shareIntent(context, file, invoice, chooserTitle))
             true
