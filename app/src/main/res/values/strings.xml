@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Invision</string>
+
+    <!-- Main navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_billing">Billing</string>
+    <string name="nav_inventory">Inventory</string>
+    <string name="nav_customers">Customers</string>
+    <string name="nav_more">More</string>
+
+    <!-- Home -->
+    <string name="home_greeting">Welcome back</string>
+    <string name="home_today">Today</string>
+    <string name="home_sales_today">Sales</string>
+    <string name="home_bills_today">Bills</string>
+    <string name="home_quick_actions">Quick actions</string>
+    <string name="home_action_new_bill">New bill</string>
+    <string name="home_action_add_product">Add product</string>
+    <string name="home_action_add_customer">Add customer</string>
+    <string name="loading">Loading</string>
+
+    <!-- Placeholder sections -->
+    <string name="coming_soon_title">%1$s is on the way</string>
+    <string name="coming_soon_body">This section will be built in an upcoming step.</string>
+</resources>
