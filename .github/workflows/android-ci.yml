@@ -78,3 +78,64 @@ jobs:
             build-logs/
           if-no-files-found: ignore
           retention-days: 14
+
+  device-tests:
+    name: Device tests (Android emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # The emulator needs hardware acceleration, which the runner allows through KVM.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build app and device tests
+        shell: bash
+        run: |
+          mkdir -p build-logs
+          ./gradlew assembleDebug assembleDebugAndroidTest 2>&1 | tee build-logs/device.log
+
+      # Runs src/androidTest on an Android 15 emulator: PDF files, sharing,
+      # printing and a full sale and return through the app.
+      - name: Run device tests on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash -c 'set -o pipefail; ./gradlew connectedDebugAndroidTest 2>&1 | tee -a build-logs/device.log'
+
+      - name: Summarize results
+        if: always()
+        run: python3 .github/scripts/ci_summary.py --device
+
+      - name: Upload device test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: device-test-reports
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+            build-logs/
+          if-no-files-found: ignore
+          retention-days: 14

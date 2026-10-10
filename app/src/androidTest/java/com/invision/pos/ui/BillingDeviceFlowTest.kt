@@ -1,0 +1,147 @@
+package com.invision.pos.ui
+
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
+import com.invision.pos.DeviceFixtures
+import com.invision.pos.InvisionApplication
+import com.invision.pos.MainActivity
+import com.invision.pos.data.repository.SaveProductResult
+import com.invision.pos.domain.model.Invoice
+import com.invision.pos.domain.model.InvoiceType
+import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.PaymentKind
+import com.invision.pos.domain.model.PaymentMethod
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.util.regex.Pattern
+
+/**
+ * A complete sale and return through the real app on a device: billing by search
+ * and by a scanner-style barcode entry, the system share sheet and print dialog,
+ * then a return, checking the database after each step.
+ */
+@RunWith(AndroidJUnit4::class)
+class BillingDeviceFlowTest {
+
+    @get:Rule
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
+    private val app: InvisionApplication = ApplicationProvider.getApplicationContext()
+    private val container get() = app.container
+    private val device: UiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+
+    private fun waitForText(text: String, substring: Boolean = false) {
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun waitForTag(tag: String) {
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun clickTab(label: String) {
+        composeRule.onAllNodes(hasText(label) and hasClickAction())
+            .filterToOne(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
+            .performClick()
+    }
+
+    /** Waits for a system window from [packages] to show, then goes back to the app. */
+    private fun expectSystemWindow(packages: String) {
+        assertTrue("$packages did not open", device.wait(Until.hasObject(By.pkg(Pattern.compile(packages))), 20_000))
+        device.pressBack()
+        assertTrue("app did not come back", device.wait(Until.hasObject(By.pkg(app.packageName)), 10_000))
+        composeRule.waitForIdle()
+    }
+
+    private fun stockOf(productId: Long): Int = runBlocking {
+        container.inventoryRepository.getProduct(productId)!!.variants.single().stockQuantity
+    }
+
+    /** Newest invoice of [type] that has a line for [productName]. */
+    private fun latest(type: InvoiceType, productName: String): Invoice? = runBlocking {
+        val billing = container.billingRepository
+        billing.observeInvoices(0, Long.MAX_VALUE).first()
+            .filter { it.type == type }
+            .firstNotNullOfOrNull { summary -> billing.getInvoice(summary.id)?.takeIf { invoice -> invoice.lines.any { it.productName == productName } } }
+    }
+
+    @Test
+    fun sellShareAndPrintThenReturn() {
+        val barcode = DeviceFixtures.uniqueBarcode()
+        val name = "Device Shirt ${barcode.takeLast(6)}"
+        val productId = runBlocking {
+            container.settingsRepository.saveSettings(DeviceFixtures.settings)
+            (container.inventoryRepository.saveProduct(DeviceFixtures.shirt(name, barcode, stock = 5)) as SaveProductResult.Saved).productId
+        }
+
+        // Add one shirt from search results.
+        clickTab("Billing")
+        waitForTag("billing_search")
+        composeRule.onNodeWithTag("billing_search").performTextInput(name)
+        waitForText("M · Navy · $barcode")
+        composeRule.onNodeWithText("M · Navy · $barcode").performClick()
+
+        // A USB or Bluetooth scanner types the code and presses Enter.
+        composeRule.onNodeWithTag("billing_search").performTextInput(barcode)
+        composeRule.waitForIdle()
+        device.pressEnter()
+        waitForText("998.00", substring = true)
+
+        // Pay the full amount in cash and complete the sale.
+        composeRule.onNodeWithTag("billing_charge").performClick()
+        waitForTag("payment_complete")
+        composeRule.onNodeWithTag("payment_complete").performClick()
+        waitForTag("receipt_preview")
+
+        // Invoice, payment and stock were saved together.
+        val sale = requireNotNull(latest(InvoiceType.SALE, name)) { "sale not saved" }
+        assertEquals(2, sale.lines.single().quantity)
+        assertEquals(Money(998_00), sale.grandTotal)
+        assertEquals(listOf(PaymentMethod.CASH to Money(998_00)), sale.payments.map { it.method to it.amount })
+        assertEquals(3, stockOf(productId))
+        waitForText("Invoice ${sale.number}")
+
+        // Share opens the system share sheet; Print opens the system print dialog.
+        composeRule.onNodeWithText("Share PDF").performClick()
+        expectSystemWindow("com\\.android\\.intentresolver|android")
+        composeRule.onNodeWithText("Print").performClick()
+        expectSystemWindow("com\\.android\\.printspooler")
+
+        // Return both shirts.
+        composeRule.onNodeWithText("Return items").performClick()
+        waitForText("Return all")
+        composeRule.onNodeWithText("Return all").performClick()
+        composeRule.onNodeWithTag("return_confirm").performClick()
+        waitForText("Credit note CN/", substring = true)
+
+        val creditNote = requireNotNull(latest(InvoiceType.RETURN, name)) { "credit note not saved" }
+        assertEquals(sale.id, creditNote.originalInvoiceId)
+        assertEquals(sale.grandTotal, creditNote.grandTotal)
+        assertEquals(listOf(PaymentKind.REFUND to sale.grandTotal), creditNote.payments.map { it.kind to it.amount })
+        assertEquals(5, stockOf(productId))
+        assertTrue(runBlocking { container.billingRepository.getInvoice(sale.id)!!.isFullyReturned })
+    }
+}

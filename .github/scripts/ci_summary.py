@@ -2,15 +2,21 @@
 
 Writes GitHub Actions annotations (visible on the run and pull request pages)
 and a Markdown table to the job summary. Never fails the build itself.
+
+With --device, summarises the emulator job instead: device test results and
+problems from its build log.
 """
 
 import collections
 import glob
 import os
 import re
+import sys
 import xml.etree.ElementTree as ET
 
-TEST_RESULTS = "app/build/test-results/testDebugUnitTest/*.xml"
+DEVICE = "--device" in sys.argv
+UNIT_RESULTS = "app/build/test-results/testDebugUnitTest/*.xml"
+DEVICE_RESULTS = "app/build/outputs/androidTest-results/connected/**/*.xml"
 LINT_XML = "app/build/reports/lint-results-debug.xml"
 APK_GLOB = "app/build/outputs/apk/debug/*.apk"
 LOG_DIR = "build-logs"
@@ -37,7 +43,7 @@ def read_log(name):
 def build_problems():
     """Compiler errors, compiler warnings and Gradle failure reasons from the captured logs."""
     errors, warnings = [], []
-    for name in ("assemble.log", "test.log", "lint.log"):
+    for name in ("device.log",) if DEVICE else ("assemble.log", "test.log", "lint.log"):
         lines = read_log(name)
         for index, line in enumerate(lines):
             stripped = line.strip()
@@ -52,10 +58,10 @@ def build_problems():
     return list(dict.fromkeys(errors)), list(dict.fromkeys(warnings))
 
 
-def unit_tests():
+def test_results(pattern):
     totals = collections.Counter()
     failures = []
-    files = glob.glob(TEST_RESULTS)
+    files = glob.glob(pattern, recursive=True)
     for path in files:
         suite = ET.parse(path).getroot()
         for key in ("tests", "failures", "errors", "skipped"):
@@ -69,7 +75,8 @@ def unit_tests():
     passed = totals["tests"] - totals["failures"] - totals["errors"] - totals["skipped"]
     summary = (
         f"{totals['tests']} run, {passed} passed, {totals['failures']} failed, "
-        f"{totals['errors']} errors, {totals['skipped']} skipped ({len(files)} classes)"
+        f"{totals['errors']} errors, {totals['skipped']} skipped "
+        f"({len(files)} {'devices' if DEVICE else 'classes'})"
     )
     return summary, failures
 
@@ -110,19 +117,23 @@ def annotate(level, title, items):
 
 
 errors, warnings = build_problems()
-test_summary, test_failures = unit_tests()
+test_summary, test_failures = test_results(DEVICE_RESULTS if DEVICE else UNIT_RESULTS)
 annotate("error", "Build errors", errors)
-annotate("error", "Test failures", test_failures)
+annotate("error", "Device test failures" if DEVICE else "Test failures", test_failures)
 annotate("warning", "Compiler warnings", warnings)
 
-rows = [("Unit tests", test_summary), ("Lint", lint()), ("Debug APK", apk())]
+if DEVICE:
+    rows = [("Device tests", test_summary)]
+else:
+    rows = [("Unit tests", test_summary), ("Lint", lint()), ("Debug APK", apk())]
 for title, text in rows:
     print(f"::notice title={title}::{escape(text)}")
 
 summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
 if summary_path:
     with open(summary_path, "a", encoding="utf-8") as out:
-        out.write("### Invision CI results\n\n| Check | Result |\n|---|---|\n")
+        heading = "Invision device tests" if DEVICE else "Invision CI results"
+        out.write(f"### {heading}\n\n| Check | Result |\n|---|---|\n")
         for title, text in rows:
             out.write(f"| {title} | {text.replace('|', '/')} |\n")
         if errors:
