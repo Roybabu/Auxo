@@ -60,6 +60,17 @@ class BarcodeRulesTest {
         assertEquals(BarcodeCheck.Invalid(BarcodeError.INVALID_CHARACTERS), BarcodeRules.check("ABC 123"))
         assertEquals(BarcodeCheck.Invalid(BarcodeError.TOO_LONG), BarcodeRules.check("A".repeat(33)))
     }
+
+    @Test
+    fun equivalents_coverUpcSentAsEan13AndBack() {
+        assertEquals(setOf("036000291452", "0036000291452"), BarcodeRules.equivalents("036000291452"))
+        assertEquals(setOf("0036000291452", "036000291452"), BarcodeRules.equivalents(" 0036000291452 "))
+        // Other codes only match themselves.
+        assertEquals(setOf("4006381333931"), BarcodeRules.equivalents("4006381333931"))
+        assertEquals(setOf("96385074"), BarcodeRules.equivalents("96385074"))
+        assertEquals(setOf("036000291453"), BarcodeRules.equivalents("036000291453")) // bad check digit
+        assertEquals(setOf("TSHIRT-M-NAVY"), BarcodeRules.equivalents("TSHIRT-M-NAVY"))
+    }
 }
 
 class InternalBarcodeGeneratorTest {

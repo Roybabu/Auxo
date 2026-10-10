@@ -396,10 +396,12 @@ class BillingViewModel(
         return cart.copy(lines = cart.lines.map { it.copy(availableStock = stock[it.variantId]) })
     }
 
-    private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? =
-        products.firstNotNullOfOrNull { product ->
-            product.variants.firstOrNull { it.barcode == code }?.let { product to it }
+    private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
+        val codes = BarcodeRules.equivalents(code)
+        return products.firstNotNullOfOrNull { product ->
+            product.variants.firstOrNull { it.barcode in codes }?.let { product to it }
         }
+    }
 
     private fun search(text: String): List<ProductSearchResult> {
         val query = text.trim()

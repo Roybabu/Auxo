@@ -92,6 +92,10 @@ sealed interface ReturnBuild {
  * Builds a credit note for returned units. Amounts are taken from the original
  * line in proportion to the units returned, rounded so that returning every
  * unit (in one go or several) gives back exactly the original line amounts.
+ *
+ * The refund follows the original bill's rounding: it is what is due after this
+ * return minus what was due before it, so all refunds together never differ
+ * from what the customer paid.
  */
 object ReturnBuilder {
 
@@ -100,7 +104,6 @@ object ReturnBuilder {
         quantities: Map<Long, Int>,
         refundMethod: PaymentMethod,
         reason: String,
-        roundOff: Boolean,
         nowMillis: Long,
     ): ReturnBuild {
         if (original.type != InvoiceType.SALE) return ReturnBuild.Rejected(ReturnError.NOT_A_SALE)
@@ -110,10 +113,13 @@ object ReturnBuilder {
             return ReturnBuild.Rejected(ReturnError.QUANTITY_TOO_LARGE)
         }
 
-        val lines = selected.map { line -> returnLine(line, quantities.getValue(line.id)) }
+        val units = selected.associate { it.id to quantities.getValue(it.id) }
+        val lines = selected.map { line -> returnLine(line, units.getValue(line.id)) }
         val subtotal = sum(lines.map { it.unitPrice * it.quantity })
-        val total = sum(lines.map { it.total })
-        val rounded = if (roundOff) BillCalculator.roundToRupee(total) else total
+        val linesTotal = sum(lines.map { it.total })
+        val returnedBefore = original.lines.associate { it.id to it.returnedQuantity }
+        val returnedAfter = original.lines.associate { it.id to it.returnedQuantity + (units[it.id] ?: 0) }
+        val refund = refundDue(original, returnedAfter) - refundDue(original, returnedBefore)
 
         val creditNote = Invoice(
             type = InvoiceType.RETURN,
@@ -131,21 +137,39 @@ object ReturnBuilder {
             cgstTotal = sum(lines.map { it.cgst }),
             sgstTotal = sum(lines.map { it.sgst }),
             igstTotal = sum(lines.map { it.igst }),
-            roundOff = rounded - total,
-            grandTotal = rounded,
-            payments = listOf(
-                PaymentRecord(
-                    method = refundMethod,
-                    kind = PaymentKind.REFUND,
-                    amount = rounded,
-                    createdAtMillis = nowMillis,
-                ),
-            ),
+            roundOff = refund - linesTotal,
+            grandTotal = refund,
+            // Returning a few paise on a rounded bill can leave nothing to refund yet.
+            payments = if (refund > Money.ZERO) {
+                listOf(
+                    PaymentRecord(
+                        method = refundMethod,
+                        kind = PaymentKind.REFUND,
+                        amount = refund,
+                        createdAtMillis = nowMillis,
+                    ),
+                )
+            } else {
+                emptyList()
+            },
             originalInvoiceId = original.id,
             originalInvoiceNumber = original.number,
             note = reason.trim().ifEmpty { null },
         )
         return ReturnBuild.Ready(creditNote)
+    }
+
+    /**
+     * Total refunded on [original] once [returned] units of each line are back:
+     * the bill total when everything is back, otherwise the returned share,
+     * rounded to the rupee if the bill was.
+     */
+    fun refundDue(original: Invoice, returned: Map<Long, Int>): Money {
+        if (original.lines.all { (returned[it.id] ?: 0) >= it.quantity }) return original.grandTotal
+        val total = sum(original.lines.map { returnedShare(it, returned[it.id] ?: 0) })
+        // A bill rounded to the rupee always ends in 00 paise.
+        val rounded = original.grandTotal.minorUnits % 100 == 0L
+        return if (rounded) BillCalculator.roundToRupee(total) else total
     }
 
     /** Credit note line for [units] more units of [line]. */
@@ -170,6 +194,14 @@ object ReturnBuilder {
             total = taxable + cgst + sgst + igst,
             returnedQuantity = 0,
             originalLineId = line.id,
+        )
+    }
+
+    /** Value of the first [units] units of [line], as the credit notes for them add up. */
+    private fun returnedShare(line: InvoiceLine, units: Int): Money {
+        val count = units.coerceIn(0, line.quantity)
+        return Money(
+            listOf(line.taxable, line.cgst, line.sgst, line.igst).sumOf { portion(it.minorUnits, count, line.quantity) },
         )
     }
 

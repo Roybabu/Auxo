@@ -24,7 +24,7 @@ class ThermalReceiptTest {
 
     @Test
     fun linesNeverExceedThePaperWidth() {
-        for (width in listOf(32, 48)) {
+        for (width in listOf(32, 42, 48)) {
             val receipt = ThermalReceiptBuilder.build(sale, ReceiptOptions(), width, ZoneOffset.UTC)
             receipt.elements.filterIsInstance<ThermalElement.Line>().forEach { line ->
                 val limit = if (line.large) width / 2 else width
@@ -69,7 +69,7 @@ class ThermalReceiptTest {
 
     @Test
     fun creditNote_showsRefundAndOriginalInvoice() {
-        val note = (ReturnBuilder.build(sale, mapOf(sale.lines[0].id to 1), PaymentMethod.UPI, "Wrong size", true, 0) as ReturnBuild.Ready)
+        val note = (ReturnBuilder.build(sale, mapOf(sale.lines[0].id to 1), PaymentMethod.UPI, "Wrong size", 0) as ReturnBuild.Ready)
             .creditNote.copy(number = "CN/26-27/00001")
         val lines = text(ThermalReceiptBuilder.build(note, ReceiptOptions(), 48, ZoneOffset.UTC))
         assertTrue(lines.contains("CREDIT NOTE"))

@@ -50,6 +50,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -322,7 +327,16 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 label = stringResource(R.string.billing_search_hint),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("billing_search"),
+                    .testTag("billing_search")
+                    .onPreviewKeyEvent { event ->
+                        // USB and Bluetooth barcode scanners type the code and then press Enter.
+                        if (event.key == Key.Enter || event.key == Key.NumPadEnter) {
+                            if (event.type == KeyEventType.KeyDown) actions.onSearchSubmitted()
+                            true
+                        } else {
+                            false
+                        }
+                    },
                 imeAction = ImeAction.Search,
                 keyboardActions = KeyboardActions(onSearch = { actions.onSearchSubmitted() }),
                 leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },

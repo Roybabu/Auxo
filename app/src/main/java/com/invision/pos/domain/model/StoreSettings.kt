@@ -5,7 +5,10 @@ enum class ReceiptPaper {
     /** 58 mm thermal roll (48 mm printable). */
     THERMAL_58,
 
-    /** 80 mm thermal roll (72 mm printable); also fits 75-76 mm rolls. */
+    /** 75-76 mm roll (64 mm printable), common on 3-inch impact and some thermal printers. */
+    THERMAL_76,
+
+    /** 78-80 mm thermal roll (72 mm printable). */
     THERMAL_80,
     A5,
     A4,

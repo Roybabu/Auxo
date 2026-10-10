@@ -340,13 +340,15 @@
     <string name="invoice_not_found">This invoice could not be found.</string>
     <string name="invoice_paper">Receipt size</string>
     <string name="paper_58">58 mm</string>
+    <string name="paper_76">76 mm</string>
     <string name="paper_80">80 mm</string>
     <string name="paper_a5">A5</string>
     <string name="paper_a4">A4</string>
     <string name="invoice_print">Print</string>
     <string name="invoice_share">Share PDF</string>
     <string name="invoice_share_title">Share receipt</string>
-    <string name="invoice_share_failed">No app available to share the PDF</string>
+    <string name="invoice_share_failed">Couldn\'t share the PDF. Try again.</string>
+    <string name="invoice_print_failed">Couldn\'t start printing. Try again.</string>
     <string name="invoice_return">Return items</string>
     <string name="invoice_new_bill">New bill</string>
     <string name="invoice_credit_notes">Returns against this invoice</string>
@@ -422,7 +424,8 @@
     <string name="settings_receipt">Receipt</string>
     <string name="settings_receipt_paper">Default receipt size</string>
     <string name="settings_paper_58">58 mm roll</string>
-    <string name="settings_paper_80">80 mm roll (75–80 mm)</string>
+    <string name="settings_paper_76">76 mm roll (75–76 mm)</string>
+    <string name="settings_paper_80">80 mm roll (78–80 mm)</string>
     <string name="settings_paper_a5">A5 sheet</string>
     <string name="settings_paper_a4">A4 sheet</string>
     <string name="settings_footer">Receipt footer</string>
