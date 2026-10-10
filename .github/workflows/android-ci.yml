@@ -42,6 +42,10 @@ jobs:
       - name: Run Android lint
         run: ./gradlew lintDebug
 
+      - name: Summarize results
+        if: always()
+        run: python3 .github/scripts/ci_summary.py
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
