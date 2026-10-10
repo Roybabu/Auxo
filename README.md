@@ -85,9 +85,13 @@ The debug APK is written to `app/build/outputs/apk/debug/`.
 
 Robolectric runs on Android 15 (API 35); see `app/src/test/resources/robolectric.properties`.
 
+Known gaps, to cover with on-device (instrumented) tests later:
+- Dialogs containing text fields (the stock adjustment dialog) can't be tested under Robolectric: any text field in a dialog window never reports idle there. The dialog's form is tested on its own instead.
+- Camera scanning (needs Google Play services) and printing (needs the Android print system) are not exercised by the tests. The barcode encoding, label layout and label contents they rely on are.
+
 ## Continuous integration
 
-`.github/workflows/android-ci.yml` runs on every push to `main`, on pull requests, and on demand. It builds the debug APK, runs all tests and lint, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts.
+`.github/workflows/android-ci.yml` runs on every push to `main`, on pull requests, and on demand. It builds the debug APK, runs all tests and lint, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts.
 
 ## Project structure
 
