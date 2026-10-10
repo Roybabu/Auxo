@@ -341,7 +341,6 @@ private fun MovementRow(movement: StockMovement, variantLabel: String) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AdjustStockDialog(
     state: AdjustStockDialogState,
@@ -355,46 +354,14 @@ fun AdjustStockDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.adjust_title)) },
         text = {
-            Column(
+            AdjustStockForm(
+                state = state,
+                onReasonChange = onReasonChange,
+                onQuantityChange = onQuantityChange,
+                onNoteChange = onNoteChange,
+                onDone = onConfirm,
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-            ) {
-                Text(
-                    text = listOfNotNull(
-                        state.variant.attributesLabel.ifEmpty { null },
-                        stringResource(R.string.adjust_current, state.variant.stockQuantity),
-                    ).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    StockAdjustmentCalculator.manualReasons.forEach { reason ->
-                        FilterChip(
-                            selected = state.reason == reason,
-                            onClick = { onReasonChange(reason) },
-                            label = { Text(stringResource(reason.labelRes())) },
-                        )
-                    }
-                }
-                InvisionTextField(
-                    value = state.quantity,
-                    onValueChange = onQuantityChange,
-                    label = stringResource(
-                        if (state.reason == StockChangeReason.CORRECTION) R.string.adjust_counted else R.string.adjust_quantity,
-                    ),
-                    error = state.error?.let { stringResource(it.messageRes()) },
-                    supportingText = state.newStock?.let { stringResource(R.string.adjust_new_stock, it) },
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                InvisionTextField(
-                    value = state.note,
-                    onValueChange = onNoteChange,
-                    label = stringResource(R.string.adjust_note),
-                    imeAction = ImeAction.Done,
-                    keyboardActions = KeyboardActions(onDone = { onConfirm() }),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            )
         },
         confirmButton = {
             TextButton(onClick = onConfirm, enabled = !state.isSaving) { Text(stringResource(R.string.action_save)) }
@@ -403,4 +370,54 @@ fun AdjustStockDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     )
+}
+
+/** Reason, quantity and note fields of the stock adjustment dialog. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AdjustStockForm(
+    state: AdjustStockDialogState,
+    onReasonChange: (StockChangeReason) -> Unit,
+    onQuantityChange: (String) -> Unit,
+    onNoteChange: (String) -> Unit,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        Text(
+            text = listOfNotNull(
+                state.variant.attributesLabel.ifEmpty { null },
+                stringResource(R.string.adjust_current, state.variant.stockQuantity),
+            ).joinToString(" · "),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            StockAdjustmentCalculator.manualReasons.forEach { reason ->
+                FilterChip(
+                    selected = state.reason == reason,
+                    onClick = { onReasonChange(reason) },
+                    label = { Text(stringResource(reason.labelRes())) },
+                )
+            }
+        }
+        InvisionTextField(
+            value = state.quantity,
+            onValueChange = onQuantityChange,
+            label = stringResource(
+                if (state.reason == StockChangeReason.CORRECTION) R.string.adjust_counted else R.string.adjust_quantity,
+            ),
+            error = state.error?.let { stringResource(it.messageRes()) },
+            supportingText = state.newStock?.let { stringResource(R.string.adjust_new_stock, it) },
+            keyboardType = KeyboardType.Number,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        InvisionTextField(
+            value = state.note,
+            onValueChange = onNoteChange,
+            label = stringResource(R.string.adjust_note),
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(onDone = { onDone() }),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

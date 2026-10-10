@@ -33,7 +33,8 @@ import com.invision.pos.domain.model.QuantityUnit
 import com.invision.pos.domain.model.DietType
 import com.invision.pos.testutil.TestData
 import com.invision.pos.ui.screens.home.HomeContent
-import com.invision.pos.ui.screens.inventory.AdjustStockDialog
+import com.invision.pos.ui.screens.inventory.AdjustStockForm
+import com.invision.pos.ui.components.ConfirmDialog
 import com.invision.pos.ui.screens.inventory.InventoryListContent
 import com.invision.pos.ui.screens.inventory.LabelPrintContent
 import com.invision.pos.ui.screens.inventory.ProductDetailContent
@@ -198,9 +199,9 @@ class ScreenTest {
     }
 
     @Test
-    fun adjustStockDialog() {
+    fun adjustStockForm_showsNewStock() {
         show {
-            AdjustStockDialog(
+            AdjustStockForm(
                 state = AdjustStockDialogState(
                     variant = TestData.tShirt().variants.first(),
                     reason = StockChangeReason.RECEIVED,
@@ -209,12 +210,27 @@ class ScreenTest {
                 onReasonChange = {},
                 onQuantityChange = {},
                 onNoteChange = {},
-                onConfirm = {},
-                onDismiss = {},
+                onDone = {},
             )
         }
-        composeRule.onNodeWithText("New stock: 20").assertExists()
+        composeRule.onNodeWithText("New stock: 20").assertIsDisplayed()
         screenshot("06_adjust_stock")
+    }
+
+    @Test
+    fun confirmDialog_rendersInItsOwnWindow() {
+        show {
+            ConfirmDialog(
+                title = "Delete product?",
+                message = "Cotton T-Shirt and its stock history will be deleted.",
+                confirmLabel = "Delete",
+                onConfirm = {},
+                onDismiss = {},
+                destructive = true,
+            )
+        }
+        composeRule.onNodeWithText("Delete product?").assertIsDisplayed()
+        screenshot("06b_delete_dialog")
     }
 
     @Test

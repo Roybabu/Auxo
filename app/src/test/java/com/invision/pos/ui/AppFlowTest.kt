@@ -93,6 +93,7 @@ class AppFlowTest {
 
         composeRule.onNodeWithTag("editor_name").performTextInput("Linen Shirt")
         composeRule.onNodeWithText("M").performClick()
+        composeRule.onNodeWithTag("product_editor").performScrollToNode(hasTestTag("editor_colour"))
         composeRule.onNodeWithTag("editor_colour").performTextInput("Beige")
         composeRule.onNodeWithTag("editor_add_colour").performClick()
 
