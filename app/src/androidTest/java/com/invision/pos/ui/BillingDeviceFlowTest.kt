@@ -1,6 +1,8 @@
 package com.invision.pos.ui
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
@@ -11,6 +13,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -51,8 +56,33 @@ class BillingDeviceFlowTest {
     private val device: UiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     private fun waitForText(text: String, substring: Boolean = false) {
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            composeRule.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
+        try {
+            composeRule.waitUntil(timeoutMillis = 15_000) {
+                composeRule.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
+            }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError("'$text' did not appear. ${screenSummary()}", e)
+        }
+    }
+
+    /** Search box contents and visible amounts, to explain a failure. */
+    private fun screenSummary(): String {
+        val search = composeRule.onAllNodes(hasTestTag("billing_search")).fetchSemanticsNodes()
+            .firstOrNull()?.config?.getOrNull(SemanticsProperties.EditableText)?.text
+        val amounts = composeRule.onAllNodes(hasText("₹", substring = true)).fetchSemanticsNodes()
+            .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
+            .distinct()
+        return "Search box: ${search ?: "not shown"}. Amounts: $amounts"
+    }
+
+    /** A phone with a scanner attached doesn't show the on-screen keyboard. */
+    private fun hideKeyboard() {
+        val window = composeRule.activity.window
+        composeRule.runOnUiThread {
+            WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            ViewCompat.getRootWindowInsets(window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) != true
         }
     }
 
@@ -106,7 +136,7 @@ class BillingDeviceFlowTest {
 
         // A USB or Bluetooth scanner types the code and presses Enter.
         composeRule.onNodeWithTag("billing_search").performTextInput(barcode)
-        composeRule.waitForIdle()
+        hideKeyboard()
         device.pressEnter()
         waitForText("998.00", substring = true)
 

@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
@@ -18,7 +20,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.ReceiptRenderer
@@ -153,6 +158,27 @@ class BillingScreenTest {
         composeRule.onNodeWithTag("billing_search").performTextInput("x")
         assertTrue(typed.last().contains("x") && typed.last().contains("shirt"))
         screenshot("22_billing_search")
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun cart_hardwareEnterInSearch_addsTheItem() {
+        var submitted = 0
+        show {
+            CartContent(
+                state = cartState(Cart()).copy(searchText = TestData.EAN[0]),
+                actions = object : BillingActions {
+                    override fun onSearchSubmitted() {
+                        submitted++
+                    }
+                },
+            )
+        }
+        // A scanner works like a keyboard: it types the code, then presses Enter.
+        composeRule.onNodeWithTag("billing_search").requestFocus()
+        composeRule.onNodeWithTag("billing_search").performKeyInput { pressKey(Key.Enter) }
+        composeRule.waitForIdle()
+        assertEquals(1, submitted)
     }
 
     @Test
