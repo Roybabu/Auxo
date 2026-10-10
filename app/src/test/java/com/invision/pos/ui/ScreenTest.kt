@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -235,25 +236,52 @@ class ScreenTest {
     }
 
     @Test
-    fun adjustStockDialog_opensSettlesAndConfirms() {
+    fun adjustStockDialog_showsPreviewAndConfirms() {
+        // A dialog that contains text fields never reports idle under Robolectric with
+        // an auto-advancing clock, so this test drives frames by hand.
+        composeRule.mainClock.autoAdvance = false
         var confirmed = false
-        show {
-            AdjustStockDialog(
-                state = AdjustStockDialogState(
-                    variant = TestData.tShirt().variants.first(),
-                    reason = StockChangeReason.SOLD,
-                    quantity = "3",
-                ),
-                onReasonChange = {},
-                onQuantityChange = {},
-                onNoteChange = {},
-                onConfirm = { confirmed = true },
-                onDismiss = {},
-            )
+        composeRule.setContent {
+            InvisionTheme {
+                AdjustStockDialog(
+                    state = AdjustStockDialogState(
+                        variant = TestData.tShirt().variants.first(),
+                        reason = StockChangeReason.SOLD,
+                        quantity = "3",
+                    ),
+                    onReasonChange = {},
+                    onQuantityChange = {},
+                    onNoteChange = {},
+                    onConfirm = { confirmed = true },
+                    onDismiss = {},
+                )
+            }
         }
+        repeat(5) { composeRule.mainClock.advanceTimeByFrame() }
         composeRule.onNodeWithText("New stock: 5").assertIsDisplayed()
         composeRule.onNodeWithText("Save").performClick()
+        repeat(2) { composeRule.mainClock.advanceTimeByFrame() }
         assertTrue(confirmed)
+    }
+
+    @Test
+    fun adjustStockDialog_focusOnOpen() {
+        // Diagnostic: reports which node, if any, takes focus when the dialog opens.
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            InvisionTheme {
+                AdjustStockDialog(
+                    state = AdjustStockDialogState(variant = TestData.tShirt().variants.first()),
+                    onReasonChange = {},
+                    onQuantityChange = {},
+                    onNoteChange = {},
+                    onConfirm = {},
+                    onDismiss = {},
+                )
+            }
+        }
+        repeat(5) { composeRule.mainClock.advanceTimeByFrame() }
+        composeRule.onNode(isFocused()).assertDoesNotExist()
     }
 
     @Test
