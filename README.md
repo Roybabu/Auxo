@@ -13,7 +13,7 @@ Invision is an Android retail point-of-sale (POS) and invoicing app, built step 
 | UI | Jetpack Compose (BOM 2026.09.00), Material 3 |
 | Architecture | MVVM with Kotlin Coroutines and Flow |
 | Navigation | Navigation Compose 2.10.2 |
-| Build | Gradle 9.8.1 (wrapper), Android Gradle Plugin 9.4.0, Kotlin DSL, version catalog |
+| Build | Gradle 9.8.1 (wrapper), Android Gradle Plugin 9.4.1, Kotlin DSL, version catalog |
 | Android SDK | compileSdk 37, targetSdk 37, minSdk 26 (Android 8.0) |
 | Java | JDK 17 or newer to run the build (CI uses JDK 21) |
 
