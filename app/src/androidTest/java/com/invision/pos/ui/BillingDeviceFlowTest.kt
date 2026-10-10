@@ -14,9 +14,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -90,14 +87,18 @@ class BillingDeviceFlowTest {
         }
     }
 
-    /** A phone with a scanner attached doesn't show the on-screen keyboard. */
-    private fun hideKeyboard() {
-        val window = composeRule.activity.window
-        composeRule.runOnUiThread {
-            WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
-        }
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            ViewCompat.getRootWindowInsets(window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) != true
+    /**
+     * Runs [block] with on-screen keyboards turned off, like a counter phone with a
+     * scanner attached: keys then go straight to the app instead of through a
+     * keyboard app that may be opening or closing.
+     */
+    private fun withoutOnScreenKeyboard(block: () -> Unit) {
+        device.executeShellCommand("ime list -s").lines().filter { it.isNotBlank() }
+            .forEach { device.executeShellCommand("ime disable ${it.trim()}") }
+        try {
+            block()
+        } finally {
+            device.executeShellCommand("ime reset")
         }
     }
 
@@ -142,7 +143,7 @@ class BillingDeviceFlowTest {
     }
 
     @Test
-    fun sellShareAndPrintThenReturn() {
+    fun sellShareAndPrintThenReturn() = withoutOnScreenKeyboard {
         val barcode = DeviceFixtures.uniqueBarcode()
         val name = "Device Shirt ${barcode.takeLast(6)}"
         val productId = runBlocking {
@@ -159,7 +160,7 @@ class BillingDeviceFlowTest {
 
         // A USB or Bluetooth scanner types the code and presses Enter.
         composeRule.onNodeWithTag("billing_search").performTextInput(barcode)
-        hideKeyboard()
+        composeRule.waitForIdle()
         device.pressEnter()
         waitForText("998.00", substring = true)
 
