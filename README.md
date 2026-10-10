@@ -19,6 +19,7 @@ Invision is an Android retail point-of-sale (POS) and invoicing app, built step 
 - **Customer:** optional name, mobile number and GSTIN (for B2B bills). Bills without details print "Walk-in Customer". Mobile numbers and GSTINs (including the check character) are validated.
 - **GST** (rates as revised under GST 2.0):
   - Each product has a GST rate (0, 5, 18, 40% or another rate) and an HSN code. Garments default to the apparel rule: 5% when a piece sells for up to ₹2,500 after discount (before GST), 18% above that.
+  - Products added before this step have no GST rate. A GST-registered store can't bill them until a rate is set in Inventory; the cart line says so.
   - Prices include GST by default (usual for retail and MRP items); this can be switched to GST added on top.
   - CGST and SGST for sales in the store's state; IGST when the place of supply is another state (chosen per bill).
   - Stores not registered for GST issue a "Bill of Supply" with no tax.
