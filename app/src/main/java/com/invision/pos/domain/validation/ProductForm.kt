@@ -1,6 +1,8 @@
 package com.invision.pos.domain.validation
 
 import com.invision.pos.domain.model.DietType
+import com.invision.pos.domain.model.GstRate
+import com.invision.pos.domain.model.formatRatePercent
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
@@ -71,6 +73,10 @@ data class ProductForm(
     val description: String = "",
     val material: String = "",
     val dietType: DietType? = null,
+    val gst: GstChoice = GstChoice.NotSet,
+    /** Custom GST rate in percent, used when [gst] is [GstChoice.Custom]. */
+    val customGstRate: String = "",
+    val hsnCode: String = "",
     val sizes: List<String> = emptyList(),
     val colours: List<String> = emptyList(),
     val defaults: VariantDefaults = VariantDefaults(),
@@ -88,6 +94,12 @@ data class ProductForm(
             description = product.description.orEmpty(),
             material = product.material.orEmpty(),
             dietType = product.dietType,
+            gst = GstChoice.from(product.gstRate),
+            customGstRate = (product.gstRate as? GstRate.Fixed)
+                ?.takeIf { it.basisPoints !in GstRate.STANDARD_BASIS_POINTS }
+                ?.let { formatRatePercent(it.basisPoints) }
+                .orEmpty(),
+            hsnCode = product.hsnCode.orEmpty(),
             sizes = product.variants.mapNotNull { it.size }.distinct(),
             colours = product.variants.mapNotNull { it.colour }.distinct(),
             defaults = product.variants.firstOrNull()?.let {
@@ -148,4 +160,24 @@ object GarmentVariants {
                 openingStock = if (it.isSaved) it.openingStock else defaults.openingStock,
             )
         }
+}
+
+/** GST choice in the product editor. */
+sealed interface GstChoice {
+    data object NotSet : GstChoice
+    data object Apparel : GstChoice
+    data class Standard(val basisPoints: Int) : GstChoice
+    data object Custom : GstChoice
+
+    companion object {
+        fun from(rate: GstRate?): GstChoice = when (rate) {
+            null -> NotSet
+            GstRate.Apparel -> Apparel
+            is GstRate.Fixed -> if (rate.basisPoints in GstRate.STANDARD_BASIS_POINTS) Standard(rate.basisPoints) else Custom
+        }
+
+        /** Default for new products: the apparel rule for garments, otherwise chosen by the user. */
+        fun defaultFor(category: com.invision.pos.domain.model.ProductCategory): GstChoice =
+            if (category == com.invision.pos.domain.model.ProductCategory.GARMENT) Apparel else NotSet
+    }
 }

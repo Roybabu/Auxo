@@ -3,15 +3,34 @@ A Invoice app build from scratch
 
 Invision is an Android retail point-of-sale (POS) and invoicing app, built step by step.
 
-**Status: Step 2 — inventory, barcodes and labels.** Products are stored on the device, with full inventory workflows for garments, packaged food and beverages. Billing, Customers and More are placeholders until later steps.
+**Status: Step 3 — billing.** Inventory (Step 2) plus a complete billing workflow: cart, discounts, GST, payments, returns, invoice history and printable or shareable receipts. Customers is a placeholder until a later step.
 
 ## Features
 
 ### Home dashboard
-- Today's sales and bill count (shown once billing exists)
+- Today's net sales (sales minus refunds) and number of bills
 - Inventory KPIs: products, units in stock, stock value at cost and at selling price
 - Low-stock, out-of-stock and expiring counts. Tapping one opens Inventory with that filter applied.
 - "Needs attention" list of the most urgent items (expired, out of stock, expiring soon, low stock)
+
+### Billing
+- **Adding items:** search by name, brand, size, colour, SKU or barcode; scan with the camera; or use a USB/Bluetooth scanner in the search box (Enter adds the item). Scanning the same item again increases its quantity. Quantities can't go above stock, and the cart updates live if stock changes elsewhere.
+- **Discounts:** per line and on the whole bill, as an amount (₹) or a percentage. A bill discount is shared across lines in proportion to their value, to the paisa.
+- **Customer:** optional name, mobile number and GSTIN (for B2B bills). Bills without details print "Walk-in Customer". Mobile numbers and GSTINs (including the check character) are validated.
+- **GST** (rates as revised under GST 2.0):
+  - Each product has a GST rate (0, 5, 18, 40% or another rate) and an HSN code. Garments default to the apparel rule: 5% when a piece sells for up to ₹2,500 after discount (before GST), 18% above that.
+  - Products added before this step have no GST rate. A GST-registered store can't bill them until a rate is set in Inventory; the cart line says so.
+  - Prices include GST by default (usual for retail and MRP items); this can be switched to GST added on top.
+  - CGST and SGST for sales in the store's state; IGST when the place of supply is another state (chosen per bill).
+  - Stores not registered for GST issue a "Bill of Supply" with no tax.
+  - Totals can be rounded to the nearest rupee, shown as a round-off line.
+- **Payments:** cash (with cash received, change and quick note buttons), UPI (shows a QR code with the amount when a UPI ID is set; optional reference), card (optional last four digits), or any split of these. The sale completes only when payments add up to the total exactly.
+- **Invoices:** numbered per financial year, e.g. `INV/26-27/00001` (prefix configurable, at most 16 characters as GST rules require), with date and time. Seller, buyer and product details are saved with the invoice, so later edits to products or settings don't change past bills.
+- **Consistency:** the invoice, its lines, the payments and the stock deduction are saved in one database transaction. If any item no longer has enough stock, nothing is saved and the cart shows which item to fix. The same applies to returns.
+- **Returns:** choose units per line (up to what is left to return), refund method and reason. This issues a credit note (`CN/26-27/00001`), records the refund and puts the units back in stock, all in one transaction. Amounts are worked out so that returning every unit, in one go or several, refunds exactly what was paid.
+- **History:** invoices and credit notes for today, the last 7 days, this month or all time, searchable by number, customer name or phone, with sales and returns totals. A payments view lists every payment and refund with totals for cash, UPI, card, refunds and net received.
+- **Receipts:** 58 mm and 80 mm thermal rolls (80 mm also fits 75–76 mm rolls), and A5 and A4 sheets. Each invoice can be previewed in any size, printed through Android printing, or shared as a PDF (WhatsApp, email and so on). Receipt options: default size, footer text, and whether to show customer details, HSN and GST per item, the GST summary, savings on MRP, and an invoice-number barcode. A4/A5 tax invoices include the amount in words and a signature block, and long invoices continue onto more pages.
+- **Billing settings** (also under More): store name, address, phone, GSTIN, state, GST options, number prefixes, UPI ID and receipt options. Billing asks for the store's state and GSTIN (or "not GST-registered") before the first sale.
 
 ### Inventory
 - **Garments:** pick sizes (XS–3XL or custom) and add colours. One variant is created per size and colour, each with its own barcode, SKU, prices and stock. Shared prices can be applied to every variant at once.
@@ -50,8 +69,8 @@ Invision is an Android retail point-of-sale (POS) and invoicing app, built step 
 | Architecture | MVVM with Kotlin Coroutines and Flow, use cases, repository |
 | Storage | Room 2.8.5 (KSP 2.3.12) |
 | Navigation | Navigation Compose 2.10.2 |
-| Barcodes | ZXing core 3.5.4 (encoding), Google code scanner 16.1.0 (camera) |
-| Printing | Android print framework, PDF generated with `PdfDocument` |
+| Barcodes and QR | ZXing core 3.5.4 (barcodes, UPI QR codes), Google code scanner 16.1.0 (camera) |
+| Printing and sharing | Android print framework; PDFs generated with `PdfDocument`, shared through `FileProvider` |
 | Build | Gradle 9.8.1 (wrapper), Android Gradle Plugin 9.4.1, Kotlin DSL, version catalog |
 | Android SDK | compileSdk 37, targetSdk 37, minSdk 26 (Android 8.0) |
 | Java | JDK 17 or newer to run the build (CI uses JDK 21) |
@@ -78,20 +97,24 @@ The debug APK is written to `app/build/outputs/apk/debug/`.
 
 ### What the tests cover
 
-- **Domain logic (plain JVM):** money parsing, GS1 check digits, barcode rules and generation, inventory search and filters, dashboard totals and alerts, stock adjustment rules, product form validation, the garment size × colour matrix, label sheet layout and label contents.
-- **ViewModels** (with an in-memory fake repository): Home, Inventory, Product detail, Product editor and Label printing, including loading, error and retry.
-- **Database** (Robolectric, in-memory Room): saving and reading every field, opening-stock history, barcode/SKU conflicts, editing without losing stock, the no-negative-stock rule, barcode lookup and cascade delete.
-- **UI** (Robolectric + Compose): each screen rendered with sample data, plus an end-to-end flow that adds a garment through the real app and database. These tests save screenshots to `app/build/outputs/screenshots/`.
+- **Billing maths (plain JVM):** GST on inclusive and exclusive prices, the apparel ₹2,500 rule at its exact boundary, CGST/SGST/IGST splits, line and bill discounts, paisa-exact allocation, rounding, savings, tax summaries, and that totals always add up.
+- **Billing rules:** payments (exact, change, split, short, over, bad input), invoice numbering and financial years, GSTIN, mobile and UPI validation, UPI payment links, Indian number grouping and amounts in words, cart and customer checks, settings validation, sale and credit-note building (including returns in several steps adding up exactly).
+- **Receipts:** thermal layouts never exceed 32 or 48 characters a line; tax invoice, bill of supply and credit note content; options hiding sections; A5/A4 columns, totals, words and GST summary.
+- **Inventory logic:** money parsing, GS1 check digits, barcode rules and generation, search and filters, dashboard totals and alerts, stock adjustment rules, product form validation (including GST rate and HSN), the garment size × colour matrix, labels.
+- **ViewModels** (with in-memory fakes): Home, Inventory, Product detail and editor, Labels, Billing (search, scanning, stock limits, discounts, customer checks, setup, cash/split/under-payment, stock sold elsewhere, place of supply), Returns, History and Billing settings.
+- **Database** (Robolectric, Room in memory): sales save everything and deduct stock; a short item saves nothing and doesn't use up an invoice number; numbering per prefix and financial year; returns restock, mark lines and record refunds, and over-returns change nothing; deleting a product keeps its invoices; period totals and payments; settings; checkout and return use cases end to end. A migration test builds a version 1 database from the committed schema, fills it with Step 2 data, and opens it with the current app.
+- **UI** (Robolectric + Compose): every Inventory and Billing screen with sample data, receipts rendered for 58 mm, 80 mm, A5 and A4 (sale and credit note), a long A5 invoice spanning pages, and end-to-end flows through the real app and database. Screenshots are saved to `app/build/outputs/screenshots/`.
 
 Robolectric runs on Android 15 (API 35); see `app/src/test/resources/robolectric.properties`.
 
 Known gaps, to cover with on-device (instrumented) tests later:
 - Dialogs containing text fields (the stock adjustment dialog) can't be tested under Robolectric: any text field in a dialog window never reports idle there. The dialog's form is tested on its own instead.
-- Camera scanning (needs Google Play services) and printing (needs the Android print system) are not exercised by the tests. The barcode encoding, label layout and label contents they rely on are.
+- PDF files: `PdfDocument` has no native backend under Robolectric. The pages it draws are tested; writing the file, printing and sharing need a device.
+- Camera scanning (needs Google Play services) is not exercised by the tests.
 
 ## Continuous integration
 
-`.github/workflows/android-ci.yml` runs on every push to `main`, on pull requests, and on demand. It builds the debug APK, runs all tests and lint, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts.
+`.github/workflows/android-ci.yml` runs on every push to `main`, on pull requests, and on demand. It builds the debug APK, runs all tests and lint, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`; the new schema file is then attached to the run as a gzip+base64 annotation, so it can be committed even without a local Android build. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts.
 
 ## Project structure
 
@@ -103,22 +126,24 @@ app/src/main/java/com/invision/pos/
 │   ├── barcode/               Barcode bar patterns (ZXing)
 │   ├── di/                    Manual dependency container (AppContainer)
 │   ├── format/                Money formatting
-│   └── label/                 Label templates, sheet layout, drawing and printing
+│   ├── label/                 Label templates, sheet layout, drawing and printing
+│   └── receipt/               Receipt layouts (58/80 mm, A5/A4), PDF, print and share
 ├── data/
 │   ├── local/                 Room database, entities, DAO and mappers
 │   ├── remote/                Network/API sources (planned)
 │   └── repository/            Repository interfaces and implementations
 ├── domain/
 │   ├── barcode/               GS1 check digits, barcode rules, in-store code generator
+│   ├── billing/               Cart, GST calculator, discounts, payments, invoice and return builders, validators
 │   ├── inventory/             Filters, dashboard summary, stock adjustment rules
-│   ├── model/                 Product, variant, money, net quantity, stock movement
-│   ├── usecase/               Save product, adjust stock, barcode lookup, summaries
+│   ├── model/                 Product, variant, GST rate, invoice, payment, settings, money
+│   ├── usecase/               Checkout, returns, save product, adjust stock, summaries
 │   └── validation/            Product form state and validation
 ├── viewmodel/                 ViewModels exposing UI state as StateFlow
 └── ui/
     ├── InvisionApp.kt         Adaptive navigation (bar or rail)
     ├── navigation/            Destinations, routes and NavHost
-    ├── screens/               Home, Inventory (list, detail, editor, labels), placeholders
+    ├── screens/               Home, Billing (cart, payment, invoice, history, returns, settings), Inventory, More
     ├── components/            Reusable composables, barcode image, scanner launcher
     ├── format/                Date and money formatting for the UI
     └── theme/                 Material 3 theme and design tokens
@@ -129,13 +154,14 @@ Money is stored as whole minor units (paise) in `Money` to avoid floating-point 
 
 ## Data and privacy
 
-All data stays on the device in a Room database (`invision.db`). Android backup and device-to-device transfer are turned off for app data until the app has its own export or sync feature.
+All data stays on the device in a Room database (`invision.db`, schema version 2). Receipt PDFs are written to the app's cache only when sharing. Android backup and device-to-device transfer are turned off for app data until the app has its own export or sync feature.
 
 ## Roadmap
 
 1. **Foundation** — buildable project, architecture, theme, navigation shell, CI
-2. **Inventory** — garments, packaged food and beverages, barcodes, labels, dashboard *(this step)*
-3. Next steps cover billing, customers and settings.
+2. **Inventory** — garments, packaged food and beverages, barcodes, labels, dashboard
+3. **Billing** — cart, discounts, GST, payments, returns, invoice history, receipts *(this step)*
+4. Next steps cover customers and reports.
 
 ## Security
 

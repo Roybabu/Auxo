@@ -23,6 +23,17 @@ object TestData {
         "8901000000057", "8901000000064", "8901000000071", "8901000000088",
     )
 
+    /** GST-registered store in West Bengal with prices including GST. */
+    val settings = com.invision.pos.domain.model.StoreSettings(
+        storeName = "Roy Mart",
+        address = "12 Park Street, Kolkata",
+        phone = "9830012345",
+        gstin = "19AABCU9603R1ZK",
+        stateCode = "19",
+        upiId = "roymart@okaxis",
+        upiPayeeName = "Roy Mart",
+    )
+
     fun variant(
         id: Long = 0,
         barcode: String = EAN[0],
@@ -57,6 +68,8 @@ object TestData {
         brand = "Roy Wear",
         category = ProductCategory.GARMENT,
         material = "100% cotton",
+        hsnCode = "6109",
+        gstRate = com.invision.pos.domain.model.GstRate.Apparel,
         variants = listOf(
             variant(id = id * 10 + 1, barcode = EAN[0], size = "M", colour = "Navy", stock = 8, cost = 25_000),
             variant(id = id * 10 + 2, barcode = EAN[1], size = "L", colour = "Navy", stock = 1, cost = 25_000),
@@ -69,6 +82,8 @@ object TestData {
         brand = "Good Bake",
         category = ProductCategory.PACKAGED_FOOD,
         dietType = DietType.VEG,
+        hsnCode = "1905",
+        gstRate = com.invision.pos.domain.model.GstRate.Fixed(500),
         variants = listOf(
             variant(
                 id = id * 10 + 1,
@@ -88,6 +103,8 @@ object TestData {
         id = id,
         name = "Mango Juice",
         category = ProductCategory.BEVERAGE,
+        hsnCode = "2202",
+        gstRate = com.invision.pos.domain.model.GstRate.Fixed(500),
         variants = listOf(
             variant(
                 id = id * 10 + 1,

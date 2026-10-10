@@ -23,6 +23,11 @@ data class ProductEntity(
     val material: String?,
     /** Packaged food only: [com.invision.pos.domain.model.DietType] name. */
     @ColumnInfo(name = "diet_type") val dietType: String?,
+    @ColumnInfo(name = "hsn_code") val hsnCode: String? = null,
+    /** "FIXED" or "APPAREL"; null when no GST rate is set. Added in version 2. */
+    @ColumnInfo(name = "gst_rule") val gstRule: String? = null,
+    /** Rate in basis points when [gstRule] is "FIXED". */
+    @ColumnInfo(name = "gst_rate_bp") val gstRateBasisPoints: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
 )
@@ -73,7 +78,7 @@ data class ProductVariantEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("variant_id"), Index("created_at")],
+    indices = [Index("variant_id"), Index("created_at"), Index("invoice_id")],
 )
 data class StockMovementEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -83,6 +88,8 @@ data class StockMovementEntity(
     val reason: String,
     val note: String?,
     @ColumnInfo(name = "created_at") val createdAt: Long,
+    /** Sale or credit note that caused the change. Added in version 2. */
+    @ColumnInfo(name = "invoice_id") val invoiceId: Long? = null,
 )
 
 data class ProductWithVariants(

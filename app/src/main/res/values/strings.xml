@@ -35,7 +35,6 @@
     <string name="home_today">Today</string>
     <string name="home_sales_today">Sales</string>
     <string name="home_bills_today">Bills</string>
-    <string name="home_sales_note">Sales will show here once billing is available.</string>
     <string name="home_inventory">Inventory</string>
     <string name="home_products">Products</string>
     <string name="home_units">Units in stock</string>
@@ -227,6 +226,229 @@
         <item quantity="one">%d page</item>
         <item quantity="other">%d pages</item>
     </plurals>
+
+    <!-- Product tax -->
+    <string name="editor_tax">GST</string>
+    <string name="editor_gst_rate">GST rate</string>
+    <string name="editor_hsn">HSN code</string>
+    <string name="editor_hsn_hint">4, 6 or 8 digits, printed on tax invoices</string>
+    <string name="gst_not_set">Not set</string>
+    <string name="gst_apparel">Apparel 5% / 18%</string>
+    <string name="gst_custom">Other</string>
+    <string name="gst_custom_rate">GST rate (%)</string>
+    <string name="gst_apparel_hint">5% when a piece sells for up to ₹2,500 after discount (before GST), 18% above that.</string>
+    <string name="gst_not_set_hint">GST-registered stores need a rate before this product can be billed.</string>
+    <string name="error_invalid_gst_rate">Enter a rate from 0 to 100, like 5 or 12.5</string>
+    <string name="error_invalid_hsn">HSN must be 4, 6 or 8 digits</string>
+    <string name="error_apparel_rule_garments">The apparel rule applies to garments only</string>
+    <string name="detail_gst">GST %1$s</string>
+    <string name="detail_hsn">HSN %1$s</string>
+
+    <!-- Billing: cart -->
+    <string name="billing_title">New bill</string>
+    <string name="billing_search_hint">Search or scan item</string>
+    <string name="billing_empty_title">Start a bill</string>
+    <string name="billing_empty_body">Scan a barcode or search for an item to add it.</string>
+    <string name="billing_no_products_title">No products to sell yet</string>
+    <string name="billing_no_products_body">Add products in Inventory first.</string>
+    <string name="billing_no_results">No items match “%1$s”</string>
+    <string name="billing_in_stock">%1$d in stock</string>
+    <string name="billing_out_of_stock">Out of stock</string>
+    <string name="billing_items">Items</string>
+    <string name="billing_clear">Clear bill</string>
+    <string name="billing_clear_title">Clear this bill?</string>
+    <string name="billing_clear_body">All items and details on this bill will be removed.</string>
+    <string name="billing_history">Invoices and payments</string>
+    <string name="billing_settings">Billing settings</string>
+    <string name="billing_setup_title">Finish billing setup</string>
+    <string name="billing_setup_body">Add your store\'s state and GSTIN, or mark the store as not GST-registered, before billing.</string>
+    <string name="billing_setup_action">Open settings</string>
+    <string name="billing_line_discount">Discount</string>
+    <string name="billing_remove_item">Remove item</string>
+    <string name="billing_discount_amount">₹</string>
+    <string name="billing_discount_percent">%</string>
+    <string name="billing_discount_value">Discount value</string>
+    <string name="billing_discount_invalid">Enter an amount, or a percentage up to 100</string>
+    <string name="billing_bill_discount">Bill discount</string>
+    <string name="billing_customer">Customer</string>
+    <string name="billing_walk_in">Walk-in Customer</string>
+    <string name="billing_add_customer">Add customer details (optional)</string>
+    <string name="billing_customer_name">Customer name</string>
+    <string name="billing_customer_phone">Mobile number</string>
+    <string name="billing_customer_gstin">Customer GSTIN (for B2B)</string>
+    <string name="billing_place_of_supply">Place of supply</string>
+    <string name="billing_interstate_note">Different state: IGST applies</string>
+    <string name="billing_subtotal">Subtotal</string>
+    <string name="billing_discount_total">Discount</string>
+    <string name="billing_taxable">Taxable value</string>
+    <string name="billing_cgst">CGST</string>
+    <string name="billing_sgst">SGST</string>
+    <string name="billing_igst">IGST</string>
+    <string name="billing_round_off">Round off</string>
+    <string name="billing_total">Total</string>
+    <string name="billing_savings">Customer saves %1$s on MRP</string>
+    <string name="billing_prices_include_gst">Prices include GST</string>
+    <string name="billing_not_registered">Not GST-registered: no tax charged</string>
+    <string name="billing_charge">Charge %1$s</string>
+    <string name="billing_fix_cart">Fix the highlighted items first</string>
+    <string name="billing_stock_changed">Stock changed while billing. Check the highlighted items.</string>
+    <string name="billing_out_of_stock_message">%1$s is out of stock</string>
+    <string name="billing_stock_limit">Only %2$d of %1$s in stock</string>
+    <string name="billing_barcode_not_found">No item has barcode %1$s</string>
+    <string name="issue_unavailable">This item was removed from inventory</string>
+    <string name="issue_not_enough_stock">Only %1$d in stock</string>
+    <string name="issue_missing_gst">Set a GST rate for this product in Inventory</string>
+    <string name="issue_discount_too_large">Discount is more than the line value</string>
+    <string name="issue_bill_discount_too_large">Discount is more than the bill</string>
+    <string name="issue_total_not_positive">The total must be more than zero</string>
+    <string name="customer_issue_name_required">Enter the business name for a GSTIN</string>
+    <string name="customer_issue_name_too_long">Name is too long</string>
+    <string name="customer_issue_phone">Enter a 10-digit mobile number</string>
+    <string name="customer_issue_gstin">GSTIN is not valid. Check the 15 characters.</string>
+
+    <!-- Billing: payment -->
+    <string name="payment_title">Payment</string>
+    <string name="payment_due">Amount due</string>
+    <string name="payment_method_cash">Cash</string>
+    <string name="payment_method_upi">UPI</string>
+    <string name="payment_method_card">Card</string>
+    <string name="payment_amount">Amount</string>
+    <string name="payment_tendered">Cash received</string>
+    <string name="payment_change">Change to return: %1$s</string>
+    <string name="payment_upi_reference">UPI reference (optional)</string>
+    <string name="payment_card_last4">Card last 4 digits (optional)</string>
+    <string name="payment_upi_qr">Customer scans to pay %1$s</string>
+    <string name="payment_upi_not_set">Add your UPI ID in Billing settings to show a payment QR code.</string>
+    <string name="payment_add_split">Split payment</string>
+    <string name="payment_remove">Remove payment</string>
+    <string name="payment_remaining">Remaining: %1$s</string>
+    <string name="payment_overpaid">Paid %1$s too much</string>
+    <string name="payment_balanced">Fully paid</string>
+    <string name="payment_complete">Complete sale</string>
+    <string name="payment_exact">Exact</string>
+    <string name="payment_error_required">Enter an amount</string>
+    <string name="payment_error_invalid">Enter an amount like 250 or 250.50</string>
+    <string name="payment_error_tendered_invalid">Enter the cash received</string>
+    <string name="payment_error_tendered_low">Cash received is less than the amount</string>
+    <string name="payment_error_reference">Check the reference</string>
+    <string name="sale_completed">Sale saved: %1$s</string>
+    <string name="sale_completed_change">Sale saved: %1$s. Return %2$s change.</string>
+
+    <!-- Invoices -->
+    <string name="invoice_title">Invoice %1$s</string>
+    <string name="credit_note_title">Credit note %1$s</string>
+    <string name="invoice_not_found">This invoice could not be found.</string>
+    <string name="invoice_paper">Receipt size</string>
+    <string name="paper_58">58 mm</string>
+    <string name="paper_80">80 mm</string>
+    <string name="paper_a5">A5</string>
+    <string name="paper_a4">A4</string>
+    <string name="invoice_print">Print</string>
+    <string name="invoice_share">Share PDF</string>
+    <string name="invoice_share_title">Share receipt</string>
+    <string name="invoice_share_failed">No app available to share the PDF</string>
+    <string name="invoice_return">Return items</string>
+    <string name="invoice_new_bill">New bill</string>
+    <string name="invoice_credit_notes">Returns against this invoice</string>
+    <string name="invoice_fully_returned">All items on this invoice have been returned.</string>
+    <string name="invoice_preview">Receipt preview</string>
+    <string name="invoice_against">Against invoice %1$s</string>
+
+    <!-- History -->
+    <string name="history_title">Invoices and payments</string>
+    <string name="history_tab_invoices">Invoices</string>
+    <string name="history_tab_payments">Payments</string>
+    <string name="history_range_today">Today</string>
+    <string name="history_range_7_days">Last 7 days</string>
+    <string name="history_range_month">This month</string>
+    <string name="history_range_all">All</string>
+    <string name="history_search_hint">Search invoice no., name or phone</string>
+    <string name="history_empty_title">No invoices yet</string>
+    <string name="history_empty_body">Bills you complete will appear here.</string>
+    <string name="history_no_results">No invoices match your search.</string>
+    <string name="history_sales">Sales</string>
+    <string name="history_returns">Returns</string>
+    <string name="history_return_badge">Return</string>
+    <string name="history_cash">Cash</string>
+    <string name="history_upi">UPI</string>
+    <string name="history_card">Card</string>
+    <string name="history_refunds">Refunds</string>
+    <string name="history_net">Net received</string>
+    <string name="history_no_payments">No payments in this period.</string>
+    <string name="history_refund_label">Refund · %1$s</string>
+    <plurals name="history_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+
+    <!-- Returns -->
+    <string name="return_title">Return items</string>
+    <string name="return_from">From invoice %1$s</string>
+    <string name="return_sold">Sold %1$d · already returned %2$d</string>
+    <string name="return_all">Return all</string>
+    <string name="return_refund_method">Refund by</string>
+    <string name="return_reason">Reason (optional)</string>
+    <string name="return_refund">Refund: %1$s</string>
+    <string name="return_confirm">Issue credit note</string>
+    <string name="return_none_selected">Choose the items being returned.</string>
+    <string name="return_error_too_many">Can\'t return more than was sold</string>
+    <string name="return_error_not_sale">Only sale invoices can be returned</string>
+    <string name="return_already_returned">Some items were already returned. The quantities have been refreshed.</string>
+    <string name="return_completed">Credit note %1$s issued</string>
+    <string name="return_nothing_left">Everything on this invoice has been returned.</string>
+
+    <!-- Billing settings -->
+    <string name="settings_title">Billing settings</string>
+    <string name="settings_store">Store details</string>
+    <string name="settings_store_name">Store name</string>
+    <string name="settings_address">Address</string>
+    <string name="settings_phone">Phone</string>
+    <string name="settings_gst">GST</string>
+    <string name="settings_gst_registered">GST-registered store</string>
+    <string name="settings_gst_registered_off">Bills are issued as “Bill of Supply” without GST.</string>
+    <string name="settings_gstin">GSTIN</string>
+    <string name="settings_state">State (place of business)</string>
+    <string name="settings_state_pick">Choose state</string>
+    <string name="settings_prices_include_tax">Selling prices include GST</string>
+    <string name="settings_prices_include_tax_hint">Usual for retail and MRP items. Turn off to add GST on top of prices.</string>
+    <string name="settings_round_off">Round total to nearest rupee</string>
+    <string name="settings_numbering">Invoice numbering</string>
+    <string name="settings_invoice_prefix">Invoice prefix</string>
+    <string name="settings_credit_note_prefix">Credit note prefix</string>
+    <string name="settings_numbering_hint">Numbers restart every financial year, e.g. %1$s.</string>
+    <string name="settings_upi">UPI payments</string>
+    <string name="settings_upi_id">UPI ID</string>
+    <string name="settings_upi_payee">Name shown to customers</string>
+    <string name="settings_receipt">Receipt</string>
+    <string name="settings_receipt_paper">Default receipt size</string>
+    <string name="settings_paper_58">58 mm roll</string>
+    <string name="settings_paper_80">80 mm roll (75–80 mm)</string>
+    <string name="settings_paper_a5">A5 sheet</string>
+    <string name="settings_paper_a4">A4 sheet</string>
+    <string name="settings_footer">Receipt footer</string>
+    <string name="settings_show_hsn">Show HSN and GST rate per item</string>
+    <string name="settings_show_tax_breakup">Show GST summary</string>
+    <string name="settings_show_savings">Show savings on MRP</string>
+    <string name="settings_show_customer">Show customer details</string>
+    <string name="settings_show_barcode">Print invoice number barcode</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_error_required">Required</string>
+    <string name="settings_error_too_long">Too long</string>
+    <string name="settings_error_phone">Enter a valid phone number</string>
+    <string name="settings_error_gstin">GSTIN is not valid. Check the 15 characters.</string>
+    <string name="settings_error_gstin_state">GSTIN belongs to a different state</string>
+    <string name="settings_error_prefix">1 to 4 capital letters or digits</string>
+    <string name="settings_error_same_prefix">Must differ from the invoice prefix</string>
+    <string name="settings_error_upi">Enter a UPI ID like name@bank</string>
+    <plurals name="settings_fix_errors">
+        <item quantity="one">Fix %d highlighted field</item>
+        <item quantity="other">Fix %d highlighted fields</item>
+    </plurals>
+
+    <!-- More -->
+    <string name="more_title">More</string>
+    <string name="more_billing_settings_body">Store details, GST, UPI and receipts</string>
+    <string name="more_history_body">Past invoices, returns and payment records</string>
 
     <!-- Placeholder sections -->
     <string name="coming_soon_title">%1$s is on the way</string>

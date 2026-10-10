@@ -3,15 +3,19 @@ package com.invision.pos.core.di
 import android.content.Context
 import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.local.InvisionDatabase
-import com.invision.pos.data.repository.InMemoryStoreRepository
+import com.invision.pos.data.repository.BillingRepository
 import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.RoomBillingRepository
 import com.invision.pos.data.repository.RoomInventoryRepository
-import com.invision.pos.data.repository.StoreRepository
+import com.invision.pos.data.repository.RoomSettingsRepository
+import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.InternalBarcodeGenerator
 import com.invision.pos.domain.usecase.AdjustStockUseCase
+import com.invision.pos.domain.usecase.CheckoutUseCase
 import com.invision.pos.domain.usecase.FindByBarcodeUseCase
 import com.invision.pos.domain.usecase.ObserveInventorySummaryUseCase
 import com.invision.pos.domain.usecase.ObserveStoreOverviewUseCase
+import com.invision.pos.domain.usecase.ProcessReturnUseCase
 import com.invision.pos.domain.usecase.SaveProductUseCase
 import java.time.Clock
 
@@ -26,18 +30,20 @@ class AppContainer(context: Context) {
 
     private val database: InvisionDatabase by lazy { InvisionDatabase.create(appContext) }
 
-    val storeRepository: StoreRepository by lazy { InMemoryStoreRepository() }
-
     val inventoryRepository: InventoryRepository by lazy {
         RoomInventoryRepository(database.inventoryDao(), clock)
     }
+
+    val billingRepository: BillingRepository by lazy { RoomBillingRepository(database.billingDao()) }
+
+    val settingsRepository: SettingsRepository by lazy { RoomSettingsRepository(database.billingDao()) }
 
     val barcodeGenerator: InternalBarcodeGenerator by lazy { InternalBarcodeGenerator() }
 
     val moneyFormatter: MoneyFormatter by lazy { MoneyFormatter() }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {
-        ObserveStoreOverviewUseCase(storeRepository)
+        ObserveStoreOverviewUseCase(settingsRepository, billingRepository, clock)
     }
 
     val observeInventorySummary: ObserveInventorySummaryUseCase by lazy {
@@ -49,4 +55,8 @@ class AppContainer(context: Context) {
     val adjustStock: AdjustStockUseCase by lazy { AdjustStockUseCase(inventoryRepository, clock) }
 
     val findByBarcode: FindByBarcodeUseCase by lazy { FindByBarcodeUseCase(inventoryRepository) }
+
+    val checkout: CheckoutUseCase by lazy { CheckoutUseCase(billingRepository, settingsRepository, clock) }
+
+    val processReturn: ProcessReturnUseCase by lazy { ProcessReturnUseCase(billingRepository, settingsRepository, clock) }
 }

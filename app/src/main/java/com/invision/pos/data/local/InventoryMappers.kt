@@ -5,6 +5,7 @@ import com.invision.pos.data.local.entity.ProductVariantEntity
 import com.invision.pos.data.local.entity.ProductWithVariants
 import com.invision.pos.data.local.entity.StockMovementEntity
 import com.invision.pos.domain.model.DietType
+import com.invision.pos.domain.model.GstRate
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.NetQuantity
 import com.invision.pos.domain.model.Product
@@ -23,6 +24,8 @@ fun ProductWithVariants.toDomain(): Product = Product(
     description = product.description,
     material = product.material,
     dietType = product.dietType?.let { enumValueOrNull<DietType>(it) },
+    hsnCode = product.hsnCode,
+    gstRate = gstRateOf(product.gstRule, product.gstRateBasisPoints),
     variants = variants.sortedBy { it.id }.map { it.toDomain() },
     createdAtMillis = product.createdAt,
     updatedAtMillis = product.updatedAt,
@@ -57,6 +60,13 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     description = description,
     material = material,
     dietType = dietType?.name,
+    hsnCode = hsnCode,
+    gstRule = when (gstRate) {
+        null -> null
+        GstRate.Apparel -> GST_RULE_APPAREL
+        is GstRate.Fixed -> GST_RULE_FIXED
+    },
+    gstRateBasisPoints = (gstRate as? GstRate.Fixed)?.basisPoints,
     createdAt = if (createdAtMillis > 0) createdAtMillis else nowMillis,
     updatedAt = nowMillis,
 )
@@ -97,5 +107,14 @@ fun StockMovement.toEntity(): StockMovementEntity = StockMovementEntity(
     createdAt = createdAtMillis,
 )
 
-private inline fun <reified T : Enum<T>> enumValueOrNull(name: String): T? =
+private const val GST_RULE_FIXED = "FIXED"
+private const val GST_RULE_APPAREL = "APPAREL"
+
+internal fun gstRateOf(rule: String?, basisPoints: Int?): GstRate? = when (rule) {
+    GST_RULE_APPAREL -> GstRate.Apparel
+    GST_RULE_FIXED -> basisPoints?.takeIf { it in 0..GstRate.MAX_BASIS_POINTS }?.let { GstRate.Fixed(it) }
+    else -> null
+}
+
+internal inline fun <reified T : Enum<T>> enumValueOrNull(name: String): T? =
     enumValues<T>().firstOrNull { it.name == name }

@@ -73,7 +73,7 @@ class AppFlowTest {
         screenshot("10_app_home_empty")
 
         clickTab("Billing")
-        waitForText("Billing is on the way")
+        waitForText("No products to sell yet")
 
         clickTab("Inventory")
         waitForText("No products yet")
@@ -92,7 +92,8 @@ class AppFlowTest {
         waitForTag("editor_name")
 
         composeRule.onNodeWithTag("editor_name").performTextInput("Linen Shirt")
-        composeRule.onNodeWithText("M").performClick()
+        composeRule.onNodeWithTag("product_editor").performScrollToNode(hasText("M") and hasClickAction())
+        composeRule.onNode(hasText("M") and hasClickAction()).performClick()
         composeRule.onNodeWithTag("product_editor").performScrollToNode(hasTestTag("editor_colour"))
         composeRule.onNodeWithTag("editor_colour").performTextInput("Beige")
         composeRule.onNodeWithTag("editor_add_colour").performClick()

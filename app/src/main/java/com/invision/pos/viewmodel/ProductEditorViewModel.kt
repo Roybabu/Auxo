@@ -14,6 +14,7 @@ import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.validation.FieldError
 import com.invision.pos.domain.validation.GarmentVariants
+import com.invision.pos.domain.validation.GstChoice
 import com.invision.pos.domain.validation.ProductForm
 import com.invision.pos.domain.validation.ProductFormErrors
 import com.invision.pos.domain.validation.ProductFormValidator
@@ -100,7 +101,17 @@ class ProductEditorViewModel(
         } else {
             listOf(VariantForm(key = newKey(), unit = category.defaultUnit, barcode = initialBarcode.orEmpty()))
         }
-        return base.copy(category = category, variants = variants, dietType = base.dietType.takeIf { category == ProductCategory.PACKAGED_FOOD })
+        val gst = when {
+            base.gst is GstChoice.Apparel && category != ProductCategory.GARMENT -> GstChoice.NotSet
+            base.gst is GstChoice.NotSet -> GstChoice.defaultFor(category)
+            else -> base.gst
+        }
+        return base.copy(
+            category = category,
+            variants = variants,
+            dietType = base.dietType.takeIf { category == ProductCategory.PACKAGED_FOOD },
+            gst = gst,
+        )
     }
 
     private fun setForm(form: ProductForm) {
@@ -131,6 +142,12 @@ class ProductEditorViewModel(
     fun onMaterialChange(value: String) = editForm { it.copy(material = value.take(ProductFormValidator.MATERIAL_MAX + 20)) }
 
     fun onDietTypeChange(dietType: DietType?) = editForm { it.copy(dietType = dietType) }
+
+    fun onGstChoiceChange(choice: GstChoice) = editForm { it.copy(gst = choice) }
+
+    fun onCustomGstRateChange(value: String) = editForm { it.copy(customGstRate = value.filter { c -> c.isDigit() || c == '.' }.take(6)) }
+
+    fun onHsnChange(value: String) = editForm { it.copy(hsnCode = value.filter { c -> c.isDigit() }.take(8)) }
 
     // Garment sizes and colours
 

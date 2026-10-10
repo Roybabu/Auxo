@@ -225,6 +225,13 @@ private fun ProductHeader(product: Product) {
             if (product.category == ProductCategory.PACKAGED_FOOD) {
                 Text(stringResource(product.dietType.labelRes()), style = MaterialTheme.typography.bodyMedium)
             }
+            Text(
+                text = listOfNotNull(
+                    stringResource(R.string.detail_gst, gstLabel(product.gstRate)),
+                    product.hsnCode?.let { stringResource(R.string.detail_hsn, it) },
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+            )
             product.description?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

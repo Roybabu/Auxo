@@ -52,6 +52,10 @@ data class Product(
     val description: String? = null,
     val material: String? = null,
     val dietType: DietType? = null,
+    /** HSN code printed on tax invoices (4, 6 or 8 digits). */
+    val hsnCode: String? = null,
+    /** Null until set; GST-registered stores need it to bill the product. */
+    val gstRate: GstRate? = null,
     val variants: List<ProductVariant> = emptyList(),
     val createdAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
