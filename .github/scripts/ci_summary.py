@@ -34,14 +34,14 @@ def lint():
     if not os.path.exists(LINT_XML):
         return "no report found"
     by_severity = collections.Counter()
-    ids = collections.Counter()
+    messages = collections.OrderedDict()
     for issue in ET.parse(LINT_XML).getroot().iter("issue"):
         by_severity[issue.get("severity", "Unknown")] += 1
-        ids[issue.get("id", "?")] += 1
+        messages.setdefault(issue.get("id", "?"), issue.get("message", "").strip())
     errors = by_severity["Error"] + by_severity["Fatal"]
     summary = f"{errors} errors, {by_severity['Warning']} warnings"
-    if ids:
-        summary += " (" + ", ".join(f"{k} x{v}" for k, v in ids.most_common(10)) + ")"
+    for issue_id, message in list(messages.items())[:10]:
+        summary += f" | {issue_id}: {message}"
     return summary
 
 
