@@ -68,6 +68,9 @@
     <string name="category_packaged_food">Packaged food</string>
     <string name="category_beverage">Beverage</string>
     <string name="filter_all">All</string>
+    <string name="filter_garments">Garments</string>
+    <string name="filter_packaged_food">Packaged food</string>
+    <string name="filter_beverages">Beverages</string>
     <string name="stock_filter_low">Low stock</string>
     <string name="stock_filter_out">Out of stock</string>
     <string name="stock_filter_expiring">Expiring</string>
@@ -113,7 +116,7 @@
     <string name="detail_sku">SKU %1$s</string>
     <string name="detail_batch">Batch %1$s</string>
     <string name="detail_expiry">Expiry %1$s</string>
-    <string name="detail_low_stock_at">Alert at %1$d</string>
+    <string name="detail_low_stock_at">Reorder at %1$d</string>
     <string name="action_adjust_stock">Adjust stock</string>
     <string name="action_print_labels">Print labels</string>
     <string name="delete_product_title">Delete product?</string>
@@ -170,7 +173,7 @@
     <string name="field_mrp">MRP</string>
     <string name="field_cost_price">Cost price</string>
     <string name="field_opening_stock">Opening stock</string>
-    <string name="field_low_stock">Low-stock alert at</string>
+    <string name="field_low_stock">Reorder level</string>
     <string name="field_barcode">Barcode</string>
     <string name="field_barcode_hint">Leave blank to generate one</string>
     <string name="field_sku">SKU</string>

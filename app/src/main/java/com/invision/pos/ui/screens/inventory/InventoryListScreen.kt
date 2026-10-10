@@ -48,6 +48,7 @@ import com.invision.pos.domain.inventory.InventoryFilter
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
+import com.invision.pos.domain.model.StockStatus
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
@@ -255,7 +256,7 @@ private fun InventoryFilters(
                 FilterChip(
                     selected = uiState.query.category == category,
                     onClick = { onCategorySelected(category) },
-                    label = { Text(stringResource(category.labelRes())) },
+                    label = { Text(stringResource(category.filterLabelRes())) },
                     leadingIcon = {
                         Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
                     },
@@ -283,8 +284,10 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
     val status = InvisionThemeExtras.statusColors
     val hasExpired = product.variants.any { it.isExpired(today) }
     val expiringSoon = product.variants.any { it.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) }
+    // Same priority as Home alerts: expired, out of stock, expiring soon, then stock level.
     val (chipText, chipTone) = when {
         hasExpired -> stringResource(R.string.status_expired) to status.danger
+        product.stockStatus == StockStatus.OUT_OF_STOCK -> stringResource(R.string.stock_status_out) to status.danger
         expiringSoon -> stringResource(R.string.status_expiring) to status.warning
         else -> stringResource(product.stockStatus.labelRes()) to product.stockStatus.tone()
     }

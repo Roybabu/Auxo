@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -51,6 +49,7 @@ import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockStatus
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.BarcodeImage
 import com.invision.pos.ui.components.ConfirmDialog
@@ -256,6 +255,8 @@ private fun VariantCard(
                 )
                 when {
                     variant.isExpired(today) -> StatusChip(stringResource(R.string.status_expired), status.danger)
+                    variant.stockStatus == StockStatus.OUT_OF_STOCK ->
+                        StatusChip(stringResource(R.string.stock_status_out), status.danger)
                     variant.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) ->
                         StatusChip(stringResource(R.string.status_expiring), status.warning)
                     else -> StatusChip(stringResource(variant.stockStatus.labelRes()), variant.stockStatus.tone())
@@ -360,7 +361,6 @@ fun AdjustStockDialog(
                 onQuantityChange = onQuantityChange,
                 onNoteChange = onNoteChange,
                 onDone = onConfirm,
-                modifier = Modifier.verticalScroll(rememberScrollState()),
             )
         },
         confirmButton = {

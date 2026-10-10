@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.TextUtils
+import androidx.core.graphics.createBitmap
 import com.invision.pos.core.barcode.BarcodeEncoder
 
 /**
@@ -92,7 +93,7 @@ object LabelRenderer {
 
     /** Renders one label to a bitmap for previews. */
     fun renderBitmap(content: LabelContent, widthPx: Int, heightPx: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(widthPx, heightPx)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         draw(canvas, content, 0f, 0f, widthPx.toFloat(), heightPx.toFloat())

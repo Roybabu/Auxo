@@ -33,6 +33,7 @@ import com.invision.pos.domain.model.QuantityUnit
 import com.invision.pos.domain.model.DietType
 import com.invision.pos.testutil.TestData
 import com.invision.pos.ui.screens.home.HomeContent
+import com.invision.pos.ui.screens.inventory.AdjustStockDialog
 import com.invision.pos.ui.screens.inventory.AdjustStockForm
 import com.invision.pos.ui.components.ConfirmDialog
 import com.invision.pos.ui.screens.inventory.InventoryListContent
@@ -229,8 +230,30 @@ class ScreenTest {
                 destructive = true,
             )
         }
+        // Robolectric captures dialog windows as blank images, so dialogs are checked without screenshots.
         composeRule.onNodeWithText("Delete product?").assertIsDisplayed()
-        screenshot("06b_delete_dialog")
+    }
+
+    @Test
+    fun adjustStockDialog_opensSettlesAndConfirms() {
+        var confirmed = false
+        show {
+            AdjustStockDialog(
+                state = AdjustStockDialogState(
+                    variant = TestData.tShirt().variants.first(),
+                    reason = StockChangeReason.SOLD,
+                    quantity = "3",
+                ),
+                onReasonChange = {},
+                onQuantityChange = {},
+                onNoteChange = {},
+                onConfirm = { confirmed = true },
+                onDismiss = {},
+            )
+        }
+        composeRule.onNodeWithText("New stock: 5").assertIsDisplayed()
+        composeRule.onNodeWithText("Save").performClick()
+        assertTrue(confirmed)
     }
 
     @Test
