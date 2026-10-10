@@ -52,6 +52,11 @@ object ThermalReceiptBuilder {
             ReceiptText.wrap(text, lineWidth).forEach { out += ThermalElement.Line(it, Align.CENTER, bold, large) }
         }
         fun left(text: String, bold: Boolean = false) {
+            // Lines that fit keep their spacing; only longer ones are wrapped.
+            if (text.length <= width && '\n' !in text) {
+                out += ThermalElement.Line(text, Align.LEFT, bold)
+                return
+            }
             val indent = text.takeWhile { it == ' ' }
             ReceiptText.wrap(text.trimStart(), width - indent.length).forEach {
                 out += ThermalElement.Line(indent + it, Align.LEFT, bold)

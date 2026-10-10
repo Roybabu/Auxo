@@ -236,7 +236,7 @@ fun BillingScreen(
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when {
-            uiState.loadFailed -> ErrorState(message = stringResource(R.string.error_generic), onRetry = {}, modifier = modifier)
+            uiState.loadFailed -> ErrorState(message = stringResource(R.string.error_generic), onRetry = viewModel::retry, modifier = modifier)
             uiState.settings == null || !uiState.productsLoaded -> LoadingState(modifier)
             inPayment -> PaymentContent(uiState, actions, modifier)
             else -> CartContent(uiState, actions, modifier)

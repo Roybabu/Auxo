@@ -102,6 +102,7 @@ class BillingScreenTest {
         return BillingUiState(
             settings = settings,
             productsLoaded = true,
+            productCount = 3,
             cart = cart,
             totals = totals,
             check = CartValidator.check(cart, totals, true),
@@ -159,6 +160,13 @@ class BillingScreenTest {
         composeRule.onNodeWithText("Finish billing setup").assertIsDisplayed()
         composeRule.onNodeWithText("Start a bill").assertIsDisplayed()
         screenshot("23_billing_empty_setup")
+    }
+
+    @Test
+    fun cart_noProductsYet() {
+        show { CartContent(state = cartState(Cart()).copy(productCount = 0), actions = object : BillingActions {}) }
+        composeRule.onNodeWithText("No products to sell yet").assertIsDisplayed()
+        composeRule.onNodeWithText("Add products in Inventory first.").assertIsDisplayed()
     }
 
     @Test

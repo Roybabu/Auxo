@@ -31,6 +31,7 @@ import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StoreSettings
 import com.invision.pos.domain.usecase.CheckoutResult
 import com.invision.pos.domain.usecase.CheckoutUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,13 +116,25 @@ class BillingViewModel(
     private var products: List<Product> = emptyList()
     private var nextPaymentKey = 0
 
+    private var loadJobs: List<Job> = emptyList()
+
     init {
-        viewModelScope.launch {
+        load()
+    }
+
+    fun retry() {
+        _uiState.update { it.copy(loadFailed = false) }
+        load()
+    }
+
+    private fun load() {
+        loadJobs.forEach { it.cancel() }
+        val settingsJob = viewModelScope.launch {
             settingsRepository.observeSettings()
                 .catch { _uiState.update { it.copy(loadFailed = true) } }
                 .collect { settings -> recalculate { it.copy(settings = settings) } }
         }
-        viewModelScope.launch {
+        val productsJob = viewModelScope.launch {
             inventory.observeProducts()
                 .catch { _uiState.update { it.copy(loadFailed = true) } }
                 .collect { list ->
@@ -136,6 +149,7 @@ class BillingViewModel(
                     }
                 }
         }
+        loadJobs = listOf(settingsJob, productsJob)
     }
 
     // Search and adding items

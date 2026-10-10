@@ -51,6 +51,17 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun loadFailure_andRetry() {
+        inventory.failReads = true
+        val viewModel = createViewModel()
+        assertTrue(viewModel.uiState.value.loadFailed)
+        inventory.failReads = false
+        viewModel.retry()
+        assertFalse(viewModel.uiState.value.loadFailed)
+        assertTrue(viewModel.uiState.value.productsLoaded)
+    }
+
+    @Test
     fun searchAndAdd() {
         val viewModel = createViewModel()
         viewModel.onSearchTextChange("navy")
