@@ -30,12 +30,13 @@ jobs:
           set -e
           ls app/build/outputs/screenshots || exit 0
           mkdir -p /tmp/shots && cp app/build/outputs/screenshots/*.png /tmp/shots/
+          if [ -d app/schemas ]; then cp -r app/schemas /tmp/shots/schemas; fi
           git config user.name "ci-preview"
           git config user.email "ci-preview@users.noreply.github.com"
           git checkout --orphan preview-shots
           git rm -rf --cached . > /dev/null
           git clean -fdq
-          cp /tmp/shots/*.png .
-          git add *.png
+          cp -r /tmp/shots/. .
+          git add -A
           git commit -qm "Screenshots for ${GITHUB_SHA::7}"
           git push origin "HEAD:refs/heads/preview-shots-${GITHUB_RUN_NUMBER}"

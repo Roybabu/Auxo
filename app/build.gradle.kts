@@ -44,8 +44,13 @@ android {
 tasks.withType<Test>().configureEach {
     // Robolectric and Compose UI tests need more than the default 512 MB.
     maxHeapSize = "2g"
-    // Robolectric's Android 16+ sandbox reads FileDescriptor internals by reflection.
-    jvmArgs("--add-opens=java.base/java.io=ALL-UNNAMED")
+    // Robolectric's Android 16+ sandbox sets FileDescriptor internals through
+    // jdk.internal.access.SharedSecrets, which JDK 17+ hides unless exported.
+    jvmArgs(
+        "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+    )
 }
 
 ksp {
