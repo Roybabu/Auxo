@@ -55,6 +55,8 @@ data class BillingUiState(
     /** Null while settings load. */
     val settings: StoreSettings? = null,
     val productsLoaded: Boolean = false,
+    /** Products in inventory; zero means there is nothing to sell yet. */
+    val productCount: Int = 0,
     val loadFailed: Boolean = false,
     val cart: Cart = Cart(),
     val totals: BillTotals = BillTotals.EMPTY,
@@ -127,6 +129,7 @@ class BillingViewModel(
                     recalculate { state ->
                         state.copy(
                             productsLoaded = true,
+                            productCount = list.size,
                             cart = syncStock(state.cart, list),
                             searchResults = search(state.searchText),
                         )
@@ -263,7 +266,7 @@ class BillingViewModel(
     }
 
     fun clearCart() = _uiState.update {
-        BillingUiState(settings = it.settings, productsLoaded = it.productsLoaded)
+        BillingUiState(settings = it.settings, productsLoaded = it.productsLoaded, productCount = it.productCount)
     }
 
     // Payment

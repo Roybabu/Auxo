@@ -42,6 +42,11 @@ import java.time.LocalDate
 
 // Invoice detail
 
+/** Message shown once when an invoice opens right after it was saved. */
+enum class InvoiceNotice { SALE_SAVED, RETURN_SAVED }
+
+data class InvoiceNoticeMessage(val notice: InvoiceNotice, val change: Money)
+
 sealed interface InvoiceDetailUiState {
     data object Loading : InvoiceDetailUiState
     data object NotFound : InvoiceDetailUiState
@@ -64,7 +69,17 @@ class InvoiceDetailViewModel(
     private val invoiceId: Long,
     private val billing: BillingRepository,
     private val settingsRepository: SettingsRepository,
+    notice: InvoiceNoticeMessage? = null,
 ) : ViewModel() {
+
+    private val _notice = MutableStateFlow(notice)
+
+    /** Shown once by the screen, then cleared with [noticeShown]. */
+    val notice: StateFlow<InvoiceNoticeMessage?> = _notice.asStateFlow()
+
+    fun noticeShown() {
+        _notice.value = null
+    }
 
     private val reload = MutableStateFlow(0)
     private val paper = MutableStateFlow<ReceiptPaper?>(null)
@@ -94,14 +109,21 @@ class InvoiceDetailViewModel(
 
     companion object {
         const val ARG_INVOICE_ID = "invoiceId"
+        const val ARG_NOTICE = "notice"
+        const val ARG_CHANGE = "change"
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
+                val handle = createSavedStateHandle()
+                val notice = handle.get<String>(ARG_NOTICE)?.let { name -> InvoiceNotice.entries.firstOrNull { it.name == name } }
+                // Shown only once, even if the screen is recreated.
+                handle[ARG_NOTICE] = null
                 InvoiceDetailViewModel(
-                    invoiceId = createSavedStateHandle().get<Long>(ARG_INVOICE_ID) ?: 0L,
+                    invoiceId = handle.get<Long>(ARG_INVOICE_ID) ?: 0L,
                     billing = container.billingRepository,
                     settingsRepository = container.settingsRepository,
+                    notice = notice?.let { InvoiceNoticeMessage(it, Money(handle.get<Long>(ARG_CHANGE) ?: 0L)) },
                 )
             }
         }

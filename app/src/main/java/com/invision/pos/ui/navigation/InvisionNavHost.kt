@@ -21,6 +21,7 @@ import com.invision.pos.ui.screens.inventory.LabelPrintScreen
 import com.invision.pos.ui.screens.inventory.ProductDetailScreen
 import com.invision.pos.ui.screens.inventory.ProductEditorScreen
 import com.invision.pos.ui.screens.more.MoreScreen
+import com.invision.pos.viewmodel.InvoiceNotice
 import com.invision.pos.ui.screens.placeholder.ComingSoonScreen
 
 @Composable
@@ -47,7 +48,9 @@ fun InvisionNavHost(
         ) {
             composable(BillingRoutes.POS) {
                 BillingScreen(
-                    onSaleCompleted = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onSaleCompleted = { invoiceId, changeMinor ->
+                        navController.navigate(BillingRoutes.savedInvoice(invoiceId, InvoiceNotice.SALE_SAVED, changeMinor))
+                    },
                     onOpenHistory = { navController.navigate(BillingRoutes.HISTORY) },
                     onOpenSettings = { navController.navigate(BillingRoutes.SETTINGS) },
                     onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
@@ -55,7 +58,18 @@ fun InvisionNavHost(
             }
             composable(
                 route = BillingRoutes.INVOICE,
-                arguments = listOf(navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType },
+                    navArgument(BillingRoutes.ARG_NOTICE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(BillingRoutes.ARG_CHANGE) {
+                        type = NavType.LongType
+                        defaultValue = 0L
+                    },
+                ),
             ) {
                 InvoiceDetailScreen(
                     onBack = { navController.popBackStack() },
@@ -82,7 +96,7 @@ fun InvisionNavHost(
                 ReturnScreen(
                     onBack = { navController.popBackStack() },
                     onCompleted = { creditNoteId ->
-                        navController.navigate(BillingRoutes.invoice(creditNoteId)) {
+                        navController.navigate(BillingRoutes.savedInvoice(creditNoteId, InvoiceNotice.RETURN_SAVED)) {
                             popUpTo(BillingRoutes.RETURN) { inclusive = true }
                         }
                     },

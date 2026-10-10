@@ -325,7 +325,6 @@
     <string name="payment_overpaid">Paid %1$s too much</string>
     <string name="payment_balanced">Fully paid</string>
     <string name="payment_complete">Complete sale</string>
-    <string name="payment_back">Back to bill</string>
     <string name="payment_exact">Exact</string>
     <string name="payment_error_required">Enter an amount</string>
     <string name="payment_error_invalid">Enter an amount like 250 or 250.50</string>

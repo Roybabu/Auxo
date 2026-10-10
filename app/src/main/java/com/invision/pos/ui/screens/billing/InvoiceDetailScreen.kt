@@ -21,11 +21,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,6 +61,7 @@ import com.invision.pos.ui.format.LocalMoneyFormatter
 import com.invision.pos.ui.theme.Spacing
 import com.invision.pos.viewmodel.InvoiceDetailUiState
 import com.invision.pos.viewmodel.InvoiceDetailViewModel
+import com.invision.pos.viewmodel.InvoiceNotice
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 
@@ -76,6 +79,20 @@ fun InvoiceDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val ready = uiState as? InvoiceDetailUiState.Ready
+    val notice by viewModel.notice.collectAsStateWithLifecycle()
+    val formatter = LocalMoneyFormatter.current
+
+    LaunchedEffect(notice, ready?.invoice?.number) {
+        val message = notice ?: return@LaunchedEffect
+        val number = ready?.invoice?.number ?: return@LaunchedEffect
+        viewModel.noticeShown()
+        val text = when {
+            message.notice == InvoiceNotice.RETURN_SAVED -> resources.getString(R.string.return_completed, number)
+            message.change.isZero -> resources.getString(R.string.sale_completed, number)
+            else -> resources.getString(R.string.sale_completed_change, number, formatter.format(message.change))
+        }
+        snackbarHostState.showSnackbar(text, duration = SnackbarDuration.Long)
+    }
 
     Scaffold(
         topBar = {

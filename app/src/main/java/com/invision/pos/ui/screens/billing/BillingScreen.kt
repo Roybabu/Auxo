@@ -119,7 +119,7 @@ interface BillingActions {
 
 @Composable
 fun BillingScreen(
-    onSaleCompleted: (invoiceId: Long) -> Unit,
+    onSaleCompleted: (invoiceId: Long, changeMinor: Long) -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
     onAddProduct: (barcode: String) -> Unit,
@@ -137,7 +137,7 @@ fun BillingScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is BillingEvent.Completed -> currentOnCompleted(event.invoiceId)
+                is BillingEvent.Completed -> currentOnCompleted(event.invoiceId, event.change.minorUnits)
                 is BillingEvent.OutOfStock -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_out_of_stock_message, event.name))
                 is BillingEvent.StockLimit -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_stock_limit, event.name, event.available))
                 is BillingEvent.BarcodeNotFound -> {
@@ -365,10 +365,11 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         if (state.cart.isEmpty) {
             if (state.searchText.isBlank()) {
                 item(key = "empty") {
+                    val noProducts = state.productCount == 0
                     EmptyState(
-                        iconRes = R.drawable.ic_nav_billing,
-                        title = stringResource(R.string.billing_empty_title),
-                        message = stringResource(R.string.billing_empty_body),
+                        iconRes = if (noProducts) R.drawable.ic_nav_inventory else R.drawable.ic_nav_billing,
+                        title = stringResource(if (noProducts) R.string.billing_no_products_title else R.string.billing_empty_title),
+                        message = stringResource(if (noProducts) R.string.billing_no_products_body else R.string.billing_empty_body),
                         modifier = Modifier.height(320.dp),
                     )
                 }
