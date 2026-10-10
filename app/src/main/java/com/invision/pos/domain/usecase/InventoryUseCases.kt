@@ -1,0 +1,91 @@
+package com.invision.pos.domain.usecase
+
+import com.invision.pos.data.repository.BarcodeMatch
+import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.SaveProductResult
+import com.invision.pos.data.repository.StockChangeResult
+import com.invision.pos.domain.barcode.InternalBarcodeGenerator
+import com.invision.pos.domain.inventory.InventorySummary
+import com.invision.pos.domain.inventory.InventorySummaryCalculator
+import com.invision.pos.domain.inventory.StockAdjustment
+import com.invision.pos.domain.inventory.StockAdjustmentCalculator
+import com.invision.pos.domain.inventory.StockAdjustmentError
+import com.invision.pos.domain.model.Product
+import com.invision.pos.domain.model.ProductVariant
+import com.invision.pos.domain.model.StockChangeReason
+import com.invision.pos.domain.model.StockMovement
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.time.Clock
+import java.time.LocalDate
+
+/** Saves a validated product, giving variants without a barcode a unique in-store EAN-13. */
+class SaveProductUseCase(
+    private val repository: InventoryRepository,
+    private val barcodeGenerator: InternalBarcodeGenerator,
+) {
+    suspend operator fun invoke(product: Product): SaveProductResult {
+        val taken = product.variants.map { it.barcode }.filter { it.isNotBlank() }.toMutableSet()
+        val variants = product.variants.map { variant ->
+            if (variant.barcode.isNotBlank()) {
+                variant
+            } else {
+                val code = barcodeGenerator.nextUnique(taken) { repository.isBarcodeInUse(it) }
+                taken += code
+                variant.copy(barcode = code)
+            }
+        }
+        return repository.saveProduct(product.copy(variants = variants))
+    }
+}
+
+sealed interface AdjustStockResult {
+    data object Done : AdjustStockResult
+    data class Rejected(val error: StockAdjustmentError) : AdjustStockResult
+}
+
+class AdjustStockUseCase(
+    private val repository: InventoryRepository,
+    private val clock: Clock,
+) {
+    suspend operator fun invoke(
+        variant: ProductVariant,
+        reason: StockChangeReason,
+        quantityText: String,
+        note: String,
+    ): AdjustStockResult {
+        val adjustment = StockAdjustmentCalculator.calculate(reason, quantityText, variant.stockQuantity)
+        if (adjustment is StockAdjustment.Invalid) return AdjustStockResult.Rejected(adjustment.error)
+        adjustment as StockAdjustment.Valid
+
+        val movement = StockMovement(
+            variantId = variant.id,
+            quantityChange = adjustment.quantityChange,
+            reason = adjustment.reason,
+            note = note.trim().ifEmpty { null },
+            createdAtMillis = clock.millis(),
+        )
+        return when (repository.recordStockChange(movement)) {
+            StockChangeResult.Applied -> AdjustStockResult.Done
+            // Stock changed elsewhere since the dialog opened.
+            StockChangeResult.WouldGoNegative -> AdjustStockResult.Rejected(StockAdjustmentError.WOULD_GO_NEGATIVE)
+        }
+    }
+}
+
+class ObserveInventorySummaryUseCase(
+    private val repository: InventoryRepository,
+    private val clock: Clock,
+) {
+    operator fun invoke(): Flow<InventorySummary> =
+        repository.observeProducts().map { products ->
+            InventorySummaryCalculator.calculate(products, LocalDate.now(clock))
+        }
+}
+
+class FindByBarcodeUseCase(private val repository: InventoryRepository) {
+    suspend operator fun invoke(barcode: String): BarcodeMatch? {
+        val code = barcode.trim()
+        return if (code.isEmpty()) null else repository.findByBarcode(code)
+    }
+}

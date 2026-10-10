@@ -17,7 +17,7 @@ jobs:
   build:
     name: Build, unit tests and lint
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Check out code
@@ -33,14 +33,32 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # Output is saved so the summary step can report compiler errors as annotations.
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        shell: bash
+        run: |
+          mkdir -p build-logs
+          ./gradlew assembleDebug 2>&1 | tee build-logs/assemble.log
+
+      # Room writes its schema during the build. A difference means the database
+      # changed without committing the new schema (and adding a migration).
+      - name: Check Room schema is committed
+        shell: bash
+        run: |
+          changes="$(git status --porcelain -- app/schemas)"
+          if [ -n "$changes" ]; then
+            echo "$changes"
+            echo "::error title=Room schema::The database schema changed. Commit the files in app/schemas and add a migration."
+            exit 1
+          fi
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+        shell: bash
+        run: ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
 
       - name: Run Android lint
-        run: ./gradlew lintDebug
+        shell: bash
+        run: ./gradlew lintDebug 2>&1 | tee build-logs/lint.log
 
       - name: Summarize results
         if: always()
@@ -54,7 +72,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload test and lint reports
+      - name: Upload reports and screenshots
         if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -62,5 +80,8 @@ jobs:
           path: |
             app/build/reports/
             app/build/test-results/
+            app/build/outputs/screenshots/
+            app/schemas/
+            build-logs/
           if-no-files-found: ignore
           retention-days: 14

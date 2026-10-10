@@ -18,6 +18,14 @@ val Amber700 = Color(0xFFB45309)
 val Amber100 = Color(0xFFFEF3C7)
 val Amber900 = Color(0xFF78350F)
 
+// Status
+val Green700 = Color(0xFF15803D)
+val Green100 = Color(0xFFDCFCE7)
+val Green900 = Color(0xFF14532D)
+val Red700 = Color(0xFFB91C1C)
+val Red100 = Color(0xFFFEE2E2)
+val Red900 = Color(0xFF7F1D1D)
+
 // Neutrals
 val Ink = Color(0xFF111827)
 val InkMuted = Color(0xFF4B5563)
