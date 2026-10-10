@@ -8,6 +8,7 @@ import com.invision.pos.domain.model.ReceiptPaper
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** Physical size and text width of each paper option. */
 data class PaperSpec(
@@ -41,7 +42,7 @@ data class ReceiptLabels(
 )
 
 internal object ReceiptText {
-    private val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
+    private val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH)
 
     fun dateTime(epochMillis: Long, zone: ZoneId): String =
         DATE_TIME.format(Instant.ofEpochMilli(epochMillis).atZone(zone)).replace("am", "AM").replace("pm", "PM")

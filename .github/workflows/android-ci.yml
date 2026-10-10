@@ -42,8 +42,6 @@ jobs:
 
       # Room writes its schema during the build. A difference means the database
       # changed without committing the new schema (and adding a migration).
-      # Room writes its schema during the build. A difference means the database
-      # changed without committing the new schema (and adding a migration).
       - name: Check Room schema is committed
         run: python3 .github/scripts/schema_check.py
 
