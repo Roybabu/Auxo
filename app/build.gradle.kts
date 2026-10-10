@@ -41,6 +41,11 @@ android {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    // Robolectric and Compose UI tests need more than the default 512 MB.
+    maxHeapSize = "2g"
+}
+
 ksp {
     // Room writes its schema here so future database migrations can be checked against it.
     arg("room.schemaLocation", "$projectDir/schemas")

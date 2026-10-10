@@ -84,7 +84,6 @@ fun rememberBarcodeScanner(onResult: (ScanOutcome) -> Unit): () -> Unit {
             } catch (e: RuntimeException) {
                 latestOnResult(ScanOutcome.Unavailable)
             }
-            Unit
         }
     }
 }

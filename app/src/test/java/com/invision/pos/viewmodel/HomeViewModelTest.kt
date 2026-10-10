@@ -4,14 +4,18 @@ import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.repository.InMemoryStoreRepository
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.StoreOverview
+import com.invision.pos.domain.usecase.ObserveInventorySummaryUseCase
 import com.invision.pos.domain.usecase.ObserveStoreOverviewUseCase
+import com.invision.pos.testutil.FakeInventoryRepository
 import com.invision.pos.testutil.MainDispatcherRule
+import com.invision.pos.testutil.TestData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -23,38 +27,58 @@ class HomeViewModelTest {
 
     private val formatter = MoneyFormatter()
 
-    private fun createViewModel(overview: StoreOverview) = HomeViewModel(
+    private fun createViewModel(
+        inventory: FakeInventoryRepository = FakeInventoryRepository(),
+        overview: StoreOverview = InMemoryStoreRepository.DEFAULT_OVERVIEW,
+    ) = HomeViewModel(
         observeStoreOverview = ObserveStoreOverviewUseCase(InMemoryStoreRepository(overview)),
+        observeInventorySummary = ObserveInventorySummaryUseCase(inventory, TestData.clock),
         moneyFormatter = formatter,
     )
 
     @Test
     fun uiState_isLoading_beforeAnyoneCollects() {
-        val viewModel = createViewModel(InMemoryStoreRepository.DEFAULT_OVERVIEW)
-
-        assertEquals(HomeUiState.Loading, viewModel.uiState.value)
+        assertEquals(HomeUiState.Loading, createViewModel().uiState.value)
     }
 
     @Test
-    fun uiState_isReady_withFormattedOverview() = runTest {
-        val overview = StoreOverview(
-            storeName = "Roy Mart",
-            salesToday = Money(125_050),
-            billsToday = 12,
+    fun uiState_combinesSalesAndInventory() = runTest {
+        val repository = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.juice(stock = 0)))
+        val viewModel = createViewModel(
+            inventory = repository,
+            overview = StoreOverview(storeName = "Roy Mart", salesToday = Money(125_050), billsToday = 12),
         )
-        val viewModel = createViewModel(overview)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect()
-        }
+        val state = viewModel.uiState.value as HomeUiState.Ready
+        assertEquals("Roy Mart", state.storeName)
+        assertEquals(formatter.format(Money(125_050)), state.salesToday)
+        assertEquals(12, state.billsToday)
+        assertEquals(2, state.inventory.productCount)
+        assertEquals(1, state.inventory.outOfStockCount)
+        assertEquals(formatter.format(Money(9 * 25_000L)), state.stockValueAtCost)
+    }
 
-        assertEquals(
-            HomeUiState.Ready(
-                storeName = "Roy Mart",
-                salesToday = formatter.format(Money(125_050)),
-                billsToday = 12,
-            ),
-            viewModel.uiState.value,
-        )
+    @Test
+    fun uiState_updatesWhenInventoryChanges() = runTest {
+        val repository = FakeInventoryRepository()
+        val viewModel = createViewModel(inventory = repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
+        assertEquals(0, (viewModel.uiState.value as HomeUiState.Ready).inventory.productCount)
+
+        repository.products.value = listOf(TestData.biscuits())
+        assertEquals(1, (viewModel.uiState.value as HomeUiState.Ready).inventory.productCount)
+    }
+
+    @Test
+    fun uiState_failsGracefully_andRetryRecovers() = runTest {
+        val repository = FakeInventoryRepository().apply { failReads = true }
+        val viewModel = createViewModel(inventory = repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
+        assertEquals(HomeUiState.Failed, viewModel.uiState.value)
+
+        repository.failReads = false
+        viewModel.retry()
+        assertTrue(viewModel.uiState.value is HomeUiState.Ready)
     }
 }
