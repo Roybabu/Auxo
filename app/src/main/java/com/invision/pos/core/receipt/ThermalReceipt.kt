@@ -52,7 +52,10 @@ object ThermalReceiptBuilder {
             ReceiptText.wrap(text, lineWidth).forEach { out += ThermalElement.Line(it, Align.CENTER, bold, large) }
         }
         fun left(text: String, bold: Boolean = false) {
-            ReceiptText.wrap(text, width).forEach { out += ThermalElement.Line(it, Align.LEFT, bold) }
+            val indent = text.takeWhile { it == ' ' }
+            ReceiptText.wrap(text.trimStart(), width - indent.length).forEach {
+                out += ThermalElement.Line(indent + it, Align.LEFT, bold)
+            }
         }
         fun pair(label: String, value: String, bold: Boolean = false) {
             out += ThermalElement.Line(twoColumns(label, value, width), Align.LEFT, bold)

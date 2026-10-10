@@ -44,7 +44,7 @@ class ThermalReceiptTest {
         assertTrue(lines.any { it.contains("Place of supply: West Bengal (19)") })
         assertTrue(lines.any { it.startsWith("TOTAL") && it.endsWith("1,557.00") })
         assertTrue(lines.any { it.startsWith("CGST") })
-        assertTrue(lines.any { it.contains("HSN 6109") && it.contains("GST 5%") })
+        assertTrue(lines.contains("  HSN 6109  GST 5%"))
         assertTrue(lines.any { it.startsWith("Paid by Cash") })
     }
 

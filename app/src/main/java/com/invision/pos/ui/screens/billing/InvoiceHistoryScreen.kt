@@ -171,17 +171,22 @@ private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> 
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     StatTile(stringResource(R.string.history_cash), formatter.format(totals.cash), Modifier.weight(1f))
                     StatTile(stringResource(R.string.history_upi), formatter.format(totals.upi), Modifier.weight(1f))
-                    StatTile(stringResource(R.string.history_card), formatter.format(totals.card), Modifier.weight(1f))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    StatTile(stringResource(R.string.history_card), formatter.format(totals.card), Modifier.weight(1f))
                     StatTile(
                         stringResource(R.string.history_refunds),
                         formatter.format(totals.refunds),
                         Modifier.weight(1f),
                         tone = if (totals.refunds > Money.ZERO) InvisionThemeExtras.statusColors.danger else null,
                     )
-                    StatTile(stringResource(R.string.history_net), formatter.format(totals.net), Modifier.weight(1f), tone = InvisionThemeExtras.statusColors.success)
                 }
+                StatTile(
+                    stringResource(R.string.history_net),
+                    formatter.format(totals.net),
+                    Modifier.fillMaxWidth(),
+                    tone = InvisionThemeExtras.statusColors.success,
+                )
             }
         }
         if (state.payments.isEmpty()) {

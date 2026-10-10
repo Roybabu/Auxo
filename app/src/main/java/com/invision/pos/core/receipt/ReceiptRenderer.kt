@@ -98,7 +98,7 @@ object ReceiptRenderer {
         }
     }
 
-    private fun monoPaint() = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    private fun monoPaint() = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         color = Color.BLACK
         typeface = Typeface.MONOSPACE
     }
@@ -115,8 +115,8 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) 
     private val line = base * 1.45f
     private val cellPadding = base * 0.4f
 
-    private val text = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = base }
-    private val bold = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val text = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply { color = Color.BLACK; textSize = base }
+    private val bold = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         color = Color.BLACK
         textSize = base
         typeface = Typeface.DEFAULT_BOLD
