@@ -1,5 +1,6 @@
 package com.invision.pos.ui
 
+import android.os.SystemClock
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
@@ -19,9 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
 import com.invision.pos.DeviceFixtures
 import com.invision.pos.InvisionApplication
 import com.invision.pos.MainActivity
@@ -38,7 +37,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.regex.Pattern
 
 /**
  * A complete sale and return through the real app on a device: billing by search
@@ -65,14 +63,31 @@ class BillingDeviceFlowTest {
         }
     }
 
-    /** Search box contents and visible amounts, to explain a failure. */
+    /** Search box contents and the texts on screen, to explain a failure. */
     private fun screenSummary(): String {
         val search = composeRule.onAllNodes(hasTestTag("billing_search")).fetchSemanticsNodes()
             .firstOrNull()?.config?.getOrNull(SemanticsProperties.EditableText)?.text
-        val amounts = composeRule.onAllNodes(hasText("₹", substring = true)).fetchSemanticsNodes()
+        val texts = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true)
+            .fetchSemanticsNodes()
             .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
             .distinct()
-        return "Search box: ${search ?: "not shown"}. Amounts: $amounts"
+        return "Search box: ${search ?: "not shown"}. On screen: ${texts.joinToString(" | ").take(1_500)}"
+    }
+
+    /**
+     * Polls the app in front until [accept] is true; returns it, or null on timeout.
+     * Compose work is let run between polls: in tests, coroutines started by the
+     * screen (such as writing the PDF before sharing) only run when the test syncs.
+     */
+    private fun packageInFront(timeoutMillis: Long, accept: (String?) -> Boolean): String? {
+        val end = SystemClock.uptimeMillis() + timeoutMillis
+        while (true) {
+            composeRule.waitForIdle()
+            val current = device.currentPackageName
+            if (accept(current)) return current
+            if (SystemClock.uptimeMillis() > end) return null
+            SystemClock.sleep(250)
+        }
     }
 
     /** A phone with a scanner attached doesn't show the on-screen keyboard. */
@@ -98,12 +113,20 @@ class BillingDeviceFlowTest {
             .performClick()
     }
 
-    /** Waits for a system window from [packages] to show, then goes back to the app. */
-    private fun expectSystemWindow(packages: String) {
-        assertTrue("$packages did not open", device.wait(Until.hasObject(By.pkg(Pattern.compile(packages))), 20_000))
+    /**
+     * Expects another app's window ([what]: the share sheet or print dialog) to
+     * come in front of ours, then goes back.
+     */
+    private fun expectSystemWindow(what: String): String {
+        val opened = packageInFront(20_000) { it != null && it != app.packageName }
+            ?: throw AssertionError("$what did not open (in front: ${device.currentPackageName}). ${screenSummary()}")
         device.pressBack()
-        assertTrue("app did not come back", device.wait(Until.hasObject(By.pkg(app.packageName)), 10_000))
+        assertTrue(
+            "app did not come back from $opened (in front: ${device.currentPackageName})",
+            packageInFront(10_000) { it == app.packageName } != null,
+        )
         composeRule.waitForIdle()
+        return opened
     }
 
     private fun stockOf(productId: Long): Int = runBlocking {
@@ -156,9 +179,9 @@ class BillingDeviceFlowTest {
 
         // Share opens the system share sheet; Print opens the system print dialog.
         composeRule.onNodeWithText("Share PDF").performClick()
-        expectSystemWindow("com\\.android\\.intentresolver|android")
+        expectSystemWindow("share sheet")
         composeRule.onNodeWithText("Print").performClick()
-        expectSystemWindow("com\\.android\\.printspooler")
+        assertEquals("com.android.printspooler", expectSystemWindow("print dialog"))
 
         // Return both shirts.
         composeRule.onNodeWithText("Return items").performClick()
