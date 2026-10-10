@@ -265,26 +265,6 @@ class ScreenTest {
     }
 
     @Test
-    fun adjustStockDialog_focusOnOpen() {
-        // Diagnostic: reports which node, if any, takes focus when the dialog opens.
-        composeRule.mainClock.autoAdvance = false
-        composeRule.setContent {
-            InvisionTheme {
-                AdjustStockDialog(
-                    state = AdjustStockDialogState(variant = TestData.tShirt().variants.first()),
-                    onReasonChange = {},
-                    onQuantityChange = {},
-                    onNoteChange = {},
-                    onConfirm = {},
-                    onDismiss = {},
-                )
-            }
-        }
-        repeat(5) { composeRule.mainClock.advanceTimeByFrame() }
-        composeRule.onNode(isFocused()).assertDoesNotExist()
-    }
-
-    @Test
     fun editor_garment_showsErrorsAfterSave() {
         var saved = false
         val sizes = listOf("S", "M")

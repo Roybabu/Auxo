@@ -40,6 +40,18 @@ jobs:
           mkdir -p build-logs
           ./gradlew assembleDebug 2>&1 | tee build-logs/assemble.log
 
+      # Room writes its schema during the build. A difference means the database
+      # changed without committing the new schema (and adding a migration).
+      - name: Check Room schema is committed
+        shell: bash
+        run: |
+          changes="$(git status --porcelain -- app/schemas)"
+          if [ -n "$changes" ]; then
+            echo "$changes"
+            echo "::error title=Room schema::The database schema changed. Commit the files in app/schemas and add a migration."
+            exit 1
+          fi
+
       - name: Run unit tests
         shell: bash
         run: ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
