@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -117,7 +118,9 @@ fun LabelPrintContent(
 ) {
     val product = uiState.product ?: return
     val formatter = LocalMoneyFormatter.current
-    val previewVariant = product.variants.firstOrNull { (uiState.copies[it.id] ?: 0) > 0 } ?: product.variants.firstOrNull()
+    // Every size or colour that will print gets its own preview, so nothing on the sheet is a surprise.
+    val printing = product.variants.filter { (uiState.copies[it.id] ?: 0) > 0 }
+    val skipped = product.variants.filter { (uiState.copies[it.id] ?: 0) <= 0 }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -147,13 +150,44 @@ fun LabelPrintContent(
             }
         }
 
-        if (previewVariant != null) {
-            item(key = "preview") {
-                val content = LabelContentFactory.forVariant(product, previewVariant, uiState.showMrp, formatter::format)
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    SectionHeader(stringResource(R.string.labels_preview))
-                    LabelPreview(content = content, template = uiState.template)
-                }
+        item(key = "preview_header") {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                SectionHeader(stringResource(R.string.labels_preview))
+                Text(
+                    text = if (printing.isEmpty()) {
+                        stringResource(R.string.labels_preview_none)
+                    } else {
+                        stringResource(R.string.labels_preview_note, printing.size, product.variants.size)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        items(printing, key = { "preview_${it.id}" }) { variant ->
+            val content = LabelContentFactory.forVariant(product, variant, uiState.showMrp, formatter::format)
+            val name = variant.attributesLabel.ifEmpty { stringResource(R.string.detail_variant_standard) }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                modifier = Modifier.testTag("label_preview_${variant.id}"),
+            ) {
+                Text(
+                    text = stringResource(R.string.labels_preview_caption, name, variant.barcode, uiState.copies[variant.id] ?: 0),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                LabelPreview(content = content, template = uiState.template, description = "$name, ${variant.barcode}")
+            }
+        }
+        if (skipped.isNotEmpty() && printing.isNotEmpty()) {
+            item(key = "preview_skipped") {
+                Text(
+                    text = stringResource(
+                        R.string.labels_preview_skipped,
+                        skipped.joinToString { it.attributesLabel.ifEmpty { it.barcode } },
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
 
@@ -200,7 +234,7 @@ fun LabelPrintContent(
 
 /** Renders the label with the same code used for printing. */
 @Composable
-private fun LabelPreview(content: LabelContent, template: LabelTemplate) {
+private fun LabelPreview(content: LabelContent, template: LabelTemplate, description: String) {
     val ratio = template.labelWidthMm / template.labelHeightMm
     val bitmap = remember(content, template) {
         val width = 640
@@ -215,7 +249,7 @@ private fun LabelPreview(content: LabelContent, template: LabelTemplate) {
             .fillMaxWidth()
             .aspectRatio(ratio),
     ) {
-        Image(bitmap = bitmap, contentDescription = stringResource(R.string.labels_preview))
+        Image(bitmap = bitmap, contentDescription = description)
     }
 }
 

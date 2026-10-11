@@ -11,6 +11,8 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -310,6 +312,33 @@ class ScreenTest {
         }
         composeRule.onNodeWithText("Preview").assertIsDisplayed()
         screenshot("09_labels")
+    }
+
+    @Test
+    fun labelPrint_previewsEveryVariantThatWillPrint() {
+        val product = TestData.tShirt().let { shirt ->
+            shirt.copy(variants = shirt.variants + shirt.variants[0].copy(id = 19, barcode = TestData.EAN[2], size = "XL"))
+        }
+        val third = product.variants[2]
+        show {
+            LabelPrintContent(
+                uiState = LabelPrintUiState(
+                    isLoading = false,
+                    product = product,
+                    // M and XL print; L is set to zero.
+                    copies = mapOf(product.variants[0].id to 2, product.variants[1].id to 0, third.id to 1),
+                ),
+                onTemplateChange = {},
+                onShowMrpChange = {},
+                onCopiesChange = { _, _ -> },
+                onMatchStock = {},
+            )
+        }
+        composeRule.onNodeWithTag("label_preview_${product.variants[0].id}").assertExists()
+        composeRule.onNodeWithTag("label_preview_${third.id}").assertExists()
+        composeRule.onAllNodesWithTag("label_preview_${product.variants[1].id}").assertCountEquals(0)
+        composeRule.onNodeWithText("Previewing 2 of 3 variants", substring = true).assertExists()
+        composeRule.onNodeWithText("Not printing (0 copies)", substring = true).assertExists()
     }
 
     private var keyCounter = 0

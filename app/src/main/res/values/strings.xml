@@ -250,6 +250,10 @@
     <string name="template_a4_24">A4 sheet, 24 labels (63.5 × 33.9 mm)</string>
     <string name="template_roll_50x25">Label roll, 50 × 25 mm</string>
     <string name="labels_preview">Preview</string>
+    <string name="labels_preview_note">Previewing %1$d of %2$d variants (those with copies set), exactly as they will print.</string>
+    <string name="labels_preview_none">Nothing to preview. Set copies for at least one variant.</string>
+    <string name="labels_preview_caption">%1$s · %2$s · ×%3$d</string>
+    <string name="labels_preview_skipped">Not printing (0 copies): %1$s</string>
     <string name="labels_copies">Copies</string>
     <string name="labels_show_mrp">Show MRP</string>
     <string name="labels_match_stock">Match stock</string>
