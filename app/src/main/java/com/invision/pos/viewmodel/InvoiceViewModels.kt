@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.util.UUID
 
 // Invoice detail
 
@@ -306,6 +307,13 @@ class ReturnViewModel(
     private val eventChannel = Channel<ReturnEvent>(Channel.BUFFERED)
     val events: Flow<ReturnEvent> = eventChannel.receiveAsFlow()
 
+    /**
+     * Stays the same while the same return is submitted again (a second tap, or a retry after
+     * the reply was lost), so it is saved once; any change to the return gets a new one.
+     */
+    private var requestKey: Triple<Map<Long, Int>, PaymentMethod, String>? = null
+    private var requestId: String = UUID.randomUUID().toString()
+
     init {
         load()
     }
@@ -345,14 +353,24 @@ class ReturnViewModel(
         val state = _uiState.value
         if (state.isSaving || state.invoice == null) return
         _uiState.update { it.copy(isSaving = true) }
+        val key = Triple(state.quantities.filterValues { it > 0 }, state.refundMethod, state.reason.trim())
+        if (key != requestKey) {
+            requestKey = key
+            requestId = UUID.randomUUID().toString()
+        }
+        val id = requestId
         viewModelScope.launch {
             val result = runCatching {
-                processReturn(invoiceId, state.quantities, state.refundMethod, state.reason)
+                processReturn(invoiceId, state.quantities, state.refundMethod, state.reason, id)
             }.getOrNull()
             _uiState.update { it.copy(isSaving = false) }
             when (result) {
                 is ProcessReturnResult.Completed -> eventChannel.send(ReturnEvent.Completed(result.creditNoteId, result.number))
-                is ProcessReturnResult.Rejected -> _uiState.update { it.copy(error = result.error) }
+                is ProcessReturnResult.Rejected -> {
+                    _uiState.update { it.copy(error = result.error) }
+                    // The units may have been returned a moment ago (for example, the reply was lost): show the sale as it is now.
+                    if (result.error == ReturnError.QUANTITY_TOO_LARGE) load()
+                }
                 ProcessReturnResult.AlreadyReturned -> {
                     eventChannel.send(ReturnEvent.AlreadyReturned)
                     load()

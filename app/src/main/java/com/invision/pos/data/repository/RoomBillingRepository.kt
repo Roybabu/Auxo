@@ -14,6 +14,7 @@ import com.invision.pos.data.local.dao.StockShortageException
 import com.invision.pos.data.local.entity.LedgerEntryEntity
 import com.invision.pos.data.local.toDomain
 import com.invision.pos.data.local.toEntity
+import com.invision.pos.domain.billing.InvoiceIntegrity
 import com.invision.pos.domain.billing.InvoiceNumbers
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceSummary
@@ -65,6 +66,7 @@ class RoomBillingRepository(
 
     override suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String?): SaleResult {
         require(invoice.type == InvoiceType.SALE && invoice.id == 0L)
+        InvoiceIntegrity.require(invoice)
         val saleDay = localDate(invoice.createdAtMillis)
         val year = InvoiceNumbers.financialYearStart(saleDay)
         return try {
@@ -153,16 +155,27 @@ class RoomBillingRepository(
         if (customers.balance(customer.id) + amount.minorUnits > limit) throw CreditLimitException()
     }
 
-    override suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String): ReturnResult {
+    override suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String, requestId: String?): ReturnResult {
         require(creditNote.type == InvoiceType.RETURN && creditNote.id == 0L)
+        InvoiceIntegrity.require(creditNote)
         val year = InvoiceNumbers.financialYearStart(localDate(creditNote.createdAtMillis))
         val saleId = requireNotNull(creditNote.originalInvoiceId) { "A credit note needs the sale it returns" }
         return try {
             database.withTransaction {
+                val claim = requestId?.let { operations.claim(it, "RETURN", creditNote.createdAtMillis) }
+                // A repeated request never returns twice; it gets the first credit note back.
+                if (claim is RequestClaim.AlreadyDone) {
+                    val saved = claim.resultId?.let { dao.getInvoice(it) }
+                    return@withTransaction ReturnResult.Recorded(saved?.invoice?.id ?: 0L, saved?.invoice?.number.orEmpty())
+                }
+
                 for (line in creditNote.lines) {
                     val originalLineId = line.originalLineId ?: throw ReturnQuantityException()
-                    if (dao.markReturned(originalLineId, line.quantity) == 0) throw ReturnQuantityException()
+                    if (dao.markReturned(saleId, originalLineId, line.quantity) == 0) throw ReturnQuantityException()
                 }
+                // All credit notes together can never give back more than the sale was for.
+                val saleTotal = dao.grandTotalOf(saleId) ?: throw ReturnQuantityException()
+                if (dao.creditedTotal(saleId) + creditNote.grandTotal.minorUnits > saleTotal) throw ReturnQuantityException()
 
                 val number = operations.nextNumber(InvoiceNumbers.sequenceKey(creditNotePrefix, year)) {
                     InvoiceNumbers.format(creditNotePrefix, year, it)
@@ -194,6 +207,7 @@ class RoomBillingRepository(
                         ),
                     )
                 }
+                if (requestId != null) operations.setRequestResult(requestId, creditNoteId)
                 ReturnResult.Recorded(creditNoteId, number)
             }
         } catch (e: ReturnQuantityException) {

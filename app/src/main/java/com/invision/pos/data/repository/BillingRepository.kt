@@ -62,9 +62,13 @@ interface BillingRepository {
     /**
      * Saves a credit note built by ReturnBuilder in one transaction: puts the units
      * back into the batches they were sold from and credits refunds made to the
-     * customer's account.
+     * customer's account. Nothing is saved unless the lines belong to the sale, no more
+     * comes back than was sold and the refunds stay within what the sale was for.
+     *
+     * A repeated [requestId] returns the credit note saved the first time instead of
+     * saving another.
      */
-    suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String): ReturnResult
+    suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String, requestId: String? = null): ReturnResult
 }
 
 interface SettingsRepository {

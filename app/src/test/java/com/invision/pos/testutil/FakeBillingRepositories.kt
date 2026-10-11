@@ -101,7 +101,16 @@ class FakeBillingRepository(private val inventory: FakeInventoryRepository) : Bi
         return SaleResult.Recorded(id, number)
     }
 
-    override suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String): ReturnResult {
+    private val returnRequests = mutableMapOf<String, ReturnResult>()
+
+    override suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String, requestId: String?): ReturnResult {
+        requestId?.let { id -> returnRequests[id]?.let { return it } }
+        val result = saveReturn(creditNote, creditNotePrefix)
+        if (requestId != null && result is ReturnResult.Recorded) returnRequests[requestId] = result
+        return result
+    }
+
+    private suspend fun saveReturn(creditNote: Invoice, creditNotePrefix: String): ReturnResult {
         val original = invoices.value.first { it.id == creditNote.originalInvoiceId }
         for (line in creditNote.lines) {
             val sold = original.lines.first { it.id == line.originalLineId }
