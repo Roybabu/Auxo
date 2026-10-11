@@ -70,6 +70,7 @@ import com.invision.pos.ui.components.StatTile
 import com.invision.pos.ui.components.StatusChip
 import com.invision.pos.ui.format.DateFormats
 import com.invision.pos.ui.navigation.TopLevelDestination
+import com.invision.pos.ui.screens.home.insights.InsightsSection
 import com.invision.pos.ui.screens.inventory.tone
 import com.invision.pos.ui.theme.HomeAvatar
 import com.invision.pos.ui.theme.HomeBadge
@@ -78,8 +79,11 @@ import com.invision.pos.ui.theme.HomeGreenDark
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
+import com.invision.pos.domain.insights.InsightsPeriod
+import com.invision.pos.viewmodel.HomeInsightsViewModel
 import com.invision.pos.viewmodel.HomeUiState
 import com.invision.pos.viewmodel.HomeViewModel
+import com.invision.pos.viewmodel.InsightsUiState
 
 @Composable
 fun HomeScreen(
@@ -91,8 +95,10 @@ fun HomeScreen(
     onOpenAlerts: () -> Unit = {},
     onReceiveStock: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
+    insightsViewModel: HomeInsightsViewModel = viewModel(factory = HomeInsightsViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val insights by insightsViewModel.uiState.collectAsStateWithLifecycle()
     HomeContent(
         uiState = uiState,
         onNavigate = onNavigate,
@@ -103,9 +109,16 @@ fun HomeScreen(
         modifier = modifier,
         onOpenAlerts = onOpenAlerts,
         onReceiveStock = onReceiveStock,
+        insights = insights,
+        onInsightsPeriodChange = insightsViewModel::onPeriodChange,
+        onInsightsRetry = insightsViewModel::retry,
     )
 }
 
+/**
+ * The Home screen for a given [uiState]. [insights] holds the financial charts shown at the
+ * bottom of the white panel; leave it null for a Home without them.
+ */
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
@@ -117,6 +130,9 @@ fun HomeContent(
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
     onReceiveStock: () -> Unit = {},
+    insights: InsightsUiState? = null,
+    onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
+    onInsightsRetry: () -> Unit = {},
 ) {
     when (uiState) {
         HomeUiState.Loading -> LoadingState(modifier)
@@ -134,6 +150,9 @@ fun HomeContent(
             modifier = modifier,
             onOpenAlerts = onOpenAlerts,
             onReceiveStock = onReceiveStock,
+            insights = insights,
+            onInsightsPeriodChange = onInsightsPeriodChange,
+            onInsightsRetry = onInsightsRetry,
         )
     }
 }
@@ -157,6 +176,9 @@ private fun HomeDashboard(
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
     onReceiveStock: () -> Unit = {},
+    insights: InsightsUiState? = null,
+    onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
+    onInsightsRetry: () -> Unit = {},
 ) {
     // The header is dark green, so the status bar icons must be light while Home is showing.
     LightStatusBarIcons(darkIcons = false)
@@ -181,6 +203,9 @@ private fun HomeDashboard(
                 onOpenProduct = onOpenProduct,
                 onOpenInventory = onOpenInventory,
                 onOpenAlerts = onOpenAlerts,
+                insights = insights,
+                onInsightsPeriodChange = onInsightsPeriodChange,
+                onInsightsRetry = onInsightsRetry,
             )
         }
     }
@@ -365,6 +390,9 @@ private fun HomePanelContent(
     onOpenProduct: (Long) -> Unit,
     onOpenInventory: (StockFilter) -> Unit,
     onOpenAlerts: () -> Unit,
+    insights: InsightsUiState?,
+    onInsightsPeriodChange: (InsightsPeriod) -> Unit,
+    onInsightsRetry: () -> Unit,
 ) {
     val status = InvisionThemeExtras.statusColors
     val inventory = state.inventory
@@ -465,6 +493,16 @@ private fun HomePanelContent(
                 )
                 AlertsCard(alerts = inventory.alerts, onOpenProduct = onOpenProduct, onOpenAlerts = onOpenAlerts)
             }
+        }
+
+        // Financial charts, below everything that was already here so the collapsed panel looks the same.
+        if (insights != null) {
+            InsightsSection(
+                state = insights,
+                inventory = inventory,
+                onPeriodChange = onInsightsPeriodChange,
+                onRetry = onInsightsRetry,
+            )
         }
     }
 }

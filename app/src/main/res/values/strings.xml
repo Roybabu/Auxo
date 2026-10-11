@@ -856,4 +856,55 @@
         <item quantity="one">%d row</item>
         <item quantity="other">%d rows</item>
     </plurals>
+
+    <string name="insights_title">Insights</string>
+    <string name="insights_period_today">Today</string>
+    <string name="insights_period_7_days">7 days</string>
+    <string name="insights_period_month">This month</string>
+    <string name="insights_period_year">This year</string>
+    <string name="insights_range">%1$s – %2$s</string>
+    <string name="insights_group_sales">Sales</string>
+    <string name="insights_group_products">Products</string>
+    <string name="insights_group_costs">Costs</string>
+    <string name="insights_group_stock">Stock</string>
+    <string name="insights_error">The charts couldn\'t be loaded.</string>
+    <string name="insights_empty">No sales or purchases in this period yet.</string>
+    <string name="insights_trend_title">Sales trend</string>
+    <string name="insights_trend_total">%1$s net sales from %2$s</string>
+    <string name="insights_trend_note">Net sales include tax and are reduced by returns.</string>
+    <string name="insights_trend_empty">No sales in this period.</string>
+    <string name="insights_trend_description">Net sales trend. Total %1$s. Highest %2$s at %3$s.</string>
+    <string name="insights_compare_title">Sales and purchases</string>
+    <string name="insights_legend_sales">Net sales</string>
+    <string name="insights_legend_purchases">Purchases received</string>
+    <string name="insights_compare_note">Purchases are goods received from suppliers. Other expenses aren\'t recorded in Invision, so this is not profit.</string>
+    <string name="insights_compare_description">Net sales %1$s and purchases received %2$s, by period.</string>
+    <string name="insights_payments_title">How bills were paid</string>
+    <string name="insights_payments_total">Total</string>
+    <string name="insights_payments_empty">No payments in this period.</string>
+    <string name="insights_payments_description">Bills by payment method: %1$s.</string>
+    <string name="insights_departments_title">Sales by department</string>
+    <string name="insights_departments_note">Net sales by product category. Restaurant dishes are counted separately.</string>
+    <string name="insights_departments_empty">No item sales in this period.</string>
+    <string name="insights_departments_description">Net sales by department: %1$s.</string>
+    <string name="insights_dept_garments">Garments</string>
+    <string name="insights_dept_food">Packaged food</string>
+    <string name="insights_dept_beverages">Beverages</string>
+    <string name="insights_dept_restaurant">Restaurant dishes</string>
+    <string name="insights_dept_other">Other</string>
+    <string name="insights_top_title">Top selling products</string>
+    <string name="insights_top_sold">%1$d sold</string>
+    <string name="insights_top_empty">No products sold in this period.</string>
+    <string name="insights_expenses_title">Expense categories</string>
+    <string name="insights_expenses_unavailable">Invision doesn\'t record expenses yet, so there is nothing to chart here. Goods received from suppliers are shown under Sales and purchases.</string>
+    <string name="insights_stock_title">Stock health</string>
+    <string name="insights_stock_ok">In stock</string>
+    <string name="insights_stock_low">Low</string>
+    <string name="insights_stock_out">Out</string>
+    <string name="insights_stock_expiring">%1$d expiring in 30 days</string>
+    <string name="insights_stock_description">Stock health by item: %1$d in stock, %2$d low, %3$d out of stock.</string>
+    <plurals name="insights_bills">
+        <item quantity="one">%d bill</item>
+        <item quantity="other">%d bills</item>
+    </plurals>
 </resources>

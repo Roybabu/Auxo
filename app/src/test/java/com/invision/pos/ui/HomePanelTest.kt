@@ -3,8 +3,10 @@ package com.invision.pos.ui
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,6 +17,7 @@ import com.invision.pos.testutil.TestData
 import com.invision.pos.ui.screens.home.HomeContent
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.HomeUiState
+import com.invision.pos.viewmodel.InsightsUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -37,7 +40,7 @@ class HomePanelTest {
 
     private val formatter = MoneyFormatter()
 
-    private fun showHome() {
+    private fun showHome(insights: InsightsUiState? = null) {
         val summary = InventorySummaryCalculator.calculate(
             listOf(TestData.tShirt(), TestData.biscuits(), TestData.juice(stock = 0)),
             TestData.today,
@@ -58,6 +61,7 @@ class HomePanelTest {
                     onOpenProduct = {},
                     onOpenInventory = {},
                     onRetry = {},
+                    insights = insights,
                 )
             }
         }
@@ -152,5 +156,14 @@ class HomePanelTest {
         val message = "opened: $opened; scrolled: $afterScroll; after drag down: ${where()}"
         assertEquals(message, open, panelTop(), 1f)
         assertTrue(message, contentTop() > scrolled + 30f)
+    }
+
+    @Test
+    fun charts_sitBelowTheExistingContent_andCanBeScrolledTo() {
+        showHome(insights = InsightsUiState(isLoading = true))
+        val collapsed = panelTop()
+        // Loading charts must not change the collapsed panel.
+        assertEquals(collapsed, panelTop(), 0.5f)
+        composeRule.onNodeWithTag("insights").performScrollTo().assertIsDisplayed()
     }
 }
