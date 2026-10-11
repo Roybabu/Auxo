@@ -1,6 +1,7 @@
 package com.invision.pos.core.receipt
 
 import com.invision.pos.domain.billing.CustomerDetails
+import com.invision.pos.domain.billing.IndianNumberFormat
 import com.invision.pos.domain.billing.ReturnBuild
 import com.invision.pos.domain.billing.ReturnBuilder
 import com.invision.pos.domain.billing.SampleSales
@@ -41,7 +42,8 @@ class ThermalReceiptTest {
         assertTrue(lines.any { it.contains("Inv No: INV/26-27/00007") })
         assertTrue(lines.any { it.contains("Date: 10-10-2026 10:00 AM") })
         assertTrue(lines.any { it.contains("Customer: Walk-in Customer") })
-        assertTrue(lines.any { it.contains("Place of supply: West Bengal (19)") })
+        assertFalse(lines.any { it.contains("Place of supply") })
+        assertEquals("Please share your feedback with us.", lines.last { it.isNotBlank() })
         assertTrue(lines.any { it.startsWith("TOTAL") && it.endsWith("1,557.00") })
         assertTrue(lines.any { it.startsWith("CGST") })
         assertTrue(lines.contains("  HSN 6109  GST 5%"))
@@ -85,6 +87,35 @@ class ThermalReceiptTest {
         val lines = text(ThermalReceiptBuilder.build(named, ReceiptOptions(), 32, ZoneOffset.UTC))
         assertTrue(lines.contains("Customer: Sen Traders"))
         assertTrue(lines.contains("GSTIN: 19AABCU9603R1ZK"))
+        assertTrue(lines.contains("Phone: 9831XXXXXX"))
+        assertFalse(lines.any { it.contains("9831000000") })
+    }
+
+    @Test
+    fun maskPhone_hidesTheLastSixDigits() {
+        assertEquals("9831XXXXXX", ReceiptText.maskPhone("9831000000"))
+        assertEquals("+91 9831X XXXXX", ReceiptText.maskPhone("+91 98310 00000"))
+        assertEquals("XXXXX", ReceiptText.maskPhone("12345"))
+        assertEquals("", ReceiptText.maskPhone(""))
+    }
+
+    @Test
+    fun mrpAboveSellingPrice_isShownAsDiscount() {
+        val line = sale.lines[0]
+        val withMrp = sale.copy(lines = listOf(line.copy(mrp = line.unitPrice + Money(5_000), quantity = 2)) + sale.lines.drop(1))
+        val expected = IndianNumberFormat.amount(Money(10_000))
+        val thermal = text(ThermalReceiptBuilder.build(withMrp, ReceiptOptions(), 48, ZoneOffset.UTC))
+        assertTrue(thermal.any { it.contains("MRP") && it.contains("Discount") && it.endsWith("-$expected") })
+        val sheet = SheetInvoiceLayout.build(withMrp, ReceiptOptions(), ReceiptPaper.A5, ZoneOffset.UTC)
+        assertTrue(sheet.rowNotes[0]!!.contains("Discount ${IndianNumberFormat.amount(Money(10_000))}"))
+    }
+
+    @Test
+    fun mrpEqualToSellingPrice_showsNoMrpDiscount() {
+        val line = sale.lines[0]
+        val same = sale.copy(lines = listOf(line.copy(mrp = line.unitPrice, discount = Money.ZERO)) + sale.lines.drop(1))
+        assertEquals(null, ReceiptText.mrpDiscount(same.lines[0]))
+        assertEquals(null, ReceiptText.mrpDiscount(line.copy(mrp = null)))
     }
 
     @Test
@@ -116,7 +147,8 @@ class SheetInvoiceLayoutTest {
         assertEquals("Rupees One Thousand Five Hundred Fifty Seven Only", doc.amountInWords)
         assertEquals(listOf("GST rate", "Taxable value", "CGST", "SGST", "Total tax"), doc.taxSummaryHeader)
         assertEquals(listOf("Walk-in Customer"), doc.buyerLines)
-        assertTrue(doc.detailLines.contains("Place of supply" to "West Bengal (19)"))
+        assertTrue(doc.detailLines.none { it.first.contains("Place of supply") })
+        assertEquals("Please share your feedback with us.", doc.feedbackNote)
         assertEquals("For Roy Mart", doc.signatureLabel)
     }
 

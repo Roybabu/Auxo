@@ -288,7 +288,7 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) 
         val summary = if (doc.taxSummaryHeader.isEmpty()) 0f else (doc.taxSummaryRows.size + 2) * (line + cellPadding) + line
         val payments = doc.paymentLines.size * line + line * 0.5f
         val notes = doc.notes.size * line
-        val footer = if (doc.footer.isBlank()) 0f else line * 1.5f
+        val footer = (if (doc.footer.isBlank()) 0f else line * 1.5f) + (if (doc.feedbackNote.isBlank()) 0f else line * 1.5f)
         val signature = line * 4f
         val barcode = if (doc.barcode != null) line * 3f else 0f
         return totals + words + summary + payments + notes + footer + max(signature, barcode)
@@ -352,6 +352,11 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) 
 
         if (doc.footer.isNotBlank()) {
             val shown = fit(doc.footer, contentWidth, text)
+            canvas.drawText(shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
+            y += line * 1.5f
+        }
+        if (doc.feedbackNote.isNotBlank()) {
+            val shown = fit(doc.feedbackNote, contentWidth, text)
             canvas.drawText(shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
             y += line * 1.5f
         }

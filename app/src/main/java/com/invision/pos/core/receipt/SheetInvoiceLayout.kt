@@ -39,6 +39,8 @@ data class SheetInvoice(
     val paymentLines: List<String>,
     val notes: List<String>,
     val footer: String,
+    /** Last line of the invoice, asking the customer for feedback. */
+    val feedbackNote: String,
     val signatureLabel: String,
     val barcode: String?,
 )
@@ -65,14 +67,11 @@ object SheetInvoiceLayout {
             add((if (isReturn) "Credit note no." else "Invoice no.") to invoice.number)
             add("Date" to ReceiptText.dateTime(invoice.createdAtMillis, zone))
             invoice.originalInvoiceNumber?.let { add("Against invoice" to it) }
-            if (gst && invoice.placeOfSupplyStateCode.isNotEmpty()) {
-                add("Place of supply" to ReceiptText.placeOfSupply(invoice.placeOfSupplyStateCode))
-            }
         }
         val buyerLines = if (options.showCustomer) {
             buildList {
                 add(invoice.buyer.name ?: labels.walkInCustomer)
-                invoice.buyer.phone?.let { add("Phone: $it") }
+                invoice.buyer.phone?.let { add("Phone: ${ReceiptText.maskPhone(it)}") }
                 invoice.buyer.gstin?.let { add("GSTIN: $it") }
             }
         } else {
@@ -96,7 +95,10 @@ object SheetInvoiceLayout {
         }
         val rows = invoice.lines.mapIndexed { i, line -> columns.map { it.value(i, line) } }
         val rowNotes = invoice.lines.map { line ->
-            if (!wide && !line.discount.isZero) "Discount ${IndianNumberFormat.amount(line.discount)}" else null
+            listOfNotNull(
+                ReceiptText.mrpDiscount(line)?.let { "MRP ${IndianNumberFormat.amount(line.mrp!!)} · Discount ${IndianNumberFormat.amount(it)}" },
+                if (!wide && !line.discount.isZero) "Discount ${IndianNumberFormat.amount(line.discount)}" else null,
+            ).joinToString(" · ").ifEmpty { null }
         }
 
         val totals = buildList {
@@ -181,6 +183,7 @@ object SheetInvoiceLayout {
             paymentLines = payments,
             notes = notes,
             footer = options.footer,
+            feedbackNote = labels.feedbackNote,
             signatureLabel = "For ${seller.name}",
             barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() },
         )

@@ -80,11 +80,8 @@ object ThermalReceiptBuilder {
         invoice.originalInvoiceNumber?.let { left("Against: $it") }
         if (options.showCustomer) {
             left("Customer: ${invoice.buyer.name ?: labels.walkInCustomer}")
-            invoice.buyer.phone?.let { left("Phone: $it") }
+            invoice.buyer.phone?.let { left("Phone: ${ReceiptText.maskPhone(it)}") }
             invoice.buyer.gstin?.let { left("GSTIN: $it") }
-        }
-        if (invoice.gstRegistered && invoice.placeOfSupplyStateCode.isNotEmpty()) {
-            left("Place of supply: ${ReceiptText.placeOfSupply(invoice.placeOfSupplyStateCode)}")
         }
         out += ThermalElement.Divider()
 
@@ -96,6 +93,7 @@ object ThermalReceiptBuilder {
             left(name)
             val gross = line.unitPrice * line.quantity
             pair("  ${line.quantity} x ${IndianNumberFormat.amount(line.unitPrice)}", IndianNumberFormat.amount(gross))
+            ReceiptText.mrpDiscount(line)?.let { pair("  MRP ${IndianNumberFormat.amount(line.mrp!!)}  Discount", "-" + IndianNumberFormat.amount(it)) }
             if (!line.discount.isZero) pair("  Discount", "-" + IndianNumberFormat.amount(line.discount))
             if (invoice.gstRegistered && options.showHsn) {
                 val parts = listOfNotNull(
@@ -156,6 +154,7 @@ object ThermalReceiptBuilder {
             center("You saved Rs. ${IndianNumberFormat.amount(invoice.savings)}", bold = true)
         }
         if (options.footer.isNotBlank()) center(options.footer)
+        if (labels.feedbackNote.isNotBlank()) center(labels.feedbackNote)
         if (options.showInvoiceBarcode && invoice.number.isNotEmpty()) {
             out += ThermalElement.Gap
             out += ThermalElement.Barcode(invoice.number)

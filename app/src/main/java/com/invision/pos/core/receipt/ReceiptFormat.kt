@@ -1,8 +1,9 @@
 package com.invision.pos.core.receipt
 
-import com.invision.pos.domain.billing.IndianStates
 import com.invision.pos.domain.model.Invoice
+import com.invision.pos.domain.model.InvoiceLine
 import com.invision.pos.domain.model.InvoiceType
+import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.PaymentRecord
@@ -42,6 +43,8 @@ data class ReceiptLabels(
     val creditNote: String = "CREDIT NOTE",
     val walkInCustomer: String = "Walk-in Customer",
     val thankYou: String = "",
+    /** Printed as the very last line of every invoice copy. */
+    val feedbackNote: String = "Please share your feedback with us.",
 )
 
 internal object ReceiptText {
@@ -76,7 +79,32 @@ internal object ReceiptText {
         }
     }
 
-    fun placeOfSupply(code: String): String = IndianStates.byCode(code)?.let { "${it.name} (${it.code})" } ?: code
+    /**
+     * The customer's phone number as printed on the invoice copy: the last six digits are
+     * hidden (other characters such as the + and spaces are kept). With six digits or fewer,
+     * all of them are hidden.
+     */
+    fun maskPhone(phone: String): String {
+        var digitsLeft = phone.count { it.isDigit() }
+        val hidden = minOf(6, digitsLeft)
+        return buildString {
+            for (c in phone) {
+                if (c.isDigit()) {
+                    append(if (digitsLeft <= hidden) 'X' else c)
+                    digitsLeft--
+                } else {
+                    append(c)
+                }
+            }
+        }
+    }
+
+    /** What the customer paid below the printed MRP on this line (MRP minus selling price, times quantity), or null if there is none. */
+    fun mrpDiscount(line: InvoiceLine): Money? {
+        val mrp = line.mrp ?: return null
+        val perUnit = mrp - line.unitPrice
+        return if (perUnit > Money.ZERO) perUnit * line.quantity else null
+    }
 
     fun rate(basisPoints: Int): String = com.invision.pos.domain.model.formatRatePercent(basisPoints) + "%"
 
