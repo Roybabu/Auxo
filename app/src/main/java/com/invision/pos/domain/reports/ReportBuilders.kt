@@ -16,6 +16,7 @@ import com.invision.pos.domain.model.PaymentRecord
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.PurchaseReceipt
+import com.invision.pos.domain.model.StockBatch
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovementRecord
 import com.invision.pos.domain.model.Supplier
@@ -28,7 +29,23 @@ import java.time.temporal.ChronoUnit
 enum class ItemKind { ALL, PRODUCTS, DISHES }
 
 /** Which batches the expiry report lists. */
-enum class ExpiryWindow(val days: Long?) { EXPIRED(0), WITHIN_7_DAYS(7), WITHIN_30_DAYS(30), ALL(null) }
+enum class ExpiryWindow(val days: Long?) {
+    EXPIRED(0),
+    WITHIN_7_DAYS(7),
+    WITHIN_30_DAYS(30),
+    ALL(null),
+    ;
+
+    /** True if [batch] belongs in this window on [today]. Expired batches fall in every window. */
+    fun includes(batch: StockBatch, today: LocalDate): Boolean {
+        val expiry = batch.expiryDate
+        return when (this) {
+            ALL -> true
+            EXPIRED -> batch.isExpired(today)
+            else -> expiry != null && !expiry.isAfter(today.plusDays(days ?: 0))
+        }
+    }
+}
 
 /**
  * Builds report tables from saved data. Credit notes count against the sales
@@ -377,14 +394,7 @@ object Reports {
 
     /** Batches with stock that have expired or expire within the window, soonest first. */
     fun expiry(batches: List<BatchWithProduct>, today: LocalDate, window: ExpiryWindow = ExpiryWindow.WITHIN_30_DAYS): ReportTable {
-        val list = batches.filter { item ->
-            val expiry = item.batch.expiryDate
-            when (window) {
-                ExpiryWindow.ALL -> true
-                ExpiryWindow.EXPIRED -> item.batch.isExpired(today)
-                else -> expiry != null && !expiry.isAfter(today.plusDays(window.days ?: 0))
-            }
-        }.sortedWith(compareBy({ it.batch.expiryDate == null }, { it.batch.expiryDate }, { it.productName.lowercase() }))
+        val list = batches.filter { window.includes(it.batch, today) }.sortedWith(compareBy({ it.batch.expiryDate == null }, { it.batch.expiryDate }, { it.productName.lowercase() }))
         return ReportTable(
             title = "Expiry",
             columns = listOf(col("Item"), col("Variant"), col("Batch"), col("Expiry"), col("Days left", END), col("Quantity", END), col("Value at cost", END)),

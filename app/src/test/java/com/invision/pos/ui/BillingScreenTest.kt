@@ -128,8 +128,8 @@ class BillingScreenTest {
             CartContent(
                 state = cartState(sampleCart).copy(customerExpanded = true, cart = sampleCart.copy(customer = CustomerDetails(name = "Anita Das"))),
                 actions = object : BillingActions {
-                    override fun onIncrement(variantId: Long) {
-                        added += variantId
+                    override fun onIncrement(lineKey: Long) {
+                        added += lineKey
                     }
                 },
             )

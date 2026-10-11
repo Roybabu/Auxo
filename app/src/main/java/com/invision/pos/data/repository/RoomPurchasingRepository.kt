@@ -126,14 +126,16 @@ class RoomPurchasingRepository(
                     RequestClaim.New -> Unit
                 }
 
-                val supplierInvoice = receipt.supplierInvoiceNumber?.trim()?.uppercase()?.ifEmpty { null }
-                if (receipt.supplierId != null && supplierInvoice != null && dao.supplierInvoiceExists(receipt.supplierId, supplierInvoice)) {
-                    throw DuplicateSupplierInvoiceException()
-                }
                 val order = receipt.orderId?.let { dao.getOrder(it) }
                 if (receipt.orderId != null) {
                     val status = order?.order?.status?.let { name -> PurchaseOrderStatus.entries.firstOrNull { it.name == name } }
                     if (status?.isOpen != true) throw OrderClosedException()
+                }
+                // Goods against an order come from the order's supplier.
+                val supplierId = order?.order?.supplierId ?: receipt.supplierId
+                val supplierInvoice = receipt.supplierInvoiceNumber?.trim()?.uppercase()?.ifEmpty { null }
+                if (supplierId != null && supplierInvoice != null && dao.supplierInvoiceExists(supplierId, supplierInvoice)) {
+                    throw DuplicateSupplierInvoiceException()
                 }
 
                 val year = PurchaseNumbers.financialYear(now, zone())
@@ -141,7 +143,7 @@ class RoomPurchasingRepository(
                 val receiptId = dao.insertReceipt(
                     PurchaseReceiptEntity(
                         number = number,
-                        supplierId = receipt.supplierId ?: order?.order?.supplierId,
+                        supplierId = supplierId,
                         orderId = receipt.orderId,
                         supplierInvoiceNumber = supplierInvoice,
                         receivedAt = now,

@@ -119,7 +119,8 @@ class RoomBillingRepositoryTest {
 
     @Test
     fun numbering_isPerPrefixAndFinancialYear() = runTest {
-        val biscuits = saveNew(TestData.biscuits())
+        // No expiry, so the sales next April can still take this stock.
+        val biscuits = saveNew(TestData.biscuits(expiry = null))
         val line = CartLine.from(biscuits, biscuits.variants[0])
         val march = java.time.LocalDate.of(2027, 3, 31).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
         val april = java.time.LocalDate.of(2027, 4, 1).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
