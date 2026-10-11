@@ -35,10 +35,6 @@ abstract class InventoryDao {
     @Query("SELECT * FROM products WHERE id = :productId")
     abstract suspend fun getProduct(productId: Long): ProductWithVariants?
 
-    @Transaction
-    @Query("SELECT * FROM products ORDER BY name COLLATE NOCASE")
-    abstract suspend fun getProducts(): List<ProductWithVariants>
-
     @Insert
     abstract suspend fun insertProduct(product: ProductEntity): Long
 
@@ -47,9 +43,6 @@ abstract class InventoryDao {
 
     @Query("DELETE FROM products WHERE id = :productId")
     abstract suspend fun deleteProduct(productId: Long): Int
-
-    @Query("UPDATE products SET preferred_supplier_id = NULL WHERE preferred_supplier_id = :supplierId")
-    abstract suspend fun clearPreferredSupplier(supplierId: Long)
 
     // Variants
 
