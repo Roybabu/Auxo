@@ -113,7 +113,8 @@ class LimitsAndRacesTest {
     @Test
     fun stockExpiringToday_stillSells_butYesterdaysDoesNot() = runTest {
         val today = saveNew(TestData.biscuits(id = 2, expiry = TestData.today))
-        val yesterday = saveNew(TestData.biscuits(id = 3, expiry = TestData.today.minusDays(1)))
+        val expiredBiscuits = TestData.biscuits(id = 3, expiry = TestData.today.minusDays(1))
+        val yesterday = saveNew(expiredBiscuits.copy(variants = expiredBiscuits.variants.map { it.copy(barcode = TestData.EAN[0]) }))
 
         assertTrue(billing.recordSale(sale(CartLine.from(today, today.variants[0], 1)), "INV") is SaleResult.Recorded)
         val expired = billing.recordSale(sale(CartLine.from(yesterday, yesterday.variants[0], 1)), "INV")
