@@ -31,11 +31,16 @@ import com.invision.pos.viewmodel.ShopViewModel
 @Composable
 fun ShopSettingsScreen(onBack: () -> Unit, viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange)
+    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange)
 }
 
 @Composable
-fun ShopSettingsContent(state: ShopUiState, onBack: () -> Unit, onRestaurantMenuChange: (Boolean) -> Unit) {
+fun ShopSettingsContent(
+    state: ShopUiState,
+    onBack: () -> Unit,
+    onRestaurantMenuChange: (Boolean) -> Unit,
+    onSuppliersChange: (Boolean) -> Unit = {},
+) {
     Scaffold(
         topBar = { InvisionTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -65,6 +70,23 @@ fun ShopSettingsContent(state: ShopUiState, onBack: () -> Unit, onRestaurantMenu
                         checked = state.restaurantMenu,
                         onCheckedChange = onRestaurantMenuChange,
                         modifier = Modifier.testTag("restaurant_menu_switch"),
+                    )
+                }
+            }
+            InvisionCard(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.shop_suppliers), style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            stringResource(R.string.shop_suppliers_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = state.suppliers,
+                        onCheckedChange = onSuppliersChange,
+                        modifier = Modifier.testTag("suppliers_switch"),
                     )
                 }
             }

@@ -372,12 +372,13 @@ object Reports {
     }
 
     /** Items out of stock or at their low-stock level, with a suggested order. */
-    fun lowStock(products: List<Product>, suppliers: List<Supplier>): ReportTable {
+    fun lowStock(products: List<Product>, suppliers: List<Supplier>, withSupplier: Boolean = true): ReportTable {
         val names = suppliers.associate { it.id to it.name }
         val suggestions = ReorderPlanner.suggestions(products)
         return ReportTable(
             title = "Low stock",
-            columns = listOf(col("Item"), col("Variant"), col("In stock", END), col("Low-stock level", END), col("Suggested order", END), col("Supplier")),
+            columns = listOf(col("Item"), col("Variant"), col("In stock", END), col("Low-stock level", END), col("Suggested order", END)) +
+                if (withSupplier) listOf(col("Supplier")) else emptyList(),
             rows = suggestions.map {
                 val unit = it.product.stockUnit
                 listOf(
@@ -386,8 +387,7 @@ object Reports {
                     ReportValue.Quantity(it.variant.stockQuantity, unit),
                     ReportValue.Quantity(it.variant.lowStockThreshold, unit),
                     ReportValue.Quantity(it.suggestedQuantity, unit),
-                    text(it.supplierId?.let(names::get)),
-                )
+                ) + if (withSupplier) listOf(text(it.supplierId?.let(names::get))) else emptyList()
             },
         )
     }

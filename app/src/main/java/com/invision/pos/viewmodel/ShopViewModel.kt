@@ -19,6 +19,8 @@ data class ShopUiState(
     /** The shop's name from the store details, or null until it has loaded. */
     val shopName: String? = null,
     val restaurantMenu: Boolean = false,
+    /** Suppliers, purchase orders and receiving stock are shown. */
+    val suppliers: Boolean = true,
 )
 
 class ShopViewModel(
@@ -29,10 +31,17 @@ class ShopViewModel(
     val uiState: StateFlow<ShopUiState> = combine(
         settings.observeSettings().map { it.storeName.trim().ifEmpty { null } }.catch { emit(null) },
         shop.restaurantMenu,
-    ) { name, menu -> ShopUiState(shopName = name, restaurantMenu = menu) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShopUiState(restaurantMenu = shop.restaurantMenu.value))
+        shop.suppliers,
+    ) { name, menu, suppliers -> ShopUiState(shopName = name, restaurantMenu = menu, suppliers = suppliers) }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            ShopUiState(restaurantMenu = shop.restaurantMenu.value, suppliers = shop.suppliers.value),
+        )
 
     fun onRestaurantMenuChange(enabled: Boolean) = shop.setRestaurantMenu(enabled)
+
+    fun onSuppliersChange(enabled: Boolean) = shop.setSuppliers(enabled)
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

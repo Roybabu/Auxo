@@ -55,6 +55,7 @@ import com.invision.pos.domain.reports.ReportPaging
 import com.invision.pos.domain.reports.ReportTable
 import com.invision.pos.domain.reports.ReportType
 import com.invision.pos.domain.reports.ReportValue
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.DateField
 import com.invision.pos.ui.components.DropdownField
@@ -207,10 +208,11 @@ fun ReportsContent(
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         val typeLabels = ReportType.entries.associateWith { stringResource(it.labelRes()) }
+        val suppliersOn = LocalSuppliersEnabled.current
         DropdownField(
             label = stringResource(R.string.report_type),
             value = typeLabels.getValue(type),
-            options = ReportType.entries,
+            options = ReportType.entries.filter { suppliersOn || !it.usesSupplier },
             optionText = { typeLabels.getValue(it) },
             onSelect = actions::onTypeChange,
             modifier = Modifier

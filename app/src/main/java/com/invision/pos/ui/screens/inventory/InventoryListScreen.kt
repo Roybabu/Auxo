@@ -55,6 +55,7 @@ import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.StockStatus
 import com.invision.pos.ui.components.ActionIcon
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -133,13 +134,14 @@ fun InventoryListScreen(
                             modifier = Modifier.testTag("inventory_menu"),
                         )
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            val suppliersOn = LocalSuppliersEnabled.current
                             listOf(
                                 StockPage.ALERTS to R.string.alerts_title,
                                 StockPage.RECEIVE to R.string.purchases_receive,
                                 StockPage.PURCHASES to R.string.purchases_title,
                                 StockPage.SUPPLIERS to R.string.suppliers_title,
                                 StockPage.MOVEMENTS to R.string.movements_title,
-                            ).forEach { (page, label) ->
+                            ).filter { (page, _) -> suppliersOn || (page != StockPage.RECEIVE && page != StockPage.PURCHASES && page != StockPage.SUPPLIERS) }.forEach { (page, label) ->
                                 DropdownMenuItem(
                                     text = { Text(stringResource(label)) },
                                     onClick = {

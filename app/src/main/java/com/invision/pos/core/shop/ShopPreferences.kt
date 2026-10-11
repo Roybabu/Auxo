@@ -12,6 +12,14 @@ interface ShopPreferences {
     val restaurantMenu: StateFlow<Boolean>
 
     fun setRestaurantMenu(enabled: Boolean)
+
+    /**
+     * True when the shop buys from suppliers: Suppliers, Purchase orders, Receive stock and every
+     * supplier detail and figure are shown. Off hides all of it; nothing is deleted. On unless the shop turns it off.
+     */
+    val suppliers: StateFlow<Boolean>
+
+    fun setSuppliers(enabled: Boolean)
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -27,8 +35,17 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         state.value = enabled
     }
 
+    private val suppliersState = MutableStateFlow(prefs.getBoolean(KEY_SUPPLIERS, true))
+    override val suppliers: StateFlow<Boolean> = suppliersState.asStateFlow()
+
+    override fun setSuppliers(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SUPPLIERS, enabled).apply()
+        suppliersState.value = enabled
+    }
+
     companion object {
         const val FILE = "shop"
         const val KEY_RESTAURANT_MENU = "restaurant_menu"
+        const val KEY_SUPPLIERS = "suppliers"
     }
 }

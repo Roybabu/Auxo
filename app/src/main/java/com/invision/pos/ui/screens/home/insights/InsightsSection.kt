@@ -38,6 +38,7 @@ import com.invision.pos.domain.inventory.InventorySummary
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.reports.Reports
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.format.DateFormats
 import com.invision.pos.ui.format.LocalMoneyFormatter
@@ -74,7 +75,7 @@ fun InsightsSection(
         when {
             state.isLoading -> InsightsLoading()
             state.failed || insights == null -> InsightsError(onRetry)
-            !insights.hasSales && !insights.hasPurchases -> MessageCard(stringResource(R.string.insights_empty), tag = "insights_empty")
+            !insights.hasSales && (!insights.hasPurchases || !LocalSuppliersEnabled.current) -> MessageCard(stringResource(R.string.insights_empty), tag = "insights_empty")
             else -> InsightsContent(insights, formatter)
         }
         if (inventory.hasProducts) {
@@ -169,15 +170,17 @@ private fun InsightsContent(insights: Insights, formatter: MoneyFormatter) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xl)) {
         Group(stringResource(R.string.insights_group_sales)) {
             TrendCard(insights, formatter)
-            ComparisonCard(insights, formatter)
+            if (LocalSuppliersEnabled.current) ComparisonCard(insights, formatter)
             PaymentMethodsCard(insights, formatter)
         }
         Group(stringResource(R.string.insights_group_products)) {
             DepartmentsCard(insights, formatter)
             TopProductsCard(insights, formatter)
         }
-        Group(stringResource(R.string.insights_group_costs)) {
-            ExpensesCard()
+        if (LocalSuppliersEnabled.current) {
+            Group(stringResource(R.string.insights_group_costs)) {
+                ExpensesCard()
+            }
         }
     }
 }

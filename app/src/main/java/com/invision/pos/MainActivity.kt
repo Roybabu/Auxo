@@ -6,10 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.invision.pos.ui.InvisionApp
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.theme.InvisionTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,7 +22,9 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        val appearance = (application as InvisionApplication).container.appearanceRepository
+        val container = (application as InvisionApplication).container
+        val appearance = container.appearanceRepository
+        val shop = container.shopPreferences
         setContent {
             val settings by appearance.settings.collectAsStateWithLifecycle()
             // System bar icons are dark on the white theme and light on the black one.
@@ -33,8 +37,11 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
+            val suppliers by shop.suppliers.collectAsStateWithLifecycle()
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                InvisionApp()
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers) {
+                    InvisionApp()
+                }
             }
         }
     }

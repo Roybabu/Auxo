@@ -60,6 +60,7 @@ import com.invision.pos.domain.validation.ProductFormErrors
 import com.invision.pos.domain.validation.VariantDefaults
 import com.invision.pos.domain.validation.VariantField
 import com.invision.pos.domain.validation.VariantForm
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.DatePickerSheet
 import com.invision.pos.ui.components.DropdownField
 import com.invision.pos.ui.components.ErrorState
@@ -255,7 +256,10 @@ fun ProductEditorContent(
             item(key = "tax") { TaxSection(form, errors, actions) }
         }
 
-        item(key = "purchasing") { PurchasingSection(form, uiState.suppliers, actions) }
+        // Nothing to show here without suppliers unless the item can be counted in more than one unit.
+        if (LocalSuppliersEnabled.current || form.category.allowedStockUnits.size > 1) {
+            item(key = "purchasing") { PurchasingSection(form, uiState.suppliers, actions) }
+        }
 
         if (form.category.usesSizeAndColour) {
             item(key = "sizes") { SizesSection(form, errors, actions) }
@@ -406,17 +410,19 @@ private fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, acti
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            val none = stringResource(R.string.editor_supplier_none)
-            val options = listOf<Supplier?>(null) + suppliers
-            DropdownField(
-                label = stringResource(R.string.editor_supplier),
-                value = suppliers.firstOrNull { it.id == form.preferredSupplierId }?.name ?: none,
-                options = options,
-                optionText = { it?.name ?: none },
-                onSelect = { actions.onPreferredSupplierChange(it?.id) },
-                supportingText = stringResource(R.string.editor_supplier_hint),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (LocalSuppliersEnabled.current) {
+                val none = stringResource(R.string.editor_supplier_none)
+                val options = listOf<Supplier?>(null) + suppliers
+                DropdownField(
+                    label = stringResource(R.string.editor_supplier),
+                    value = suppliers.firstOrNull { it.id == form.preferredSupplierId }?.name ?: none,
+                    options = options,
+                    optionText = { it?.name ?: none },
+                    onSelect = { actions.onPreferredSupplierChange(it?.id) },
+                    supportingText = stringResource(R.string.editor_supplier_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
@@ -829,7 +835,7 @@ private fun VariantEditorCard(
 
             if (category.tracksExpiry && row.isSaved) {
                 Text(
-                    text = stringResource(R.string.editor_batches_hint),
+                    text = stringResource(if (LocalSuppliersEnabled.current) R.string.editor_batches_hint else R.string.editor_batches_hint_plain),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

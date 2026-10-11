@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.invision.pos.R
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTopAppBar
 import com.invision.pos.ui.components.SectionHeader
@@ -88,9 +89,11 @@ fun MoreScreen(
             )
 
             SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
-            MoreItem(R.drawable.ic_receive, stringResource(R.string.purchases_receive), stringResource(R.string.more_receive_body), actions::onReceiveStock)
-            MoreItem(R.drawable.ic_purchase_order, stringResource(R.string.purchases_title), stringResource(R.string.more_purchases_body), actions::onOpenPurchases)
-            MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
+            if (LocalSuppliersEnabled.current) {
+                MoreItem(R.drawable.ic_receive, stringResource(R.string.purchases_receive), stringResource(R.string.more_receive_body), actions::onReceiveStock)
+                MoreItem(R.drawable.ic_purchase_order, stringResource(R.string.purchases_title), stringResource(R.string.more_purchases_body), actions::onOpenPurchases)
+                MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
+            }
             MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
             MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
 

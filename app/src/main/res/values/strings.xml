@@ -188,6 +188,7 @@
     <string name="editor_remove_variant">Remove variant</string>
     <string name="editor_stock_locked">In stock: %1$s. Use Adjust stock to change it.</string>
     <string name="editor_stock_and_cost">Stock and cost</string>
+    <string name="editor_batches_hint_plain">Batches and expiry dates are kept from stock added. Use Adjust stock to add a batch.</string>
     <string name="editor_batches_hint">Batches and expiry dates are kept from stock received. Use Adjust stock or Receive stock to add a batch.</string>
     <string name="editor_purchasing">Stock and purchasing</string>
     <string name="editor_stock_unit">Stock counted by</string>
@@ -525,6 +526,8 @@
     <string name="more_title">More</string>
     <string name="shop_name_fallback">My shop</string>
     <string name="shop_settings_title">Shop settings</string>
+    <string name="shop_suppliers">Suppliers and purchasing</string>
+    <string name="shop_suppliers_body">Turn this off to hide everything about suppliers: Suppliers, Purchase orders, Receive stock, supplier fields and purchase figures. Nothing is deleted, and it all comes back when you turn this on.</string>
     <string name="shop_restaurant_menu">Restaurant menu</string>
     <string name="shop_restaurant_menu_body">Turn this on if you sell dishes. You can then add dishes and prices, and sell them from the billing page.</string>
     <string name="more_billing_settings_body">Store details, GST, UPI and receipts</string>
@@ -712,6 +715,7 @@
     <string name="alerts_tab_low">Low stock (%1$d)</string>
     <string name="alerts_tab_expiry">Expiry</string>
     <string name="alerts_low_intro">Items out of stock or at their reorder level. Choose items to turn them into draft purchase orders, one per supplier.</string>
+    <string name="alerts_low_intro_plain">Items that are out of stock or at their reorder level.</string>
     <string name="alerts_low_empty_title">Stock levels look good</string>
     <string name="alerts_low_empty_body">Items at or below their reorder level appear here.</string>
     <string name="alerts_select_all">Select all</string>

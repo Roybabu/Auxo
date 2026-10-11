@@ -25,6 +25,7 @@ import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
 import com.invision.pos.testutil.keepActive
 import com.invision.pos.testutil.record
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.more.ShopSettingsContent
@@ -42,11 +43,17 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-private class FakeShopPreferences(initial: Boolean = false) : ShopPreferences {
+private class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean = true) : ShopPreferences {
     private val state = MutableStateFlow(initial)
     override val restaurantMenu: StateFlow<Boolean> = state
     override fun setRestaurantMenu(enabled: Boolean) {
         state.value = enabled
+    }
+
+    private val suppliersState = MutableStateFlow(suppliersOn)
+    override val suppliers: StateFlow<Boolean> = suppliersState
+    override fun setSuppliers(enabled: Boolean) {
+        suppliersState.value = enabled
     }
 }
 
@@ -76,6 +83,20 @@ class ShopSettingsTest {
         assertTrue(prefs.restaurantMenu.value)
         // It is still on after the app is opened again.
         assertTrue(SharedPrefsShopPreferences(context).restaurantMenu.value)
+    }
+
+    @Test
+    fun suppliers_areOnUntilTheShopTurnsThemOff_andStayOffAfterARestart() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences(SharedPrefsShopPreferences.FILE, Context.MODE_PRIVATE).edit().clear().commit()
+        val prefs = SharedPrefsShopPreferences(context)
+        assertTrue(prefs.suppliers.value)
+
+        prefs.setSuppliers(false)
+        assertFalse(prefs.suppliers.value)
+        assertFalse(SharedPrefsShopPreferences(context).suppliers.value)
+        prefs.setSuppliers(true)
+        assertTrue(SharedPrefsShopPreferences(context).suppliers.value)
     }
 
     @Test
@@ -169,6 +190,31 @@ class ShopSettingsTest {
         composeRule.onNodeWithText("Dishes and prices").assertDoesNotExist()
         composeRule.onNodeWithTag("more_shop_settings").performClick()
         assertTrue(opened)
+    }
+
+    @Test
+    fun moreAndInsights_leaveOutSuppliers_whenTheyAreOff() {
+        composeRule.setContent {
+            InvisionTheme {
+                androidx.compose.runtime.CompositionLocalProvider(LocalSuppliersEnabled provides false) {
+                    MoreScreen(shop = ShopUiState(shopName = "Das Sweets", suppliers = false), actions = object : MoreActions {})
+                }
+            }
+        }
+        composeRule.onNodeWithText("Stock alerts").assertIsDisplayed()
+        composeRule.onNodeWithText("Suppliers").assertDoesNotExist()
+        composeRule.onNodeWithText("Purchase orders").assertDoesNotExist()
+        composeRule.onNodeWithText("Receive stock").assertDoesNotExist()
+    }
+
+    @Test
+    fun lowStockReport_hasNoSupplierColumn_whenSuppliersAreOff() {
+        val products = listOf(TestData.tShirt())
+        val on = com.invision.pos.domain.reports.Reports.lowStock(products, emptyList())
+        val off = com.invision.pos.domain.reports.Reports.lowStock(products, emptyList(), withSupplier = false)
+        assertEquals(on.columns.size - 1, off.columns.size)
+        assertFalse(off.columns.any { it.title == "Supplier" })
+        assertTrue(off.rows.all { it.size == off.columns.size })
     }
 
     @Test

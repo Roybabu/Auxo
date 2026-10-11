@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -50,6 +52,7 @@ import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.reports.ExpiryWindow
 import com.invision.pos.domain.usecase.WastageError
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.DropdownField
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
@@ -209,6 +212,7 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
         return
     }
     val selected = state.selected
+    val suppliersOn = LocalSuppliersEnabled.current
     LazyColumn(
         contentPadding = PaddingValues(horizontal = Spacing.screen, vertical = Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
@@ -216,8 +220,8 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
     ) {
         item(key = "intro") {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(R.string.alerts_low_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(if (suppliersOn) R.string.alerts_low_intro else R.string.alerts_low_intro_plain), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (suppliersOn) Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         pluralStringResource(R.plurals.alerts_selected, selected.size, selected.size),
                         style = MaterialTheme.typography.titleSmall,
@@ -227,7 +231,7 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
                         Text(stringResource(if (selected.size < state.suggestions.size) R.string.alerts_select_all else R.string.alerts_select_none))
                     }
                 }
-                if (selected.any { it.supplierId == null }) {
+                if (suppliersOn && selected.any { it.supplierId == null }) {
                     if (state.suppliers.isEmpty()) {
                         Text(stringResource(R.string.order_no_suppliers), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     } else {
@@ -249,7 +253,7 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
                         )
                     }
                 }
-                Button(
+                if (suppliersOn) Button(
                     onClick = actions::onCreateDrafts,
                     enabled = selected.isNotEmpty() && !state.isCreating,
                     modifier = Modifier
@@ -265,6 +269,7 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
                 suggestion = suggestion,
                 checked = suggestion.variant.id !in state.deselected,
                 supplierName = state.supplierName(suggestion.supplierId),
+                showSupplier = suppliersOn,
                 onToggle = { actions.onToggle(suggestion.variant.id) },
                 onOpen = { actions.onOpenProduct(suggestion.product.id) },
             )
@@ -277,6 +282,7 @@ private fun SuggestionRow(
     suggestion: ReorderSuggestion,
     checked: Boolean,
     supplierName: String?,
+    showSupplier: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
 ) {
@@ -288,7 +294,11 @@ private fun SuggestionRow(
             modifier = Modifier.padding(end = Spacing.lg, top = Spacing.sm, bottom = Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Checkbox(checked = checked, onCheckedChange = { onToggle() }, modifier = Modifier.testTag("suggestion_${variant.id}"))
+            if (showSupplier) {
+                Checkbox(checked = checked, onCheckedChange = { onToggle() }, modifier = Modifier.testTag("suggestion_${variant.id}"))
+            } else {
+                Spacer(Modifier.width(Spacing.lg))
+            }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(
                     listOf(suggestion.product.name, variant.attributesLabel).filter { it.isNotBlank() }.joinToString(" · "),
@@ -301,11 +311,13 @@ private fun SuggestionRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(
-                    text = supplierName ?: stringResource(R.string.alerts_no_supplier),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (supplierName == null) status.warning.content else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (showSupplier) {
+                    Text(
+                        text = supplierName ?: stringResource(R.string.alerts_no_supplier),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (supplierName == null) status.warning.content else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (suggestion.isOutOfStock) {

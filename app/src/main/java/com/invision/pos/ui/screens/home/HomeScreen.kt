@@ -61,6 +61,7 @@ import com.invision.pos.domain.inventory.StockAlertType
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.StockUnit
+import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -299,7 +300,9 @@ private fun HomeHeaderBlock(
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill)
-            QuickAction(stringResource(R.string.purchases_receive), R.drawable.ic_receive, onReceiveStock)
+            if (LocalSuppliersEnabled.current) {
+                QuickAction(stringResource(R.string.purchases_receive), R.drawable.ic_receive, onReceiveStock)
+            }
             QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_nav_inventory, onAddProduct)
             QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore)
         }

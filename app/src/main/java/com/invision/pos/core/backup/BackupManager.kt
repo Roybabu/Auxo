@@ -62,6 +62,7 @@ class BackupManager(
                         put(PREF_ACCENT, settings.accent.id)
                         put(PREF_DARK, settings.darkMode.toString())
                         shop?.let { put(PREF_RESTAURANT_MENU, it.restaurantMenu.value.toString()) }
+                        shop?.let { put(PREF_SUPPLIERS, it.suppliers.value.toString()) }
                     },
                 )
             }
@@ -109,6 +110,7 @@ class BackupManager(
             backup.preferences[PREF_ACCENT]?.let { appearance.setAccent(AppAccent.fromId(it)) }
             backup.preferences[PREF_DARK]?.let { appearance.setDarkMode(it.toBoolean()) }
             backup.preferences[PREF_RESTAURANT_MENU]?.let { shop?.setRestaurantMenu(it.toBoolean()) }
+            backup.preferences[PREF_SUPPLIERS]?.let { shop?.setSuppliers(it.toBoolean()) }
         } finally {
             work.deleteRecursively()
         }
@@ -147,6 +149,7 @@ class BackupManager(
         const val PREF_ACCENT = "accent"
         const val PREF_DARK = "dark_mode"
         const val PREF_RESTAURANT_MENU = "restaurant_menu"
+        const val PREF_SUPPLIERS = "suppliers"
         private val FILE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
     }
 }

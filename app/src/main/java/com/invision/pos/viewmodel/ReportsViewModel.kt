@@ -81,6 +81,7 @@ class ReportsViewModel(
     private val purchasing: PurchasingRepository,
     private val customers: CustomerRepository,
     private val clock: Clock,
+    private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportsUiState())
@@ -174,7 +175,7 @@ class ReportsViewModel(
             ReportType.STOCK_MOVEMENTS -> Reports.stockMovements(inventory.observeMovementHistory(from, to).first(), category = filters.category)
             ReportType.WASTAGE -> Reports.wastage(inventory.observeMovementHistory(from, to).first(), filters.category)
             ReportType.STOCK_VALUE -> Reports.stockValue(inventory.observeProducts().first(), filters.category)
-            ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), purchasing.observeSuppliers().first())
+            ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), purchasing.observeSuppliers().first(), withSupplier = shop?.suppliers?.value ?: true)
             ReportType.EXPIRY -> Reports.expiry(inventory.observeBatches().first(), today, filters.expiryWindow)
             ReportType.CUSTOMER_BALANCES -> Reports.customerBalances(customers.observeAccounts().first(), filters.onlyOutstanding)
         }
@@ -205,6 +206,7 @@ class ReportsViewModel(
                     purchasing = container.purchasingRepository,
                     customers = container.customerRepository,
                     clock = container.clock,
+                    shop = container.shopPreferences,
                 )
             }
         }
