@@ -63,7 +63,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
         MenuItemEntity::class,
         RecipeLineEntity::class,
     ],
-    version = 3,
+    version = InvisionDatabase.VERSION,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -102,6 +102,9 @@ abstract class InvisionDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "invision.db"
+
+        /** The database version above, for code that checks a file against it. */
+        const val VERSION = 3
 
         fun create(context: Context): InvisionDatabase =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, NAME).build()

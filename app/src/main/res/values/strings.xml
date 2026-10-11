@@ -813,6 +813,37 @@
     <string name="report_next_page">Next</string>
 
     <!-- More, Home and Inventory entry points -->
+    <string name="more_section_data">Your data</string>
+    <string name="more_backup_title">Backup and restore</string>
+    <string name="more_backup_body">Save everything to a file, or move it to another phone</string>
+    <string name="backup_title">Backup and restore</string>
+    <string name="backup_make_title">Back up this phone</string>
+    <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, the menu, your store settings and your app colour. The file goes into the Invision folder in Documents on this phone.</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_working">Working…</string>
+    <string name="backup_last">Last backup: %1$s</string>
+    <string name="backup_never">No backup made on this phone yet</string>
+    <string name="backup_saved_title">Backup saved</string>
+    <string name="backup_saved_where">%1$s
+in %2$s</string>
+    <string name="backup_share">Share or send</string>
+    <string name="backup_share_title">Send backup</string>
+    <string name="backup_restore_title">Restore from a backup</string>
+    <string name="backup_restore_body">Use this on a new phone, or to go back to an earlier backup. Choose a backup file from the Invision folder, or from wherever you copied it.</string>
+    <string name="backup_restore_choose">Choose backup file</string>
+    <string name="backup_privacy">Backup files include customer details and sales and are not locked with a password. Keep them private.</string>
+    <string name="backup_confirm_title">Replace everything on this phone?</string>
+    <string name="backup_confirm_body">All products, bills, customers and settings on this phone will be replaced by what is in the backup. This cannot be undone, so make a backup first if you may need today's data. The app will restart.</string>
+    <string name="backup_confirm_action">Replace and restart</string>
+    <string name="backup_restoring">Restoring your data…</string>
+    <string name="backup_dismiss">OK</string>
+    <string name="backup_error_not_a_backup">That file is not an Invision backup.</string>
+    <string name="backup_error_wrong_app">That backup is from a different app.</string>
+    <string name="backup_error_newer">That backup was made by a newer version of Invision. Update the app and try again.</string>
+    <string name="backup_error_corrupt">That backup is damaged, so nothing was changed.</string>
+    <string name="backup_error_unreadable">That file could not be opened.</string>
+    <string name="backup_error_save">The backup could not be saved. Check that the phone has free space and try again.</string>
+    <string name="backup_error_restore">Restoring failed and your data on this phone was kept as it was.</string>
     <string name="more_section_appearance">Appearance</string>
     <string name="appearance_dark_mode">Dark mode</string>
     <string name="appearance_dark_mode_body">Black backgrounds with light text</string>

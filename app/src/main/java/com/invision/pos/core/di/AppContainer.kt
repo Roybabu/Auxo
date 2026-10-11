@@ -4,6 +4,9 @@ import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
 import com.invision.pos.core.appearance.AppearanceRepository
 import com.invision.pos.core.appearance.SharedPrefsAppearanceRepository
+import com.invision.pos.core.backup.BackupManager
+import com.invision.pos.core.backup.BackupService
+import com.invision.pos.core.backup.DocumentsBackupStorage
 import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.local.InvisionDatabase
 import com.invision.pos.data.repository.BillingRepository
@@ -60,6 +63,10 @@ class AppContainer(context: Context) {
     val moneyFormatter: MoneyFormatter by lazy { MoneyFormatter() }
 
     val appearanceRepository: AppearanceRepository by lazy { SharedPrefsAppearanceRepository(appContext) }
+
+    val backupService: BackupService by lazy {
+        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock)
+    }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {
         ObserveStoreOverviewUseCase(settingsRepository, billingRepository, clock)

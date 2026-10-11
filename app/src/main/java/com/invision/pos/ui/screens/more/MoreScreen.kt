@@ -52,6 +52,7 @@ interface MoreActions {
     fun onOpenReports() = Unit
     fun onOpenHistory() = Unit
     fun onOpenBillingSettings() = Unit
+    fun onOpenBackup() = Unit
 }
 
 /** Purchasing, stock records, the restaurant menu, reports, settings and how the app looks. */
@@ -89,6 +90,9 @@ fun MoreScreen(
             MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
             MoreItem(R.drawable.ic_history, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
             MoreItem(R.drawable.ic_settings, stringResource(R.string.billing_settings), stringResource(R.string.more_billing_settings_body), actions::onOpenBillingSettings)
+
+            SectionHeader(stringResource(R.string.more_section_data), modifier = Modifier.padding(top = Spacing.md))
+            MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
 
             SectionHeader(stringResource(R.string.more_section_appearance), modifier = Modifier.padding(top = Spacing.md))
             AppearanceCard(appearance, onAccentChange, onDarkModeChange)

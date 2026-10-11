@@ -31,6 +31,7 @@ import com.invision.pos.ui.screens.customers.CustomerEditorScreen
 import com.invision.pos.ui.screens.customers.CustomerListScreen
 import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
+import com.invision.pos.ui.screens.more.BackupScreen
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.purchasing.PurchaseListScreen
@@ -283,6 +284,7 @@ fun InvisionNavHost(
                         override fun onOpenReports() = navController.navigate(MoreRoutes.REPORTS)
                         override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
                         override fun onOpenBillingSettings() = navController.navigate(BillingRoutes.SETTINGS)
+                        override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
                     },
                 )
             }
@@ -306,6 +308,9 @@ fun InvisionNavHost(
                     onBack = { navController.popBackStack() },
                     onDone = { navController.popBackStack() },
                 )
+            }
+            composable(MoreRoutes.BACKUP) {
+                BackupScreen(onBack = { navController.popBackStack() })
             }
             composable(MoreRoutes.REPORTS) {
                 ReportsScreen(onBack = { navController.popBackStack() })
