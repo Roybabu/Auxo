@@ -9,6 +9,7 @@ import com.invision.pos.testutil.FakeInventoryRepository
 import com.invision.pos.testutil.FakeSettingsRepository
 import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
+import com.invision.pos.testutil.payInFull
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -56,6 +57,7 @@ class DoubleTapSaleTest {
         val viewModel = BillingViewModel(inventory, settings, CheckoutUseCase(billing, settings, TestData.clock))
         viewModel.onBarcodeScanned(TestData.EAN[0])
         viewModel.proceedToPayment()
+        viewModel.payInFull()
         return viewModel
     }
 
@@ -104,6 +106,7 @@ class DoubleTapSaleTest {
 
         viewModel.onBarcodeScanned(TestData.EAN[0])
         viewModel.proceedToPayment()
+        viewModel.payInFull()
         viewModel.completeSale()
         assertTrue(viewModel.events.first() is BillingEvent.Completed)
         assertEquals(2, store.invoices.value.size)

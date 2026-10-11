@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -177,6 +178,9 @@ class BillingDeviceFlowTest {
         // Pay the full amount in cash and complete the sale.
         composeRule.onNodeWithTag("billing_charge").performClick()
         waitForTag("payment_complete")
+        // The amount starts at 0.00, so clear it and type the full bill.
+        composeRule.onNodeWithTag("payment_amount_0").performTextClearance()
+        composeRule.onNodeWithTag("payment_amount_0").performTextInput("998")
         composeRule.onNodeWithTag("payment_complete").performClick()
         waitForTag("receipt_preview")
 

@@ -507,8 +507,7 @@ class BillingViewModel(
             eventChannel.trySend(BillingEvent.FixCart)
             return
         }
-        val total = state.totals.grandTotal
-        val first = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CASH, amount = total.toDecimalString())
+        val first = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CASH, amount = EMPTY_AMOUNT)
         updatePayments(listOf(first), stage = BillingStage.PAYMENT)
     }
 
@@ -517,7 +516,18 @@ class BillingViewModel(
     fun onPaymentMethodChange(key: Int, method: PaymentMethod) =
         updatePayment(key) { it.copy(method = method, tendered = if (method == PaymentMethod.CASH) it.tendered else "", reference = "") }
 
-    fun onPaymentAmountChange(key: Int, amount: String) = updatePayment(key) { it.copy(amount = amount) }
+    /**
+     * New payments start at 0.00 for the person to fill in. Typing into an untouched 0.00
+     * replaces it, so "5" gives 5 and not 0.005.
+     */
+    fun onPaymentAmountChange(key: Int, amount: String) = updatePayment(key) { draft ->
+        val typed = if (draft.amount == EMPTY_AMOUNT && amount.length > EMPTY_AMOUNT.length && amount.startsWith(EMPTY_AMOUNT)) {
+            amount.removePrefix(EMPTY_AMOUNT)
+        } else {
+            amount
+        }
+        draft.copy(amount = typed)
+    }
 
     fun onTenderedChange(key: Int, tendered: String) = updatePayment(key) { it.copy(tendered = tendered) }
 
@@ -526,10 +536,9 @@ class BillingViewModel(
     /** Adds another payment for whatever is still unpaid (split payment). */
     fun addSplitPayment() {
         val state = _uiState.value
-        val remaining = state.paymentRemaining.takeIf { it > Money.ZERO } ?: Money.ZERO
         val usedMethods = state.payments.map { it.method }.toSet()
         val method = state.paymentMethods.firstOrNull { it !in usedMethods } ?: PaymentMethod.CASH
-        val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = if (remaining.isZero) "" else remaining.toDecimalString())
+        val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = EMPTY_AMOUNT)
         updatePayments(state.payments + draft)
     }
 
@@ -696,6 +705,9 @@ class BillingViewModel(
 
     companion object {
         const val MAX_RESULTS = 25
+
+        /** What a new payment's amount shows until something is typed. */
+        const val EMPTY_AMOUNT = "0.00"
         const val MAX_CUSTOMER_RESULTS = 6
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {

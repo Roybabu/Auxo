@@ -14,6 +14,7 @@ import com.invision.pos.testutil.FakeInventoryRepository
 import com.invision.pos.testutil.FakeSettingsRepository
 import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
+import com.invision.pos.testutil.payInFull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -169,7 +170,10 @@ class BillingViewModelTest {
         viewModel.proceedToPayment()
         val state = viewModel.uiState.value
         assertEquals(BillingStage.PAYMENT, state.stage)
-        assertEquals("499.00", state.payments.single().amount)
+        assertEquals("0.00", state.payments.single().amount)
+        // Typing into the untouched 0.00 replaces it.
+        viewModel.onPaymentAmountChange(state.payments.single().key, "0.00499")
+        assertEquals("499", viewModel.uiState.value.payments.single().amount)
         viewModel.onTenderedChange(state.payments.single().key, "500")
         assertEquals(Money(100), viewModel.uiState.value.change)
         viewModel.completeSale()
@@ -194,11 +198,31 @@ class BillingViewModelTest {
         viewModel.addSplitPayment()
         val second = viewModel.uiState.value.payments.last()
         assertEquals(PaymentMethod.UPI, second.method)
-        assertEquals("199.00", second.amount)
+        assertEquals("0.00", second.amount)
+        assertEquals(Money(19_900), viewModel.uiState.value.paymentRemaining)
+        viewModel.onPaymentAmountChange(second.key, "199")
         assertTrue(viewModel.uiState.value.paymentRemaining.isZero)
         viewModel.completeSale()
         assertTrue(viewModel.events.first() is BillingEvent.Completed)
         assertEquals(2, billing.invoices.value.single().payments.size)
+    }
+
+    @Test
+    fun paymentPage_startsAtZero_andNothingSavesUntilAnAmountIsEntered() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onBarcodeScanned(TestData.EAN[0])
+        viewModel.proceedToPayment()
+        assertEquals("0.00", viewModel.uiState.value.payments.single().amount)
+        assertEquals(Money(49_900), viewModel.uiState.value.paymentRemaining)
+
+        viewModel.completeSale()
+        assertTrue(viewModel.uiState.value.paymentShowErrors)
+        assertTrue(billing.invoices.value.isEmpty())
+
+        // Typing before the 0.00 is kept as typed, and clearing the box leaves it empty.
+        val key = viewModel.uiState.value.payments.single().key
+        viewModel.onPaymentAmountChange(key, "")
+        assertEquals("", viewModel.uiState.value.payments.single().amount)
     }
 
     @Test
@@ -259,6 +283,7 @@ class ReturnAndHistoryViewModelTest {
         repeat(3) { viewModel.onBarcodeScanned(TestData.EAN[0]) }
         viewModel.onCustomerChange(CustomerDetails(name = "Anita Das", phone = "9831000000"))
         viewModel.proceedToPayment()
+        viewModel.payInFull()
         viewModel.completeSale()
         return (viewModel.events.first() as BillingEvent.Completed).invoiceId
     }

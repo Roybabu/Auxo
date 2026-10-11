@@ -29,6 +29,7 @@ import com.invision.pos.testutil.FakePurchasingRepository
 import com.invision.pos.testutil.FakeSettingsRepository
 import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
+import com.invision.pos.testutil.payInFull
 import com.invision.pos.testutil.keepActive
 import com.invision.pos.testutil.record
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -277,6 +278,7 @@ class BillingAccountsAndMenuTest {
         viewModel.proceedToPayment()
         val draft = viewModel.uiState.value.payments.single()
         viewModel.onPaymentMethodChange(draft.key, PaymentMethod.CREDIT)
+        viewModel.payInFull()
         viewModel.completeSale()
         assertTrue(events.last() is BillingEvent.Completed)
         val invoice = billing.invoices.value.single()
