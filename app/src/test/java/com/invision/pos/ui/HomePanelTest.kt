@@ -78,6 +78,11 @@ class HomePanelTest {
         composeRule.waitForIdle()
     }
 
+    /** Opens the panel with a slow drag that ends on it, so the content is left at its top. */
+    private fun openPanelSlowly() {
+        drag(pixels = -500f, millis = 1000)
+    }
+
     @Test
     fun panel_startsLowOnTheScreen_belowTheHeader() {
         showHome()
@@ -118,7 +123,7 @@ class HomePanelTest {
     @Test
     fun openPanel_scrollsItsContent_withoutMoving() {
         showHome()
-        drag(pixels = -900f, millis = 300)
+        openPanelSlowly()
         val open = panelTop()
         val before = contentTop()
 
@@ -131,7 +136,7 @@ class HomePanelTest {
     @Test
     fun scrolledContent_comesBackToTheTopBeforeThePanelCloses() {
         showHome()
-        drag(pixels = -900f, millis = 300)
+        openPanelSlowly()
         val open = panelTop()
         drag(pixels = -400f, millis = 800)
         val scrolled = contentTop()
