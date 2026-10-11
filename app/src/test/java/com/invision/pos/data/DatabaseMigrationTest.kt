@@ -19,6 +19,7 @@ import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.PaymentRecord
 import com.invision.pos.domain.model.StockChangeReason
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.testutil.TestData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -55,9 +56,10 @@ class DatabaseMigrationTest {
         context.deleteDatabase(name)
     }
 
-    private fun createVersion1() {
-        val schema = JSONObject(File("schemas/com.invision.pos.data.local.InvisionDatabase/1.json").readText()).getJSONObject("database")
-        assertEquals(1, schema.getInt("version"))
+    /** Creates the tables of schema [version] from its committed JSON and returns the open database. */
+    private fun createFromSchema(version: Int): SQLiteDatabase {
+        val schema = JSONObject(File("schemas/com.invision.pos.data.local.InvisionDatabase/$version.json").readText()).getJSONObject("database")
+        assertEquals(version, schema.getInt("version"))
         val db = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name).apply { parentFile?.mkdirs() }, null)
         val entities = schema.getJSONArray("entities")
         for (i in 0 until entities.length()) {
@@ -71,7 +73,12 @@ class DatabaseMigrationTest {
         }
         val setup = schema.getJSONArray("setupQueries")
         for (i in 0 until setup.length()) db.execSQL(setup.getString(i))
-        db.version = 1
+        db.version = version
+        return db
+    }
+
+    private fun createVersion1() {
+        val db = createFromSchema(1)
 
         // Step 2 data: a product, a variant with stock and its opening stock movement.
         db.execSQL(
@@ -118,5 +125,58 @@ class DatabaseMigrationTest {
         val result = RoomBillingRepository(db).recordSale(invoice, "INV")
         assertTrue(result is SaleResult.Recorded)
         assertEquals(6, inventory.getProduct(1)!!.variants.single().stockQuantity)
+    }
+
+    @Test
+    fun migrate2To3_putsFoodStockIntoBatches() = runTest {
+        val expiryDay = TestData.today.plusDays(20).toEpochDay()
+        createFromSchema(2).apply {
+            execSQL(
+                "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at) VALUES " +
+                    "(1, 'Cotton T-Shirt', NULL, 'GARMENT', NULL, NULL, NULL, '6109', 'APPAREL', NULL, 100, 100), " +
+                    "(2, 'Butter Biscuits', NULL, 'PACKAGED_FOOD', NULL, NULL, 'VEG', '1905', 'FIXED', 500, 100, 100), " +
+                    "(3, 'Mango Juice', NULL, 'BEVERAGE', NULL, NULL, NULL, '2202', 'FIXED', 500, 100, 100)",
+            )
+            execSQL(
+                "INSERT INTO product_variants (id, product_id, sku, barcode, size, colour, net_quantity_milli, net_quantity_unit, " +
+                    "price_minor, mrp_minor, cost_minor, stock_quantity, low_stock_threshold, batch_number, expiry_epoch_day) VALUES " +
+                    "(11, 1, NULL, '${TestData.EAN[0]}', 'M', 'Navy', NULL, NULL, 49900, NULL, 25000, 8, 2, NULL, NULL), " +
+                    "(21, 2, NULL, '${TestData.EAN[2]}', NULL, NULL, 200000, 'GRAM', 3000, 3500, 2200, 30, 10, 'B9', $expiryDay), " +
+                    "(31, 3, NULL, '${TestData.EAN[3]}', NULL, NULL, 1000000, 'LITRE', 9900, NULL, NULL, 0, 5, NULL, NULL)",
+            )
+            execSQL(
+                "INSERT INTO stock_movements (id, variant_id, quantity_change, reason, note, created_at, invoice_id) VALUES " +
+                    "(1, 11, 8, 'INITIAL', NULL, 100, NULL), (2, 21, 30, 'INITIAL', NULL, 100, NULL)",
+            )
+            close()
+        }
+
+        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        database = db
+        val inventory = RoomInventoryRepository(db, TestData.clock)
+        val biscuits = inventory.getProduct(2)!!.variants.single()
+        assertEquals(3, db.openHelper.readableDatabase.version)
+
+        // Existing food stock became one batch with the variant's batch number and expiry.
+        val batch = biscuits.batches.single()
+        assertEquals(30, batch.quantity)
+        assertEquals("B9", batch.batchNumber)
+        assertEquals(TestData.today.plusDays(20), batch.expiryDate)
+        assertEquals(Money(2_200), batch.unitCost)
+        assertTrue(inventory.getProduct(1)!!.variants.single().batches.isEmpty()) // garments aren't batched
+        assertTrue(inventory.getProduct(3)!!.variants.single().batches.isEmpty()) // nothing in stock
+        assertEquals(0, biscuits.reorderQuantity)
+        assertEquals(StockUnit.UNIT, inventory.getProduct(2)!!.stockUnit)
+
+        // Selling from the migrated batch keeps stock and batches in step.
+        val product = inventory.getProduct(2)!!
+        val cart = Cart(lines = listOf(CartLine.from(product, biscuits, quantity = 5)))
+        val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))
+        val sale = SaleBuilder.build(cart, totals, TestData.settings, listOf(PaymentRecord(method = PaymentMethod.CASH, amount = totals.grandTotal)), TestData.clock.millis())
+        assertTrue(RoomBillingRepository(db).recordSale(sale, "INV") is SaleResult.Recorded)
+        val after = inventory.getProduct(2)!!.variants.single()
+        assertEquals(25, after.stockQuantity)
+        assertEquals(25, after.batches.single().quantity)
+        assertEquals(25, db.inventoryDao().movementTotal(21))
     }
 }

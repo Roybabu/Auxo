@@ -42,7 +42,7 @@ object FileExport {
         val cutoff = System.currentTimeMillis() - STALE_AFTER_MILLIS
         dir.listFiles()?.filter { it.lastModified() < cutoff }?.forEach { it.delete() }
         val file = File(dir, safeFileName(export.fileName))
-        val bom = if (export.mimeType == ExportFile.CSV_MIME_TYPE) "﻿" else ""
+        val bom = if (export.mimeType == ExportFile.CSV_MIME_TYPE) "\uFEFF" else ""
         file.writeText(bom + export.content, Charsets.UTF_8)
         return file
     }

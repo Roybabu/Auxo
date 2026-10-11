@@ -7,6 +7,7 @@ import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.QuantityUnit
+import com.invision.pos.domain.model.StockUnit
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -96,6 +97,28 @@ object TestData {
                 mrp = 3_500,
                 expiry = expiry,
             ),
+        ),
+    )
+
+    /** Kitchen flour counted in grams; cost is per kilogram. */
+    fun flour(id: Long = 4, grams: Int = 5_000, expiry: LocalDate? = today.plusDays(60)) = Product(
+        id = id,
+        name = "Wheat Flour",
+        category = ProductCategory.INGREDIENT,
+        stockUnit = StockUnit.GRAM,
+        variants = listOf(
+            variant(id = id * 10 + 1, barcode = EAN[4], price = 0, stock = grams, lowStock = 1_000, cost = 4_500, expiry = expiry),
+        ),
+    )
+
+    /** Kitchen milk counted in millilitres; cost is per litre. */
+    fun milk(id: Long = 5, millilitres: Int = 2_000, expiry: LocalDate? = today.plusDays(3)) = Product(
+        id = id,
+        name = "Milk",
+        category = ProductCategory.INGREDIENT,
+        stockUnit = StockUnit.MILLILITRE,
+        variants = listOf(
+            variant(id = id * 10 + 1, barcode = EAN[5], price = 0, stock = millilitres, lowStock = 500, cost = 6_000, expiry = expiry),
         ),
     )
 

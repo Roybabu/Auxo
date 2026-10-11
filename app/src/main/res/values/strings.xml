@@ -707,7 +707,6 @@
     <string name="expiry_window_expired">Expired</string>
     <string name="expiry_window_7">Within 7 days</string>
     <string name="expiry_window_30">Within 30 days</string>
-    <string name="expiry_expired_value">Expired stock at cost (%1$d batches)</string>
     <string name="expiry_expired_on">Expired %1$s</string>
     <string name="expiry_today">Expires today</string>
     <string name="expiry_value_at_cost">%1$s at cost</string>
@@ -801,7 +800,7 @@
     <string name="report_all_suppliers">All suppliers</string>
     <string name="report_only_outstanding">Only accounts with a balance</string>
     <string name="report_empty">Nothing to show for these filters.</string>
-    <string name="report_truncated">Showing the first %1$d of %2$d rows. Export to get them all.</string>
+    <string name="report_truncated">Export the CSV for every row. Shown here: %1$d of %2$d</string>
 
     <!-- More, Home and Inventory entry points -->
     <string name="more_section_stock">Stock and purchasing</string>
@@ -844,6 +843,10 @@
     <plurals name="menu_servings_left">
         <item quantity="one">Stock for %d serving</item>
         <item quantity="other">Stock for %d servings</item>
+    </plurals>
+    <plurals name="expiry_expired_value">
+        <item quantity="one">Expired stock at cost (%d batch)</item>
+        <item quantity="other">Expired stock at cost (%d batches)</item>
     </plurals>
     <plurals name="report_rows">
         <item quantity="one">%d row</item>

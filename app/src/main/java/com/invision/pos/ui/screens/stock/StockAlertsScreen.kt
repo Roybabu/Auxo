@@ -353,7 +353,7 @@ private fun ExpiryTab(state: StockAlertsUiState, actions: StockAlertsActions) {
             if (state.expiredBatchCount > 0) {
                 item(key = "expired_tile") {
                     StatTile(
-                        label = stringResource(R.string.expiry_expired_value, state.expiredBatchCount),
+                        label = pluralStringResource(R.plurals.expiry_expired_value, state.expiredBatchCount, state.expiredBatchCount),
                         value = formatter.format(state.expiredValue),
                         iconRes = R.drawable.ic_expiry,
                         tone = InvisionThemeExtras.statusColors.danger,
