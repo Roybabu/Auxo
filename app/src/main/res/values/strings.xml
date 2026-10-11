@@ -52,10 +52,8 @@
     <string name="home_view_inventory">View inventory</string>
     <string name="home_empty_title">Add your first product</string>
     <string name="home_empty_body">Add garments, packaged food or beverages to see stock levels and alerts here.</string>
-    <string name="home_quick_actions">Quick actions</string>
     <string name="home_action_new_bill">New bill</string>
     <string name="home_action_add_product">Add product</string>
-    <string name="home_action_add_customer">Add customer</string>
 
     <!-- Stock alerts -->
     <string name="alert_expired">Expired on %1$s</string>
