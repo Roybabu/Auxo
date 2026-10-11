@@ -20,6 +20,8 @@ import com.invision.pos.domain.billing.BillTotals
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartCheck
 import com.invision.pos.domain.billing.CartLine
+import com.invision.pos.domain.billing.CustomItem
+import com.invision.pos.domain.billing.CustomItemResult
 import com.invision.pos.domain.billing.CartValidator
 import com.invision.pos.domain.billing.CreditAccount
 import com.invision.pos.domain.billing.CustomerDetails
@@ -169,6 +171,7 @@ class BillingViewModel(
     private var salesRank: List<Long> = emptyList()
     private var allMenu: List<MenuItem> = emptyList()
     private var menuLoaded = false
+    private var nextCustomKey = 0L
 
     /** False when the shop has the restaurant menu switched off: no dishes are offered or found. */
     private var menuEnabled = shop?.restaurantMenu?.value ?: true
@@ -362,6 +365,14 @@ class BillingViewModel(
                 menuResults = emptyList(),
             )
         }
+    }
+
+    /** Puts an item that is not in the shop's list on the bill. Returns false if the details are not valid. */
+    fun addCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean {
+        val draft = (CustomItem.validate(name, price, quantity, gstBasisPoints) as? CustomItemResult.Valid)?.draft ?: return false
+        val key = CartLine.CUSTOM_KEY_BASE - nextCustomKey++
+        recalculate { state -> state.copy(cart = state.cart.add(CartLine.custom(key, draft))) }
+        return true
     }
 
     fun onMenuSectionChange(section: String?) = _uiState.update { it.copy(menuSection = section) }
@@ -655,6 +666,7 @@ class BillingViewModel(
             lines = cart.lines.map { line ->
                 val menuItemId = line.menuItemId
                 when {
+                    line.isCustom -> line
                     menuItemId == null -> line.copy(availableStock = stock[line.variantId])
                     !menuLoaded -> line
                     else -> line.copy(availableStock = if (dishes[menuItemId]?.available == true) CartLine.UNLIMITED else null)

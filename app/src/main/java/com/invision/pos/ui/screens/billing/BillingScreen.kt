@@ -109,6 +109,7 @@ interface BillingActions {
     fun onAddResult(result: ProductSearchResult) = Unit
     fun onAddMenuItem(item: MenuItem) = Unit
     fun onMenuSectionChange(section: String?) = Unit
+    fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean = false
     fun onIncrement(lineKey: Long) = Unit
     fun onDecrement(lineKey: Long) = Unit
     fun onRemove(lineKey: Long) = Unit
@@ -204,6 +205,8 @@ fun BillingScreen(
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
             override fun onAddMenuItem(item: MenuItem) = viewModel.addMenuItem(item)
             override fun onMenuSectionChange(section: String?) = viewModel.onMenuSectionChange(section)
+            override fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int) =
+                viewModel.addCustomItem(name, price, quantity, gstBasisPoints)
             override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
             override fun onDecrement(lineKey: Long) = viewModel.decrement(lineKey)
             override fun onRemove(lineKey: Long) = viewModel.removeLine(lineKey)
@@ -334,6 +337,14 @@ private fun ChargeBar(
 @Composable
 fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifier = Modifier) {
     val formatter = LocalMoneyFormatter.current
+    var customItemOpen by rememberSaveable { mutableStateOf(false) }
+    if (customItemOpen) {
+        CustomItemDialog(
+            showGst = state.settings?.gstRegistered ?: true,
+            onAdd = actions::onAddCustomItem,
+            onDismiss = { customItemOpen = false },
+        )
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -374,6 +385,13 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                     null
                 },
             )
+        }
+
+        item(key = "custom_item") {
+            OutlinedButton(onClick = { customItemOpen = true }, modifier = Modifier.fillMaxWidth().testTag("billing_custom_item")) {
+                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.custom_item_button), modifier = Modifier.padding(start = Spacing.sm))
+            }
         }
 
         if (state.searchText.isNotBlank()) {

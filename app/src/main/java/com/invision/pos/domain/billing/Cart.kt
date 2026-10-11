@@ -34,15 +34,36 @@ data class CartLine(
     val availableStock: Int?,
     /** Set for restaurant dishes. */
     val menuItemId: Long? = null,
+    /** A one-off item typed in at the counter: not in the shop's list, so no stock is tracked. */
+    val isCustom: Boolean = false,
 ) {
     val isMenuItem: Boolean get() = menuItemId != null
 
     /** The inventory variant sold, or null for a dish. */
-    val stockVariantId: Long? get() = if (menuItemId == null) variantId else null
+    val stockVariantId: Long? get() = if (menuItemId == null && !isCustom) variantId else null
 
     companion object {
         /** No stock limit for dishes; ingredients are checked when the sale is saved. */
         const val UNLIMITED = Int.MAX_VALUE
+
+        /** Custom item keys count down from here, far below any dish key. */
+        const val CUSTOM_KEY_BASE: Long = -(1L shl 40)
+
+        /** A one-off item that is not in the shop's list yet. [key] must come from [CUSTOM_KEY_BASE] downwards. */
+        fun custom(key: Long, draft: CustomItemDraft) = CartLine(
+            variantId = key,
+            productId = 0,
+            productName = draft.name,
+            variantLabel = "",
+            barcode = "",
+            hsnCode = null,
+            unitPrice = draft.unitPrice,
+            mrp = null,
+            gstRate = GstRate.Fixed(draft.gstBasisPoints),
+            quantity = draft.quantity,
+            availableStock = UNLIMITED,
+            isCustom = true,
+        )
 
         /** Line key for a dish. */
         fun keyForMenuItem(menuItemId: Long): Long = -menuItemId

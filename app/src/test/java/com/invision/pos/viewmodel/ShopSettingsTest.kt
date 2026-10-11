@@ -121,6 +121,34 @@ class ShopSettingsTest {
     }
 
     @Test
+    fun billing_canAddAnItemThatIsNotInTheList() = runTest {
+        val inventory = FakeInventoryRepository(listOf(TestData.tShirt()))
+        val settings = FakeSettingsRepository()
+        val viewModel = BillingViewModel(
+            inventory = inventory,
+            settingsRepository = settings,
+            checkout = CheckoutUseCase(FakeBillingRepository(inventory), settings, TestData.clock),
+            clock = TestData.clock,
+        )
+        keepActive(viewModel.uiState)
+
+        assertFalse(viewModel.addCustomItem("", "10", "1", 0))
+        assertTrue(viewModel.uiState.value.cart.isEmpty)
+
+        assertTrue(viewModel.addCustomItem("Alteration", "150", "1", 1_800))
+        assertTrue(viewModel.addCustomItem("Alteration", "150", "1", 1_800))
+        val lines = viewModel.uiState.value.cart.lines
+        assertEquals(2, lines.size) // each one-off item is its own line
+        assertTrue(lines.all { it.isCustom })
+        assertTrue(viewModel.uiState.value.check.canCheckout)
+
+        viewModel.increment(lines[0].variantId)
+        assertEquals(2, viewModel.uiState.value.cart.lines[0].quantity)
+        viewModel.removeLine(lines[1].variantId)
+        assertEquals(1, viewModel.uiState.value.cart.lines.size)
+    }
+
+    @Test
     fun morePage_showsTheShopName_andHidesTheMenuUntilItIsOn() {
         var opened = false
         composeRule.setContent {

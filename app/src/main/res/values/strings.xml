@@ -287,6 +287,15 @@
 
     <!-- Billing: cart -->
     <string name="billing_title">New bill</string>
+    <string name="custom_item_button">Add an item not in the list</string>
+    <string name="custom_item_title">Add an item to this bill</string>
+    <string name="custom_item_body">For something that is not in your products yet. It goes on this bill only and does not change your stock.</string>
+    <string name="custom_item_name">Item name</string>
+    <string name="custom_item_price">Price (each)</string>
+    <string name="custom_item_quantity">Quantity</string>
+    <string name="custom_item_quantity_error">Enter a whole number from 1 to %1$d</string>
+    <string name="custom_item_gst">GST rate</string>
+    <string name="custom_item_add">Add to bill</string>
     <string name="billing_search_hint">Search or scan item</string>
     <string name="billing_empty_title">Start a bill</string>
     <string name="billing_empty_body">Scan a barcode or search for an item to add it.</string>
