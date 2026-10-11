@@ -242,6 +242,7 @@ class BillingViewModelTest {
         val viewModel = createViewModel()
         viewModel.onBarcodeScanned(TestData.EAN[1]) // the only L
         viewModel.proceedToPayment()
+        viewModel.payInFull()
         // Another sale takes the last unit before this one completes.
         billing.recordSale(
             com.invision.pos.domain.billing.SampleSales.shirtsAndBiscuits().copy(
