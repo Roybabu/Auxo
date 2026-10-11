@@ -85,6 +85,29 @@ class ReportsViewModelTest {
     }
 
     @Test
+    fun report_refreshesWhenDataChanges() = runTest {
+        val viewModel = viewModel()
+        assertTrue(viewModel.uiState.value.table!!.isEmpty)
+
+        sell()
+        assertEquals(ReportValue.Count(1), viewModel.uiState.value.table!!.rows.single()[1])
+        sell()
+        assertEquals(ReportValue.Count(2), viewModel.uiState.value.table!!.rows.single()[1])
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun stockReport_refreshesWhenStockChanges() = runTest {
+        val viewModel = viewModel()
+        viewModel.onTypeChange(ReportType.STOCK_VALUE)
+        assertEquals(3, viewModel.uiState.value.table!!.rows.size)
+
+        val juice = TestData.juice(stock = 5)
+        inventory.saveProduct(juice.copy(id = 0, variants = juice.variants.map { it.copy(id = 0, productId = 0) }))
+        assertEquals(4, viewModel.uiState.value.table!!.rows.size)
+    }
+
+    @Test
     fun currentPositionReports_ignoreThePeriod() = runTest {
         sell()
         customers.addEntry(LedgerEntry(customerId = 1, type = LedgerEntryType.SALE, amount = Money(5_000), createdAtMillis = 1))

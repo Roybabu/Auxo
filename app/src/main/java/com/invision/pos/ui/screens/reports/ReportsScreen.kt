@@ -21,10 +21,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +51,7 @@ import com.invision.pos.domain.reports.ColumnAlign
 import com.invision.pos.domain.reports.ExpiryWindow
 import com.invision.pos.domain.reports.ItemKind
 import com.invision.pos.domain.reports.PeriodPreset
+import com.invision.pos.domain.reports.ReportPaging
 import com.invision.pos.domain.reports.ReportTable
 import com.invision.pos.domain.reports.ReportType
 import com.invision.pos.domain.reports.ReportValue
@@ -71,9 +75,6 @@ import com.invision.pos.viewmodel.usesItemKind
 import com.invision.pos.viewmodel.usesOutstanding
 import com.invision.pos.viewmodel.usesSupplier
 import java.time.LocalDate
-
-/** Rows drawn on screen; the exported file has all of them. */
-private const val MAX_ROWS_SHOWN = 200
 
 @StringRes
 fun ReportType.labelRes(): Int = when (this) {
@@ -343,6 +344,10 @@ fun ReportTableView(table: ReportTable, modifier: Modifier = Modifier) {
             else -> 140.dp
         }
     }
+    // Back to the first page when a different report or fewer rows arrive; a refresh keeps the page.
+    var requestedPage by remember(table.columns) { mutableIntStateOf(0) }
+    val page = ReportPaging.clamp(requestedPage, table.rows.size)
+    val shown = ReportPaging.range(page, table.rows.size)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(
             pluralStringResource(R.plurals.report_rows, table.rows.size, table.rows.size),
@@ -358,7 +363,7 @@ fun ReportTableView(table: ReportTable, modifier: Modifier = Modifier) {
                     bold = true,
                     background = true,
                 )
-                table.rows.take(MAX_ROWS_SHOWN).forEach { row ->
+                table.rows.slice(shown).forEach { row ->
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     TableRow(row.map { it.displayText(formatter) }, table.columns.map { it.align }, widths)
                 }
@@ -368,12 +373,26 @@ fun ReportTableView(table: ReportTable, modifier: Modifier = Modifier) {
                 }
             }
         }
-        if (table.rows.size > MAX_ROWS_SHOWN) {
-            Text(
-                stringResource(R.string.report_truncated, MAX_ROWS_SHOWN, table.rows.size),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        if (table.rows.size > ReportPaging.PAGE_SIZE) {
+            val pages = ReportPaging.pageCount(table.rows.size)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = { requestedPage = page - 1 }, enabled = page > 0, modifier = Modifier.testTag("report_previous")) {
+                    Text(stringResource(R.string.report_previous_page))
+                }
+                Text(
+                    stringResource(R.string.report_page_position, shown.first + 1, shown.last + 1, table.rows.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("report_page_position"),
+                )
+                TextButton(onClick = { requestedPage = page + 1 }, enabled = page < pages - 1, modifier = Modifier.testTag("report_next")) {
+                    Text(stringResource(R.string.report_next_page))
+                }
+            }
         }
     }
 }

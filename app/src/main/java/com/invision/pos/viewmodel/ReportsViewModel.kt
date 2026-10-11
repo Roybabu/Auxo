@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -72,7 +74,7 @@ sealed interface ReportsEvent {
     data class Export(val file: ExportFile) : ReportsEvent
 }
 
-/** Builds the chosen report from saved data whenever a filter changes. */
+/** Builds the chosen report from saved data when a filter or the underlying data changes. */
 class ReportsViewModel(
     private val billing: BillingRepository,
     private val inventory: InventoryRepository,
@@ -129,11 +131,34 @@ class ReportsViewModel(
         val period = ReportPeriod.of(filters.preset, today, filters.customFrom, filters.customTo)
         _uiState.update { it.copy(isLoading = true, loadFailed = false, period = period) }
         loadJob = viewModelScope.launch {
-            val table = runCatching { build(filters, period, today) }
-                .onFailure { if (it is CancellationException) throw it }
-                .getOrNull()
-            _uiState.update { it.copy(isLoading = false, loadFailed = table == null, table = table) }
+            val (from, to) = period.bounds(clock.zone)
+            try {
+                // Builds the report now and again whenever the data behind it changes.
+                combine(sources(filters, from, to)) { }.collectLatest {
+                    val table = runCatching { build(filters, period, today) }
+                        .onFailure { if (it is CancellationException) throw it }
+                        .getOrNull()
+                    _uiState.update { it.copy(isLoading = false, loadFailed = table == null, table = table) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, loadFailed = true, table = null) }
+            }
         }
+    }
+
+    /** Streams that emit when saved data the chosen report reads from changes. */
+    private fun sources(filters: ReportFilters, from: Long, to: Long): List<Flow<Any?>> = when (filters.type) {
+        ReportType.SALES_SUMMARY, ReportType.ITEM_SALES, ReportType.GST_RATES, ReportType.HSN_SUMMARY ->
+            listOf(billing.observeInvoices(from, to))
+        ReportType.COLLECTIONS -> listOf(billing.observeInvoices(from, to), customers.observeAccountPayments(from, to))
+        ReportType.PURCHASES -> listOf(purchasing.observeReceipts(from, to))
+        ReportType.STOCK_MOVEMENTS, ReportType.WASTAGE -> listOf(inventory.observeMovementHistory(from, to))
+        ReportType.STOCK_VALUE -> listOf(inventory.observeProducts())
+        ReportType.LOW_STOCK -> listOf(inventory.observeProducts(), purchasing.observeSuppliers())
+        ReportType.EXPIRY -> listOf(inventory.observeBatches())
+        ReportType.CUSTOMER_BALANCES -> listOf(customers.observeAccounts())
     }
 
     private suspend fun build(filters: ReportFilters, period: ReportPeriod, today: LocalDate): ReportTable {
