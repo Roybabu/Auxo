@@ -167,7 +167,7 @@ fun ReturnContent(
                 SectionHeader(stringResource(R.string.return_refund_method))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     // Refunds can go back on the account only for sales made to a customer account.
-                    val methods = if (state.invoice?.customerId != null) PaymentMethod.entries else PaymentMethod.MONEY
+                    val methods = if (state.invoice.customerId != null) PaymentMethod.entries else PaymentMethod.MONEY
                     methods.forEach { method ->
                         FilterChip(
                             selected = state.refundMethod == method,
