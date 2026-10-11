@@ -234,10 +234,10 @@ private fun HomeHeaderBlock(
                 Box(
                     modifier = Modifier
                         .size(52.dp)
+                        .testTag("home_logo")
                         .clip(RoundedCornerShape(14.dp))
                         .background(Color.White)
-                        .padding(4.dp)
-                        .testTag("home_logo"),
+                        .padding(4.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
