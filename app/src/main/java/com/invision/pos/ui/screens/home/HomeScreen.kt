@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -143,12 +147,6 @@ private object TemporaryHomeData {
     const val UPI_TODAY = "₹0.00"
 }
 
-private val PanelShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-
-/** The white panel starts at about this fraction of the screen width from the top, as in the design. */
-private const val PANEL_TOP_WIDTH_RATIO = 0.975f
-private val PanelTopMax = 420.dp
-
 @Composable
 private fun HomeDashboard(
     state: HomeUiState.Ready,
@@ -163,7 +161,8 @@ private fun HomeDashboard(
     // The header is dark green, so the status bar icons must be light while Home is showing.
     LightStatusBarIcons(darkIcons = false)
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(HomeGreen)) {
-        val panelTop = (maxWidth * PANEL_TOP_WIDTH_RATIO).coerceAtMost(PanelTopMax)
+        val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val extents = rememberPanelExtents(widthDp = maxWidth.value, heightDp = maxHeight.value, statusBarDp = statusBar.value)
         HomeHeaderBlock(
             storeName = state.storeName,
             hasAlerts = state.inventory.alerts.isNotEmpty(),
@@ -174,13 +173,7 @@ private fun HomeDashboard(
             onAddProduct = onAddProduct,
             onMore = { onNavigate(TopLevelDestination.MORE) },
         )
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = panelTop),
-            shape = PanelShape,
-            color = MaterialTheme.colorScheme.surface,
-        ) {
+        ExpandablePanel(extents = extents) {
             HomePanelContent(
                 state = state,
                 onNavigate = onNavigate,
@@ -378,6 +371,7 @@ private fun HomePanelContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .testTag("home_panel_content")
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.screen, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.xl),
