@@ -1,5 +1,6 @@
 package com.invision.pos.data.repository
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.room.withTransaction
 import com.invision.pos.data.local.InvisionDatabase
 import com.invision.pos.data.local.MovementInfo
@@ -34,7 +35,7 @@ private class CustomerMissingException : RuntimeException("Customer not found")
 
 class RoomBillingRepository(
     private val database: InvisionDatabase,
-    private val zone: () -> ZoneId = { ZoneId.systemDefault() },
+    private val zone: () -> ZoneId = { BusinessTime.ZONE },
 ) : BillingRepository {
 
     private val dao = database.billingDao()

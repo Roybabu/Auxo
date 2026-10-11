@@ -1,5 +1,6 @@
 package com.invision.pos.core.receipt
 
+import com.invision.pos.domain.billing.BusinessTime
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.Context
@@ -70,7 +71,7 @@ object ReceiptOutput {
      * Writes the receipt PDF into the app's cache and returns the file. Receipts
      * written more than a day ago are cleared out first.
      */
-    fun writePdfFile(context: Context, invoice: Invoice, options: ReceiptOptions, zone: ZoneId = ZoneId.systemDefault()): File {
+    fun writePdfFile(context: Context, invoice: Invoice, options: ReceiptOptions, zone: ZoneId = BusinessTime.ZONE): File {
         val dir = File(context.cacheDir, RECEIPT_DIR).apply { mkdirs() }
         val cutoff = System.currentTimeMillis() - STALE_AFTER_MILLIS
         dir.listFiles()?.filter { it.lastModified() < cutoff }?.forEach { it.delete() }
@@ -120,7 +121,7 @@ object ReceiptOutput {
      */
     fun print(context: Context, invoice: Invoice, options: ReceiptOptions): Boolean {
         val printManager = context.getSystemService(PrintManager::class.java) ?: return false
-        val pages = ReceiptRenderer.pages(invoice, options, ZoneId.systemDefault())
+        val pages = ReceiptRenderer.pages(invoice, options, BusinessTime.ZONE)
         val first = pages.first()
         val mediaSize = when (options.paper) {
             ReceiptPaper.A4 -> PrintAttributes.MediaSize.ISO_A4

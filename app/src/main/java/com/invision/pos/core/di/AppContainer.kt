@@ -1,5 +1,6 @@
 package com.invision.pos.core.di
 
+import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
 import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.local.InvisionDatabase
@@ -36,7 +37,7 @@ import java.time.Clock
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
-    val clock: Clock = Clock.systemDefaultZone()
+    val clock: Clock = BusinessTime.clock()
 
     private val database: InvisionDatabase by lazy { InvisionDatabase.create(appContext) }
 

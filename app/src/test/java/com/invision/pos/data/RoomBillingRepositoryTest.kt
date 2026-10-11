@@ -131,6 +131,39 @@ class RoomBillingRepositoryTest {
     }
 
     @Test
+    fun numbering_followsIndianTimeAtTheFinancialYearBoundary() = runTest {
+        val biscuits = saveNew(TestData.biscuits(expiry = null))
+        val line = CartLine.from(biscuits, biscuits.variants[0])
+        val ist = billingInBusinessZone()
+        fun utc(day: Int, hour: Int, minute: Int) =
+            java.time.LocalDate.of(2027, 3, day).atTime(hour, minute).toInstant(ZoneOffset.UTC).toEpochMilli()
+
+        // 18:29 UTC on 31 March is 23:59 in India, still the old financial year.
+        assertEquals("INV/26-27/00001", (ist.recordSale(sale(line, at = utc(31, 18, 29)), "INV") as SaleResult.Recorded).number)
+        // 18:30 UTC is midnight in India, the first minute of 1 April.
+        assertEquals("INV/27-28/00001", (ist.recordSale(sale(line, at = utc(31, 18, 30)), "INV") as SaleResult.Recorded).number)
+    }
+
+    @Test
+    fun numbering_ignoresTheDevicesOwnTimeZone() = runTest {
+        val biscuits = saveNew(TestData.biscuits(expiry = null))
+        val line = CartLine.from(biscuits, biscuits.variants[0])
+        val ist = billingInBusinessZone()
+        // 20:00 UTC on 31 March is 01:30 on 1 April in India, but still 31 March in New York.
+        val instant = java.time.LocalDate.of(2027, 3, 31).atTime(20, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+        val original = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+            assertEquals("INV/27-28/00001", (ist.recordSale(sale(line, at = instant), "INV") as SaleResult.Recorded).number)
+        } finally {
+            java.util.TimeZone.setDefault(original)
+        }
+    }
+
+    /** A repository built the way the app builds it, with no zone override. */
+    private fun billingInBusinessZone() = RoomBillingRepository(database)
+
+    @Test
     fun return_restocksMarksLinesAndRecordsRefund() = runTest {
         val shirt = saveNew(TestData.tShirt())
         val saleId = (billing.recordSale(sale(CartLine.from(shirt, shirt.variants[0], quantity = 3)), "INV") as SaleResult.Recorded).invoiceId

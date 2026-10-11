@@ -1,5 +1,6 @@
 package com.invision.pos.ui.format
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.invision.pos.core.format.MoneyFormatter
 import java.time.Instant
@@ -17,6 +18,6 @@ object DateFormats {
 
     fun date(date: LocalDate): String = dateFormatter.format(date)
 
-    fun dateTime(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String =
+    fun dateTime(epochMillis: Long, zone: ZoneId = BusinessTime.ZONE): String =
         dateTimeFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
 }

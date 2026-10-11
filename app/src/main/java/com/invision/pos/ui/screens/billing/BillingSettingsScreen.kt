@@ -1,5 +1,6 @@
 package com.invision.pos.ui.screens.billing
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -223,7 +224,7 @@ fun BillingSettingsContent(
                 }
                 val example = InvoiceNumbers.format(
                     settings.invoicePrefix.ifEmpty { "INV" },
-                    InvoiceNumbers.financialYearStart(LocalDate.now()),
+                    InvoiceNumbers.financialYearStart(LocalDate.now(BusinessTime.ZONE)),
                     1,
                 )
                 Text(
