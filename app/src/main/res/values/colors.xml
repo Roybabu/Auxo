@@ -2,5 +2,5 @@
 <resources>
     <!-- Used before Compose draws its first frame (window and launcher). -->
     <color name="window_background">#FFF8FAF9</color>
-    <color name="ic_launcher_background">#FF047857</color>
+    <color name="ic_launcher_background">#FFFFFFFF</color>
 </resources>
