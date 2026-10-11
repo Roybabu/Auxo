@@ -11,6 +11,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.invision.pos.ui.InvisionApp
+import com.invision.pos.ui.LocalStoreLogo
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.theme.InvisionTheme
 
@@ -37,9 +38,10 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
+            val logo by container.storeLogoRepository.logo.collectAsStateWithLifecycle()
             val suppliers by shop.suppliers.collectAsStateWithLifecycle()
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers) {
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalStoreLogo provides logo) {
                     InvisionApp()
                 }
             }

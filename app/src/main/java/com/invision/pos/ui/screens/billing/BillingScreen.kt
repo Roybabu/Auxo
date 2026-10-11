@@ -57,6 +57,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -128,6 +129,8 @@ interface BillingActions {
     fun onPaymentMethodChange(key: Int, method: PaymentMethod) = Unit
     fun onPaymentAmountChange(key: Int, amount: String) = Unit
     fun onTenderedChange(key: Int, tendered: String) = Unit
+    fun onPaymentAmountDone(key: Int) = Unit
+    fun onTenderedDone(key: Int) = Unit
     fun onReferenceChange(key: Int, reference: String) = Unit
     fun onAddSplit() = Unit
     fun onRemovePayment(key: Int) = Unit
@@ -156,7 +159,6 @@ fun BillingScreen(
             when (event) {
                 is BillingEvent.Completed -> currentOnCompleted(event.invoiceId, event.change.minorUnits)
                 is BillingEvent.OutOfStock -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_out_of_stock_message, event.name))
-                is BillingEvent.StockLimit -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_stock_limit, event.name, event.available))
                 is BillingEvent.BarcodeNotFound -> {
                     val result = snackbarHostState.showSnackbar(
                         message = resources.getString(R.string.billing_barcode_not_found, event.barcode),
@@ -226,6 +228,8 @@ fun BillingScreen(
             override fun onPaymentMethodChange(key: Int, method: PaymentMethod) = viewModel.onPaymentMethodChange(key, method)
             override fun onPaymentAmountChange(key: Int, amount: String) = viewModel.onPaymentAmountChange(key, amount)
             override fun onTenderedChange(key: Int, tendered: String) = viewModel.onTenderedChange(key, tendered)
+            override fun onPaymentAmountDone(key: Int) = viewModel.onPaymentAmountDone(key)
+            override fun onTenderedDone(key: Int) = viewModel.onTenderedDone(key)
             override fun onReferenceChange(key: Int, reference: String) = viewModel.onReferenceChange(key, reference)
             override fun onAddSplit() = viewModel.addSplitPayment()
             override fun onRemovePayment(key: Int) = viewModel.removePayment(key)
@@ -467,6 +471,7 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                     issue = state.check.lineIssues[line.variantId]?.let { lineIssueText(it) },
                     discountOpen = state.editingDiscountFor == line.variantId,
                     discountInput = state.lineDiscounts[line.variantId] ?: DiscountInput(),
+                    canIncrease = line.canIncrease,
                     onIncrement = { actions.onIncrement(line.variantId) },
                     onDecrement = { actions.onDecrement(line.variantId) },
                     onRemove = { actions.onRemove(line.variantId) },
@@ -641,6 +646,7 @@ private fun CartLineCard(
     issue: String?,
     discountOpen: Boolean,
     discountInput: DiscountInput,
+    canIncrease: Boolean,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onRemove: () -> Unit,
@@ -673,7 +679,7 @@ private fun CartLineCard(
                     Icon(painterResource(R.drawable.ic_remove), contentDescription = stringResource(R.string.action_decrease))
                 }
                 Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
-                IconButton(onClick = onIncrement) {
+                IconButton(onClick = onIncrement, enabled = canIncrease, modifier = Modifier.testTag("line_increase")) {
                     Icon(painterResource(R.drawable.ic_add), contentDescription = stringResource(R.string.action_increase))
                 }
                 TextButton(onClick = onToggleDiscount) { Text(stringResource(R.string.billing_line_discount)) }
@@ -1030,17 +1036,18 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                     }
                     InvisionTextField(
                         value = draft.amount,
-                        onValueChange = { actions.onPaymentAmountChange(draft.key, it.filter { c -> c.isDigit() || c == '.' }.take(12)) },
+                        onValueChange = { actions.onPaymentAmountChange(draft.key, it) },
                         label = stringResource(R.string.payment_amount),
                         prefix = stringResource(R.string.currency_prefix),
                         error = error?.takeIf { it.name.startsWith("AMOUNT") }?.let { stringResource(it.messageRes()) },
                         keyboardType = KeyboardType.Decimal,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .onFocusChanged { if (!it.isFocused) actions.onPaymentAmountDone(draft.key) }
                             .testTag("payment_amount_${draft.key}"),
                     )
                     when (draft.method) {
-                        PaymentMethod.CASH -> CashFields(draft.amount, draft.tendered, error, onTendered = { actions.onTenderedChange(draft.key, it) })
+                        PaymentMethod.CASH -> CashFields(draft.amount, draft.tendered, error, onTendered = { actions.onTenderedChange(draft.key, it) }, onTenderedDone = { actions.onTenderedDone(draft.key) })
                         PaymentMethod.UPI -> {
                             val amount = Money.parseOrNull(draft.amount)
                             if (settings != null && settings.upiId.isNotBlank() && amount != null && !amount.isZero) {
@@ -1129,18 +1136,19 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CashFields(amountText: String, tendered: String, error: PaymentError?, onTendered: (String) -> Unit) {
+private fun CashFields(amountText: String, tendered: String, error: PaymentError?, onTendered: (String) -> Unit, onTenderedDone: () -> Unit) {
     val formatter = LocalMoneyFormatter.current
     val amount = Money.parseOrNull(amountText)
     InvisionTextField(
         value = tendered,
-        onValueChange = { onTendered(it.filter { c -> c.isDigit() || c == '.' }.take(12)) },
+        onValueChange = onTendered,
         label = stringResource(R.string.payment_tendered),
         prefix = stringResource(R.string.currency_prefix),
         error = error?.takeIf { it.name.startsWith("TENDERED") }?.let { stringResource(it.messageRes()) },
         keyboardType = KeyboardType.Decimal,
         modifier = Modifier
             .fillMaxWidth()
+            .onFocusChanged { if (!it.isFocused) onTenderedDone() }
             .testTag("payment_tendered"),
     )
     if (amount != null && !amount.isZero) {

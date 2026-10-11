@@ -52,6 +52,7 @@ import com.invision.pos.core.receipt.isThermal
 import com.invision.pos.domain.model.InvoiceSummary
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.ReceiptPaper
+import com.invision.pos.ui.LocalStoreLogo
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -77,6 +78,7 @@ fun InvoiceDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val logo = LocalStoreLogo.current
     val resources = LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -125,14 +127,14 @@ fun InvoiceDetailScreen(
                 state = state,
                 onPaperChange = viewModel::onPaperChange,
                 onPrint = {
-                    if (!ReceiptOutput.print(context, state.invoice, state.receiptOptions)) {
+                    if (!ReceiptOutput.print(context, state.invoice, state.receiptOptions, logo)) {
                         scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.invoice_print_failed)) }
                     }
                 },
                 onShare = {
                     scope.launch {
                         val title = resources.getString(R.string.invoice_share_title)
-                        if (!ReceiptOutput.share(context, state.invoice, state.receiptOptions, title)) {
+                        if (!ReceiptOutput.share(context, state.invoice, state.receiptOptions, title, logo)) {
                             snackbarHostState.showSnackbar(resources.getString(R.string.invoice_share_failed))
                         }
                     }
@@ -160,7 +162,8 @@ fun InvoiceDetailContent(
     zone: ZoneId = BusinessTime.ZONE,
 ) {
     val invoice = state.invoice
-    val pages = remember(invoice, state.receiptOptions) { ReceiptRenderer.pages(invoice, state.receiptOptions, zone) }
+    val logo = LocalStoreLogo.current
+    val pages = remember(invoice, state.receiptOptions, logo) { ReceiptRenderer.pages(invoice, state.receiptOptions, zone, logo) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = Spacing.screen, vertical = Spacing.md),

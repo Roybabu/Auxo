@@ -39,6 +39,12 @@ data class CartLine(
 ) {
     val isMenuItem: Boolean get() = menuItemId != null
 
+    /** True while one more unit can still be sold: the "+" button is on only then. */
+    val canIncrease: Boolean get() = availableStock != null && quantity < availableStock
+
+    /** [wanted] kept within what can be sold. An item that cannot be sold at all is left as asked. */
+    fun withinStock(wanted: Int): Int = if (availableStock == null) wanted else wanted.coerceAtMost(availableStock)
+
     /** The inventory variant sold, or null for a dish. */
     val stockVariantId: Long? get() = if (menuItemId == null && !isCustom) variantId else null
 
@@ -132,7 +138,8 @@ data class Cart(
         } else {
             copy(lines = lines.map {
                 if (it.variantId == line.variantId) {
-                    it.copy(quantity = it.quantity + line.quantity, availableStock = line.availableStock)
+                    val merged = it.copy(availableStock = line.availableStock)
+                    merged.copy(quantity = merged.withinStock(it.quantity + line.quantity))
                 } else {
                     it
                 }
@@ -141,7 +148,7 @@ data class Cart(
     }
 
     fun setQuantity(variantId: Long, quantity: Int): Cart =
-        if (quantity <= 0) remove(variantId) else updateLine(variantId) { it.copy(quantity = quantity) }
+        if (quantity <= 0) remove(variantId) else updateLine(variantId) { it.copy(quantity = it.withinStock(quantity)) }
 
     fun setLineDiscount(variantId: Long, discount: Discount?): Cart = updateLine(variantId) { it.copy(discount = discount) }
 

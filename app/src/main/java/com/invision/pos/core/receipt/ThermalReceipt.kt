@@ -137,13 +137,6 @@ object ThermalReceiptBuilder {
             payment.change?.let { pair("  Change", IndianNumberFormat.amount(it)) }
         }
 
-        // GST summary
-        if (invoice.gstRegistered && options.showTaxBreakup && invoice.lines.isNotEmpty()) {
-            out += ThermalElement.Divider()
-            out += ThermalElement.Line("GST summary", bold = true)
-            gstSummaryRows(invoice, width).forEach { out += ThermalElement.Line(it) }
-        }
-
         if (invoice.note != null) {
             out += ThermalElement.Divider()
             left("Reason: ${invoice.note}")
@@ -160,36 +153,6 @@ object ThermalReceiptBuilder {
             out += ThermalElement.Barcode(invoice.number)
         }
         return ThermalReceipt(width, out)
-    }
-
-    /** Rate, taxable value and tax columns; falls back to two lines when a row is too wide. */
-    private fun gstSummaryRows(invoice: Invoice, width: Int): List<String> {
-        val groups = invoice.lines.groupBy { it.gstRateBasisPoints }.toSortedMap()
-        val header = if (invoice.interState) listOf("Rate", "Taxable", "IGST") else listOf("Rate", "Taxable", "CGST", "SGST")
-        val rows = groups.map { (rate, lines) ->
-            val taxable = lines.fold(Money.ZERO) { acc, l -> acc + l.taxable }
-            val cgst = lines.fold(Money.ZERO) { acc, l -> acc + l.cgst }
-            val sgst = lines.fold(Money.ZERO) { acc, l -> acc + l.sgst }
-            val igst = lines.fold(Money.ZERO) { acc, l -> acc + l.igst }
-            val values = if (invoice.interState) {
-                listOf(IndianNumberFormat.amount(taxable), IndianNumberFormat.amount(igst))
-            } else {
-                listOf(IndianNumberFormat.amount(taxable), IndianNumberFormat.amount(cgst), IndianNumberFormat.amount(sgst))
-            }
-            listOf(ReceiptText.rate(rate)) + values
-        }
-        val all = listOf(header) + rows
-        val rateWidth = all.maxOf { it[0].length }
-        val valueWidth = (width - rateWidth) / (header.size - 1)
-        val fits = all.all { row -> row.drop(1).all { it.length < valueWidth } } && valueWidth > 0
-        return if (fits) {
-            all.map { row -> row[0].padEnd(rateWidth) + row.drop(1).joinToString("") { it.padStart(valueWidth) } }
-        } else {
-            all.flatMap { row ->
-                listOf(twoColumns(row[0], row[1], width)) +
-                    row.drop(2).mapIndexed { i, value -> twoColumns("  " + header[i + 2], value, width) }
-            }
-        }
     }
 
     private fun signed(amount: Money): String =

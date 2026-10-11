@@ -51,6 +51,23 @@ class ThermalReceiptTest {
     }
 
     @Test
+    fun gstSummary_appearsOnce_andNotAfterThePayments() {
+        for (width in listOf(32, 42, 48)) {
+            val lines = text(ThermalReceiptBuilder.build(sale, ReceiptOptions(), width, ZoneOffset.UTC))
+            assertEquals(0, lines.count { it.contains("GST summary") })
+            // The GST amounts are in the totals, once each, above the payments.
+            assertEquals(1, lines.count { it.startsWith("CGST") })
+            assertEquals(1, lines.count { it.startsWith("SGST") })
+            assertEquals(1, lines.count { it.startsWith("Taxable value") })
+            val paid = lines.indexOfFirst { it.startsWith("Paid by Cash") }
+            assertTrue(lines.indexOfFirst { it.startsWith("CGST") } < paid)
+            assertTrue(lines.drop(paid).none { it.startsWith("CGST") || it.startsWith("SGST") || it.startsWith("IGST") })
+            // Totals and payment details are still there.
+            assertTrue(lines.any { it.startsWith("TOTAL") && it.endsWith("1,557.00") })
+        }
+    }
+
+    @Test
     fun optionsHideSections() {
         val options = ReceiptOptions(showCustomer = false, showHsn = false, showTaxBreakup = false, showInvoiceBarcode = false, footer = "")
         val receipt = ThermalReceiptBuilder.build(sale, options, 32, ZoneOffset.UTC)

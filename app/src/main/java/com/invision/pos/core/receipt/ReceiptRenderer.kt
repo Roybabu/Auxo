@@ -1,13 +1,16 @@
 package com.invision.pos.core.receipt
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.TextUtils
 import com.invision.pos.core.label.LabelRenderer
 import com.invision.pos.core.label.LabelSheetLayout
+import com.invision.pos.core.shop.LogoSizing
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
@@ -24,16 +27,21 @@ class ReceiptPage(val widthPt: Float, val heightPt: Float, val draw: (Canvas) ->
  */
 object ReceiptRenderer {
 
-    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId): List<ReceiptPage> =
+    /** [logo] is the shop's logo; when it is null no room is left for one. */
+    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap? = null): List<ReceiptPage> =
         if (options.paper.isThermal) {
-            listOf(thermalPage(invoice, options, zone))
+            listOf(thermalPage(invoice, options, zone, logo))
         } else {
-            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone), options.paper).pages()
+            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone), options.paper, logo).pages()
         }
+
+    /** Where a logo goes on a thermal roll: centred above the shop name, at most this big. */
+    internal fun thermalLogoSize(logo: Bitmap, printableWidth: Float, lineHeight: Float): Pair<Float, Float> =
+        LogoSizing.contain(logo.width, logo.height, printableWidth * 0.6f, lineHeight * 5f)
 
     // Thermal rolls
 
-    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId): ReceiptPage {
+    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?): ReceiptPage {
         val spec = options.paper.spec
         val receipt = ThermalReceiptBuilder.build(invoice, options, spec.charsPerLine, zone)
         val widthPt = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
@@ -47,8 +55,10 @@ object ReceiptRenderer {
         val fontSize = 10f * (printable / spec.charsPerLine) / charWidthAt10
         val lineHeight = fontSize * 1.3f
         val barcodeHeight = fontSize * 4f
+        val logoSize = logo?.let { thermalLogoSize(it, printable, lineHeight) }
+        val logoBlock = logoSize?.let { it.second + lineHeight / 2 } ?: 0f
 
-        val contentHeight = receipt.elements.sumOf { element ->
+        val contentHeight = logoBlock + receipt.elements.sumOf { element ->
             when (element) {
                 is ThermalElement.Line -> (if (element.large) lineHeight * 2 else lineHeight).toDouble()
                 is ThermalElement.Divider -> lineHeight.toDouble()
@@ -61,6 +71,11 @@ object ReceiptRenderer {
         return ReceiptPage(widthPt, heightPt) { canvas ->
             canvas.drawColor(Color.WHITE)
             var y = margin
+            if (logo != null && logoSize != null) {
+                val target = RectF(margin + (printable - logoSize.first) / 2, y, margin + (printable + logoSize.first) / 2, y + logoSize.second)
+                canvas.drawBitmap(logo, null, target, logoPaint)
+                y += logoBlock
+            }
             for (element in receipt.elements) {
                 when (element) {
                     is ThermalElement.Line -> {
@@ -98,6 +113,8 @@ object ReceiptRenderer {
         }
     }
 
+    private val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+
     private fun monoPaint() = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
         color = Color.BLACK
         typeface = Typeface.MONOSPACE
@@ -105,7 +122,7 @@ object ReceiptRenderer {
 }
 
 /** Draws an A5 or A4 tax invoice, adding pages when the item table is long. */
-private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) {
+private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, private val logo: Bitmap? = null) {
     private val spec = paper.spec
     private val pageWidth = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
     private val pageHeight = LabelSheetLayout.mmToPoints(spec.paperHeightMm ?: 297f)
@@ -123,6 +140,11 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) 
     }
     private val rule = Paint().apply { color = Color.BLACK; strokeWidth = 0.6f }
     private val fill = Paint().apply { color = Color.rgb(235, 235, 235); style = Paint.Style.FILL }
+    private val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+    /** The logo's size on the page: top left, above the seller, in proportion to the text. */
+    private val logoSize: Pair<Float, Float>? = logo?.let { LogoSizing.contain(it.width, it.height, contentWidth * 0.3f, line * 4f) }
+    private val logoBlock: Float = logoSize?.let { it.second + line * 0.4f } ?: 0f
 
     fun pages(): List<ReceiptPage> {
         val rowHeights = doc.rows.indices.map { rowHeight(it) }
@@ -179,11 +201,15 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper) 
         val left = 1.6f * line + doc.sellerLines.size * line
         val right = 1.6f * line + doc.detailLines.size * line
         val buyer = if (doc.buyerLines.isEmpty()) 0f else line * (doc.buyerLines.size + 1) + line
-        return max(left, right) + line + buyer
+        return logoBlock + max(left, right) + line + buyer
     }
 
     private fun drawHeader(canvas: Canvas, top: Float): Float {
         var y = top
+        if (logo != null && logoSize != null) {
+            canvas.drawBitmap(logo, null, RectF(margin, y, margin + logoSize.first, y + logoSize.second), logoPaint)
+            y += logoBlock
+        }
         bold.textSize = base * 1.6f
         canvas.drawText(fit(doc.sellerName, contentWidth * 0.55f, bold), margin, y + line * 1.2f, bold)
         bold.textSize = base

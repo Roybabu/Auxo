@@ -71,12 +71,12 @@ object ReceiptOutput {
      * Writes the receipt PDF into the app's cache and returns the file. Receipts
      * written more than a day ago are cleared out first.
      */
-    fun writePdfFile(context: Context, invoice: Invoice, options: ReceiptOptions, zone: ZoneId = BusinessTime.ZONE): File {
+    fun writePdfFile(context: Context, invoice: Invoice, options: ReceiptOptions, zone: ZoneId = BusinessTime.ZONE, logo: Bitmap? = null): File {
         val dir = File(context.cacheDir, RECEIPT_DIR).apply { mkdirs() }
         val cutoff = System.currentTimeMillis() - STALE_AFTER_MILLIS
         dir.listFiles()?.filter { it.lastModified() < cutoff }?.forEach { it.delete() }
         val file = File(dir, fileName(invoice))
-        FileOutputStream(file).use { writePdf(ReceiptRenderer.pages(invoice, options, zone), it) }
+        FileOutputStream(file).use { writePdf(ReceiptRenderer.pages(invoice, options, zone, logo), it) }
         return file
     }
 
@@ -100,8 +100,8 @@ object ReceiptOutput {
      * Writes the PDF off the main thread and opens the share sheet. Returns false
      * if the file couldn't be written or no app can receive it.
      */
-    suspend fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String): Boolean {
-        val file = runCatching { withContext(Dispatchers.IO) { writePdfFile(context, invoice, options) } }
+    suspend fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String, logo: Bitmap? = null): Boolean {
+        val file = runCatching { withContext(Dispatchers.IO) { writePdfFile(context, invoice, options, logo = logo) } }
             .onFailure { if (it is CancellationException) throw it }
             .getOrNull() ?: return false
         return try {
@@ -119,9 +119,9 @@ object ReceiptOutput {
      * Sends the receipt to the Android print system. Must be called with an
      * Activity context. Returns false if printing couldn't be started.
      */
-    fun print(context: Context, invoice: Invoice, options: ReceiptOptions): Boolean {
+    fun print(context: Context, invoice: Invoice, options: ReceiptOptions, logo: Bitmap? = null): Boolean {
         val printManager = context.getSystemService(PrintManager::class.java) ?: return false
-        val pages = ReceiptRenderer.pages(invoice, options, BusinessTime.ZONE)
+        val pages = ReceiptRenderer.pages(invoice, options, BusinessTime.ZONE, logo)
         val first = pages.first()
         val mediaSize = when (options.paper) {
             ReceiptPaper.A4 -> PrintAttributes.MediaSize.ISO_A4

@@ -15,6 +15,7 @@ import com.invision.pos.testutil.FakeSettingsRepository
 import com.invision.pos.testutil.MainDispatcherRule
 import com.invision.pos.testutil.TestData
 import com.invision.pos.testutil.payInFull
+import com.invision.pos.testutil.record
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -109,12 +110,33 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun quantityIsLimitedByStock() = runTest {
+    fun quantityIsLimitedByStock_withNoMessage() = runTest {
         val viewModel = createViewModel()
+        val events = record(viewModel.events)
         viewModel.onBarcodeScanned(TestData.EAN[1]) // L Navy, 1 in stock
+        assertFalse(viewModel.uiState.value.cart.lines.single().canIncrease) // the "+" button is off
         viewModel.increment(12)
-        assertEquals(BillingEvent.StockLimit("Cotton T-Shirt", 1), viewModel.events.first())
+        viewModel.onBarcodeScanned(TestData.EAN[1]) // scanning it again adds nothing either
         assertEquals(1, viewModel.uiState.value.cart.itemCount)
+        assertTrue(events.isEmpty())
+    }
+
+    @Test
+    fun plusStaysOn_untilTheLastUnitIsOnTheBill() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onBarcodeScanned(TestData.EAN[0]) // 8 in stock
+        repeat(6) { viewModel.increment(11) }
+        assertEquals(7, viewModel.uiState.value.cart.lines.single().quantity)
+        assertTrue(viewModel.uiState.value.cart.lines.single().canIncrease)
+        viewModel.increment(11)
+        assertEquals(8, viewModel.uiState.value.cart.lines.single().quantity)
+        assertFalse(viewModel.uiState.value.cart.lines.single().canIncrease)
+        viewModel.increment(11)
+        viewModel.setQuantity(11, 20) // the quantity itself is capped, not only the button
+        assertEquals(8, viewModel.uiState.value.cart.lines.single().quantity)
+        viewModel.decrement(11) // reducing still works
+        assertEquals(7, viewModel.uiState.value.cart.lines.single().quantity)
+        assertTrue(viewModel.uiState.value.cart.lines.single().canIncrease)
     }
 
     @Test
@@ -170,10 +192,7 @@ class BillingViewModelTest {
         viewModel.proceedToPayment()
         val state = viewModel.uiState.value
         assertEquals(BillingStage.PAYMENT, state.stage)
-        assertEquals("0.00", state.payments.single().amount)
-        // Typing into the untouched 0.00 replaces it.
-        viewModel.onPaymentAmountChange(state.payments.single().key, "0.00499")
-        assertEquals("499", viewModel.uiState.value.payments.single().amount)
+        assertEquals("499.00", state.payments.single().amount) // the whole bill, ready to charge
         viewModel.onTenderedChange(state.payments.single().key, "500")
         assertEquals(Money(100), viewModel.uiState.value.change)
         viewModel.completeSale()
@@ -198,8 +217,10 @@ class BillingViewModelTest {
         viewModel.addSplitPayment()
         val second = viewModel.uiState.value.payments.last()
         assertEquals(PaymentMethod.UPI, second.method)
-        assertEquals("0.00", second.amount)
-        assertEquals(Money(19_900), viewModel.uiState.value.paymentRemaining)
+        assertEquals("199.00", second.amount) // what is still unpaid
+        assertTrue(viewModel.uiState.value.paymentRemaining.isZero)
+        viewModel.onPaymentAmountChange(second.key, "150")
+        assertEquals(Money(4_900), viewModel.uiState.value.paymentRemaining) // part payment is flagged
         viewModel.onPaymentAmountChange(second.key, "199")
         assertTrue(viewModel.uiState.value.paymentRemaining.isZero)
         viewModel.completeSale()
@@ -208,21 +229,47 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun paymentPage_startsAtZero_andNothingSavesUntilAnAmountIsEntered() = runTest {
+    fun paymentPage_startsWithTheBillTotal_andCanBeEdited() = runTest {
         val viewModel = createViewModel()
         viewModel.onBarcodeScanned(TestData.EAN[0])
         viewModel.proceedToPayment()
-        assertEquals("0.00", viewModel.uiState.value.payments.single().amount)
-        assertEquals(Money(49_900), viewModel.uiState.value.paymentRemaining)
+        assertEquals("499.00", viewModel.uiState.value.payments.single().amount)
+        assertTrue(viewModel.uiState.value.paymentRemaining.isZero)
 
-        viewModel.completeSale()
-        assertTrue(viewModel.uiState.value.paymentShowErrors)
-        assertTrue(billing.invoices.value.isEmpty())
-
-        // Typing before the 0.00 is kept as typed, and clearing the box leaves it empty.
+        // Clearing the box leaves it empty, and an empty amount cannot be saved.
         val key = viewModel.uiState.value.payments.single().key
         viewModel.onPaymentAmountChange(key, "")
         assertEquals("", viewModel.uiState.value.payments.single().amount)
+        assertEquals(Money(49_900), viewModel.uiState.value.paymentRemaining)
+        viewModel.completeSale()
+        assertTrue(viewModel.uiState.value.paymentShowErrors)
+        assertTrue(billing.invoices.value.isEmpty())
+    }
+
+    @Test
+    fun cashReceived_isShownWithTwoDecimals_onceTheFieldIsLeft() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onBarcodeScanned(TestData.EAN[0])
+        viewModel.proceedToPayment()
+        val key = viewModel.uiState.value.payments.single().key
+
+        // While typing nothing is added.
+        viewModel.onTenderedChange(key, "500")
+        assertEquals("500", viewModel.uiState.value.payments.single().tendered)
+        assertEquals(Money(100), viewModel.uiState.value.change)
+        viewModel.onTenderedDone(key)
+        assertEquals("500.00", viewModel.uiState.value.payments.single().tendered)
+
+        viewModel.onTenderedChange(key, "1.5.0")
+        assertEquals("1.50", viewModel.uiState.value.payments.single().tendered)
+        viewModel.onTenderedChange(key, "99.5")
+        viewModel.onTenderedDone(key)
+        assertEquals("99.50", viewModel.uiState.value.payments.single().tendered)
+
+        // A payment amount is tidied the same way.
+        viewModel.onPaymentAmountChange(key, "499.5")
+        viewModel.onPaymentAmountDone(key)
+        assertEquals("499.50", viewModel.uiState.value.payments.single().amount)
     }
 
     @Test

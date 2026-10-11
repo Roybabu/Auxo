@@ -85,6 +85,20 @@ class InventorySummaryCalculatorTest {
     }
 
     @Test
+    fun lowStock_countsUnitsOfZeroAndOne_butNotTwo_whenNoThresholdIsSet() {
+        val product = TestData.tShirt().copy(
+            variants = listOf(
+                TestData.variant(id = 11, barcode = TestData.EAN[0], stock = 1, lowStock = 0),
+                TestData.variant(id = 12, barcode = TestData.EAN[1], stock = 2, lowStock = 0),
+                TestData.variant(id = 13, barcode = TestData.EAN[2], stock = 0, lowStock = 0),
+            ),
+        )
+        val summary = InventorySummaryCalculator.calculate(listOf(product), TestData.today)
+        assertEquals(1, summary.lowStockCount)
+        assertEquals(1, summary.outOfStockCount)
+    }
+
+    @Test
     fun alertsAreCapped() {
         val products = (1L..10L).map { TestData.juice(id = it, stock = 0) }
         val summary = InventorySummaryCalculator.calculate(products, TestData.today, maxAlerts = 3)

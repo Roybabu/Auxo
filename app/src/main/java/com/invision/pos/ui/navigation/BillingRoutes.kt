@@ -15,7 +15,6 @@ object BillingRoutes {
     const val INVOICE = "$PREFIX/invoice/{$ARG_INVOICE_ID}?$ARG_NOTICE={$ARG_NOTICE}&$ARG_CHANGE={$ARG_CHANGE}"
     const val HISTORY = "$PREFIX/history"
     const val RETURN = "$PREFIX/return/{$ARG_INVOICE_ID}"
-    const val SETTINGS = "$PREFIX/settings"
 
     fun invoice(invoiceId: Long): String = "$PREFIX/invoice/$invoiceId"
 

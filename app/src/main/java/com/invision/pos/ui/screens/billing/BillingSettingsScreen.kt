@@ -57,6 +57,8 @@ import java.time.LocalDate
 fun BillingSettingsScreen(
     onBack: () -> Unit,
     viewModel: BillingSettingsViewModel = viewModel(factory = BillingSettingsViewModel.Factory),
+    /** Extra content shown above the billing settings (Store details adds the logo here). */
+    topSection: (@Composable () -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -98,6 +100,7 @@ fun BillingSettingsScreen(
                 onGstinChange = viewModel::onGstinChange,
                 onSave = viewModel::save,
                 modifier = modifier,
+                topSection = topSection,
             )
         }
     }
@@ -111,6 +114,7 @@ fun BillingSettingsContent(
     onGstinChange: (String) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    topSection: (@Composable () -> Unit)? = null,
 ) {
     val settings = state.settings
     val errors = state.visibleErrors
@@ -125,6 +129,10 @@ fun BillingSettingsContent(
         contentPadding = PaddingValues(horizontal = Spacing.screen, vertical = Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
+        if (topSection != null) {
+            item(key = "top") { topSection() }
+        }
+
         item(key = "store") {
             SettingsCard(stringResource(R.string.settings_store)) {
                 InvisionTextField(

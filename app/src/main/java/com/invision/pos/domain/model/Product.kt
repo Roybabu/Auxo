@@ -32,10 +32,19 @@ data class ProductVariant(
     /** Batches with stock, earliest expiry first. Empty for items not kept in batches. */
     val batches: List<StockBatch> = emptyList(),
 ) {
+    /**
+     * Stock at or below this is low. A level set on the item is kept; without one, anything under
+     * two units is low ([DEFAULT_LOW_STOCK_LEVEL]).
+     */
+    val effectiveLowStockLevel: Int get() = if (lowStockThreshold > 0) lowStockThreshold else DEFAULT_LOW_STOCK_LEVEL
+
+    /** Out of stock, or low: worked out from the stock now, never saved as a flag. */
+    val needsRestock: Boolean get() = stockQuantity <= effectiveLowStockLevel
+
     val stockStatus: StockStatus
         get() = when {
             stockQuantity <= 0 -> StockStatus.OUT_OF_STOCK
-            stockQuantity <= lowStockThreshold -> StockStatus.LOW_STOCK
+            stockQuantity <= effectiveLowStockLevel -> StockStatus.LOW_STOCK
             else -> StockStatus.IN_STOCK
         }
 
@@ -92,3 +101,6 @@ data class Product(
 
     val highestPrice: Money? get() = variants.maxOfOrNull { it.sellingPrice }
 }
+
+/** Low-stock level used when an item has none of its own: 0 or 1 unit is low, 2 or more is not. */
+const val DEFAULT_LOW_STOCK_LEVEL = 1

@@ -3,7 +3,12 @@ package com.invision.pos.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -13,6 +18,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.appearance.AppAccent
 import com.invision.pos.core.appearance.AppearanceSettings
+import com.invision.pos.ui.screens.more.AppearanceContent
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.theme.InvisionTheme
@@ -32,41 +38,91 @@ class AppearanceScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun scrollToAppearance() {
-        composeRule.onNodeWithTag("more_list").performScrollToNode(hasTestTag("appearance"))
+    @Test
+    fun morePage_hasOneAppearanceRow_andNoInlineControls() {
+        var opened = 0
+        composeRule.setContent {
+            InvisionTheme {
+                MoreScreen(
+                    actions = object : MoreActions {
+                        override fun onOpenAppearance() {
+                            opened++
+                        }
+                    },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("more_list").performScrollToNode(hasTestTag("more_appearance"))
+        composeRule.onAllNodesWithText("Appearance").assertCountEquals(1)
+        composeRule.onNodeWithText("Theme and app colors").assertIsDisplayed()
+        composeRule.onNodeWithTag("dark_mode_switch").assertDoesNotExist()
+        composeRule.onNodeWithTag("accent_ocean").assertDoesNotExist()
+        composeRule.onNodeWithText("App colour").assertDoesNotExist()
+
+        // The whole row opens the screen, not just its icon.
+        composeRule.onNodeWithText("Theme and app colors").performClick()
+        assertEquals(1, opened)
+        composeRule.onNodeWithTag("more_appearance").performClick()
+        assertEquals(2, opened)
     }
 
     @Test
-    fun morePage_offersEightColours_andMarksTheChosenOne() {
+    fun morePage_noLongerListsBillingSettings() {
+        composeRule.setContent { InvisionTheme { MoreScreen(actions = object : MoreActions {}) } }
+        composeRule.onNodeWithTag("more_list").performScrollToNode(hasTestTag("more_appearance"))
+        composeRule.onNodeWithText("Billing settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Store details, GST, UPI and receipts").assertDoesNotExist()
+    }
+
+    @Test
+    fun appearanceScreen_offersEightColours_andMarksTheChosenOne() {
         composeRule.setContent {
             InvisionTheme {
-                MoreScreen(actions = object : MoreActions {}, appearance = AppearanceSettings(accent = AppAccent.OCEAN))
+                AppearanceContent(AppearanceSettings(accent = AppAccent.OCEAN), onBack = {}, onAccentChange = {}, onDarkModeChange = {})
             }
         }
-        scrollToAppearance()
         composeRule.onNodeWithText("App colour").assertIsDisplayed()
+        composeRule.onNodeWithTag("dark_mode_switch").assertIsDisplayed()
         AppAccent.entries.forEach { composeRule.onNodeWithTag("accent_${it.id}").assertExists() }
         composeRule.onNodeWithTag("accent_ocean").assertIsSelected()
     }
 
     @Test
-    fun tappingAColour_andTheDarkSwitch_reportTheChoice() {
+    fun appearanceScreen_tappingAColour_andTheDarkSwitch_reportTheChoice() {
         var accent: AppAccent? = null
         var dark: Boolean? = null
         composeRule.setContent {
             InvisionTheme {
-                MoreScreen(
-                    actions = object : MoreActions {},
-                    onAccentChange = { accent = it },
-                    onDarkModeChange = { dark = it },
-                )
+                AppearanceContent(AppearanceSettings(), onBack = {}, onAccentChange = { accent = it }, onDarkModeChange = { dark = it })
             }
         }
-        scrollToAppearance()
         composeRule.onNodeWithTag("accent_violet").performClick()
         composeRule.onNodeWithTag("dark_mode_switch").performClick()
         assertEquals(AppAccent.VIOLET, accent)
         assertEquals(true, dark)
+    }
+
+    @Test
+    fun appearanceScreen_changesApplyImmediately_andBackWorks() {
+        var back = 0
+        composeRule.setContent {
+            var settings by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(AppearanceSettings()) }
+            InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
+                AppearanceContent(
+                    settings,
+                    onBack = { back++ },
+                    onAccentChange = { settings = settings.copy(accent = it) },
+                    onDarkModeChange = { settings = settings.copy(darkMode = it) },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("dark_mode_switch").assertIsOff()
+        composeRule.onNodeWithTag("dark_mode_switch").performClick()
+        composeRule.onNodeWithTag("dark_mode_switch").assertIsOn()
+        composeRule.onNodeWithTag("accent_rose").performClick()
+        composeRule.onNodeWithTag("accent_rose").assertIsSelected()
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        assertEquals(1, back)
     }
 
     @Test

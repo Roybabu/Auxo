@@ -310,7 +310,7 @@
     <string name="billing_clear_title">Clear this bill?</string>
     <string name="billing_clear_body">All items and details on this bill will be removed.</string>
     <string name="billing_history">Invoices and payments</string>
-    <string name="billing_settings">Billing settings</string>
+    <string name="billing_settings">Store details</string>
     <string name="billing_setup_title">Finish billing setup</string>
     <string name="billing_setup_body">Add your store\'s state and GSTIN, or mark the store as not GST-registered, before billing.</string>
     <string name="billing_setup_action">Open settings</string>
@@ -344,7 +344,6 @@
     <string name="billing_fix_cart">Fix the highlighted items first</string>
     <string name="billing_stock_changed">Stock changed while billing. Check the highlighted items.</string>
     <string name="billing_out_of_stock_message">%1$s is out of stock</string>
-    <string name="billing_stock_limit">Only %2$d of %1$s in stock</string>
     <string name="billing_barcode_not_found">No item has barcode %1$s</string>
     <string name="billing_ingredients_short">Not enough ingredients in stock for: %1$s</string>
     <string name="billing_menu_title">Menu</string>
@@ -474,7 +473,7 @@
     <string name="return_nothing_left">Everything on this invoice has been returned.</string>
 
     <!-- Billing settings -->
-    <string name="settings_title">Billing settings</string>
+    <string name="settings_title">Store details</string>
     <string name="settings_store">Store details</string>
     <string name="settings_store_name">Store name</string>
     <string name="settings_address">Address</string>
@@ -530,7 +529,18 @@
     <string name="shop_suppliers_body">Turn this off to hide everything about suppliers: Suppliers, Purchase orders, Receive stock, supplier fields and purchase figures. Nothing is deleted, and it all comes back when you turn this on.</string>
     <string name="shop_restaurant_menu">Restaurant menu</string>
     <string name="shop_restaurant_menu_body">Turn this on if you sell dishes. You can then add dishes and prices, and sell them from the billing page.</string>
-    <string name="more_billing_settings_body">Store details, GST, UPI and receipts</string>
+    <string name="store_details_title">Store details</string>
+    <string name="store_details_body">Name, address, GST, UPI, receipts and logo</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_row_body">Theme and app colors</string>
+    <string name="store_logo_title">Store logo</string>
+    <string name="store_logo_body">Shown beside your shop name on Home and printed at the top of invoices and receipts.</string>
+    <string name="store_logo_choose">Choose logo</string>
+    <string name="store_logo_replace">Replace logo</string>
+    <string name="store_logo_remove">Remove logo</string>
+    <string name="store_logo_placeholder">No logo yet</string>
+    <string name="store_logo_description">Store logo</string>
+    <string name="store_logo_error">That picture could not be read. Choose a PNG or JPEG image.</string>
     <string name="more_history_body">Past invoices, returns and payment records</string>
 
     <!-- Shared: forms, export and item search -->
@@ -855,7 +865,7 @@ in %2$s</string>
     <string name="backup_error_unreadable">That file could not be opened.</string>
     <string name="backup_error_save">The backup could not be saved. Check that the phone has free space and try again.</string>
     <string name="backup_error_restore">Restoring failed and your data on this phone was kept as it was.</string>
-    <string name="more_section_appearance">Appearance</string>
+    <string name="more_section_appearance">App</string>
     <string name="appearance_dark_mode">Dark mode</string>
     <string name="appearance_dark_mode_body">Black backgrounds with light text</string>
     <string name="appearance_colour">App colour</string>

@@ -307,7 +307,7 @@ private fun SuggestionRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = stringResource(R.string.alerts_stock_line, unit.format(variant.stockQuantity), unit.format(variant.lowStockThreshold)),
+                    text = stringResource(R.string.alerts_stock_line, unit.format(variant.stockQuantity), unit.format(variant.effectiveLowStockLevel)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

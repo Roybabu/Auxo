@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,9 +31,13 @@ import com.invision.pos.viewmodel.ShopViewModel
 
 /** The parts of the app this shop uses. */
 @Composable
-fun ShopSettingsScreen(onBack: () -> Unit, viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory)) {
+fun ShopSettingsScreen(
+    onBack: () -> Unit,
+    onOpenStoreDetails: () -> Unit,
+    viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange)
+    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange, onOpenStoreDetails)
 }
 
 @Composable
@@ -40,6 +46,7 @@ fun ShopSettingsContent(
     onBack: () -> Unit,
     onRestaurantMenuChange: (Boolean) -> Unit,
     onSuppliersChange: (Boolean) -> Unit = {},
+    onOpenStoreDetails: () -> Unit = {},
 ) {
     Scaffold(
         topBar = { InvisionTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
@@ -55,6 +62,21 @@ fun ShopSettingsContent(
         ) {
             if (state.shopName != null) {
                 Text(state.shopName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("shop_name"))
+            }
+            InvisionCard(onClick = onOpenStoreDetails, modifier = Modifier.fillMaxWidth().testTag("shop_store_details")) {
+                Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(R.drawable.ic_store), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Column(modifier = Modifier
+                        .weight(1f)
+                        .padding(start = Spacing.lg)) {
+                        Text(stringResource(R.string.store_details_title), style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            stringResource(R.string.store_details_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
             InvisionCard(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {

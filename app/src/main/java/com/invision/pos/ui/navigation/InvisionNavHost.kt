@@ -16,7 +16,6 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.ui.screens.billing.BillingScreen
-import com.invision.pos.ui.screens.billing.BillingSettingsScreen
 import com.invision.pos.ui.screens.billing.InvoiceDetailScreen
 import com.invision.pos.ui.screens.billing.InvoiceHistoryScreen
 import com.invision.pos.ui.screens.billing.ReturnScreen
@@ -34,7 +33,9 @@ import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
 import com.invision.pos.ui.screens.more.BackupScreen
 import com.invision.pos.ui.screens.more.MoreActions
+import com.invision.pos.ui.screens.more.AppearanceScreen
 import com.invision.pos.ui.screens.more.ShopSettingsScreen
+import com.invision.pos.ui.screens.more.StoreDetailsScreen
 import com.invision.pos.viewmodel.ShopViewModel
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.purchasing.PurchaseListScreen
@@ -47,7 +48,6 @@ import com.invision.pos.ui.screens.purchasing.SupplierListScreen
 import com.invision.pos.ui.screens.reports.ReportsScreen
 import com.invision.pos.ui.screens.stock.StockAlertsScreen
 import com.invision.pos.ui.screens.stock.StockMovementsScreen
-import com.invision.pos.viewmodel.AppearanceViewModel
 import com.invision.pos.viewmodel.InvoiceNotice
 import com.invision.pos.viewmodel.PurchaseTab
 
@@ -81,7 +81,7 @@ fun InvisionNavHost(
                         navController.navigate(BillingRoutes.savedInvoice(invoiceId, InvoiceNotice.SALE_SAVED, changeMinor))
                     },
                     onOpenHistory = { navController.navigate(BillingRoutes.HISTORY) },
-                    onOpenSettings = { navController.navigate(BillingRoutes.SETTINGS) },
+                    onOpenSettings = { navController.navigate(MoreRoutes.STORE_DETAILS) },
                     onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
                 )
             }
@@ -130,9 +130,6 @@ fun InvisionNavHost(
                         }
                     },
                 )
-            }
-            composable(BillingRoutes.SETTINGS) {
-                BillingSettingsScreen(onBack = { navController.popBackStack() })
             }
         }
         navigation(
@@ -271,15 +268,10 @@ fun InvisionNavHost(
             route = TopLevelDestination.MORE.route,
         ) {
             composable(MoreRoutes.HOME) {
-                val appearanceViewModel: AppearanceViewModel = viewModel(factory = AppearanceViewModel.Factory)
-                val appearance by appearanceViewModel.settings.collectAsStateWithLifecycle()
                 val shopViewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory)
                 val shop by shopViewModel.uiState.collectAsStateWithLifecycle()
                 MoreScreen(
-                    appearance = appearance,
                     shop = shop,
-                    onAccentChange = appearanceViewModel::onAccentChange,
-                    onDarkModeChange = appearanceViewModel::onDarkModeChange,
                     actions = object : MoreActions {
                         override fun onOpenSuppliers() = navController.navigate(StockRoutes.suppliers())
                         override fun onOpenPurchases() = navController.navigate(StockRoutes.purchases())
@@ -289,7 +281,7 @@ fun InvisionNavHost(
                         override fun onOpenMenu() = navController.navigate(MoreRoutes.MENU)
                         override fun onOpenReports() = navController.navigate(MoreRoutes.REPORTS)
                         override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
-                        override fun onOpenBillingSettings() = navController.navigate(BillingRoutes.SETTINGS)
+                        override fun onOpenAppearance() = navController.navigate(MoreRoutes.APPEARANCE)
                         override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
                         override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
                     },
@@ -317,7 +309,16 @@ fun InvisionNavHost(
                 )
             }
             composable(MoreRoutes.SHOP_SETTINGS) {
-                ShopSettingsScreen(onBack = { navController.popBackStack() })
+                ShopSettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
+                )
+            }
+            composable(MoreRoutes.STORE_DETAILS) {
+                StoreDetailsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(MoreRoutes.APPEARANCE) {
+                AppearanceScreen(onBack = { navController.popBackStack() })
             }
             composable(MoreRoutes.BACKUP) {
                 BackupScreen(onBack = { navController.popBackStack() })

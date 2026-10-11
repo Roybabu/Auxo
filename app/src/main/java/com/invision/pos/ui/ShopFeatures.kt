@@ -8,3 +8,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * in Shop settings, and on in tests that do not set it.
  */
 val LocalSuppliersEnabled = staticCompositionLocalOf { true }
+
+/** The shop's logo picture, or null when none was added. Home and the receipts use it. */
+val LocalStoreLogo = staticCompositionLocalOf<android.graphics.Bitmap?> { null }

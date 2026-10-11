@@ -3,8 +3,8 @@ package com.invision.pos.testutil
 import com.invision.pos.viewmodel.BillingViewModel
 
 /**
- * Types the whole bill amount into the only payment on the payment page. New payments start at
- * 0.00, so tests that just want to pay in full call this after `proceedToPayment()`.
+ * Types the whole bill amount into the only payment on the payment page. The page already starts
+ * with the whole bill, so this only matters after a test has changed the amount.
  */
 fun BillingViewModel.payInFull() {
     val state = uiState.value

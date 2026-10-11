@@ -14,6 +14,7 @@ import com.invision.pos.data.repository.SaveCustomerResult
 import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
+import com.invision.pos.domain.billing.AmountInput
 import com.invision.pos.domain.billing.BillCalculator
 import com.invision.pos.domain.billing.BestSellers
 import com.invision.pos.domain.billing.BillTotals
@@ -135,7 +136,6 @@ enum class CustomerSaveError { NAME_REQUIRED, INVALID_PHONE, INVALID_DETAILS, PH
 sealed interface BillingEvent {
     data class Completed(val invoiceId: Long, val number: String, val change: Money) : BillingEvent
     data class OutOfStock(val name: String) : BillingEvent
-    data class StockLimit(val name: String, val available: Int) : BillingEvent
     data class BarcodeNotFound(val barcode: String) : BillingEvent
     data object ScannerUnavailable : BillingEvent
     data object StockChanged : BillingEvent
@@ -336,10 +336,8 @@ class BillingViewModel(
                 eventChannel.trySend(BillingEvent.OutOfStock(label))
                 return
             }
-            inCart + 1 > available -> {
-                eventChannel.trySend(BillingEvent.StockLimit(label, available))
-                return
-            }
+            // All the stock is already on the bill: nothing more to add, and no message.
+            inCart + 1 > available -> return
         }
         recalculate { state ->
             state.copy(
@@ -381,11 +379,8 @@ class BillingViewModel(
 
     fun increment(lineKey: Long) {
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
-        val available = line.availableStock ?: 0
-        if (line.quantity + 1 > available) {
-            eventChannel.trySend(BillingEvent.StockLimit(line.productName, available))
-            return
-        }
+        // The "+" button is off at the limit; this keeps the rule in the billing logic too.
+        if (!line.canIncrease) return
         setQuantity(lineKey, line.quantity + 1)
     }
 
@@ -535,7 +530,8 @@ class BillingViewModel(
             eventChannel.trySend(BillingEvent.FixCart)
             return
         }
-        val first = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CASH, amount = EMPTY_AMOUNT)
+        // The amount starts as the whole bill, and can be changed for a part payment.
+        val first = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CASH, amount = state.totals.grandTotal.toDecimalString())
         updatePayments(listOf(first), stage = BillingStage.PAYMENT)
     }
 
@@ -544,20 +540,15 @@ class BillingViewModel(
     fun onPaymentMethodChange(key: Int, method: PaymentMethod) =
         updatePayment(key) { it.copy(method = method, tendered = if (method == PaymentMethod.CASH) it.tendered else "", reference = "") }
 
-    /**
-     * New payments start at 0.00 for the person to fill in. Typing into an untouched 0.00
-     * replaces it, so "5" gives 5 and not 0.005.
-     */
-    fun onPaymentAmountChange(key: Int, amount: String) = updatePayment(key) { draft ->
-        val typed = if (draft.amount == EMPTY_AMOUNT && amount.length > EMPTY_AMOUNT.length && amount.startsWith(EMPTY_AMOUNT)) {
-            amount.removePrefix(EMPTY_AMOUNT)
-        } else {
-            amount
-        }
-        draft.copy(amount = typed)
-    }
+    fun onPaymentAmountChange(key: Int, amount: String) = updatePayment(key) { it.copy(amount = AmountInput.sanitize(amount)) }
 
-    fun onTenderedChange(key: Int, tendered: String) = updatePayment(key) { it.copy(tendered = tendered) }
+    fun onTenderedChange(key: Int, tendered: String) = updatePayment(key) { it.copy(tendered = AmountInput.sanitize(tendered)) }
+
+    /** Called when the amount field is left: shows it with two decimals ("500" -> "500.00"). */
+    fun onPaymentAmountDone(key: Int) = updatePayment(key) { it.copy(amount = AmountInput.normalize(it.amount).ifEmpty { it.amount }) }
+
+    /** Called when the cash received field is left: shows it with two decimals ("99.5" -> "99.50"). */
+    fun onTenderedDone(key: Int) = updatePayment(key) { it.copy(tendered = AmountInput.normalize(it.tendered).ifEmpty { it.tendered }) }
 
     fun onReferenceChange(key: Int, reference: String) = updatePayment(key) { it.copy(reference = reference) }
 
@@ -566,7 +557,8 @@ class BillingViewModel(
         val state = _uiState.value
         val usedMethods = state.payments.map { it.method }.toSet()
         val method = state.paymentMethods.firstOrNull { it !in usedMethods } ?: PaymentMethod.CASH
-        val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = EMPTY_AMOUNT)
+        val remaining = state.paymentRemaining.takeIf { it > Money.ZERO } ?: Money.ZERO
+        val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = if (remaining.isZero) "" else remaining.toDecimalString())
         updatePayments(state.payments + draft)
     }
 
@@ -576,6 +568,8 @@ class BillingViewModel(
     }
 
     fun completeSale() {
+        // Tidy the amounts before they are checked, so "500" and "99.5" are used as 500.00 and 99.50.
+        updatePayments(_uiState.value.payments.map { it.copy(amount = AmountInput.normalize(it.amount).ifEmpty { it.amount }, tendered = AmountInput.normalize(it.tendered).ifEmpty { it.tendered }) })
         val state = _uiState.value
         if (state.isSaving) return
         val check = PaymentValidator.check(state.payments, state.totals.grandTotal, creditAccount(state))
@@ -734,9 +728,6 @@ class BillingViewModel(
 
     companion object {
         const val MAX_RESULTS = 25
-
-        /** What a new payment's amount shows until something is typed. */
-        const val EMPTY_AMOUNT = "0.00"
         const val MAX_CUSTOMER_RESULTS = 6
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {

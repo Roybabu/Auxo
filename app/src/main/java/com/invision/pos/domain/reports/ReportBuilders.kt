@@ -385,7 +385,7 @@ object Reports {
                     ReportValue.Text(it.product.name),
                     text(it.variant.attributesLabel),
                     ReportValue.Quantity(it.variant.stockQuantity, unit),
-                    ReportValue.Quantity(it.variant.lowStockThreshold, unit),
+                    ReportValue.Quantity(it.variant.effectiveLowStockLevel, unit),
                     ReportValue.Quantity(it.suggestedQuantity, unit),
                 ) + if (withSupplier) listOf(text(it.supplierId?.let(names::get))) else emptyList()
             },

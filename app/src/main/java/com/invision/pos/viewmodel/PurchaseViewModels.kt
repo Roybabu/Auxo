@@ -321,7 +321,7 @@ class PurchaseOrderEditorViewModel(
             return
         }
         val variant = item.variant
-        val low = variant.stockQuantity <= 0 || (variant.lowStockThreshold > 0 && variant.stockQuantity <= variant.lowStockThreshold)
+        val low = variant.needsRestock
         val suggested = if (low) ReorderPlanner.suggestedQuantity(variant) else null
         val line = PurchaseLineForm.forVariant(newKey(), item.product, variant, suggested)
         edit { it.copy(lines = it.lines + line, picker = ItemPickerState()) }

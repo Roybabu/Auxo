@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +40,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
@@ -61,6 +64,7 @@ import com.invision.pos.domain.inventory.StockAlertType
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.StockUnit
+import com.invision.pos.ui.LocalStoreLogo
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
@@ -224,19 +228,41 @@ private fun HomeHeaderBlock(
             .padding(horizontal = 24.dp, vertical = Spacing.lg),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(InvisionThemeExtras.home.avatar),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_nav_home),
-                    contentDescription = null,
-                    tint = InvisionThemeExtras.home.avatarIcon,
-                    modifier = Modifier.size(24.dp),
-                )
+            val logo = LocalStoreLogo.current
+            if (logo != null) {
+                // The shop's own logo, on a light tile so any picture stays readable on the dark header.
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color.White)
+                        .padding(4.dp)
+                        .testTag("home_logo"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        bitmap = logo.asImageBitmap(),
+                        contentDescription = stringResource(R.string.store_logo_description),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(InvisionThemeExtras.home.avatar)
+                        .testTag("home_icon"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_nav_home),
+                        contentDescription = null,
+                        tint = InvisionThemeExtras.home.avatarIcon,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
             Spacer(Modifier.width(Spacing.md))
             Column(modifier = Modifier.weight(1f)) {

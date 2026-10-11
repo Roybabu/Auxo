@@ -32,8 +32,27 @@ class ProductModelTest {
         assertEquals(StockStatus.OUT_OF_STOCK, TestData.variant(stock = 0, lowStock = 2).stockStatus)
         assertEquals(StockStatus.LOW_STOCK, TestData.variant(stock = 2, lowStock = 2).stockStatus)
         assertEquals(StockStatus.IN_STOCK, TestData.variant(stock = 3, lowStock = 2).stockStatus)
-        // A threshold of zero means "never warn" until stock runs out.
-        assertEquals(StockStatus.IN_STOCK, TestData.variant(stock = 1, lowStock = 0).stockStatus)
+    }
+
+    @Test
+    fun lowStock_isAutomaticBelowTwoUnits_whenNoThresholdIsSet() {
+        // No threshold configured (0): the default level of 1 applies.
+        assertEquals(StockStatus.OUT_OF_STOCK, TestData.variant(stock = 0, lowStock = 0).stockStatus)
+        assertEquals(StockStatus.LOW_STOCK, TestData.variant(stock = 1, lowStock = 0).stockStatus)
+        assertEquals(StockStatus.IN_STOCK, TestData.variant(stock = 2, lowStock = 0).stockStatus)
+        assertTrue(TestData.variant(stock = 0, lowStock = 0).needsRestock)
+        assertTrue(TestData.variant(stock = 1, lowStock = 0).needsRestock)
+        assertFalse(TestData.variant(stock = 2, lowStock = 0).needsRestock)
+    }
+
+    @Test
+    fun lowStock_followsCurrentStock_andKeepsAConfiguredThreshold() {
+        val variant = TestData.variant(stock = 5, lowStock = 5)
+        assertEquals(StockStatus.LOW_STOCK, variant.stockStatus)
+        assertEquals(StockStatus.IN_STOCK, variant.copy(stockQuantity = 6).stockStatus)
+        assertEquals(StockStatus.LOW_STOCK, variant.copy(stockQuantity = 1).stockStatus)
+        assertEquals(5, variant.effectiveLowStockLevel)
+        assertEquals(DEFAULT_LOW_STOCK_LEVEL, TestData.variant(lowStock = 0).effectiveLowStockLevel)
     }
 
     @Test

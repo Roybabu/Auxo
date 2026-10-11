@@ -20,12 +20,12 @@ data class ReorderSuggestion(
 object ReorderPlanner {
 
     /**
-     * Variants that are out of stock, or at or below a low-stock level that was set.
+     * Variants that are out of stock or low (1 unit or fewer, or at or below the level set on the item).
      * Out-of-stock items come first, then by name.
      */
     fun suggestions(products: List<Product>): List<ReorderSuggestion> = products.flatMap { product ->
         product.variants
-            .filter { it.stockQuantity <= 0 || (it.lowStockThreshold > 0 && it.stockQuantity <= it.lowStockThreshold) }
+            .filter { it.needsRestock }
             .map { ReorderSuggestion(product, it, suggestedQuantity(it)) }
     }.sortedWith(compareBy<ReorderSuggestion>({ !it.isOutOfStock }, { it.product.name.lowercase() }, { it.variant.id }))
 
