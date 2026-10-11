@@ -68,6 +68,8 @@ class HomePanelTest {
 
     private fun contentTop(): Float = composeRule.onNodeWithText("Today").getUnclippedBoundsInRoot().top.value
 
+    private fun where() = "panel=${panelTop()}dp content=${contentTop()}dp"
+
     /** Moves a finger up (negative [pixels]) or down from near the bottom of the panel. */
     private fun drag(pixels: Float, millis: Long) {
         composeRule.onNodeWithTag("home_panel").performTouchInput {
@@ -80,7 +82,7 @@ class HomePanelTest {
 
     /** Opens the panel with a slow drag that ends on it, so the content is left at its top. */
     private fun openPanelSlowly() {
-        drag(pixels = -500f, millis = 1000)
+        drag(pixels = -400f, millis = 1000)
     }
 
     @Test
@@ -126,11 +128,12 @@ class HomePanelTest {
         openPanelSlowly()
         val open = panelTop()
         val before = contentTop()
+        val opened = where()
 
         drag(pixels = -400f, millis = 800)
 
-        assertEquals(open, panelTop(), 1f)
-        assertTrue("content moved from $before to ${contentTop()}", before - contentTop() > 100f)
+        assertEquals("after opening: $opened; after scrolling: ${where()}", open, panelTop(), 1f)
+        assertTrue("after opening: $opened; after scrolling: ${where()}", before - contentTop() > 100f)
     }
 
     @Test
@@ -138,13 +141,16 @@ class HomePanelTest {
         showHome()
         openPanelSlowly()
         val open = panelTop()
+        val opened = where()
         drag(pixels = -400f, millis = 800)
         val scrolled = contentTop()
+        val afterScroll = where()
 
         // A short, slow drag down only has to bring the content back; it is not enough to close the panel.
         drag(pixels = 100f, millis = 800)
 
-        assertEquals(open, panelTop(), 1f)
-        assertTrue("content stayed at $scrolled", contentTop() > scrolled + 30f)
+        val message = "opened: $opened; scrolled: $afterScroll; after drag down: ${where()}"
+        assertEquals(message, open, panelTop(), 1f)
+        assertTrue(message, contentTop() > scrolled + 30f)
     }
 }
