@@ -11,6 +11,8 @@ import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -114,10 +116,17 @@ class BillingDeviceFlowTest {
         }
     }
 
+    /**
+     * Opens a bottom-bar tab. Home has no bar, so from there the "More" quick action
+     * is used first: it leaves Home and brings the bar up.
+     */
     private fun clickTab(label: String) {
-        composeRule.onAllNodes(hasText(label) and hasClickAction())
-            .filterToOne(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
-            .performClick()
+        val tab = hasText(label) and hasClickAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)
+        if (composeRule.onAllNodes(tab).fetchSemanticsNodes().isEmpty()) {
+            composeRule.onAllNodesWithText("More").onFirst().performClick()
+            composeRule.waitUntil(timeoutMillis = 15_000) { composeRule.onAllNodes(tab).fetchSemanticsNodes().isNotEmpty() }
+        }
+        composeRule.onAllNodes(tab).onFirst().performClick()
     }
 
     /**
