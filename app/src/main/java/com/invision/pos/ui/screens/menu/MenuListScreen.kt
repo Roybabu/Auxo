@@ -196,7 +196,6 @@ private fun DishRow(dish: MenuDish, onClick: () -> Unit, onAvailableChange: (Boo
                     text = listOfNotNull(
                         formatter.format(item.price),
                         stringResource(R.string.menu_gst, formatRatePercent(item.gstRateBasisPoints)),
-                        if (item.recipe.isNotEmpty()) pluralStringResource(R.plurals.menu_recipe_count, item.recipe.size, item.recipe.size) else null,
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

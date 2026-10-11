@@ -1,6 +1,5 @@
 package com.invision.pos.viewmodel
 
-import com.invision.pos.domain.inventory.PickableItem
 import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.ProductCategory
@@ -23,6 +22,7 @@ import com.invision.pos.testutil.record
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -222,27 +222,16 @@ class MenuViewModelsTest {
     }
 
     @Test
-    fun editor_buildsARecipeFromIngredients() = runTest {
+    fun editor_savesADishWithoutARecipe() = runTest {
         val viewModel = MenuEditorViewModel(0, menu, inventory)
         val events = record(viewModel.events)
         assertEquals(listOf("Breakfast", "Drinks"), viewModel.uiState.value.sections)
 
-        viewModel.onIngredientQueryChange("navy")
-        assertTrue(viewModel.uiState.value.picker.results.isEmpty()) // garments aren't ingredients
-        viewModel.onIngredientQueryChange("flour")
-        val pick = viewModel.uiState.value.picker.results.single()
-        viewModel.addIngredient(pick)
-        viewModel.addIngredient(PickableItem(pick.product, pick.variant))
-        assertTrue(events.last() is MenuEditorEvent.AlreadyAdded)
-        val line = viewModel.uiState.value.form.recipe.single()
-        assertEquals("Wheat Flour", line.ingredientName)
-
-        viewModel.onFormChange(viewModel.uiState.value.form.copy(name = "Puri", section = "Breakfast", price = "45", deductIngredients = true))
-        viewModel.onIngredientQuantityChange(line.key, "0.08")
+        viewModel.onFormChange(viewModel.uiState.value.form.copy(name = "Puri", section = "Breakfast", price = "45"))
         viewModel.save()
         val id = (events.last() as MenuEditorEvent.Saved).menuItemId
         val saved = menu.items.value.first { it.id == id }
-        assertEquals(listOf(RecipeLine(flour.variants[0].id, 80)), saved.recipe)
+        assertTrue(saved.recipe.isEmpty())
         assertEquals(Money(4_500), saved.price)
     }
 
@@ -252,8 +241,9 @@ class MenuViewModelsTest {
         val events = record(viewModel.events)
         val form = viewModel.uiState.value.form
         assertEquals("Paratha", form.name)
-        assertEquals(listOf("0.12", "0.03"), form.recipe.map { it.quantity })
-        assertEquals(listOf("Wheat Flour", "Milk"), form.recipe.map { it.ingredientName })
+        // Recipes are gone from the editor, even for a dish that had one.
+        assertTrue(form.recipe.isEmpty())
+        assertFalse(form.deductIngredients)
 
         viewModel.onFormChange(form.copy(price = ""))
         viewModel.save()

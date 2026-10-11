@@ -228,7 +228,6 @@ class MenuEditorViewModel(
     }
 
     private fun formFor(item: MenuItem, catalogue: List<Product>): MenuItemForm {
-        val variants = catalogue.flatMap { product -> product.variants.map { it.id to (product to it) } }.toMap()
         return MenuItemForm(
             name = item.name,
             section = item.section,
@@ -238,17 +237,9 @@ class MenuEditorViewModel(
             sacCode = item.sacCode.orEmpty(),
             dietType = item.dietType,
             available = item.available,
-            deductIngredients = item.deductIngredients,
-            recipe = item.recipe.mapNotNull { line ->
-                val (product, variant) = variants[line.variantId] ?: return@mapNotNull null
-                RecipeLineForm(
-                    key = newKey(),
-                    variantId = line.variantId,
-                    ingredientName = PickableItem(product, variant).label,
-                    stockUnit = product.stockUnit,
-                    quantity = product.stockUnit.toEntryText(line.quantity),
-                )
-            },
+            // Recipes are no longer part of a dish; saving a dish clears any old one.
+            deductIngredients = false,
+            recipe = emptyList(),
         )
     }
 

@@ -38,21 +38,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
-import com.invision.pos.domain.inventory.PickableItem
 import com.invision.pos.domain.menu.MenuError
 import com.invision.pos.domain.menu.MenuField
 import com.invision.pos.domain.menu.MenuItemForm
-import com.invision.pos.domain.menu.RecipeLineForm
 import com.invision.pos.domain.model.DietType
-import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.ConfirmDialog
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTextField
 import com.invision.pos.ui.components.InvisionTopAppBar
-import com.invision.pos.ui.components.ItemPickerField
 import com.invision.pos.ui.components.LoadingState
-import com.invision.pos.ui.components.SectionHeader
 import com.invision.pos.ui.screens.inventory.labelRes
 import com.invision.pos.ui.screens.inventory.stockText
 import com.invision.pos.ui.theme.Spacing
@@ -75,10 +70,6 @@ fun MenuError.messageRes(): Int = when (this) {
 /** Callbacks of the dish editor, so its content can be shown in tests without a ViewModel. */
 interface MenuEditorActions {
     fun onFormChange(form: MenuItemForm) = Unit
-    fun onIngredientQueryChange(query: String) = Unit
-    fun onAddIngredient(item: PickableItem) = Unit
-    fun onIngredientQuantityChange(key: String, text: String) = Unit
-    fun onRemoveIngredient(key: String) = Unit
     fun onDelete() = Unit
 }
 
@@ -107,10 +98,6 @@ fun MenuEditorScreen(
     val actions = remember(viewModel) {
         object : MenuEditorActions {
             override fun onFormChange(form: MenuItemForm) = viewModel.onFormChange(form)
-            override fun onIngredientQueryChange(query: String) = viewModel.onIngredientQueryChange(query)
-            override fun onAddIngredient(item: PickableItem) = viewModel.addIngredient(item)
-            override fun onIngredientQuantityChange(key: String, text: String) = viewModel.onIngredientQuantityChange(key, text)
-            override fun onRemoveIngredient(key: String) = viewModel.removeIngredient(key)
             override fun onDelete() {
                 confirmDelete = true
             }
@@ -263,44 +250,6 @@ fun MenuEditorContent(
                 }
             }
         }
-        item(key = "recipe_header") {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                SectionHeader(stringResource(R.string.menu_recipe))
-                SwitchRow(
-                    label = stringResource(R.string.menu_field_deduct),
-                    supporting = stringResource(R.string.menu_field_deduct_hint),
-                    checked = form.deductIngredients,
-                    onCheckedChange = { actions.onFormChange(form.copy(deductIngredients = it)) },
-                    tag = "menu_deduct",
-                )
-                errorOf(MenuField.RECIPE)?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-        item(key = "picker") {
-            ItemPickerField(
-                state = state.picker,
-                onQueryChange = actions::onIngredientQueryChange,
-                onPick = actions::onAddIngredient,
-                label = stringResource(R.string.menu_recipe_add),
-                detail = { stockText(it.product.stockUnit, it.variant.stockQuantity) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (form.recipe.isEmpty()) {
-            item(key = "no_ingredients") {
-                Text(stringResource(R.string.menu_recipe_empty), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        items(form.recipe, key = { it.key }) { line ->
-            RecipeLineRow(
-                line = line,
-                error = state.visibleRecipeErrors[line.key]?.let { stringResource(it.messageRes()) },
-                onQuantityChange = { actions.onIngredientQuantityChange(line.key, it) },
-                onRemove = { actions.onRemoveIngredient(line.key) },
-            )
-        }
         if (!state.isNew) {
             item(key = "delete") {
                 OutlinedButton(onClick = actions::onDelete, enabled = !state.isSaving, modifier = Modifier.testTag("menu_delete")) {
@@ -325,31 +274,5 @@ private fun SwitchRow(
             supporting?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = if (tag != null) Modifier.testTag(tag) else Modifier)
-    }
-}
-
-@Composable
-private fun RecipeLineRow(line: RecipeLineForm, error: String?, onQuantityChange: (String) -> Unit, onRemove: () -> Unit) {
-    InvisionCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(start = Spacing.lg, top = Spacing.sm, bottom = Spacing.sm, end = Spacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-        ) {
-            Text(line.ingredientName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            InvisionTextField(
-                value = line.quantity,
-                onValueChange = onQuantityChange,
-                label = stringResource(R.string.menu_recipe_quantity, line.stockUnit.entrySymbol),
-                error = error,
-                // 0.15 kg reads more easily as 150 g.
-                supportingText = if (line.stockUnit.scale == 1) null else line.stockUnit.parse(line.quantity)?.let { line.stockUnit.format(it) },
-                keyboardType = if (line.stockUnit.scale == 1) KeyboardType.Number else KeyboardType.Decimal,
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("recipe_quantity_${line.key}"),
-            )
-            ActionIcon(R.drawable.ic_delete, stringResource(R.string.action_remove), onRemove)
-        }
     }
 }

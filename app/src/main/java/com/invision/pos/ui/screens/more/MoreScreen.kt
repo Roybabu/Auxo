@@ -40,6 +40,7 @@ import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTopAppBar
 import com.invision.pos.ui.components.SectionHeader
 import com.invision.pos.ui.theme.Spacing
+import com.invision.pos.viewmodel.ShopUiState
 
 /** Where the More tab leads. */
 interface MoreActions {
@@ -53,6 +54,7 @@ interface MoreActions {
     fun onOpenHistory() = Unit
     fun onOpenBillingSettings() = Unit
     fun onOpenBackup() = Unit
+    fun onOpenShopSettings() = Unit
 }
 
 /** Purchasing, stock records, the restaurant menu, reports, settings and how the app looks. */
@@ -60,6 +62,7 @@ interface MoreActions {
 fun MoreScreen(
     actions: MoreActions,
     appearance: AppearanceSettings = AppearanceSettings(),
+    shop: ShopUiState = ShopUiState(),
     onAccentChange: (AppAccent) -> Unit = {},
     onDarkModeChange: (Boolean) -> Unit = {},
 ) {
@@ -76,15 +79,25 @@ fun MoreScreen(
                 .testTag("more_list"),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
-            SectionHeader(stringResource(R.string.more_section_stock))
+            MoreItem(
+                R.drawable.ic_settings,
+                shop.shopName ?: stringResource(R.string.shop_name_fallback),
+                stringResource(R.string.shop_settings_title),
+                actions::onOpenShopSettings,
+                modifier = Modifier.testTag("more_shop_settings"),
+            )
+
+            SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
             MoreItem(R.drawable.ic_receive, stringResource(R.string.purchases_receive), stringResource(R.string.more_receive_body), actions::onReceiveStock)
             MoreItem(R.drawable.ic_purchase_order, stringResource(R.string.purchases_title), stringResource(R.string.more_purchases_body), actions::onOpenPurchases)
             MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
             MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
             MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
 
-            SectionHeader(stringResource(R.string.more_section_restaurant), modifier = Modifier.padding(top = Spacing.md))
-            MoreItem(R.drawable.ic_menu_book, stringResource(R.string.menu_title), stringResource(R.string.more_menu_body), actions::onOpenMenu)
+            if (shop.restaurantMenu) {
+                SectionHeader(stringResource(R.string.more_section_restaurant), modifier = Modifier.padding(top = Spacing.md))
+                MoreItem(R.drawable.ic_menu_book, stringResource(R.string.menu_title), stringResource(R.string.more_menu_body), actions::onOpenMenu)
+            }
 
             SectionHeader(stringResource(R.string.more_section_records), modifier = Modifier.padding(top = Spacing.md))
             MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
@@ -101,8 +114,8 @@ fun MoreScreen(
 }
 
 @Composable
-private fun MoreItem(@DrawableRes icon: Int, title: String, body: String, onClick: () -> Unit) {
-    InvisionCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+private fun MoreItem(@DrawableRes icon: Int, title: String, body: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    InvisionCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Column(modifier = Modifier

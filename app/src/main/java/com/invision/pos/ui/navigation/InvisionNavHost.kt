@@ -34,6 +34,8 @@ import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
 import com.invision.pos.ui.screens.more.BackupScreen
 import com.invision.pos.ui.screens.more.MoreActions
+import com.invision.pos.ui.screens.more.ShopSettingsScreen
+import com.invision.pos.viewmodel.ShopViewModel
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.purchasing.PurchaseListScreen
 import com.invision.pos.ui.screens.purchasing.PurchaseOrderDetailScreen
@@ -271,8 +273,11 @@ fun InvisionNavHost(
             composable(MoreRoutes.HOME) {
                 val appearanceViewModel: AppearanceViewModel = viewModel(factory = AppearanceViewModel.Factory)
                 val appearance by appearanceViewModel.settings.collectAsStateWithLifecycle()
+                val shopViewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory)
+                val shop by shopViewModel.uiState.collectAsStateWithLifecycle()
                 MoreScreen(
                     appearance = appearance,
+                    shop = shop,
                     onAccentChange = appearanceViewModel::onAccentChange,
                     onDarkModeChange = appearanceViewModel::onDarkModeChange,
                     actions = object : MoreActions {
@@ -286,6 +291,7 @@ fun InvisionNavHost(
                         override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
                         override fun onOpenBillingSettings() = navController.navigate(BillingRoutes.SETTINGS)
                         override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
+                        override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
                     },
                 )
             }
@@ -309,6 +315,9 @@ fun InvisionNavHost(
                     onBack = { navController.popBackStack() },
                     onDone = { navController.popBackStack() },
                 )
+            }
+            composable(MoreRoutes.SHOP_SETTINGS) {
+                ShopSettingsScreen(onBack = { navController.popBackStack() })
             }
             composable(MoreRoutes.BACKUP) {
                 BackupScreen(onBack = { navController.popBackStack() })

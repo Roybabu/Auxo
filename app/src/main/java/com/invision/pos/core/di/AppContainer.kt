@@ -3,6 +3,8 @@ package com.invision.pos.core.di
 import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
 import com.invision.pos.core.appearance.AppearanceRepository
+import com.invision.pos.core.shop.ShopPreferences
+import com.invision.pos.core.shop.SharedPrefsShopPreferences
 import com.invision.pos.core.appearance.SharedPrefsAppearanceRepository
 import com.invision.pos.core.backup.BackupManager
 import com.invision.pos.core.backup.BackupService
@@ -64,8 +66,10 @@ class AppContainer(context: Context) {
 
     val appearanceRepository: AppearanceRepository by lazy { SharedPrefsAppearanceRepository(appContext) }
 
+    val shopPreferences: ShopPreferences by lazy { SharedPrefsShopPreferences(appContext) }
+
     val backupService: BackupService by lazy {
-        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock)
+        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, shopPreferences)
     }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {

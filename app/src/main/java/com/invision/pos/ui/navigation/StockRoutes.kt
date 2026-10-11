@@ -66,6 +66,7 @@ object MoreRoutes {
     const val MENU_EDITOR = "$PREFIX/menu-item?$ARG_MENU_ITEM_ID={$ARG_MENU_ITEM_ID}"
     const val REPORTS = "$PREFIX/reports"
     const val BACKUP = "$PREFIX/backup"
+    const val SHOP_SETTINGS = "$PREFIX/shop-settings"
 
     fun newMenuItem(): String = "$PREFIX/menu-item"
 

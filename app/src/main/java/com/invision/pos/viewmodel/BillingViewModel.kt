@@ -154,6 +154,7 @@ class BillingViewModel(
     private val menuRepository: MenuRepository? = null,
     private val clock: Clock = BusinessTime.clock(),
     private val billing: BillingRepository? = null,
+    private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -168,6 +169,9 @@ class BillingViewModel(
     private var salesRank: List<Long> = emptyList()
     private var allMenu: List<MenuItem> = emptyList()
     private var menuLoaded = false
+
+    /** False when the shop has the restaurant menu switched off: no dishes are offered or found. */
+    private var menuEnabled = shop?.restaurantMenu?.value ?: true
     private var accounts: List<CustomerAccount> = emptyList()
     private var nextPaymentKey = 0
 
@@ -219,7 +223,7 @@ class BillingViewModel(
                         menuLoaded = true
                         recalculate { state ->
                             state.copy(
-                                menu = list.filter { it.available },
+                                menu = if (menuEnabled) list.filter { it.available } else emptyList(),
                                 menuResults = searchMenu(state.searchText),
                                 cart = syncStock(state.cart),
                             )
@@ -261,7 +265,20 @@ class BillingViewModel(
                 }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, customersJob, bestSellersJob)
+        val shopJob = shop?.let { prefs ->
+            viewModelScope.launch {
+                prefs.restaurantMenu.collect { enabled ->
+                    menuEnabled = enabled
+                    recalculate { state ->
+                        state.copy(
+                            menu = if (enabled) allMenu.filter { it.available } else emptyList(),
+                            menuResults = searchMenu(state.searchText),
+                        )
+                    }
+                }
+            }
+        }
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, bestSellersJob)
     }
 
     // Search and adding items
@@ -686,7 +703,7 @@ class BillingViewModel(
 
     private fun searchMenu(text: String): List<MenuItem> {
         val query = text.trim()
-        if (query.isEmpty()) return emptyList()
+        if (query.isEmpty() || !menuEnabled) return emptyList()
         return allMenu
             .filter { it.name.contains(query, ignoreCase = true) || it.section.contains(query, ignoreCase = true) }
             .sortedWith(compareBy({ !it.available }, { it.name.lowercase() }))
@@ -721,6 +738,7 @@ class BillingViewModel(
                     menuRepository = container.menuRepository,
                     clock = container.clock,
                     billing = container.billingRepository,
+                    shop = container.shopPreferences,
                 )
             }
         }

@@ -1,0 +1,45 @@
+package com.invision.pos.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.invision.pos.core.shop.ShopPreferences
+import com.invision.pos.data.repository.SettingsRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
+/** What the More page and Shop settings show about the shop. */
+data class ShopUiState(
+    /** The shop's name from the store details, or null until it has loaded. */
+    val shopName: String? = null,
+    val restaurantMenu: Boolean = false,
+)
+
+class ShopViewModel(
+    settings: SettingsRepository,
+    private val shop: ShopPreferences,
+) : ViewModel() {
+
+    val uiState: StateFlow<ShopUiState> = combine(
+        settings.observeSettings().map { it.storeName.trim().ifEmpty { null } }.catch { emit(null) },
+        shop.restaurantMenu,
+    ) { name, menu -> ShopUiState(shopName = name, restaurantMenu = menu) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShopUiState(restaurantMenu = shop.restaurantMenu.value))
+
+    fun onRestaurantMenuChange(enabled: Boolean) = shop.setRestaurantMenu(enabled)
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val container = appContainer()
+                ShopViewModel(container.settingsRepository, container.shopPreferences)
+            }
+        }
+    }
+}

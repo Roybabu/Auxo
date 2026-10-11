@@ -31,7 +31,6 @@ import com.invision.pos.domain.customers.Ledger
 import com.invision.pos.domain.inventory.PickableItem
 import com.invision.pos.domain.inventory.ReorderPlanner
 import com.invision.pos.domain.menu.MenuItemForm
-import com.invision.pos.domain.menu.RecipeLineForm
 import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.Customer
 import com.invision.pos.domain.model.CustomerAccount
@@ -69,6 +68,7 @@ import com.invision.pos.ui.screens.menu.MenuEditorContent
 import com.invision.pos.ui.screens.menu.MenuListContent
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
+import com.invision.pos.viewmodel.ShopUiState
 import com.invision.pos.ui.screens.purchasing.OrderEditorActions
 import com.invision.pos.ui.screens.purchasing.PurchaseOrderDetailContent
 import com.invision.pos.ui.screens.purchasing.PurchaseOrderEditorContent
@@ -415,25 +415,21 @@ class OperationsScreenTest {
     }
 
     @Test
-    fun menuEditor_showsTheRecipe() {
+    fun menuEditor_hasNoRecipe() {
         show {
             MenuEditorContent(
                 state = MenuEditorUiState(
                     isLoading = false,
                     isNew = false,
                     sections = listOf("Breakfast", "Drinks"),
-                    form = MenuItemForm(
-                        name = "Paratha", section = "Breakfast", price = "60", deductIngredients = true,
-                        recipe = listOf(RecipeLineForm("a", 41, "Wheat Flour", StockUnit.GRAM, "0.12")),
-                    ),
+                    form = MenuItemForm(name = "Paratha", section = "Breakfast", price = "60"),
                 ),
                 actions = object : MenuEditorActions {},
             )
         }
         composeRule.onNodeWithText("Drinks").assertIsDisplayed() // section suggestion
-        composeRule.onNodeWithTag("menu_editor").performScrollToNode(hasTestTag("recipe_quantity_a"))
-        composeRule.onNodeWithText("Wheat Flour").assertIsDisplayed()
-        composeRule.onNodeWithText("120 g").assertIsDisplayed()
+        composeRule.onNodeWithText("Recipe (per serving)").assertDoesNotExist()
+        composeRule.onNodeWithTag("menu_deduct").assertDoesNotExist()
         screenshot("52_menu_editor")
     }
 
@@ -496,6 +492,7 @@ class OperationsScreenTest {
         val opened = mutableListOf<String>()
         show {
             MoreScreen(
+                shop = ShopUiState(restaurantMenu = true),
                 actions = object : MoreActions {
                     override fun onOpenSuppliers() {
                         opened += "suppliers"

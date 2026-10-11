@@ -514,6 +514,10 @@
 
     <!-- More -->
     <string name="more_title">More</string>
+    <string name="shop_name_fallback">My shop</string>
+    <string name="shop_settings_title">Shop settings</string>
+    <string name="shop_restaurant_menu">Restaurant menu</string>
+    <string name="shop_restaurant_menu_body">Turn this on if you sell dishes. You can then add dishes and prices, and sell them from the billing page.</string>
     <string name="more_billing_settings_body">Store details, GST, UPI and receipts</string>
     <string name="more_history_body">Past invoices, returns and payment records</string>
 
@@ -747,7 +751,7 @@
     <string name="menu_add">Add dish</string>
     <string name="menu_search">Search dishes or sections</string>
     <string name="menu_empty_title">No dishes yet</string>
-    <string name="menu_empty_body">Add dishes and drinks to sell them on bills. A recipe can take ingredients out of stock as dishes sell.</string>
+    <string name="menu_empty_body">Add dishes and drinks to sell them on bills.</string>
     <string name="menu_no_results">No dishes match your search.</string>
     <string name="menu_dishes">Dishes</string>
     <string name="menu_unavailable_count">Off the menu</string>
@@ -766,12 +770,6 @@
     <string name="menu_field_sac">SAC code (optional)</string>
     <string name="menu_field_diet">Veg or non-veg</string>
     <string name="menu_field_available">Available to sell</string>
-    <string name="menu_recipe">Recipe (per serving)</string>
-    <string name="menu_field_deduct">Take ingredients out of stock</string>
-    <string name="menu_field_deduct_hint">Each serving sold uses the ingredients below</string>
-    <string name="menu_recipe_add">Add an ingredient</string>
-    <string name="menu_recipe_empty">No ingredients yet.</string>
-    <string name="menu_recipe_quantity">Per serving (%1$s)</string>
     <string name="menu_error_sac">Use 4, 6 or 8 digits</string>
     <string name="menu_error_recipe_needed">Add the ingredients to take out of stock</string>
     <string name="menu_error_duplicate_ingredient">This ingredient is already in the recipe</string>
@@ -865,7 +863,7 @@ in %2$s</string>
     <string name="more_suppliers_body">Businesses you buy from</string>
     <string name="more_alerts_body">Low stock, reorders, expiring batches and wastage</string>
     <string name="more_movements_body">Every stock change, with CSV export</string>
-    <string name="more_menu_body">Dishes, prices and recipes</string>
+    <string name="more_menu_body">Dishes and prices</string>
     <string name="more_reports_body">Sales, GST, stock, purchases and dues, with CSV export</string>
     <string name="home_alerts_open">Reorder and expiry</string>
     <string name="inventory_more_options">Stock and purchasing</string>
@@ -889,10 +887,6 @@ in %2$s</string>
     <plurals name="expiry_days_left">
         <item quantity="one">%1$d day left (%2$s)</item>
         <item quantity="other">%1$d days left (%2$s)</item>
-    </plurals>
-    <plurals name="menu_recipe_count">
-        <item quantity="one">%d ingredient</item>
-        <item quantity="other">%d ingredients</item>
     </plurals>
     <plurals name="menu_servings_left">
         <item quantity="one">Stock for %d serving</item>

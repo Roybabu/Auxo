@@ -34,6 +34,7 @@ class BackupManager(
     private val appearance: AppearanceRepository,
     private val storage: BackupStorage,
     private val clock: Clock,
+    private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
 ) : BackupService {
 
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -57,7 +58,11 @@ class BackupManager(
                     out = out,
                     manifest = manifest,
                     database = snapshot,
-                    preferences = mapOf(PREF_ACCENT to settings.accent.id, PREF_DARK to settings.darkMode.toString()),
+                    preferences = buildMap {
+                        put(PREF_ACCENT, settings.accent.id)
+                        put(PREF_DARK, settings.darkMode.toString())
+                        shop?.let { put(PREF_RESTAURANT_MENU, it.restaurantMenu.value.toString()) }
+                    },
                 )
             }
             prefs.edit().putLong(KEY_LAST_BACKUP, now).apply()
@@ -103,6 +108,7 @@ class BackupManager(
 
             backup.preferences[PREF_ACCENT]?.let { appearance.setAccent(AppAccent.fromId(it)) }
             backup.preferences[PREF_DARK]?.let { appearance.setDarkMode(it.toBoolean()) }
+            backup.preferences[PREF_RESTAURANT_MENU]?.let { shop?.setRestaurantMenu(it.toBoolean()) }
         } finally {
             work.deleteRecursively()
         }
@@ -140,6 +146,7 @@ class BackupManager(
         private const val KEY_LAST_BACKUP = "last_backup_millis"
         const val PREF_ACCENT = "accent"
         const val PREF_DARK = "dark_mode"
+        const val PREF_RESTAURANT_MENU = "restaurant_menu"
         private val FILE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
     }
 }
