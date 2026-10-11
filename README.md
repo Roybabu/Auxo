@@ -1,5 +1,5 @@
 # Invision
-A Invoice app build from scratch 
+An invoicing app built from scratch.
 
 Invision is an Android retail point-of-sale (POS) and invoicing app, built step by step.
 
