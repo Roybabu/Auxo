@@ -16,7 +16,7 @@ enum class TopLevelDestination(
     BILLING(route = "billing", labelRes = R.string.nav_billing, iconRes = R.drawable.ic_nav_billing, rootRoute = BillingRoutes.POS),
     INVENTORY(route = "inventory", labelRes = R.string.nav_inventory, iconRes = R.drawable.ic_nav_inventory, rootRoute = InventoryRoutes.LIST),
     CUSTOMERS(route = "customers", labelRes = R.string.nav_customers, iconRes = R.drawable.ic_nav_customers, rootRoute = CustomerRoutes.LIST),
-    MORE(route = "more", labelRes = R.string.nav_more, iconRes = R.drawable.ic_nav_more, rootRoute = MoreRoutes.HOME),
+    MORE(route = "more", labelRes = R.string.nav_more, iconRes = R.drawable.ic_apps_outline, rootRoute = MoreRoutes.HOME),
     ;
 
     companion object {
