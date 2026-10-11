@@ -73,10 +73,6 @@ import com.invision.pos.ui.format.LocalMoneyFormatter
 import com.invision.pos.ui.navigation.TopLevelDestination
 import com.invision.pos.ui.screens.home.insights.InsightsSection
 import com.invision.pos.ui.screens.inventory.tone
-import com.invision.pos.ui.theme.HomeAvatar
-import com.invision.pos.ui.theme.HomeBadge
-import com.invision.pos.ui.theme.HomeGreen
-import com.invision.pos.ui.theme.HomeGreenDark
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
@@ -173,9 +169,9 @@ private fun HomeDashboard(
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
 ) {
-    // The header is dark green, so the status bar icons must be light while Home is showing.
+    // The header is a dark shade of the accent, so the status bar icons must be light while Home is showing.
     LightStatusBarIcons(darkIcons = false)
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(HomeGreen)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(InvisionThemeExtras.home.header)) {
         val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
         val extents = rememberPanelExtents(widthDp = maxWidth.value, heightDp = maxHeight.value, statusBarDp = statusBar.value)
         HomeHeaderBlock(
@@ -231,13 +227,13 @@ private fun HomeHeaderBlock(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(HomeAvatar),
+                    .background(InvisionThemeExtras.home.avatar),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_nav_home),
                     contentDescription = null,
-                    tint = HomeGreenDark,
+                    tint = InvisionThemeExtras.home.avatarIcon,
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -277,7 +273,7 @@ private fun HomeHeaderBlock(
                             .align(Alignment.TopEnd)
                             .padding(top = 11.dp, end = 12.dp)
                             .size(8.dp)
-                            .background(HomeBadge, CircleShape),
+                            .background(InvisionThemeExtras.home.badge, CircleShape),
                     )
                 }
             }
@@ -316,7 +312,7 @@ private fun BalanceCard(label: String, value: String, onClick: () -> Unit, modif
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = HomeGreenDark,
+        color = InvisionThemeExtras.home.card,
     ) {
         Column(modifier = Modifier.padding(horizontal = Spacing.lg, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -359,13 +355,13 @@ private fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Uni
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(Color.White),
+                .background(InvisionThemeExtras.home.actionCircle),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                tint = HomeGreenDark,
+                tint = InvisionThemeExtras.home.actionIcon,
                 modifier = Modifier.size(26.dp),
             )
         }

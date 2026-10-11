@@ -809,6 +809,19 @@
     <string name="report_next_page">Next</string>
 
     <!-- More, Home and Inventory entry points -->
+    <string name="more_section_appearance">Appearance</string>
+    <string name="appearance_dark_mode">Dark mode</string>
+    <string name="appearance_dark_mode_body">Black backgrounds with light text</string>
+    <string name="appearance_colour">App colour</string>
+    <string name="appearance_colour_body">Pick the colour used for buttons, highlights and the Home screen</string>
+    <string name="accent_emerald">Emerald</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_ocean">Ocean</string>
+    <string name="accent_violet">Violet</string>
+    <string name="accent_orchid">Orchid</string>
+    <string name="accent_rose">Rose</string>
+    <string name="accent_sunset">Sunset</string>
+    <string name="accent_slate">Slate</string>
     <string name="more_section_stock">Stock and purchasing</string>
     <string name="more_section_restaurant">Restaurant</string>
     <string name="more_section_records">Reports and records</string>

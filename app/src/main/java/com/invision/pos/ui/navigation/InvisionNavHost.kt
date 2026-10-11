@@ -1,7 +1,10 @@
 package com.invision.pos.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -40,6 +43,7 @@ import com.invision.pos.ui.screens.purchasing.SupplierListScreen
 import com.invision.pos.ui.screens.reports.ReportsScreen
 import com.invision.pos.ui.screens.stock.StockAlertsScreen
 import com.invision.pos.ui.screens.stock.StockMovementsScreen
+import com.invision.pos.viewmodel.AppearanceViewModel
 import com.invision.pos.viewmodel.InvoiceNotice
 import com.invision.pos.viewmodel.PurchaseTab
 
@@ -263,7 +267,12 @@ fun InvisionNavHost(
             route = TopLevelDestination.MORE.route,
         ) {
             composable(MoreRoutes.HOME) {
+                val appearanceViewModel: AppearanceViewModel = viewModel(factory = AppearanceViewModel.Factory)
+                val appearance by appearanceViewModel.settings.collectAsStateWithLifecycle()
                 MoreScreen(
+                    appearance = appearance,
+                    onAccentChange = appearanceViewModel::onAccentChange,
+                    onDarkModeChange = appearanceViewModel::onDarkModeChange,
                     actions = object : MoreActions {
                         override fun onOpenSuppliers() = navController.navigate(StockRoutes.suppliers())
                         override fun onOpenPurchases() = navController.navigate(StockRoutes.purchases())

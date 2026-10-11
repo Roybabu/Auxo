@@ -268,6 +268,7 @@ private fun ComparisonCard(insights: Insights, formatter: MoneyFormatter) {
     }
 }
 
+@Composable
 private fun methodColor(method: PaymentMethod) = when (method) {
     PaymentMethod.CASH -> ChartPalette.Green
     PaymentMethod.UPI -> ChartPalette.Amber

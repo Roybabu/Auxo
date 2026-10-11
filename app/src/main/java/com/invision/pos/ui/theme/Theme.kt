@@ -1,55 +1,39 @@
 package com.invision.pos.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.invision.pos.core.appearance.AppAccent
 
-private val InvisionLightColors = lightColorScheme(
-    primary = Emerald700,
-    onPrimary = Color.White,
-    primaryContainer = Emerald100,
-    onPrimaryContainer = Emerald900,
-    // Material uses the secondary container for selected chips and the navigation
-    // indicator, so it stays in the emerald family.
-    secondary = Sage600,
-    onSecondary = Color.White,
-    secondaryContainer = Emerald100,
-    onSecondaryContainer = Emerald900,
-    tertiary = Amber700,
-    onTertiary = Color.White,
-    tertiaryContainer = Amber100,
-    onTertiaryContainer = Amber900,
-    error = Red700,
-    onError = Color.White,
-    errorContainer = Red100,
-    onErrorContainer = Red900,
-    background = BackgroundLight,
-    onBackground = Ink,
-    surface = SurfaceWhite,
-    onSurface = Ink,
-    surfaceVariant = GreyLineSoft,
-    onSurfaceVariant = InkMuted,
-    surfaceContainerLowest = SurfaceWhite,
-    surfaceContainerLow = ContainerLow,
-    surfaceContainer = ContainerDefault,
-    surfaceContainerHigh = ContainerHigh,
-    surfaceContainerHighest = GreyLineSoft,
-    outline = GreyLine,
-    outlineVariant = GreyLineSoft,
-)
+/** True while the dark theme is showing, for things MaterialTheme has no colour for. */
+val LocalDarkTheme = staticCompositionLocalOf { false }
+
+/** The Home header colours for the chosen accent. */
+val LocalHomeColors = staticCompositionLocalOf { AccentPalette.home(AppAccent.DEFAULT, dark = false) }
 
 /**
- * Invision's Material 3 theme: light surfaces, emerald accents, dark text and
- * rounded shapes. Dynamic colour is intentionally not used so the brand stays
- * consistent across devices.
+ * Invision's Material 3 theme: rounded shapes and one of eight accent colours, in a light
+ * (white surfaces) or dark (near-black surfaces) version. Dynamic colour is intentionally not
+ * used so the brand stays consistent across devices. The defaults are the original green,
+ * light look.
  */
 @Composable
-fun InvisionTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalStatusColors provides LightStatusColors) {
+fun InvisionTheme(
+    accent: AppAccent = AppAccent.DEFAULT,
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val colors = remember(accent, darkTheme) { AccentPalette.scheme(accent, darkTheme) }
+    val home = remember(accent, darkTheme) { AccentPalette.home(accent, darkTheme) }
+    CompositionLocalProvider(
+        LocalStatusColors provides if (darkTheme) DarkStatusColors else LightStatusColors,
+        LocalDarkTheme provides darkTheme,
+        LocalHomeColors provides home,
+    ) {
         MaterialTheme(
-            colorScheme = InvisionLightColors,
+            colorScheme = colors,
             typography = InvisionTypography,
             shapes = InvisionShapes,
             content = content,

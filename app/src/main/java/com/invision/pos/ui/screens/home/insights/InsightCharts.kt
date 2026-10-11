@@ -41,24 +41,26 @@ import com.invision.pos.domain.insights.ComparisonBucket
 import com.invision.pos.domain.insights.CompactMoney
 import com.invision.pos.domain.insights.SeriesPoint
 import com.invision.pos.domain.model.Money
+import com.invision.pos.ui.theme.LocalDarkTheme
 import com.invision.pos.ui.theme.Spacing
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Series colours. Each has at least 3:1 contrast on white, and every chart also writes the
- * values out (in labels, legends or a text description), so colour is never the only cue.
+ * Series colours. Each has at least 3:1 contrast on the card behind it, in both the light
+ * (white) and dark (black) theme, and every chart also writes the values out (in labels,
+ * legends or a text description), so colour is never the only cue.
  */
 object ChartPalette {
-    val Green = Color(0xFF2F6E61)
-    val Amber = Color(0xFFB45309)
-    val Blue = Color(0xFF1D4ED8)
-    val Slate = Color(0xFF64748B)
-    val Purple = Color(0xFF7E22CE)
+    val Green: Color @Composable get() = if (LocalDarkTheme.current) Color(0xFF4FB39E) else Color(0xFF2F6E61)
+    val Amber: Color @Composable get() = if (LocalDarkTheme.current) Color(0xFFFBBF24) else Color(0xFFB45309)
+    val Blue: Color @Composable get() = if (LocalDarkTheme.current) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
+    val Slate: Color @Composable get() = if (LocalDarkTheme.current) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val Purple: Color @Composable get() = if (LocalDarkTheme.current) Color(0xFFC084FC) else Color(0xFF7E22CE)
 
     /** In order, for charts that need several. */
-    val Series = listOf(Green, Amber, Blue, Slate, Purple)
+    val Series: List<Color> @Composable get() = listOf(Green, Amber, Blue, Slate, Purple)
 }
 
 private val ChartHeight = 150.dp

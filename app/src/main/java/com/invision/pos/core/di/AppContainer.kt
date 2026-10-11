@@ -2,6 +2,8 @@ package com.invision.pos.core.di
 
 import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
+import com.invision.pos.core.appearance.AppearanceRepository
+import com.invision.pos.core.appearance.SharedPrefsAppearanceRepository
 import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.local.InvisionDatabase
 import com.invision.pos.data.repository.BillingRepository
@@ -56,6 +58,8 @@ class AppContainer(context: Context) {
     val barcodeGenerator: InternalBarcodeGenerator by lazy { InternalBarcodeGenerator() }
 
     val moneyFormatter: MoneyFormatter by lazy { MoneyFormatter() }
+
+    val appearanceRepository: AppearanceRepository by lazy { SharedPrefsAppearanceRepository(appContext) }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {
         ObserveStoreOverviewUseCase(settingsRepository, billingRepository, clock)

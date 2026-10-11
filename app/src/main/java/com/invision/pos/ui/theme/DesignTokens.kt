@@ -41,6 +41,13 @@ val LightStatusColors = StatusColors(
     neutral = ToneColors(container = ContainerHigh, content = InkMuted, accent = InkMuted),
 )
 
+val DarkStatusColors = StatusColors(
+    success = ToneColors(container = Color(0xFF123D26), content = Color(0xFFBBF7D0), accent = Color(0xFF4ADE80)),
+    warning = ToneColors(container = Color(0xFF4A3000), content = Color(0xFFFDE68A), accent = Color(0xFFFBBF24)),
+    danger = ToneColors(container = Color(0xFF4C1414), content = Color(0xFFFECACA), accent = Color(0xFFF87171)),
+    neutral = ToneColors(container = Color(0xFF2A2F2D), content = Color(0xFFC1C8C5), accent = Color(0xFFC1C8C5)),
+)
+
 val LocalStatusColors = staticCompositionLocalOf { LightStatusColors }
 
 /** Access to Invision-specific theme values, alongside MaterialTheme. */
@@ -49,4 +56,9 @@ object InvisionThemeExtras {
         @Composable
         @ReadOnlyComposable
         get() = LocalStatusColors.current
+
+    val home: HomeColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalHomeColors.current
 }
