@@ -171,7 +171,7 @@ Not covered by automated tests:
 
 ## Continuous integration
 
-`.github/workflows/android-ci.yml` is meant to run on every push to `main`, on pull requests, and on demand. **Automatic CI is temporarily paused:** the push and pull request triggers are commented out for the current development period, so it only runs when started by hand from the Actions tab. Tests should be run locally or as targeted CI runs in the meantime. The triggers will be restored, and the full workflow (including the emulator tests) run, at the final release verification. It builds the debug APK, runs all tests and lint, measures unit test coverage in a separate job, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`; the new schema file is then attached to the run as a gzip+base64 annotation, so it can be committed even without a local Android build. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts. A second job runs the device tests on an Android 15 emulator and reports their results the same way.
+`.github/workflows/android-ci.yml` is meant to run on every push to `main`, on pull requests, and on demand. **Automatic CI is temporarily paused:** the push and pull request triggers are commented out for the current development period, so it only runs when started by hand from the Actions tab. Tests should be run locally or as targeted CI runs in the meantime. The triggers will be restored, and the full workflow (including the emulator tests) run, at the final release verification. It builds the debug APK, runs all tests and lint, measures unit test coverage in a separate job, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`; the new schema file is then attached to the run as a gzip+base64 annotation, so it can be committed even without a local Android build. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts. A `security` job scans the repository and builds an unsigned release variant. A further job runs the device tests on an Android 15 emulator and reports their results the same way.
 
 ## Project structure
 
@@ -188,7 +188,7 @@ app/src/main/java/com/invision/pos/
 │   └── receipt/               Receipt layouts (58/76/80 mm, A5/A4), PDF, print and share
 ├── data/
 │   ├── local/                 Room database, entities, DAOs, mappers, StockWriter (the one place stock changes)
-│   ├── remote/                Network/API sources (planned)
+│   ├── remote/                Empty placeholder; the app makes no network calls
 │   └── repository/            Repository interfaces and implementations
 ├── domain/
 │   ├── barcode/               GS1 check digits, barcode rules, in-store code generator
@@ -218,9 +218,34 @@ app/schemas/                   Room schema history, for future migrations
 
 Money is stored as whole minor units (paise) in `Money` to avoid floating-point rounding. Display currency currently defaults to Indian rupees (INR).
 
+## Supported platforms
+
+Android 8.0 (API 26) and newer, phones and tablets (the navigation switches between bar and rail). Nothing else is built: no iOS, web or desktop target. The only environment where the app has been run is the Android 15 emulator in CI; it has not been tried on a physical phone.
+
 ## Data and privacy
 
-All data stays on the device in a Room database (`invision.db`, schema version 3). Receipt PDFs and CSV exports are written to the app's cache only when sharing, and cleared after a day. Android backup and device-to-device transfer are turned off for app data until the app has its own export or sync feature.
+- **Persistence:** all data stays on the device in a Room (SQLite) database, `invision.db`, schema version 3. There is no server, account or sync; the app declares no network access of its own.
+- **Not encrypted:** the database sits in the app's private storage, which other apps cannot read on an unmodified device, but it is not encrypted. Anyone with a rooted device or a full-disk image can read it.
+- **No backup:** Android backup and device-to-device transfer are turned off for app data. Uninstalling the app, clearing its data or losing the phone loses the store's data. There is no in-app backup or restore yet, so export reports to CSV regularly.
+- **Temporary files:** receipt PDFs and CSV exports are written to the app's cache only when sharing, are shared through a `FileProvider` with a read grant for the chosen app, and are cleared after a day.
+- **Logging:** the app writes nothing to the system log.
+
+## Printing and barcode limits
+
+- Receipts and labels are opened in Android's print dialog as PDFs. Nothing is sent to a printer directly, there is no ESC/POS or Bluetooth thermal printer support, and output on a real printer has not been checked.
+- Camera scanning uses Google's code scanner and needs Google Play services. Without it, type the code or use a hardware scanner that types as a keyboard. Camera scanning has not been tested automatically.
+- Generated barcodes follow the GS1 check-digit rules; scan quality of printed labels depends on the printer and paper and has not been tested.
+
+## Known issues
+
+- No supplier balances: purchases record goods received, not money owed.
+- A bill with a total of zero cannot be completed.
+- A cash refund on a bill that was sold on account does not change the customer's ledger.
+- The refund method is not tied to how the original bill was paid.
+- Database layer code is not in the coverage figures, because Robolectric loads it in a way JaCoCo cannot see.
+- No code formatter or Kotlin static analyser (ktlint, detekt) is set up; only Android lint runs.
+- The release build is not minified or signed, and has only been checked to compile in CI.
+- Automatic CI is paused (see above).
 
 ## Roadmap
 
@@ -232,4 +257,4 @@ All data stays on the device in a Room database (`invision.db`, schema version 3
 
 ## Security
 
-Do not commit API keys, passwords or signing keys. `.gitignore` excludes keystores, `keystore.properties`, `secrets.properties` and `local.properties`.
+Do not commit API keys, passwords or signing keys. `.gitignore` excludes keystores, `keystore.properties`, `secrets.properties` and `local.properties`. The `security` CI job runs `.github/scripts/security_check.py` over every tracked file (secret patterns, secret-type file names, unsafe manifest settings such as backup or cleartext traffic, workflow permissions) and builds an unsigned release APK; the `build` job lists the permissions of the merged manifest and fails on unexpected ones. Workflows run with read-only `contents` permission and use no repository secrets. Dependabot proposes monthly updates for Gradle dependencies and GitHub Actions.
