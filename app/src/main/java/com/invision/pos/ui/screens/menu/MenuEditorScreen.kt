@@ -222,7 +222,7 @@ fun MenuEditorContent(
                             onValueChange = { actions.onFormChange(form.copy(price = it.filter { c -> c.isDigit() || c == '.' }.take(12))) },
                             label = stringResource(R.string.menu_field_price),
                             error = errorOf(MenuField.PRICE),
-                            prefix = "₹",
+                            prefix = stringResource(R.string.currency_prefix),
                             keyboardType = KeyboardType.Decimal,
                             modifier = Modifier
                                 .weight(1f)

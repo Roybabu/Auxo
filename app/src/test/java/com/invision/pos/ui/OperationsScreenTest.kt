@@ -17,6 +17,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.format.MoneyFormatter
+import com.invision.pos.domain.billing.BillCalculator
+import com.invision.pos.domain.billing.Cart
+import com.invision.pos.domain.billing.CartLine
+import com.invision.pos.domain.billing.CartValidator
+import com.invision.pos.domain.billing.CustomerDetails
+import com.invision.pos.domain.billing.PaymentDraft
+import com.invision.pos.domain.billing.taxModeFor
 import com.invision.pos.domain.customers.Ledger
 import com.invision.pos.domain.inventory.PickableItem
 import com.invision.pos.domain.inventory.ReorderPlanner
@@ -45,6 +52,9 @@ import com.invision.pos.domain.purchasing.PurchaseLineError
 import com.invision.pos.domain.purchasing.PurchaseLineForm
 import com.invision.pos.domain.reports.Reports
 import com.invision.pos.testutil.TestData
+import com.invision.pos.ui.screens.billing.BillingActions
+import com.invision.pos.ui.screens.billing.CartContent
+import com.invision.pos.ui.screens.billing.PaymentContent
 import com.invision.pos.ui.screens.customers.AccountPaymentContent
 import com.invision.pos.ui.screens.customers.CustomerDetailContent
 import com.invision.pos.ui.screens.customers.CustomerListContent
@@ -68,6 +78,8 @@ import com.invision.pos.ui.screens.stock.WriteOffForm
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.AccountPaymentUiState
 import com.invision.pos.viewmodel.AlertsTab
+import com.invision.pos.viewmodel.BillingStage
+import com.invision.pos.viewmodel.BillingUiState
 import com.invision.pos.viewmodel.CustomerDetailUiState
 import com.invision.pos.viewmodel.CustomerListUiState
 import com.invision.pos.viewmodel.ItemPickerState
@@ -463,5 +475,49 @@ class OperationsScreenTest {
         assertEquals(listOf("suppliers", "reports"), opened)
         screenshot("54_more")
         composeRule.onNodeWithText("Restaurant menu").assertIsDisplayed()
+    }
+
+    @Test
+    fun billing_quickMenu_addsDishesToTheBill() {
+        val dosa = MenuItem(id = 5, name = "Masala Dosa", section = "Breakfast", price = Money(12_000))
+        val tea = MenuItem(id = 6, name = "Masala Tea", section = "Drinks", price = Money(2_000))
+        val cart = Cart().add(CartLine.forMenuItem(dosa, 2))
+        val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))
+        val added = mutableListOf<MenuItem>()
+        show {
+            CartContent(
+                state = BillingUiState(
+                    settings = TestData.settings, productsLoaded = true, productCount = 0, menu = listOf(dosa, tea),
+                    cart = cart, totals = totals, check = CartValidator.check(cart, totals, true),
+                ),
+                actions = object : BillingActions {
+                    override fun onAddMenuItem(item: MenuItem) {
+                        added += item
+                    }
+                },
+            )
+        }
+        composeRule.onNodeWithTag("quick_menu").assertIsDisplayed()
+        composeRule.onNodeWithText("Drinks").assertIsDisplayed()
+        composeRule.onNodeWithTag("dish_5").performClick()
+        assertEquals(listOf(dosa), added)
+        composeRule.onNodeWithText("Masala Dosa").assertIsDisplayed() // the cart line
+        screenshot("55_billing_menu")
+    }
+
+    @Test
+    fun billing_payment_canGoOnASavedCustomersAccount() {
+        val cart = Cart(customer = CustomerDetails(name = anita.name, phone = anita.phone.orEmpty(), customerId = anita.id))
+            .add(CartLine.from(shirt, shirt.variants[0]))
+        val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))
+        val state = BillingUiState(
+            settings = TestData.settings, productsLoaded = true, productCount = 1, cart = cart, totals = totals,
+            check = CartValidator.check(cart, totals, true), account = CustomerAccount(anita, Money(20_000)),
+            stage = BillingStage.PAYMENT, payments = listOf(PaymentDraft(key = 0, method = PaymentMethod.CREDIT, amount = "499.00")),
+        )
+        show { PaymentContent(state, object : BillingActions {}) }
+        composeRule.onNodeWithTag("method_CREDIT_0").assertIsDisplayed()
+        composeRule.onNodeWithText("Added to Anita Das's account. Balance after this bill: ${rupees(69_900)}").assertIsDisplayed()
+        screenshot("56_billing_on_account")
     }
 }

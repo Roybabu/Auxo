@@ -133,7 +133,7 @@ fun AccountPaymentContent(
                     label = stringResource(R.string.payment_amount),
                     error = amountError?.let { stringResource(it.messageRes()) },
                     supportingText = state.balanceAfter?.let { stringResource(R.string.account_payment_after, formatter.format(it)) },
-                    prefix = "₹",
+                    prefix = stringResource(R.string.currency_prefix),
                     keyboardType = KeyboardType.Decimal,
                     modifier = Modifier
                         .fillMaxWidth()

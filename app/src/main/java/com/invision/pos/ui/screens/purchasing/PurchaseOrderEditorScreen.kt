@@ -304,7 +304,7 @@ fun PurchaseLineCard(
                     onValueChange = onCostChange,
                     label = stringResource(R.string.field_cost_per, unit.entrySymbol),
                     error = costError?.let { stringResource(it.messageRes()) },
-                    prefix = "₹",
+                    prefix = stringResource(R.string.currency_prefix),
                     keyboardType = KeyboardType.Decimal,
                     modifier = Modifier
                         .weight(1f)

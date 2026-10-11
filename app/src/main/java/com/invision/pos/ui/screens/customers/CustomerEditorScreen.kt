@@ -169,7 +169,7 @@ fun CustomerEditorContent(
                     label = stringResource(R.string.customer_field_credit_limit),
                     error = errorOf(ContactField.CREDIT_LIMIT),
                     supportingText = stringResource(R.string.customer_field_credit_limit_hint),
-                    prefix = "₹",
+                    prefix = stringResource(R.string.currency_prefix),
                     keyboardType = KeyboardType.Decimal,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -182,7 +182,7 @@ fun CustomerEditorContent(
                         label = stringResource(R.string.customer_field_opening_balance),
                         error = errorOf(ContactField.OPENING_BALANCE),
                         supportingText = stringResource(R.string.customer_field_opening_balance_hint),
-                        prefix = "₹",
+                        prefix = stringResource(R.string.currency_prefix),
                         keyboardType = KeyboardType.Decimal,
                         modifier = Modifier
                             .fillMaxWidth()
