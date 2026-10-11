@@ -416,8 +416,12 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
             item(key = "quick_menu") { QuickMenuCard(state, actions) }
         }
 
+        if (state.cart.isEmpty && state.searchText.isBlank() && state.bestSellers.isNotEmpty()) {
+            item(key = "best_sellers") { BestSellersCard(state.bestSellers, actions) }
+        }
+
         if (state.cart.isEmpty) {
-            if (state.searchText.isBlank() && state.menu.isEmpty()) {
+            if (state.searchText.isBlank() && state.menu.isEmpty() && state.bestSellers.isEmpty()) {
                 item(key = "empty") {
                     val noProducts = state.productCount == 0 && state.menu.isEmpty()
                     EmptyState(
@@ -561,6 +565,27 @@ private fun MenuResultRow(item: MenuItem, onClick: () -> Unit) {
 
 /** Restaurant menu by section, for adding dishes with one tap. */
 @OptIn(ExperimentalLayoutApi::class)
+/** The items that sold the most in the last 30 days, ready to tap and add to the bill. */
+@Composable
+private fun BestSellersCard(results: List<ProductSearchResult>, actions: BillingActions) {
+    InvisionCard(modifier = Modifier.fillMaxWidth().testTag("best_sellers")) {
+        Column {
+            Column(modifier = Modifier.padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = Spacing.sm)) {
+                Text(stringResource(R.string.billing_best_sellers_title), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    stringResource(R.string.billing_best_sellers_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            results.forEach { result ->
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SearchResultRow(result, onClick = { actions.onAddResult(result) })
+            }
+        }
+    }
+}
+
 @Composable
 private fun QuickMenuCard(state: BillingUiState, actions: BillingActions) {
     val formatter = LocalMoneyFormatter.current

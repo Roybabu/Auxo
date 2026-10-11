@@ -334,6 +334,8 @@
     <string name="billing_barcode_not_found">No item has barcode %1$s</string>
     <string name="billing_ingredients_short">Not enough ingredients in stock for: %1$s</string>
     <string name="billing_menu_title">Menu</string>
+    <string name="billing_best_sellers_title">Best sellers</string>
+    <string name="billing_best_sellers_subtitle">Most sold in the last 30 days. Tap to add.</string>
     <string name="billing_menu_dish">Menu · %1$s</string>
     <string name="menu_unavailable">Not available</string>
     <string name="billing_customer_search">Find a saved customer</string>

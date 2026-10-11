@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.invision.pos.data.repository.BillingRepository
 import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.MenuRepository
@@ -14,6 +15,7 @@ import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
 import com.invision.pos.domain.billing.BillCalculator
+import com.invision.pos.domain.billing.BestSellers
 import com.invision.pos.domain.billing.BillTotals
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartCheck
@@ -42,6 +44,7 @@ import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StoreSettings
 import com.invision.pos.domain.usecase.CheckoutResult
 import com.invision.pos.domain.usecase.CheckoutUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -80,6 +83,8 @@ data class BillingUiState(
     val showErrors: Boolean = false,
     val searchText: String = "",
     val searchResults: List<ProductSearchResult> = emptyList(),
+    /** Items that sold the most over the last 30 days, for quick adding when nothing is typed. */
+    val bestSellers: List<ProductSearchResult> = emptyList(),
     /** Dishes matching the search. */
     val menuResults: List<MenuItem> = emptyList(),
     /** Available dishes, for quick adding when the store has a menu. */
@@ -148,6 +153,7 @@ class BillingViewModel(
     private val customers: CustomerRepository? = null,
     private val menuRepository: MenuRepository? = null,
     private val clock: Clock = BusinessTime.clock(),
+    private val billing: BillingRepository? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -157,6 +163,9 @@ class BillingViewModel(
     val events: Flow<BillingEvent> = eventChannel.receiveAsFlow()
 
     private var products: List<Product> = emptyList()
+
+    /** Variant ids by units sold over the last 30 days, best first. */
+    private var salesRank: List<Long> = emptyList()
     private var allMenu: List<MenuItem> = emptyList()
     private var menuLoaded = false
     private var accounts: List<CustomerAccount> = emptyList()
@@ -196,6 +205,7 @@ class BillingViewModel(
                             productCount = list.count { it.category.isSold },
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
+                            bestSellers = bestSellers(),
                         )
                     }
                 }
@@ -231,7 +241,27 @@ class BillingViewModel(
                     }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, customersJob)
+        val bestSellersJob = billing?.let { repository ->
+            viewModelScope.launch {
+                val zone = clock.zone
+                val day = today
+                val from = day.minusDays(BestSellers.DAYS - 1L).atStartOfDay(zone).toInstant().toEpochMilli()
+                val to = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+                // The list is only a shortcut: if it can't load, billing carries on without it.
+                try {
+                    repository.observeInvoices(from, to).collect {
+                        salesRank = BestSellers.rank(repository.invoicesBetween(from, to))
+                        _uiState.update { state -> state.copy(bestSellers = bestSellers()) }
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    salesRank = emptyList()
+                    _uiState.update { state -> state.copy(bestSellers = emptyList()) }
+                }
+            }
+        }
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, customersJob, bestSellersJob)
     }
 
     // Search and adding items
@@ -457,6 +487,7 @@ class BillingViewModel(
                 settings = it.settings,
                 productsLoaded = it.productsLoaded,
                 productCount = it.productCount,
+                bestSellers = it.bestSellers,
                 menu = it.menu,
                 menuSection = it.menuSection,
             )
@@ -613,6 +644,16 @@ class BillingViewModel(
         }
     }
 
+    /** The best-selling items that still exist and are sold, up to [BestSellers.LIMIT]. */
+    private fun bestSellers(): List<ProductSearchResult> {
+        if (salesRank.isEmpty()) return emptyList()
+        val byVariant = products
+            .filter { it.category.isSold }
+            .flatMap { product -> product.variants.map { it.id to ProductSearchResult(product, it) } }
+            .toMap()
+        return salesRank.mapNotNull { byVariant[it] }.take(BestSellers.LIMIT)
+    }
+
     private fun search(text: String): List<ProductSearchResult> {
         val query = text.trim()
         if (query.isEmpty()) return emptyList()
@@ -667,6 +708,7 @@ class BillingViewModel(
                     customers = container.customerRepository,
                     menuRepository = container.menuRepository,
                     clock = container.clock,
+                    billing = container.billingRepository,
                 )
             }
         }
