@@ -278,8 +278,26 @@ class PurchaseOrderEditorViewModel(
                 }
             }
             revalidate()
+            followSuppliers(suppliers.map { it.id }.toSet())
         }
         jobs = listOf(productsJob, loadJob)
+    }
+
+    /**
+     * Keeps the supplier list current, so a supplier added through "Add supplier"
+     * shows up on return, and is chosen if none was.
+     */
+    private suspend fun followSuppliers(knownIds: Set<Long>) {
+        var known = knownIds
+        purchasing.observeSuppliers().catch { }.collect { list ->
+            val added = list.filter { it.active && it.id !in known }
+            known = list.map { it.id }.toSet()
+            _uiState.update { state ->
+                val shown = list.filter { it.active || it.id == state.supplierId }
+                state.copy(suppliers = shown, supplierId = state.supplierId ?: added.singleOrNull()?.id ?: shown.singleOrNull()?.id)
+            }
+            revalidate()
+        }
     }
 
     private fun newKey(): String = "line-${nextKey++}"
@@ -601,8 +619,26 @@ class ReceiveGoodsViewModel(
                     )
                 }
             }
+            if (order == null) followSuppliers(suppliers.map { it.id }.toSet())
         }
         jobs = listOf(productsJob, loadJob)
+    }
+
+    /**
+     * Keeps the supplier list of a receipt without an order current, so a supplier
+     * added through "Add supplier" shows up on return, and is chosen if none was.
+     */
+    private suspend fun followSuppliers(knownIds: Set<Long>) {
+        var known = knownIds
+        purchasing.observeSuppliers().catch { }.collect { list ->
+            val added = list.filter { it.active && it.id !in known }
+            known = list.map { it.id }.toSet()
+            _uiState.update { state ->
+                val active = list.filter { it.active }
+                state.copy(suppliers = active, supplierId = state.supplierId ?: added.singleOrNull()?.id ?: active.singleOrNull()?.id)
+            }
+            if (_uiState.value.showErrors) revalidate()
+        }
     }
 
     private fun newKey(): String = "line-${nextKey++}"

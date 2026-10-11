@@ -99,6 +99,21 @@ class PurchasingViewModelsTest {
     }
 
     @Test
+    fun aSupplierAddedMeanwhile_isOfferedAndChosen() = runTest {
+        val editor = PurchaseOrderEditorViewModel(0, purchasing, inventory, TestData.clock)
+        val receive = receiveViewModel()
+        assertEquals(null, editor.uiState.value.supplierId)
+        // "Add supplier" opens the supplier editor; the new supplier is there on return.
+        val id = purchasing.saveSupplier(Supplier(name = "New Traders"))
+        assertEquals(3, editor.uiState.value.suppliers.size)
+        assertEquals(id, editor.uiState.value.supplierId)
+        assertEquals(id, receive.uiState.value.supplierId)
+        // A choice already made is kept.
+        purchasing.saveSupplier(Supplier(name = "Later Traders"))
+        assertEquals(id, editor.uiState.value.supplierId)
+    }
+
+    @Test
     fun sentOrders_cantBeEdited() = runTest {
         val id = purchasing.createDraftOrders(listOf(PurchaseOrder(supplierId = mills.id, lines = listOf(orderLine(21, 24))))).single()
         purchasing.setOrderStatus(id, PurchaseOrderStatus.ORDERED)
