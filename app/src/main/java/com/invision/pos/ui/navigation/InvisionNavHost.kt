@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -449,11 +450,14 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
 }
 
 /**
- * Switches tabs. Billing, Inventory and Customers keep their place (a half-built bill, a
- * scrolled list) when you leave and come back. Two tabs are deliberate exceptions:
- *  - Home always returns to the Home screen, whatever screen you were on (editor, receive
- *    stock, a new bill...). What you were doing is saved and comes back with its tab.
+ * Switches tabs.
+ *  - Tapping the tab you are already on goes back to that tab's main page, from any page
+ *    inside it (an invoice, a product, a customer, a menu option).
+ *  - Home always returns to the Home screen, whatever screen you were on. What you were
+ *    doing is saved and comes back with its tab.
  *  - More always opens its own menu page, never the option you last used from it.
+ *  - Billing, Inventory and Customers keep their place (a half-built bill, a scrolled list)
+ *    when you leave for another tab and come back.
  */
 fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
     if (destination == TopLevelDestination.HOME) {
@@ -467,6 +471,21 @@ fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
         }
         return
     }
+
+    val current = currentDestination
+    if (current?.hierarchy?.any { it.route == destination.route } == true) {
+        // Already inside this tab: go back to its main page.
+        if (current.route == destination.rootRoute) return
+        if (popBackStack(destination.rootRoute, inclusive = false)) return
+        // The page was opened from elsewhere (Home, More), so the tab's main page is not
+        // underneath it. Open the tab fresh in its place.
+        navigate(destination.route) {
+            popUpTo(graph.findStartDestination().id) { saveState = false }
+            launchSingleTop = true
+        }
+        return
+    }
+
     navigate(destination.route) {
         popUpTo(graph.findStartDestination().id) {
             saveState = true

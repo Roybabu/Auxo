@@ -15,6 +15,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -183,5 +185,52 @@ class AppFlowTest {
         }
         clickTab("More")
         waitForTag("more_list")
+    }
+
+    @Test
+    fun tappingTheCurrentTab_goesBackToItsMainPage() {
+        composeRule.setContent { InvisionTheme { InvisionApp() } }
+        waitForText("Add your first product")
+        homeAction("New bill")
+        waitForText("No products to sell yet")
+
+        // Billing: from the invoice history back to the billing page.
+        composeRule.onNodeWithContentDescription("Invoices and payments").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("No products to sell yet").fetchSemanticsNodes().isEmpty()
+        }
+        clickTab("Billing")
+        waitForText("No products to sell yet")
+
+        // Inventory: from the product editor back to the product list.
+        clickTab("Inventory")
+        waitForText("No products yet")
+        composeRule.onNodeWithText("Add product").performClick()
+        waitForTag("editor_name")
+        clickTab("Inventory")
+        waitForText("No products yet")
+        composeRule.onAllNodesWithTag("editor_name").assertCountEquals(0)
+
+        // Customers: from the customer editor back to the customer list.
+        clickTab("Customers")
+        waitForText("No customers yet")
+        composeRule.onAllNodesWithText("Add customer").onFirst().performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("No customers yet").fetchSemanticsNodes().isEmpty()
+        }
+        clickTab("Customers")
+        waitForText("No customers yet")
+    }
+
+    @Test
+    fun tabsOpenedFromHome_alsoGoToTheirMainPage() {
+        composeRule.setContent { InvisionTheme { InvisionApp() } }
+        waitForText("Add your first product")
+
+        homeAction("Add product")
+        waitForTag("editor_name")
+        clickTab("Inventory")
+        waitForText("No products yet")
+        composeRule.onAllNodesWithTag("editor_name").assertCountEquals(0)
     }
 }
