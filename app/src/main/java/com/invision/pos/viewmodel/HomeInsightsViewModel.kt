@@ -8,11 +8,13 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.data.repository.BillingRepository
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.PurchasingRepository
+import com.invision.pos.domain.insights.Collected
 import com.invision.pos.domain.insights.Insights
 import com.invision.pos.domain.insights.InsightsBuilder
 import com.invision.pos.domain.insights.InsightsPeriod
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
+import com.invision.pos.domain.reports.PeriodPreset
 import com.invision.pos.domain.reports.ReportPeriod
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -36,6 +38,8 @@ data class InsightsUiState(
     val isLoading: Boolean = true,
     val failed: Boolean = false,
     val insights: Insights? = null,
+    /** Cash and UPI taken today for the header cards; null until loaded or if loading failed. */
+    val collectedToday: Collected? = null,
 )
 
 /** Builds the Home charts from saved bills, goods receipts and products, and rebuilds them when any of them change. */
@@ -51,8 +55,11 @@ class HomeInsightsViewModel(
 
     private var loadJob: Job? = null
 
+    private var todayJob: Job? = null
+
     init {
         load()
+        loadToday()
     }
 
     fun onPeriodChange(period: InsightsPeriod) {
@@ -61,7 +68,30 @@ class HomeInsightsViewModel(
         load()
     }
 
-    fun retry() = load()
+    fun retry() {
+        load()
+        loadToday()
+    }
+
+    /** Header figures: always today's business day, whatever period the charts show. */
+    private fun loadToday() {
+        todayJob?.cancel()
+        val (from, to) = ReportPeriod.of(PeriodPreset.TODAY, LocalDate.now(clock)).bounds(clock.zone)
+        _uiState.update { it.copy(collectedToday = null) }
+        todayJob = viewModelScope.launch {
+            try {
+                billing.observeInvoices(from, to).collectLatest {
+                    val collected = runCatching { InsightsBuilder.collected(billing.invoicesBetween(from, to)) }
+                        .onFailure { e -> if (e is CancellationException) throw e }.getOrNull()
+                    _uiState.update { it.copy(collectedToday = collected) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(collectedToday = null) }
+            }
+        }
+    }
 
     private fun load() {
         loadJob?.cancel()

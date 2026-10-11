@@ -65,6 +65,25 @@ class HomeInsightsViewModelTest {
     }
 
     @Test
+    fun headerFigures_showTodaysUpi_whateverPeriodTheChartsUse() = runTest {
+        sell()
+        val viewModel = viewModel()
+        val upi = viewModel.uiState.value.collectedToday!!.upi
+        assertTrue(upi.minorUnits > 0)
+        assertEquals(0L, viewModel.uiState.value.collectedToday!!.cash.minorUnits)
+
+        viewModel.onPeriodChange(InsightsPeriod.THIS_YEAR)
+        assertEquals(upi, viewModel.uiState.value.collectedToday!!.upi)
+    }
+
+    @Test
+    fun headerFigures_areZeroWithNoBills() = runTest {
+        val collected = viewModel().uiState.value.collectedToday!!
+        assertEquals(0L, collected.cash.minorUnits)
+        assertEquals(0L, collected.upi.minorUnits)
+    }
+
+    @Test
     fun withNoActivity_buildsEmptyCharts_notAnError() = runTest {
         val state = viewModel().uiState.value
         assertFalse(state.failed)

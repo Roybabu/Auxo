@@ -124,7 +124,25 @@ class TimeBuckets private constructor(
     }
 }
 
+/** Money actually collected on bills in one period, net of refunds. Credit (on account) is not money collected. */
+data class Collected(val cash: Money, val upi: Money)
+
 object InsightsBuilder {
+
+    /**
+     * Cash and UPI taken on [invoices], each payment counted once (split payments are separate
+     * records) and refunds taken off the same method.
+     */
+    fun collected(invoices: List<Invoice>): Collected {
+        fun net(method: PaymentMethod): Money {
+            val records = invoices.flatMap { it.payments }.filter { it.method == method }
+            val taken = records.filter { it.kind == PaymentKind.PAYMENT }.sumOf { it.amount.minorUnits }
+            val refunded = records.filter { it.kind == PaymentKind.REFUND }.sumOf { it.amount.minorUnits }
+            return Money(taken - refunded)
+        }
+        return Collected(cash = net(PaymentMethod.CASH), upi = net(PaymentMethod.UPI))
+    }
+
 
     const val TOP_PRODUCTS = 5
 

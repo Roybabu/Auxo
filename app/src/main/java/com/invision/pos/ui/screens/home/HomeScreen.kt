@@ -69,6 +69,7 @@ import com.invision.pos.ui.components.SectionHeader
 import com.invision.pos.ui.components.StatTile
 import com.invision.pos.ui.components.StatusChip
 import com.invision.pos.ui.format.DateFormats
+import com.invision.pos.ui.format.LocalMoneyFormatter
 import com.invision.pos.ui.navigation.TopLevelDestination
 import com.invision.pos.ui.screens.home.insights.InsightsSection
 import com.invision.pos.ui.screens.inventory.tone
@@ -79,6 +80,7 @@ import com.invision.pos.ui.theme.HomeGreenDark
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
+import com.invision.pos.domain.insights.Collected
 import com.invision.pos.domain.insights.InsightsPeriod
 import com.invision.pos.viewmodel.HomeInsightsViewModel
 import com.invision.pos.viewmodel.HomeUiState
@@ -157,15 +159,6 @@ fun HomeContent(
     }
 }
 
-/**
- * TEMPORARY (home redesign, step 2): placeholder balance figures. Real cash and UPI
- * totals for today replace these when the data is wired in (step 4).
- */
-private object TemporaryHomeData {
-    const val CASH_TODAY = "₹0.00"
-    const val UPI_TODAY = "₹0.00"
-}
-
 @Composable
 private fun HomeDashboard(
     state: HomeUiState.Ready,
@@ -188,6 +181,7 @@ private fun HomeDashboard(
         HomeHeaderBlock(
             storeName = state.storeName,
             hasAlerts = state.inventory.alerts.isNotEmpty(),
+            collectedToday = insights?.collectedToday,
             onOpenAlerts = onOpenAlerts,
             onOpenBalances = { onNavigate(TopLevelDestination.MORE) },
             onNewBill = { onNavigate(TopLevelDestination.BILLING) },
@@ -211,10 +205,14 @@ private fun HomeDashboard(
     }
 }
 
+/** Shown on a header card until today's figure has loaded (or if it could not be loaded). */
+private const val NOT_LOADED = "–"
+
 @Composable
 private fun HomeHeaderBlock(
     storeName: String,
     hasAlerts: Boolean,
+    collectedToday: Collected?,
     onOpenAlerts: () -> Unit,
     onOpenBalances: () -> Unit,
     onNewBill: () -> Unit,
@@ -286,16 +284,17 @@ private fun HomeHeaderBlock(
         }
 
         Spacer(Modifier.height(20.dp))
+        val money = LocalMoneyFormatter.current
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
             BalanceCard(
                 label = stringResource(R.string.home_cash_today),
-                value = TemporaryHomeData.CASH_TODAY,
+                value = collectedToday?.cash?.let { money.format(it) } ?: NOT_LOADED,
                 onClick = onOpenBalances,
                 modifier = Modifier.weight(1f),
             )
             BalanceCard(
                 label = stringResource(R.string.home_upi_today),
-                value = TemporaryHomeData.UPI_TODAY,
+                value = collectedToday?.upi?.let { money.format(it) } ?: NOT_LOADED,
                 onClick = onOpenBalances,
                 modifier = Modifier.weight(1f),
             )

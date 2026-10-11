@@ -67,6 +67,31 @@ class InsightsBuilderTest {
     )
 
     @Test
+    fun collected_countsSplitPaymentsOnce_andTakesRefundsOffTheSameMethod() {
+        val split = sale(shirt, 2, at(today)) { total ->
+            val upi = Money(total.minorUnits / 4)
+            listOf(
+                PaymentRecord(method = PaymentMethod.UPI, amount = upi),
+                PaymentRecord(method = PaymentMethod.CASH, amount = total - upi),
+            )
+        }
+        val refund = creditNote(sale(shirt, 1, at(today)), PaymentMethod.CASH)
+        val onAccount = sale(biscuits, 1, at(today)) { listOf(PaymentRecord(method = PaymentMethod.CREDIT, amount = it)) }
+
+        val collected = InsightsBuilder.collected(listOf(split, refund, onAccount))
+
+        val upiPart = split.payments.single { it.method == PaymentMethod.UPI }.amount
+        val cashPart = split.payments.single { it.method == PaymentMethod.CASH }.amount
+        assertEquals(upiPart, collected.upi)
+        assertEquals(cashPart - refund.grandTotal, collected.cash)
+    }
+
+    @Test
+    fun collected_withNoBills_isZero() {
+        assertEquals(Collected(Money.ZERO, Money.ZERO), InsightsBuilder.collected(emptyList()))
+    }
+
+    @Test
     fun noActivity_isAllZero() {
         val insights = build(InsightsPeriod.LAST_7_DAYS, emptyList())
         assertEquals(Money.ZERO, insights.sales)
