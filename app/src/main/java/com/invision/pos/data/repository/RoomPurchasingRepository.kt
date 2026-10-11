@@ -118,9 +118,10 @@ class RoomPurchasingRepository(
             database.withTransaction {
                 val now = receipt.receivedAtMillis.takeIf { it > 0 } ?: clock.millis()
                 when (val claim = operations.claim(requestId, "RECEIPT", now)) {
+                    // A repeated request never receives twice; it gets the first receipt back.
                     is RequestClaim.AlreadyDone -> {
-                        val saved = claim.resultId?.let { dao.receiptNumber(it) }
-                        if (claim.resultId != null && saved != null) return@withTransaction ReceiveResult.Recorded(claim.resultId, saved)
+                        val id = claim.resultId ?: 0L
+                        return@withTransaction ReceiveResult.Recorded(id, dao.receiptNumber(id).orEmpty())
                     }
                     RequestClaim.New -> Unit
                 }

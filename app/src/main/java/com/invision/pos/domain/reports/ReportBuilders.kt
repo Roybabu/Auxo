@@ -1,11 +1,14 @@
 package com.invision.pos.domain.reports
 
+import com.invision.pos.domain.customers.LedgerLine
 import com.invision.pos.domain.inventory.ReorderPlanner
 import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.CustomerAccount
+import com.invision.pos.domain.model.Customer
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceLine
 import com.invision.pos.domain.model.InvoiceType
+import com.invision.pos.domain.model.LedgerEntryType
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentMethod
@@ -430,4 +433,45 @@ object Reports {
             },
         )
     }
+
+    fun ledgerTypeName(type: LedgerEntryType): String = when (type) {
+        LedgerEntryType.OPENING_BALANCE -> "Opening balance"
+        LedgerEntryType.SALE -> "Sale on account"
+        LedgerEntryType.RETURN -> "Return"
+        LedgerEntryType.PAYMENT -> "Payment received"
+    }
+
+    /** One customer's account: every entry with the running balance, oldest first. */
+    fun customerStatement(customer: Customer, lines: List<LedgerLine>): ReportTable = ReportTable(
+        title = "Statement: ${customer.name}",
+        columns = listOf(
+            col("Date"), col("Entry"), col("Invoice"), col("Method"), col("Reference"),
+            col("Debit", END), col("Credit", END), col("Balance", END), col("Note"),
+        ),
+        rows = lines.map { line ->
+            val entry = line.entry
+            listOf(
+                ReportValue.Moment(entry.createdAtMillis),
+                ReportValue.Text(ledgerTypeName(entry.type)),
+                text(entry.invoiceNumber),
+                entry.method?.let { ReportValue.Text(methodName(it)) } ?: ReportValue.Empty,
+                text(entry.reference),
+                if (line.debit.isZero) ReportValue.Empty else ReportValue.Amount(line.debit),
+                if (line.credit.isZero) ReportValue.Empty else ReportValue.Amount(line.credit),
+                ReportValue.Amount(line.balanceAfter),
+                text(entry.note),
+            )
+        },
+        totals = if (lines.isEmpty()) {
+            null
+        } else {
+            listOf(
+                ReportValue.Text("Total"), ReportValue.Empty, ReportValue.Empty, ReportValue.Empty, ReportValue.Empty,
+                ReportValue.Amount(sum(lines.map { it.debit })),
+                ReportValue.Amount(sum(lines.map { it.credit })),
+                ReportValue.Amount(lines.last().balanceAfter),
+                ReportValue.Empty,
+            )
+        },
+    )
 }

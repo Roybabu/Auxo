@@ -9,7 +9,7 @@ import com.invision.pos.domain.model.Supplier
 
 enum class ContactField { NAME, CONTACT_PERSON, PHONE, EMAIL, GSTIN, STATE, ADDRESS, NOTES, CREDIT_LIMIT, OPENING_BALANCE }
 
-enum class ContactError { REQUIRED, TOO_LONG, INVALID_PHONE, INVALID_MOBILE, INVALID_EMAIL, INVALID_GSTIN, GSTIN_STATE_MISMATCH, INVALID_AMOUNT }
+enum class ContactError { REQUIRED, TOO_LONG, INVALID_PHONE, INVALID_MOBILE, INVALID_EMAIL, INVALID_GSTIN, GSTIN_STATE_MISMATCH, INVALID_AMOUNT, PHONE_IN_USE }
 
 /** Rules shared by supplier and customer forms. */
 internal object ContactRules {

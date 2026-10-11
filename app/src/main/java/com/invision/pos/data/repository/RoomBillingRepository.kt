@@ -69,9 +69,10 @@ class RoomBillingRepository(
         return try {
             database.withTransaction {
                 val claim = requestId?.let { operations.claim(it, "SALE", invoice.createdAtMillis) }
-                if (claim is RequestClaim.AlreadyDone && claim.resultId != null) {
-                    val saved = dao.getInvoice(claim.resultId)
-                    if (saved != null) return@withTransaction SaleResult.Recorded(saved.invoice.id, saved.invoice.number)
+                // A repeated request never bills twice; it gets the first invoice back.
+                if (claim is RequestClaim.AlreadyDone) {
+                    val saved = claim.resultId?.let { dao.getInvoice(it) }
+                    return@withTransaction SaleResult.Recorded(saved?.invoice?.id ?: 0L, saved?.invoice?.number.orEmpty())
                 }
 
                 // Check everything first, so every short item is reported at once.
