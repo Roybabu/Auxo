@@ -5,6 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -50,6 +53,9 @@ import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.domain.model.Supplier
 import com.invision.pos.domain.purchasing.PurchaseLineError
 import com.invision.pos.domain.purchasing.PurchaseLineForm
+import com.invision.pos.domain.reports.ReportColumn
+import com.invision.pos.domain.reports.ReportTable
+import com.invision.pos.domain.reports.ReportValue
 import com.invision.pos.domain.reports.Reports
 import com.invision.pos.testutil.TestData
 import com.invision.pos.ui.screens.billing.BillingActions
@@ -451,6 +457,38 @@ class OperationsScreenTest {
         composeRule.onNodeWithText("Value at cost").assertExists()
         composeRule.onNodeWithText(rupees(2_250)).assertExists() // 500 g of flour at ₹45/kg
         screenshot("53_reports")
+    }
+
+    @Test
+    fun reports_longTablesAreShownOnePageAtATime() {
+        val rows = (1..250).map { listOf<ReportValue>(ReportValue.Text("Row $it")) }
+        val table = ReportTable("Long report", listOf(ReportColumn("Name")), rows)
+        show {
+            ReportsContent(
+                state = ReportsUiState(
+                    filters = ReportFilters(type = ReportType.STOCK_VALUE),
+                    period = ReportPeriod.of(PeriodPreset.THIS_MONTH, today),
+                    isLoading = false,
+                    table = table,
+                ),
+                actions = object : ReportsActions {},
+            )
+        }
+        composeRule.onNodeWithText("250 rows").assertExists()
+        composeRule.onNodeWithTag("report_page_position").performScrollTo().assertTextEquals("Rows 1\u2013100 of 250")
+        composeRule.onNodeWithText("Row 100").assertExists()
+        composeRule.onNodeWithText("Row 101").assertDoesNotExist()
+        composeRule.onNodeWithTag("report_previous").assertIsNotEnabled()
+
+        composeRule.onNodeWithTag("report_next").performClick()
+        composeRule.onNodeWithTag("report_page_position").assertTextEquals("Rows 101\u2013200 of 250")
+        composeRule.onNodeWithText("Row 101").assertExists()
+        composeRule.onNodeWithText("Row 100").assertDoesNotExist()
+
+        composeRule.onNodeWithTag("report_next").performClick()
+        composeRule.onNodeWithTag("report_page_position").assertTextEquals("Rows 201\u2013250 of 250")
+        composeRule.onNodeWithText("Row 250").assertExists()
+        composeRule.onNodeWithTag("report_next").assertIsNotEnabled()
     }
 
     @Test

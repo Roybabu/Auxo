@@ -800,7 +800,9 @@
     <string name="report_all_suppliers">All suppliers</string>
     <string name="report_only_outstanding">Only accounts with a balance</string>
     <string name="report_empty">Nothing to show for these filters.</string>
-    <string name="report_truncated">Export the CSV for every row. Shown here: %1$d of %2$d</string>
+    <string name="report_page_position">Rows %1$d–%2$d of %3$d</string>
+    <string name="report_previous_page">Previous</string>
+    <string name="report_next_page">Next</string>
 
     <!-- More, Home and Inventory entry points -->
     <string name="more_section_stock">Stock and purchasing</string>
