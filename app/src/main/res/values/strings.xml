@@ -840,7 +840,7 @@ in %2$s</string>
     <string name="backup_restore_choose">Choose backup file</string>
     <string name="backup_privacy">Backup files include customer details and sales and are not locked with a password. Keep them private.</string>
     <string name="backup_confirm_title">Replace everything on this phone?</string>
-    <string name="backup_confirm_body">All products, bills, customers and settings on this phone will be replaced by what is in the backup. This cannot be undone, so make a backup first if you may need today's data. The app will restart.</string>
+    <string name="backup_confirm_body">All products, bills, customers and settings on this phone will be replaced by what is in the backup. This cannot be undone, so make a backup first if you may need today\'s data. The app will restart.</string>
     <string name="backup_confirm_action">Replace and restart</string>
     <string name="backup_restoring">Restoring your data…</string>
     <string name="backup_dismiss">OK</string>
