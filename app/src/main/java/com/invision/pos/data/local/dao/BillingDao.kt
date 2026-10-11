@@ -106,11 +106,24 @@ abstract class BillingDao {
     @Insert
     abstract suspend fun insertPayments(payments: List<PaymentEntity>)
 
+    /**
+     * Counts [quantity] more units of a line of sale [saleId] as returned. Matches nothing, and so
+     * changes nothing, if the line belongs to another invoice, the invoice is not a sale, or
+     * more would come back than was sold.
+     */
     @Query(
         "UPDATE invoice_lines SET returned_quantity = returned_quantity + :quantity " +
-            "WHERE id = :lineId AND returned_quantity + :quantity <= quantity",
+            "WHERE id = :lineId AND invoice_id = :saleId AND :quantity > 0 AND returned_quantity + :quantity <= quantity " +
+            "AND EXISTS (SELECT 1 FROM invoices s WHERE s.id = :saleId AND s.type = 'SALE')",
     )
-    abstract suspend fun markReturned(lineId: Long, quantity: Int): Int
+    abstract suspend fun markReturned(saleId: Long, lineId: Long, quantity: Int): Int
+
+    /** Total of the credit notes already issued against sale [saleId]. */
+    @Query("SELECT COALESCE(SUM(grand_total_minor), 0) FROM invoices WHERE original_invoice_id = :saleId AND type = 'RETURN'")
+    abstract suspend fun creditedTotal(saleId: Long): Long
+
+    @Query("SELECT grand_total_minor FROM invoices WHERE id = :invoiceId")
+    abstract suspend fun grandTotalOf(invoiceId: Long): Long?
 
     @Query("SELECT customer_id FROM invoices WHERE id = :invoiceId")
     abstract suspend fun customerOf(invoiceId: Long): Long?

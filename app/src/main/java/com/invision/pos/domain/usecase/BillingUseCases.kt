@@ -110,6 +110,7 @@ class ProcessReturnUseCase(
         quantities: Map<Long, Int>,
         refundMethod: PaymentMethod,
         reason: String,
+        requestId: String? = null,
     ): ProcessReturnResult {
         val original = billing.getInvoice(invoiceId) ?: return ProcessReturnResult.InvoiceNotFound
         val store = settings.getSettings()
@@ -118,7 +119,7 @@ class ProcessReturnUseCase(
             is ReturnBuild.Rejected -> return ProcessReturnResult.Rejected(build.error)
             is ReturnBuild.Ready -> build.creditNote
         }
-        return when (val result = billing.recordReturn(creditNote, store.creditNotePrefix)) {
+        return when (val result = billing.recordReturn(creditNote, store.creditNotePrefix, requestId)) {
             is ReturnResult.Recorded -> ProcessReturnResult.Completed(result.creditNoteId, result.number, creditNote.grandTotal)
             ReturnResult.QuantityExceedsSold -> ProcessReturnResult.AlreadyReturned
         }
