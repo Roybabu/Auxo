@@ -1,3 +1,5 @@
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -19,6 +21,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Off by default (it slows the tests). CI's coverage job turns it on with -Pcoverage.
+            enableUnitTestCoverage = providers.gradleProperty("coverage").isPresent
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -53,6 +59,11 @@ tasks.withType<Test>().configureEach {
         "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
         "--add-opens=java.base/java.io=ALL-UNNAMED",
     )
+    // Robolectric loads app classes through its own class loader; count those too.
+    extensions.findByType(JacocoTaskExtension::class.java)?.apply {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
 }
 
 ksp {
