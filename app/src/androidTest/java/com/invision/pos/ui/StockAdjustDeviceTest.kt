@@ -49,6 +49,11 @@ class StockAdjustDeviceTest {
      */
     private fun clickTab(label: String) {
         val tab = hasText(label) and hasClickAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)
+        // The app may still be drawing its first screen: wait for the bar or for Home's quick actions.
+        composeRule.waitUntil(timeoutMillis = 30_000) {
+            composeRule.onAllNodes(tab).fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("More").fetchSemanticsNodes().isNotEmpty()
+        }
         if (composeRule.onAllNodes(tab).fetchSemanticsNodes().isEmpty()) {
             composeRule.onAllNodesWithText("More").onFirst().performClick()
             composeRule.waitUntil(timeoutMillis = 15_000) { composeRule.onAllNodes(tab).fetchSemanticsNodes().isNotEmpty() }
