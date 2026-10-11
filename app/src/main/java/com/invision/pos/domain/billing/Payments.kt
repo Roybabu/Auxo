@@ -21,6 +21,18 @@ enum class PaymentError {
     TENDERED_INVALID,
     TENDERED_TOO_LOW,
     REFERENCE_INVALID,
+
+    /** "On account" needs a saved customer on the bill. */
+    CREDIT_NEEDS_CUSTOMER,
+
+    /** The amount on account would take the customer past their credit limit. */
+    CREDIT_OVER_LIMIT,
+}
+
+/** The customer account a bill can be put on: what they owe now and their limit, if any. */
+data class CreditAccount(val balance: Money, val limit: Money? = null) {
+    /** How much more can go on the account; null when there is no limit. */
+    val available: Money? get() = limit?.let { it - balance }
 }
 
 sealed interface PaymentCheck {
@@ -39,11 +51,17 @@ object PaymentValidator {
     private val UPI_REFERENCE = Regex("""[A-Za-z0-9]{4,35}""")
     private val CARD_LAST_FOUR = Regex("""\d{4}""")
 
-    fun check(drafts: List<PaymentDraft>, total: Money): PaymentCheck {
+    /**
+     * Checks the payments for a bill of [total]. Amounts must add up exactly.
+     * Part or all of the bill can go "on account" only with a customer [account],
+     * within its credit limit.
+     */
+    fun check(drafts: List<PaymentDraft>, total: Money, account: CreditAccount? = null): PaymentCheck {
         val errors = mutableMapOf<Int, PaymentError>()
         val records = mutableListOf<PaymentRecord>()
         var paid = Money.ZERO
         var change = Money.ZERO
+        var onAccount = Money.ZERO
 
         for (draft in drafts) {
             val amount = when {
@@ -56,6 +74,17 @@ object PaymentValidator {
                 }
             } ?: continue
             paid += amount
+
+            if (draft.method == PaymentMethod.CREDIT) {
+                onAccount += amount
+                val available = account?.available
+                when {
+                    account == null -> errors[draft.key] = PaymentError.CREDIT_NEEDS_CUSTOMER
+                    available != null && onAccount > available -> errors[draft.key] = PaymentError.CREDIT_OVER_LIMIT
+                }
+                records += PaymentRecord(method = PaymentMethod.CREDIT, kind = PaymentKind.PAYMENT, amount = amount)
+                continue
+            }
 
             var tendered: Money? = null
             if (draft.method == PaymentMethod.CASH && draft.tendered.isNotBlank()) {

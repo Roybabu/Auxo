@@ -1,6 +1,7 @@
 package com.invision.pos.ui.screens.inventory
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +15,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -29,8 +32,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -67,12 +72,17 @@ import com.invision.pos.viewmodel.InventoryUiState
 import com.invision.pos.viewmodel.InventoryViewModel
 import java.time.LocalDate
 
+/** Stock pages reached from the Inventory tab's menu. */
+enum class StockPage { ALERTS, RECEIVE, PURCHASES, SUPPLIERS, MOVEMENTS }
+
 @Composable
 fun InventoryListScreen(
     onOpenProduct: (Long) -> Unit,
     onAddProduct: (barcode: String?) -> Unit,
+    onOpenStockPage: (StockPage) -> Unit = {},
     viewModel: InventoryViewModel = viewModel(factory = InventoryViewModel.Factory),
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -115,6 +125,31 @@ fun InventoryListScreen(
                         contentDescription = stringResource(R.string.action_scan),
                         onClick = scan,
                     )
+                    Box {
+                        ActionIcon(
+                            iconRes = R.drawable.ic_nav_more,
+                            contentDescription = stringResource(R.string.inventory_more_options),
+                            onClick = { menuOpen = true },
+                            modifier = Modifier.testTag("inventory_menu"),
+                        )
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            listOf(
+                                StockPage.ALERTS to R.string.alerts_title,
+                                StockPage.RECEIVE to R.string.purchases_receive,
+                                StockPage.PURCHASES to R.string.purchases_title,
+                                StockPage.SUPPLIERS to R.string.suppliers_title,
+                                StockPage.MOVEMENTS to R.string.movements_title,
+                            ).forEach { (page, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(label)) },
+                                    onClick = {
+                                        menuOpen = false
+                                        onOpenStockPage(page)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 },
             )
         },
@@ -294,6 +329,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
     val low = product.lowestPrice
     val high = product.highestPrice
     val priceText = when {
+        !product.category.isSold -> ""
         low == null || high == null -> ""
         low == high -> formatter.format(low)
         else -> stringResource(R.string.price_range, formatter.format(low), formatter.format(high))
@@ -338,7 +374,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 StatusChip(text = chipText, tone = chipTone)
                 Text(
-                    text = pluralStringResource(R.plurals.units_in_stock, product.totalStock, product.totalStock),
+                    text = stockText(product.stockUnit, product.totalStock),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

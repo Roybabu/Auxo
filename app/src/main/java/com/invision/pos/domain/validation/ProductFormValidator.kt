@@ -10,6 +10,7 @@ import com.invision.pos.domain.model.NetQuantity
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
+import com.invision.pos.domain.model.StockUnit
 
 enum class FieldError {
     REQUIRED,
@@ -34,13 +35,16 @@ enum class FieldError {
     INVALID_GST_RATE,
     INVALID_HSN,
     APPAREL_RULE_GARMENTS_ONLY,
+
+    /** Weight or volume quantity that isn't a number with up to 3 decimals. */
+    INVALID_AMOUNT,
 }
 
 enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SIZES, COLOURS, VARIANTS, GST_RATE, HSN }
 
 enum class VariantField {
     SIZE, COLOUR, NET_QUANTITY, UNIT, SELLING_PRICE, MRP, COST_PRICE,
-    OPENING_STOCK, LOW_STOCK, BARCODE, SKU, BATCH,
+    OPENING_STOCK, LOW_STOCK, REORDER, BARCODE, SKU, BATCH,
 }
 
 data class ProductFormErrors(
@@ -100,7 +104,11 @@ object ProductFormValidator {
         if (form.description.trim().length > DESCRIPTION_MAX) fieldErrors[FormField.DESCRIPTION] = FieldError.TOO_LONG
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
 
-        val gstRate: GstRate? = when (val choice = form.gst) {
+        // Ingredients aren't sold, so they carry no GST or HSN.
+        val sold = form.category.isSold
+        val unit = form.stockUnit.takeIf { it in form.category.allowedStockUnits } ?: StockUnit.UNIT
+
+        val gstRate: GstRate? = if (!sold) null else when (val choice = form.gst) {
             GstChoice.NotSet -> null
             GstChoice.Apparel -> {
                 if (form.category != ProductCategory.GARMENT) fieldErrors[FormField.GST_RATE] = FieldError.APPAREL_RULE_GARMENTS_ONLY
@@ -113,7 +121,7 @@ object ProductFormValidator {
                 basisPoints?.let { GstRate.Fixed(it) }
             }
         }
-        val hsn = form.hsnCode.trim()
+        val hsn = if (sold) form.hsnCode.trim() else ""
         if (hsn.isNotEmpty() && !HSN_PATTERN.matches(hsn)) fieldErrors[FormField.HSN] = FieldError.INVALID_HSN
 
         if (form.category.usesSizeAndColour) {
@@ -131,7 +139,7 @@ object ProductFormValidator {
 
         val validVariants = form.variants.mapNotNull { row ->
             val errors = mutableMapOf<VariantField, FieldError>()
-            val variant = validateVariant(form.category, row, errors)
+            val variant = validateVariant(form.category, unit, row, errors)
             if (errors.isNotEmpty()) variantErrors[row.key] = errors
             variant
         }
@@ -154,12 +162,15 @@ object ProductFormValidator {
             gstRate = gstRate,
             variants = validVariants,
             createdAtMillis = form.createdAtMillis,
+            stockUnit = unit,
+            preferredSupplierId = form.preferredSupplierId,
         )
         return ProductValidation.Valid(product)
     }
 
     private fun validateVariant(
         category: ProductCategory,
+        unit: StockUnit,
         row: VariantForm,
         errors: MutableMap<VariantField, FieldError>,
     ): ProductVariant? {
@@ -186,6 +197,7 @@ object ProductFormValidator {
         }
 
         val price = when {
+            !category.isSold -> Money.ZERO
             row.sellingPrice.isBlank() -> {
                 errors[VariantField.SELLING_PRICE] = FieldError.REQUIRED
                 null
@@ -194,12 +206,13 @@ object ProductFormValidator {
                 if (it == null) errors[VariantField.SELLING_PRICE] = FieldError.INVALID_PRICE
             }
         }
-        val mrp = optionalMoney(row.mrp, VariantField.MRP, errors)
+        val mrp = if (category.isSold) optionalMoney(row.mrp, VariantField.MRP, errors) else null
         if (price != null && mrp != null && mrp < price) errors[VariantField.MRP] = FieldError.MRP_BELOW_PRICE
         val cost = optionalMoney(row.costPrice, VariantField.COST_PRICE, errors)
 
-        val openingStock = if (row.isSaved) 0 else optionalCount(row.openingStock, VariantField.OPENING_STOCK, errors)
-        val lowStock = optionalCount(row.lowStockThreshold, VariantField.LOW_STOCK, errors)
+        val openingStock = if (row.isSaved) 0 else optionalQuantity(row.openingStock, unit, VariantField.OPENING_STOCK, errors)
+        val lowStock = optionalQuantity(row.lowStockThreshold, unit, VariantField.LOW_STOCK, errors)
+        val reorder = optionalQuantity(row.reorderQuantity, unit, VariantField.REORDER, errors)
 
         val barcode = row.barcode.trim()
         if (barcode.isNotEmpty()) {
@@ -235,6 +248,7 @@ object ProductFormValidator {
             costPrice = cost,
             stockQuantity = if (row.isSaved) row.currentStock ?: 0 else openingStock,
             lowStockThreshold = lowStock,
+            reorderQuantity = reorder,
             batchNumber = batch.ifEmpty { null }.takeIf { category.tracksExpiry },
             expiryDate = row.expiryDate.takeIf { category.tracksExpiry },
         )
@@ -291,6 +305,19 @@ object ProductFormValidator {
         if (text.isBlank()) return null
         return Money.parseOrNull(text).also { if (it == null) errors[field] = FieldError.INVALID_PRICE }
     }
+
+    /** Whole pieces, or kg / L with up to 3 decimals stored as grams / millilitres. */
+    private fun optionalQuantity(text: String, unit: StockUnit, field: VariantField, errors: MutableMap<VariantField, FieldError>): Int {
+        if (unit == StockUnit.UNIT) return optionalCount(text, field, errors)
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return 0
+        return unit.parse(trimmed, allowZero = true) ?: run {
+            errors[field] = if (DECIMAL.matches(trimmed)) FieldError.QUANTITY_TOO_LARGE else FieldError.INVALID_AMOUNT
+            0
+        }
+    }
+
+    private val DECIMAL = Regex("""\d+(\.\d{1,3})?""")
 
     private fun optionalCount(text: String, field: VariantField, errors: MutableMap<VariantField, FieldError>): Int {
         val trimmed = text.trim()

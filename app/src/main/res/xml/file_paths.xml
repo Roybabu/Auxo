@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Receipt PDFs written to the cache can be shared with other apps. -->
+<!-- Receipt PDFs and report CSV files written to the cache can be shared with other apps. -->
 <paths>
     <cache-path name="receipts" path="receipts/" />
+    <cache-path name="exports" path="exports/" />
 </paths>

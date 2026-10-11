@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -32,27 +34,30 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.domain.inventory.InventoryFilter
-import com.invision.pos.domain.inventory.StockAdjustmentCalculator
+import com.invision.pos.domain.inventory.StockAdjustmentError
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
 import com.invision.pos.domain.model.StockStatus
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.BarcodeImage
 import com.invision.pos.ui.components.ConfirmDialog
+import com.invision.pos.ui.components.DateField
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -143,6 +148,8 @@ fun ProductDetailScreen(
             state = dialog,
             onReasonChange = viewModel::onAdjustReasonChange,
             onQuantityChange = viewModel::onAdjustQuantityChange,
+            onBatchChange = viewModel::onAdjustBatchChange,
+            onExpiryChange = viewModel::onAdjustExpiryChange,
             onNoteChange = viewModel::onAdjustNoteChange,
             onConfirm = viewModel::confirmAdjust,
             onDismiss = viewModel::dismissAdjust,
@@ -180,6 +187,7 @@ fun ProductDetailContent(
             VariantCard(
                 variant = variant,
                 category = product.category,
+                unit = product.stockUnit,
                 today = state.today,
                 onAdjustStock = { onAdjustStock(variant) },
             )
@@ -199,7 +207,7 @@ fun ProductDetailContent(
                     Column {
                         state.movements.forEachIndexed { index, movement ->
                             if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            MovementRow(movement, variantLabels[movement.variantId].orEmpty())
+                            MovementRow(movement, variantLabels[movement.variantId].orEmpty(), product.stockUnit)
                         }
                     }
                 }
@@ -225,18 +233,22 @@ private fun ProductHeader(product: Product) {
             if (product.category == ProductCategory.PACKAGED_FOOD) {
                 Text(stringResource(product.dietType.labelRes()), style = MaterialTheme.typography.bodyMedium)
             }
-            Text(
-                text = listOfNotNull(
-                    stringResource(R.string.detail_gst, gstLabel(product.gstRate)),
-                    product.hsnCode?.let { stringResource(R.string.detail_hsn, it) },
-                ).joinToString(" · "),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            if (product.category.isSold) {
+                Text(
+                    text = listOfNotNull(
+                        stringResource(R.string.detail_gst, gstLabel(product.gstRate)),
+                        product.hsnCode?.let { stringResource(R.string.detail_hsn, it) },
+                    ).joinToString(" · "),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                Text(stringResource(R.string.detail_ingredient_note), style = MaterialTheme.typography.bodyMedium)
+            }
             product.description?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(
-                text = pluralStringResource(R.plurals.units_in_stock, product.totalStock, product.totalStock),
+                text = stockText(product.stockUnit, product.totalStock),
                 style = MaterialTheme.typography.titleMedium,
             )
         }
@@ -247,6 +259,7 @@ private fun ProductHeader(product: Product) {
 private fun VariantCard(
     variant: ProductVariant,
     category: ProductCategory,
+    unit: StockUnit,
     today: LocalDate,
     onAdjustStock: () -> Unit,
 ) {
@@ -269,25 +282,33 @@ private fun VariantCard(
                     else -> StatusChip(stringResource(variant.stockStatus.labelRes()), variant.stockStatus.tone())
                 }
             }
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            if (!category.isSold) {
                 Text(
-                    text = formatter.format(variant.sellingPrice),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    text = variant.costPrice?.let { stringResource(R.string.detail_cost_per, formatter.format(it), unit.entrySymbol) }
+                        ?: stringResource(R.string.detail_cost_unknown),
+                    style = MaterialTheme.typography.titleMedium,
                 )
-                variant.mrp?.let {
+            } else {
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                     Text(
-                        text = stringResource(R.string.detail_mrp, formatter.format(it)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = formatter.format(variant.sellingPrice),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-                variant.costPrice?.let {
-                    Text(
-                        text = stringResource(R.string.detail_cost, formatter.format(it)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    variant.mrp?.let {
+                        Text(
+                            text = stringResource(R.string.detail_mrp, formatter.format(it)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    variant.costPrice?.let {
+                        Text(
+                            text = stringResource(R.string.detail_cost, formatter.format(it)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             BarcodeImage(
@@ -299,9 +320,8 @@ private fun VariantCard(
             Text(text = variant.barcode, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
             val extra = listOfNotNull(
                 variant.sku?.let { stringResource(R.string.detail_sku, it) },
-                if (category.tracksExpiry) variant.batchNumber?.let { stringResource(R.string.detail_batch, it) } else null,
-                if (category.tracksExpiry) variant.expiryDate?.let { stringResource(R.string.detail_expiry, DateFormats.date(it)) } else null,
-                if (variant.lowStockThreshold > 0) stringResource(R.string.detail_low_stock_at, variant.lowStockThreshold) else null,
+                if (variant.lowStockThreshold > 0) stringResource(R.string.detail_low_stock_at, unit.format(variant.lowStockThreshold)) else null,
+                if (variant.reorderQuantity > 0) stringResource(R.string.detail_reorder_quantity, unit.format(variant.reorderQuantity)) else null,
             )
             if (extra.isNotEmpty()) {
                 Text(
@@ -310,9 +330,12 @@ private fun VariantCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (category.tracksExpiry && variant.batches.isNotEmpty()) {
+                BatchList(variant = variant, unit = unit, today = today)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = pluralStringResource(R.plurals.units_in_stock, variant.stockQuantity, variant.stockQuantity),
+                    text = stockText(unit, variant.stockQuantity),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -322,8 +345,45 @@ private fun VariantCard(
     }
 }
 
+/** Batches of one variant, earliest expiry first, with expired ones marked. */
 @Composable
-private fun MovementRow(movement: StockMovement, variantLabel: String) {
+private fun BatchList(variant: ProductVariant, unit: StockUnit, today: LocalDate) {
+    val status = InvisionThemeExtras.statusColors
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Text(stringResource(R.string.detail_batches), style = MaterialTheme.typography.labelLarge)
+        variant.batches.forEach { batch ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                Text(
+                    text = listOfNotNull(
+                        batch.batchNumber?.let { stringResource(R.string.detail_batch, it) } ?: stringResource(R.string.detail_batch_none),
+                        batch.expiryDate?.let { stringResource(R.string.detail_expiry, DateFormats.date(it)) },
+                    ).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                when {
+                    batch.isExpired(today) -> StatusChip(stringResource(R.string.status_expired), status.danger)
+                    batch.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) ->
+                        StatusChip(stringResource(R.string.status_expiring), status.warning)
+                    else -> Unit
+                }
+                Text(unit.format(batch.quantity), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        val expired = variant.expiredQuantity(today)
+        if (expired > 0) {
+            Text(
+                text = stringResource(R.string.detail_expired_stock, unit.format(expired)),
+                style = MaterialTheme.typography.bodySmall,
+                color = status.danger.accent,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MovementRow(movement: StockMovement, variantLabel: String, unit: StockUnit) {
     val status = InvisionThemeExtras.statusColors
     Row(
         modifier = Modifier
@@ -342,7 +402,7 @@ private fun MovementRow(movement: StockMovement, variantLabel: String) {
         }
         val change = movement.quantityChange
         Text(
-            text = if (change > 0) "+$change" else change.toString(),
+            text = if (change > 0) "+" + unit.format(change) else unit.format(change),
             style = MaterialTheme.typography.titleMedium,
             color = if (change > 0) status.success.accent else status.danger.accent,
         )
@@ -354,6 +414,8 @@ fun AdjustStockDialog(
     state: AdjustStockDialogState,
     onReasonChange: (StockChangeReason) -> Unit,
     onQuantityChange: (String) -> Unit,
+    onBatchChange: (String) -> Unit,
+    onExpiryChange: (LocalDate?) -> Unit,
     onNoteChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -366,6 +428,8 @@ fun AdjustStockDialog(
                 state = state,
                 onReasonChange = onReasonChange,
                 onQuantityChange = onQuantityChange,
+                onBatchChange = onBatchChange,
+                onExpiryChange = onExpiryChange,
                 onNoteChange = onNoteChange,
                 onDone = onConfirm,
             )
@@ -379,7 +443,7 @@ fun AdjustStockDialog(
     )
 }
 
-/** Reason, quantity and note fields of the stock adjustment dialog. */
+/** Reason, quantity, batch and note fields of the stock adjustment dialog. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AdjustStockForm(
@@ -389,17 +453,23 @@ fun AdjustStockForm(
     onNoteChange: (String) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    onBatchChange: (String) -> Unit = {},
+    onExpiryChange: (LocalDate?) -> Unit = {},
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+    val unit = state.unit
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
         Text(
             text = listOfNotNull(
                 state.variant.attributesLabel.ifEmpty { null },
-                stringResource(R.string.adjust_current, state.variant.stockQuantity),
+                stringResource(R.string.adjust_current, unit.format(state.variant.stockQuantity)),
             ).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            StockAdjustmentCalculator.manualReasons.forEach { reason ->
+            state.reasons.forEach { reason ->
                 FilterChip(
                     selected = state.reason == reason,
                     onClick = { onReasonChange(reason) },
@@ -407,17 +477,37 @@ fun AdjustStockForm(
                 )
             }
         }
+        val counted = state.reason == StockChangeReason.CORRECTION
         InvisionTextField(
             value = state.quantity,
             onValueChange = onQuantityChange,
-            label = stringResource(
-                if (state.reason == StockChangeReason.CORRECTION) R.string.adjust_counted else R.string.adjust_quantity,
-            ),
-            error = state.error?.let { stringResource(it.messageRes()) },
-            supportingText = state.newStock?.let { stringResource(R.string.adjust_new_stock, it) },
-            keyboardType = KeyboardType.Number,
-            modifier = Modifier.fillMaxWidth(),
+            label = when {
+                unit == StockUnit.UNIT -> stringResource(if (counted) R.string.adjust_counted else R.string.adjust_quantity)
+                else -> stringResource(if (counted) R.string.adjust_counted_unit else R.string.adjust_quantity_unit, unit.entrySymbol)
+            },
+            error = state.error?.takeIf { it != StockAdjustmentError.BATCH_INVALID }?.let { stringResource(it.messageRes()) },
+            supportingText = state.newStock?.let { stringResource(R.string.adjust_new_stock, unit.format(it)) },
+            keyboardType = if (unit == StockUnit.UNIT) KeyboardType.Number else KeyboardType.Decimal,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("adjust_quantity"),
         )
+        if (state.asksForBatch) {
+            InvisionTextField(
+                value = state.batchNumber,
+                onValueChange = onBatchChange,
+                label = stringResource(R.string.adjust_batch),
+                error = if (state.error == StockAdjustmentError.BATCH_INVALID) stringResource(R.string.adjust_error_batch) else null,
+                capitalization = KeyboardCapitalization.Characters,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DateField(
+                label = stringResource(R.string.field_expiry),
+                date = state.expiryDate,
+                onDateChange = onExpiryChange,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         InvisionTextField(
             value = state.note,
             onValueChange = onNoteChange,

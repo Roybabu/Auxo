@@ -1,19 +1,34 @@
 package com.invision.pos.data.repository
 
-import com.invision.pos.data.local.dao.InventoryDao
+import androidx.room.withTransaction
+import com.invision.pos.data.local.InvisionDatabase
+import com.invision.pos.data.local.MissingItemException
+import com.invision.pos.data.local.MovementInfo
+import com.invision.pos.data.local.RequestClaim
+import com.invision.pos.data.local.StockWriter
+import com.invision.pos.data.local.claim
+import com.invision.pos.data.local.dao.StockShortageException
 import com.invision.pos.data.local.toDomain
 import com.invision.pos.data.local.toEntity
 import com.invision.pos.domain.barcode.BarcodeRules
+import com.invision.pos.domain.model.BatchDetails
+import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.Product
+import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockMovementRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 
 class RoomInventoryRepository(
-    private val dao: InventoryDao,
+    private val database: InvisionDatabase,
     private val clock: Clock,
 ) : InventoryRepository {
+
+    private val dao = database.inventoryDao()
+    private val operations = database.operationDao()
+    private val stock = StockWriter(dao)
 
     override fun observeProducts(): Flow<List<Product>> =
         dao.observeProducts().map { rows -> rows.map { it.toDomain() } }
@@ -51,7 +66,7 @@ class RoomInventoryRepository(
         val removedIds = if (product.id == 0L) {
             emptyList()
         } else {
-            dao.getProduct(product.id)?.variants.orEmpty().map { it.id }.filterNot { it in keptIds }
+            dao.getProduct(product.id)?.variants.orEmpty().map { it.variant.id }.filterNot { it in keptIds }
         }
 
         val productId = dao.saveProduct(
@@ -67,6 +82,45 @@ class RoomInventoryRepository(
         dao.deleteProduct(productId)
     }
 
-    override suspend fun recordStockChange(movement: StockMovement): StockChangeResult =
-        if (dao.adjustStock(movement.toEntity())) StockChangeResult.Applied else StockChangeResult.WouldGoNegative
+    override suspend fun recordStockChange(movement: StockMovement, batch: BatchDetails, requestId: String?): StockChangeResult =
+        try {
+            database.withTransaction {
+                val firstTime = requestId == null || operations.claim(requestId, "STOCK_CHANGE", clock.millis()) is RequestClaim.New
+                val info = MovementInfo(movement.reason, movement.createdAtMillis, movement.note)
+                if (firstTime && movement.quantityChange > 0) {
+                    stock.add(movement.variantId, movement.quantityChange, info, batch)
+                } else if (firstTime && movement.quantityChange < 0) {
+                    stock.remove(movement.variantId, -movement.quantityChange, info)
+                }
+            }
+            StockChangeResult.Applied
+        } catch (e: StockShortageException) {
+            StockChangeResult.WouldGoNegative
+        } catch (e: MissingItemException) {
+            StockChangeResult.ItemMissing
+        }
+
+    override fun observeBatches(): Flow<List<BatchWithProduct>> =
+        dao.observeBatchesWithStock().map { rows -> rows.map { it.toDomain() } }
+
+    override suspend fun writeOff(
+        batchId: Long,
+        quantity: Int,
+        reason: StockChangeReason,
+        note: String?,
+        requestId: String,
+    ): StockChangeResult = try {
+        database.withTransaction {
+            val now = clock.millis()
+            if (operations.claim(requestId, "WRITE_OFF", now) is RequestClaim.New) {
+                stock.removeFromBatch(batchId, quantity, MovementInfo(reason, now, note))
+            }
+        }
+        StockChangeResult.Applied
+    } catch (e: StockShortageException) {
+        StockChangeResult.WouldGoNegative
+    }
+
+    override fun observeMovementHistory(fromMillis: Long, toMillis: Long): Flow<List<StockMovementRecord>> =
+        dao.observeMovementHistory(fromMillis, toMillis).map { rows -> rows.map { it.toDomain() } }
 }

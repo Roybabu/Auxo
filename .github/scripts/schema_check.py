@@ -1,14 +1,18 @@
 """Fail the build when Room's generated schema differs from the committed one.
 
-When it differs, each changed schema file is also published as a gzip+base64
-annotation, so the exact file can be recovered and committed without a local
-Android build:  base64 -d <text> | gunzip > app/schemas/<path>
+When it differs, each changed schema file is also published as gzip+base64
+annotations, so the exact file can be recovered and committed without a local
+Android build. Annotations are cut at 4 KB, so the text is split into numbered
+parts: join them in order, then  base64 -d | gunzip > app/schemas/<path>
 """
 
 import base64
 import gzip
 import subprocess
 import sys
+
+# GitHub keeps the first 4096 characters of an annotation.
+PART_SIZE = 4000
 
 changed = subprocess.run(
     ["git", "status", "--porcelain", "--untracked-files=all", "--", "app/schemas"],
@@ -26,5 +30,7 @@ for line in changed:
         continue
     with open(path, "rb") as handle:
         packed = base64.b64encode(gzip.compress(handle.read(), mtime=0)).decode("ascii")
-    print(f"::notice title=schema-file {path}::{packed}")
+    parts = [packed[i:i + PART_SIZE] for i in range(0, len(packed), PART_SIZE)]
+    for number, part in enumerate(parts, start=1):
+        print(f"::notice title=schema-file {path} part {number}/{len(parts)}::{part}")
 sys.exit(1)

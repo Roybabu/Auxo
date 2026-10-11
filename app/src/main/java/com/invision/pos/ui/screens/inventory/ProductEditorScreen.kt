@@ -15,9 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,7 +25,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,6 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.domain.model.DietType
 import com.invision.pos.domain.model.ProductCategory
+import com.invision.pos.domain.model.StockUnit
+import com.invision.pos.domain.model.Supplier
 import com.invision.pos.domain.validation.FieldError
 import com.invision.pos.domain.validation.FormField
 import com.invision.pos.domain.validation.GarmentVariants
@@ -62,6 +60,8 @@ import com.invision.pos.domain.validation.ProductFormErrors
 import com.invision.pos.domain.validation.VariantDefaults
 import com.invision.pos.domain.validation.VariantField
 import com.invision.pos.domain.validation.VariantForm
+import com.invision.pos.ui.components.DatePickerSheet
+import com.invision.pos.ui.components.DropdownField
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTextField
@@ -75,9 +75,6 @@ import com.invision.pos.ui.theme.Spacing
 import com.invision.pos.viewmodel.ProductEditorEvent
 import com.invision.pos.viewmodel.ProductEditorUiState
 import com.invision.pos.viewmodel.ProductEditorViewModel
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 /** Callbacks from the editor UI, so the content can be previewed and tested without a ViewModel. */
 interface ProductEditorActions {
@@ -90,6 +87,8 @@ interface ProductEditorActions {
     fun onGstChoiceChange(choice: GstChoice) = Unit
     fun onCustomGstRateChange(value: String) = Unit
     fun onHsnChange(value: String) = Unit
+    fun onStockUnitChange(unit: StockUnit) = Unit
+    fun onPreferredSupplierChange(supplierId: Long?) = Unit
     fun onToggleSize(size: String)
     fun onAddColour(colour: String)
     fun onRemoveColour(colour: String)
@@ -150,6 +149,8 @@ fun ProductEditorScreen(
             override fun onGstChoiceChange(choice: GstChoice) = viewModel.onGstChoiceChange(choice)
             override fun onCustomGstRateChange(value: String) = viewModel.onCustomGstRateChange(value)
             override fun onHsnChange(value: String) = viewModel.onHsnChange(value)
+            override fun onStockUnitChange(unit: StockUnit) = viewModel.onStockUnitChange(unit)
+            override fun onPreferredSupplierChange(supplierId: Long?) = viewModel.onPreferredSupplierChange(supplierId)
             override fun onToggleSize(size: String) = viewModel.toggleSize(size)
             override fun onAddColour(colour: String) = viewModel.addColour(colour)
             override fun onRemoveColour(colour: String) = viewModel.removeColour(colour)
@@ -201,7 +202,7 @@ fun ProductEditorScreen(
     val dateKey = expiryTarget
     if (dateKey != null) {
         val current = uiState.form.variants.firstOrNull { it.key == dateKey }?.expiryDate
-        ExpiryDatePickerDialog(
+        DatePickerSheet(
             initial = current,
             onConfirm = { date ->
                 viewModel.onExpiryChange(dateKey, date)
@@ -250,7 +251,11 @@ fun ProductEditorContent(
 
         item(key = "details") { DetailsSection(form, errors, actions) }
 
-        item(key = "tax") { TaxSection(form, errors, actions) }
+        if (form.category.isSold) {
+            item(key = "tax") { TaxSection(form, errors, actions) }
+        }
+
+        item(key = "purchasing") { PurchasingSection(form, uiState.suppliers, actions) }
 
         if (form.category.usesSizeAndColour) {
             item(key = "sizes") { SizesSection(form, errors, actions) }
@@ -278,13 +283,14 @@ fun ProductEditorContent(
                 row = row,
                 index = form.variants.indexOf(row),
                 category = form.category,
+                unit = form.stockUnit,
                 errors = errors.forVariant(row.key),
                 canRemove = !form.category.usesSizeAndColour && form.variants.size > 1,
                 actions = actions,
             )
         }
 
-        if (!form.category.usesSizeAndColour) {
+        if (form.category.usesNetQuantity) {
             item(key = "add_pack") {
                 OutlinedButton(onClick = actions::onAddPackSize, modifier = Modifier.fillMaxWidth()) {
                     Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
@@ -366,6 +372,49 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                 capitalization = KeyboardCapitalization.Sentences,
                 singleLine = false,
                 minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** How an ingredient is counted, and the supplier reorders go to. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, actions: ProductEditorActions) {
+    InvisionCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            SectionHeader(stringResource(R.string.editor_purchasing))
+            if (form.category.allowedStockUnits.size > 1) {
+                Text(stringResource(R.string.editor_stock_unit), style = MaterialTheme.typography.labelLarge)
+                if (form.isNew) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        form.category.allowedStockUnits.forEach { unit ->
+                            FilterChip(
+                                selected = form.stockUnit == unit,
+                                onClick = { actions.onStockUnitChange(unit) },
+                                label = { Text(stringResource(unit.labelRes())) },
+                            )
+                        }
+                    }
+                } else {
+                    Text(stringResource(form.stockUnit.labelRes()), style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(
+                    text = stringResource(R.string.editor_stock_unit_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            val none = stringResource(R.string.editor_supplier_none)
+            val options = listOf<Supplier?>(null) + suppliers
+            DropdownField(
+                label = stringResource(R.string.editor_supplier),
+                value = suppliers.firstOrNull { it.id == form.preferredSupplierId }?.name ?: none,
+                options = options,
+                optionText = { it?.name ?: none },
+                onSelect = { actions.onPreferredSupplierChange(it?.id) },
+                supportingText = stringResource(R.string.editor_supplier_hint),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -614,6 +663,7 @@ private fun VariantEditorCard(
     row: VariantForm,
     index: Int,
     category: ProductCategory,
+    unit: StockUnit,
     errors: Map<VariantField, FieldError>,
     canRemove: Boolean,
     actions: ProductEditorActions,
@@ -626,10 +676,10 @@ private fun VariantEditorCard(
     InvisionCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val title = if (category.usesSizeAndColour) {
-                    listOf(row.size, row.colour).filter { it.isNotBlank() }.joinToString(" · ")
-                } else {
-                    stringResource(R.string.editor_pack, index + 1)
+                val title = when {
+                    category.usesSizeAndColour -> listOf(row.size, row.colour).filter { it.isNotBlank() }.joinToString(" · ")
+                    category.usesNetQuantity -> stringResource(R.string.editor_pack, index + 1)
+                    else -> stringResource(R.string.editor_stock_and_cost)
                 }
                 Text(text = title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 if (canRemove) {
@@ -662,62 +712,87 @@ private fun VariantEditorCard(
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                InvisionTextField(
-                    value = row.sellingPrice,
-                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sellingPrice = sanitizeDecimal(value)) } },
-                    label = stringResource(R.string.field_selling_price),
-                    prefix = currency,
-                    error = errorFor(VariantField.SELLING_PRICE),
-                    keyboardType = KeyboardType.Decimal,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("variant_price_$index"),
-                )
-                InvisionTextField(
-                    value = row.mrp,
-                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
-                    label = stringResource(R.string.field_mrp),
-                    prefix = currency,
-                    error = errorFor(VariantField.MRP),
-                    keyboardType = KeyboardType.Decimal,
-                    modifier = Modifier.weight(1f),
-                )
+            if (category.isSold) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    InvisionTextField(
+                        value = row.sellingPrice,
+                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sellingPrice = sanitizeDecimal(value)) } },
+                        label = stringResource(R.string.field_selling_price),
+                        prefix = currency,
+                        error = errorFor(VariantField.SELLING_PRICE),
+                        keyboardType = KeyboardType.Decimal,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("variant_price_$index"),
+                    )
+                    InvisionTextField(
+                        value = row.mrp,
+                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
+                        label = stringResource(R.string.field_mrp),
+                        prefix = currency,
+                        error = errorFor(VariantField.MRP),
+                        keyboardType = KeyboardType.Decimal,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
+            // Quantities are typed in pieces, kg or L; ingredients may use up to 3 decimals.
+            val quantityKeyboard = if (unit == StockUnit.UNIT) KeyboardType.Number else KeyboardType.Decimal
+            fun sanitizeQuantity(text: String): String = if (unit == StockUnit.UNIT) sanitizeCount(text) else sanitizeDecimal(text, 3)
+            @Composable
+            fun quantityLabel(res: Int): String =
+                if (unit == StockUnit.UNIT) stringResource(res) else stringResource(R.string.field_with_unit, stringResource(res), unit.entrySymbol)
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 InvisionTextField(
                     value = row.costPrice,
                     onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(costPrice = sanitizeDecimal(value)) } },
-                    label = stringResource(R.string.field_cost_price),
+                    label = if (category.isSold) {
+                        stringResource(R.string.field_cost_price)
+                    } else {
+                        stringResource(R.string.field_cost_per, unit.entrySymbol)
+                    },
                     prefix = currency,
                     error = errorFor(VariantField.COST_PRICE),
                     keyboardType = KeyboardType.Decimal,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("variant_cost_$index"),
                 )
                 InvisionTextField(
                     value = row.lowStockThreshold,
-                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(lowStockThreshold = sanitizeCount(value)) } },
-                    label = stringResource(R.string.field_low_stock),
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(lowStockThreshold = sanitizeQuantity(value)) } },
+                    label = quantityLabel(R.string.field_low_stock),
                     error = errorFor(VariantField.LOW_STOCK),
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = quantityKeyboard,
                     modifier = Modifier.weight(1f),
                 )
             }
+            InvisionTextField(
+                value = row.reorderQuantity,
+                onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(reorderQuantity = sanitizeQuantity(value)) } },
+                label = quantityLabel(R.string.field_reorder_quantity),
+                error = errorFor(VariantField.REORDER),
+                supportingText = stringResource(R.string.field_reorder_quantity_hint),
+                keyboardType = quantityKeyboard,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             if (row.isSaved) {
                 Text(
-                    text = stringResource(R.string.editor_stock_locked, row.currentStock ?: 0),
+                    text = stringResource(R.string.editor_stock_locked, unit.format(row.currentStock ?: 0)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 InvisionTextField(
                     value = row.openingStock,
-                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(openingStock = sanitizeCount(value)) } },
-                    label = stringResource(R.string.field_opening_stock),
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(openingStock = sanitizeQuantity(value)) } },
+                    label = quantityLabel(R.string.field_opening_stock),
                     error = errorFor(VariantField.OPENING_STOCK),
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth(),
+                    keyboardType = quantityKeyboard,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("variant_opening_$index"),
                 )
             }
 
@@ -752,7 +827,13 @@ private fun VariantEditorCard(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            if (category.tracksExpiry) {
+            if (category.tracksExpiry && row.isSaved) {
+                Text(
+                    text = stringResource(R.string.editor_batches_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (category.tracksExpiry) {
                 InvisionTextField(
                     value = row.batchNumber,
                     onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(batchNumber = value.take(32)) } },
@@ -782,34 +863,6 @@ private fun VariantEditorCard(
                 }
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExpiryDatePickerDialog(
-    initial: LocalDate?,
-    onConfirm: (LocalDate?) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = initial?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
-    )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val date = state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }
-                    onConfirm(date)
-                },
-            ) { Text(stringResource(R.string.action_ok)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
-    ) {
-        DatePicker(state = state)
     }
 }
 

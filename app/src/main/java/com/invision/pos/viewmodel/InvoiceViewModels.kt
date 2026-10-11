@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.data.repository.BillingRepository
+import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.billing.ReturnBuild
 import com.invision.pos.domain.billing.ReturnBuilder
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -136,24 +138,37 @@ enum class HistoryRange { TODAY, LAST_7_DAYS, THIS_MONTH, ALL }
 
 enum class HistoryTab { INVOICES, PAYMENTS }
 
+/**
+ * Money taken and given back. Cash, UPI and card include payments received
+ * against customer accounts; sales put on account are counted separately as
+ * they bring in no money yet, and refunds credited to an account are not money out.
+ */
 data class PaymentTotals(
     val cash: Money = Money.ZERO,
     val upi: Money = Money.ZERO,
     val card: Money = Money.ZERO,
     val refunds: Money = Money.ZERO,
+    /** Sales put on customer accounts. */
+    val onAccount: Money = Money.ZERO,
+    /** Part of cash, UPI and card received against accounts. */
+    val accountPayments: Money = Money.ZERO,
 ) {
     val received: Money get() = cash + upi + card
     val net: Money get() = received - refunds
 
     companion object {
         fun of(payments: List<PaymentRecord>): PaymentTotals = payments.fold(PaymentTotals()) { totals, p ->
-            if (p.kind == PaymentKind.REFUND) {
-                totals.copy(refunds = totals.refunds + p.amount)
-            } else {
-                when (p.method) {
-                    PaymentMethod.CASH -> totals.copy(cash = totals.cash + p.amount)
-                    PaymentMethod.UPI -> totals.copy(upi = totals.upi + p.amount)
-                    PaymentMethod.CARD -> totals.copy(card = totals.card + p.amount)
+            when {
+                p.kind == PaymentKind.REFUND && p.method == PaymentMethod.CREDIT -> totals
+                p.kind == PaymentKind.REFUND -> totals.copy(refunds = totals.refunds + p.amount)
+                else -> {
+                    val fromAccount = if (p.customerName != null) p.amount else Money.ZERO
+                    when (p.method) {
+                        PaymentMethod.CASH -> totals.copy(cash = totals.cash + p.amount, accountPayments = totals.accountPayments + fromAccount)
+                        PaymentMethod.UPI -> totals.copy(upi = totals.upi + p.amount, accountPayments = totals.accountPayments + fromAccount)
+                        PaymentMethod.CARD -> totals.copy(card = totals.card + p.amount, accountPayments = totals.accountPayments + fromAccount)
+                        PaymentMethod.CREDIT -> totals.copy(onAccount = totals.onAccount + p.amount)
+                    }
                 }
             }
         }
@@ -177,6 +192,7 @@ data class InvoiceHistoryUiState(
 class InvoiceHistoryViewModel(
     private val billing: BillingRepository,
     private val clock: Clock,
+    private val customers: CustomerRepository? = null,
 ) : ViewModel() {
 
     private val filters = MutableStateFlow(Triple(HistoryTab.INVOICES, HistoryRange.TODAY, ""))
@@ -185,12 +201,17 @@ class InvoiceHistoryViewModel(
     val uiState: StateFlow<InvoiceHistoryUiState> = combine(filters, reload) { f, _ -> f }
         .flatMapLatest { (tab, range, query) ->
             val (from, to) = bounds(range)
-            combine(billing.observeInvoices(from, to), billing.observePayments(from, to)) { invoices, payments ->
+            val accountPayments = customers?.observeAccountPayments(from, to) ?: flowOf(emptyList())
+            combine(billing.observeInvoices(from, to), billing.observePayments(from, to), accountPayments) { invoices, invoicePayments, fromAccounts ->
                 val filtered = filterInvoices(invoices, query)
+                val payments = (invoicePayments + fromAccounts).sortedWith(compareByDescending<PaymentRecord> { it.createdAtMillis }.thenByDescending { it.id })
                 val filteredPayments = if (query.isBlank()) {
                     payments
                 } else {
-                    payments.filter { it.invoiceNumber?.contains(query.trim(), ignoreCase = true) == true }
+                    payments.filter {
+                        it.invoiceNumber?.contains(query.trim(), ignoreCase = true) == true ||
+                            it.customerName?.contains(query.trim(), ignoreCase = true) == true
+                    }
                 }
                 InvoiceHistoryUiState(
                     isLoading = false,
@@ -242,7 +263,7 @@ class InvoiceHistoryViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                InvoiceHistoryViewModel(container.billingRepository, container.clock)
+                InvoiceHistoryViewModel(container.billingRepository, container.clock, container.customerRepository)
             }
         }
     }

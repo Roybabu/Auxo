@@ -5,7 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.MenuRepository
+import com.invision.pos.data.repository.SaveCustomerResult
 import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
@@ -15,6 +18,7 @@ import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartCheck
 import com.invision.pos.domain.billing.CartLine
 import com.invision.pos.domain.billing.CartValidator
+import com.invision.pos.domain.billing.CreditAccount
 import com.invision.pos.domain.billing.CustomerDetails
 import com.invision.pos.domain.billing.Discount
 import com.invision.pos.domain.billing.DiscountParse
@@ -23,7 +27,13 @@ import com.invision.pos.domain.billing.PaymentDraft
 import com.invision.pos.domain.billing.PaymentError
 import com.invision.pos.domain.billing.PaymentValidator
 import com.invision.pos.domain.billing.taxModeFor
+import com.invision.pos.domain.contacts.ContactField
+import com.invision.pos.domain.contacts.CustomerForm
+import com.invision.pos.domain.contacts.CustomerValidation
+import com.invision.pos.domain.contacts.CustomerValidator
 import com.invision.pos.domain.inventory.InventoryFilter
+import com.invision.pos.domain.model.CustomerAccount
+import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.Product
@@ -41,6 +51,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.LocalDate
+import java.util.UUID
 
 /** One variant offered while searching. */
 data class ProductSearchResult(val product: Product, val variant: ProductVariant) {
@@ -56,7 +69,7 @@ data class BillingUiState(
     /** Null while settings load. */
     val settings: StoreSettings? = null,
     val productsLoaded: Boolean = false,
-    /** Products in inventory; zero means there is nothing to sell yet. */
+    /** Products for sale in inventory; zero means there is nothing to sell yet. */
     val productCount: Int = 0,
     val loadFailed: Boolean = false,
     val cart: Cart = Cart(),
@@ -66,11 +79,24 @@ data class BillingUiState(
     val showErrors: Boolean = false,
     val searchText: String = "",
     val searchResults: List<ProductSearchResult> = emptyList(),
+    /** Dishes matching the search. */
+    val menuResults: List<MenuItem> = emptyList(),
+    /** Available dishes, for quick adding when the store has a menu. */
+    val menu: List<MenuItem> = emptyList(),
+    /** Menu section shown in the quick-add card; null shows the first section. */
+    val menuSection: String? = null,
     val lineDiscounts: Map<Long, DiscountInput> = emptyMap(),
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
     val billDiscount: DiscountInput = DiscountInput(),
     val customerExpanded: Boolean = false,
+    /** Search text for saved customers. */
+    val customerQuery: String = "",
+    val customerResults: List<CustomerAccount> = emptyList(),
+    /** Saved customer the bill is for, with their balance. */
+    val account: CustomerAccount? = null,
+    /** Set when saving the typed details as a customer failed. */
+    val customerSaveError: CustomerSaveError? = null,
     val stage: BillingStage = BillingStage.CART,
     val payments: List<PaymentDraft> = emptyList(),
     val paymentErrors: Map<Int, PaymentError> = emptyMap(),
@@ -87,7 +113,16 @@ data class BillingUiState(
             val tendered = Money.parseOrNull(draft.tendered) ?: return@fold acc
             if (tendered > amount) acc + (tendered - amount) else acc
         }
+
+    /** Payment methods offered: "On account" only for a saved customer. */
+    val paymentMethods: List<PaymentMethod>
+        get() = if (account != null) PaymentMethod.entries else PaymentMethod.MONEY
+
+    /** Menu sections with available dishes, in menu order. */
+    val menuSections: List<String> get() = menu.map { it.section }.distinct()
 }
+
+enum class CustomerSaveError { NAME_REQUIRED, INVALID_PHONE, INVALID_DETAILS, PHONE_IN_USE, FAILED }
 
 sealed interface BillingEvent {
     data class Completed(val invoiceId: Long, val number: String, val change: Money) : BillingEvent
@@ -96,15 +131,22 @@ sealed interface BillingEvent {
     data class BarcodeNotFound(val barcode: String) : BillingEvent
     data object ScannerUnavailable : BillingEvent
     data object StockChanged : BillingEvent
+    data class IngredientsShort(val names: List<String>) : BillingEvent
+    data object CreditLimitExceeded : BillingEvent
+    data object CustomerMissing : BillingEvent
     data object SetupRequired : BillingEvent
     data object FixCart : BillingEvent
     data object SaveFailed : BillingEvent
+    data class CustomerSaved(val name: String) : BillingEvent
 }
 
 class BillingViewModel(
     private val inventory: InventoryRepository,
     private val settingsRepository: SettingsRepository,
     private val checkout: CheckoutUseCase,
+    private val customers: CustomerRepository? = null,
+    private val menuRepository: MenuRepository? = null,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -114,9 +156,17 @@ class BillingViewModel(
     val events: Flow<BillingEvent> = eventChannel.receiveAsFlow()
 
     private var products: List<Product> = emptyList()
+    private var allMenu: List<MenuItem> = emptyList()
+    private var menuLoaded = false
+    private var accounts: List<CustomerAccount> = emptyList()
     private var nextPaymentKey = 0
 
+    /** One id per bill, so retrying "Complete sale" can't save it twice. */
+    private var saleRequestId: String = UUID.randomUUID().toString()
+
     private var loadJobs: List<Job> = emptyList()
+
+    private val today: LocalDate get() = LocalDate.now(clock)
 
     init {
         load()
@@ -142,37 +192,70 @@ class BillingViewModel(
                     recalculate { state ->
                         state.copy(
                             productsLoaded = true,
-                            productCount = list.size,
-                            cart = syncStock(state.cart, list),
+                            productCount = list.count { it.category.isSold },
+                            cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
                         )
                     }
                 }
         }
-        loadJobs = listOf(settingsJob, productsJob)
+        val menuJob = menuRepository?.let { repository ->
+            viewModelScope.launch {
+                repository.observeMenu()
+                    .catch { _uiState.update { it.copy(loadFailed = true) } }
+                    .collect { list ->
+                        allMenu = list
+                        menuLoaded = true
+                        recalculate { state ->
+                            state.copy(
+                                menu = list.filter { it.available },
+                                menuResults = searchMenu(state.searchText),
+                                cart = syncStock(state.cart),
+                            )
+                        }
+                    }
+            }
+        }
+        val customersJob = customers?.let { repository ->
+            viewModelScope.launch {
+                repository.observeAccounts()
+                    .catch { _uiState.update { it.copy(loadFailed = true) } }
+                    .collect { list ->
+                        accounts = list
+                        _uiState.update { state ->
+                            val linkedId = state.account?.customer?.id
+                            val linked = linkedId?.let { id -> list.firstOrNull { it.customer.id == id } }
+                            state.copy(customerResults = searchCustomers(state.customerQuery), account = linked ?: state.account)
+                        }
+                    }
+            }
+        }
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, customersJob)
     }
 
     // Search and adding items
 
     fun onSearchTextChange(text: String) {
-        _uiState.update { it.copy(searchText = text, searchResults = search(text)) }
+        _uiState.update { it.copy(searchText = text, searchResults = search(text), menuResults = searchMenu(text)) }
     }
 
     /**
      * Enter in the search box, which hardware barcode scanners also send. Adds the
-     * item when the text is an exact barcode or matches a single variant.
+     * item when the text is an exact barcode or matches a single item.
      */
     fun onSearchSubmitted() {
         val text = _uiState.value.searchText.trim()
         if (text.isEmpty()) return
         val exact = findVariantByBarcode(text)
+        val state = _uiState.value
         when {
             exact != null -> add(exact.first, exact.second, clearSearch = true)
-            _uiState.value.searchResults.size == 1 -> {
-                val only = _uiState.value.searchResults.single()
+            state.searchResults.size == 1 && state.menuResults.isEmpty() -> {
+                val only = state.searchResults.single()
                 add(only.product, only.variant, clearSearch = true)
             }
-            BarcodeRules.check(text) is BarcodeCheck.Valid && _uiState.value.searchResults.isEmpty() ->
+            state.menuResults.size == 1 && state.searchResults.isEmpty() -> addMenuItem(state.menuResults.single())
+            BarcodeRules.check(text) is BarcodeCheck.Valid && state.searchResults.isEmpty() && state.menuResults.isEmpty() ->
                 eventChannel.trySend(BillingEvent.BarcodeNotFound(text))
         }
     }
@@ -196,64 +279,84 @@ class BillingViewModel(
     private fun add(product: Product, variant: ProductVariant, clearSearch: Boolean) {
         val inCart = _uiState.value.cart.lines.firstOrNull { it.variantId == variant.id }?.quantity ?: 0
         val label = listOf(product.name, variant.attributesLabel).filter { it.isNotBlank() }.joinToString(" ")
+        val available = variant.sellableQuantity(today)
         when {
-            variant.stockQuantity <= 0 -> {
+            available <= 0 -> {
                 eventChannel.trySend(BillingEvent.OutOfStock(label))
                 return
             }
-            inCart + 1 > variant.stockQuantity -> {
-                eventChannel.trySend(BillingEvent.StockLimit(label, variant.stockQuantity))
+            inCart + 1 > available -> {
+                eventChannel.trySend(BillingEvent.StockLimit(label, available))
                 return
             }
         }
         recalculate { state ->
             state.copy(
-                cart = state.cart.add(CartLine.from(product, variant)),
+                cart = state.cart.add(CartLine.from(product, variant, today = today)),
                 searchText = if (clearSearch) "" else state.searchText,
                 searchResults = if (clearSearch) emptyList() else state.searchResults,
+                menuResults = if (clearSearch) emptyList() else state.menuResults,
             )
         }
     }
 
-    // Cart lines
+    /** Adds one serving of a dish. */
+    fun addMenuItem(item: MenuItem) {
+        if (!item.available) {
+            eventChannel.trySend(BillingEvent.OutOfStock(item.name))
+            return
+        }
+        recalculate { state ->
+            state.copy(
+                cart = state.cart.add(CartLine.forMenuItem(item)),
+                searchText = "",
+                searchResults = emptyList(),
+                menuResults = emptyList(),
+            )
+        }
+    }
 
-    fun increment(variantId: Long) {
-        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == variantId } ?: return
+    fun onMenuSectionChange(section: String?) = _uiState.update { it.copy(menuSection = section) }
+
+    // Cart lines, keyed by CartLine.variantId (dishes use minus the menu item id)
+
+    fun increment(lineKey: Long) {
+        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
         val available = line.availableStock ?: 0
         if (line.quantity + 1 > available) {
             eventChannel.trySend(BillingEvent.StockLimit(line.productName, available))
             return
         }
-        setQuantity(variantId, line.quantity + 1)
+        setQuantity(lineKey, line.quantity + 1)
     }
 
-    fun decrement(variantId: Long) {
-        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == variantId } ?: return
-        if (line.quantity > 1) setQuantity(variantId, line.quantity - 1)
+    fun decrement(lineKey: Long) {
+        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
+        if (line.quantity > 1) setQuantity(lineKey, line.quantity - 1)
     }
 
-    fun setQuantity(variantId: Long, quantity: Int) = recalculate { it.copy(cart = it.cart.setQuantity(variantId, quantity)) }
+    fun setQuantity(lineKey: Long, quantity: Int) = recalculate { it.copy(cart = it.cart.setQuantity(lineKey, quantity)) }
 
-    fun removeLine(variantId: Long) = recalculate {
+    fun removeLine(lineKey: Long) = recalculate {
         it.copy(
-            cart = it.cart.remove(variantId),
-            lineDiscounts = it.lineDiscounts - variantId,
-            editingDiscountFor = it.editingDiscountFor.takeIf { id -> id != variantId },
+            cart = it.cart.remove(lineKey),
+            lineDiscounts = it.lineDiscounts - lineKey,
+            editingDiscountFor = it.editingDiscountFor.takeIf { id -> id != lineKey },
         )
     }
 
-    fun toggleLineDiscountEditor(variantId: Long) = _uiState.update {
-        it.copy(editingDiscountFor = if (it.editingDiscountFor == variantId) null else variantId)
+    fun toggleLineDiscountEditor(lineKey: Long) = _uiState.update {
+        it.copy(editingDiscountFor = if (it.editingDiscountFor == lineKey) null else lineKey)
     }
 
-    fun onLineDiscountChange(variantId: Long, text: String, isPercent: Boolean) {
+    fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) {
         val parsed = Discount.parse(text, isPercent)
         recalculate { state ->
             val input = DiscountInput(text = text, isPercent = isPercent, invalid = parsed is DiscountParse.Invalid)
             val discount = (parsed as? DiscountParse.Parsed)?.discount
             state.copy(
-                lineDiscounts = state.lineDiscounts + (variantId to input),
-                cart = state.cart.setLineDiscount(variantId, discount),
+                lineDiscounts = state.lineDiscounts + (lineKey to input),
+                cart = state.cart.setLineDiscount(lineKey, discount),
             )
         }
     }
@@ -272,15 +375,91 @@ class BillingViewModel(
 
     fun toggleCustomer() = _uiState.update { it.copy(customerExpanded = !it.customerExpanded) }
 
-    fun onCustomerChange(customer: CustomerDetails) = recalculate { it.copy(cart = it.cart.copy(customer = customer)) }
+    /** Typed buyer details. Editing them unlinks a saved customer. */
+    fun onCustomerChange(customer: CustomerDetails) = recalculate { state ->
+        val unlinked = state.account != null
+        state.copy(
+            cart = state.cart.copy(customer = customer.copy(customerId = null)),
+            account = null,
+            payments = if (unlinked) state.payments.filterNot { it.method == PaymentMethod.CREDIT } else state.payments,
+            customerSaveError = null,
+        )
+    }
+
+    fun onCustomerQueryChange(query: String) = _uiState.update { it.copy(customerQuery = query, customerResults = searchCustomers(query)) }
+
+    /** Puts the bill on a saved customer's name, so it can go on their account. */
+    fun linkCustomer(account: CustomerAccount) {
+        val customer = account.customer
+        recalculate { state ->
+            state.copy(
+                cart = state.cart.copy(
+                    customer = CustomerDetails(
+                        name = customer.name,
+                        phone = customer.phone.orEmpty(),
+                        gstin = customer.gstin.orEmpty(),
+                        customerId = customer.id,
+                    ),
+                ),
+                account = account,
+                customerQuery = "",
+                customerResults = emptyList(),
+                customerSaveError = null,
+            )
+        }
+    }
+
+    fun unlinkCustomer() = recalculate { state ->
+        state.copy(
+            cart = state.cart.copy(customer = CustomerDetails()),
+            account = null,
+            payments = state.payments.filterNot { it.method == PaymentMethod.CREDIT },
+        )
+    }
+
+    /** Saves the name and mobile typed on the bill as a new customer and links the bill to them. */
+    fun saveTypedCustomer() {
+        val repository = customers ?: return
+        val typed = _uiState.value.cart.customer
+        val validation = CustomerValidator.validate(CustomerForm(name = typed.name, phone = typed.phone, gstin = typed.gstin))
+        if (validation is CustomerValidation.Invalid) {
+            val error = when {
+                typed.name.isBlank() -> CustomerSaveError.NAME_REQUIRED
+                validation.errors.containsKey(ContactField.PHONE) -> CustomerSaveError.INVALID_PHONE
+                else -> CustomerSaveError.INVALID_DETAILS
+            }
+            _uiState.update { it.copy(customerSaveError = error) }
+            return
+        }
+        val customer = (validation as CustomerValidation.Valid).customer
+        viewModelScope.launch {
+            when (val result = runCatching { repository.saveCustomer(customer) }.getOrNull()) {
+                is SaveCustomerResult.Saved -> {
+                    linkCustomer(CustomerAccount(customer.copy(id = result.customerId), Money.ZERO))
+                    eventChannel.send(BillingEvent.CustomerSaved(customer.name))
+                }
+                SaveCustomerResult.PhoneInUse -> _uiState.update { it.copy(customerSaveError = CustomerSaveError.PHONE_IN_USE) }
+                null -> _uiState.update { it.copy(customerSaveError = CustomerSaveError.FAILED) }
+            }
+        }
+    }
 
     fun onPlaceOfSupplyChange(stateCode: String?) = recalculate {
         val store = it.settings?.stateCode
         it.copy(cart = it.cart.copy(placeOfSupplyStateCode = stateCode.takeIf { code -> code != store }))
     }
 
-    fun clearCart() = _uiState.update {
-        BillingUiState(settings = it.settings, productsLoaded = it.productsLoaded, productCount = it.productCount)
+    fun clearCart() {
+        saleRequestId = UUID.randomUUID().toString()
+        _uiState.update {
+            BillingUiState(
+                settings = it.settings,
+                productsLoaded = it.productsLoaded,
+                productCount = it.productCount,
+                menu = it.menu,
+                menuSection = it.menuSection,
+            )
+        }
     }
 
     // Payment
@@ -317,7 +496,7 @@ class BillingViewModel(
         val state = _uiState.value
         val remaining = state.paymentRemaining.takeIf { it > Money.ZERO } ?: Money.ZERO
         val usedMethods = state.payments.map { it.method }.toSet()
-        val method = PaymentMethod.entries.firstOrNull { it !in usedMethods } ?: PaymentMethod.CASH
+        val method = state.paymentMethods.firstOrNull { it !in usedMethods } ?: PaymentMethod.CASH
         val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = if (remaining.isZero) "" else remaining.toDecimalString())
         updatePayments(state.payments + draft)
     }
@@ -330,14 +509,15 @@ class BillingViewModel(
     fun completeSale() {
         val state = _uiState.value
         if (state.isSaving) return
-        val check = PaymentValidator.check(state.payments, state.totals.grandTotal)
+        val check = PaymentValidator.check(state.payments, state.totals.grandTotal, creditAccount(state))
         if (check is PaymentCheck.Invalid) {
             _uiState.update { it.copy(paymentShowErrors = true) }
             return
         }
         _uiState.update { it.copy(isSaving = true) }
+        val requestId = saleRequestId
         viewModelScope.launch {
-            val result = runCatching { checkout(state.cart, state.payments) }.getOrNull()
+            val result = runCatching { checkout(state.cart, state.payments, requestId) }.getOrNull()
             _uiState.update { it.copy(isSaving = false) }
             when (result) {
                 is CheckoutResult.Completed -> {
@@ -348,23 +528,41 @@ class BillingViewModel(
                     _uiState.update { it.copy(stage = BillingStage.CART, showErrors = true) }
                     eventChannel.send(BillingEvent.StockChanged)
                 }
+                is CheckoutResult.IngredientsShort -> {
+                    val names = products.flatMap { product -> product.variants.map { product to it } }
+                        .filter { (_, variant) -> variant.id in result.variantIds }
+                        .map { (product, variant) -> listOf(product.name, variant.attributesLabel).filter { it.isNotBlank() }.joinToString(" ") }
+                    eventChannel.send(BillingEvent.IngredientsShort(names))
+                }
                 is CheckoutResult.CartInvalid -> {
                     _uiState.update { it.copy(stage = BillingStage.CART, showErrors = true) }
                     eventChannel.send(BillingEvent.FixCart)
                 }
                 is CheckoutResult.PaymentsInvalid -> _uiState.update { it.copy(paymentShowErrors = true) }
+                CheckoutResult.CreditLimitExceeded -> {
+                    _uiState.update { it.copy(paymentShowErrors = true) }
+                    eventChannel.send(BillingEvent.CreditLimitExceeded)
+                }
+                CheckoutResult.CustomerMissing -> {
+                    unlinkCustomer()
+                    _uiState.update { it.copy(stage = BillingStage.CART) }
+                    eventChannel.send(BillingEvent.CustomerMissing)
+                }
                 CheckoutResult.SetupRequired -> eventChannel.send(BillingEvent.SetupRequired)
                 null -> eventChannel.send(BillingEvent.SaveFailed)
             }
         }
     }
 
+    private fun creditAccount(state: BillingUiState): CreditAccount? =
+        state.account?.let { CreditAccount(it.balance, it.customer.creditLimit) }
+
     private fun updatePayment(key: Int, transform: (PaymentDraft) -> PaymentDraft) =
         updatePayments(_uiState.value.payments.map { if (it.key == key) transform(it) else it })
 
     private fun updatePayments(payments: List<PaymentDraft>, stage: BillingStage? = null) {
         _uiState.update { state ->
-            val check = PaymentValidator.check(payments, state.totals.grandTotal)
+            val check = PaymentValidator.check(payments, state.totals.grandTotal, creditAccount(state))
             val (errors, remaining) = when (check) {
                 is PaymentCheck.Invalid -> check.errors to check.remaining
                 is PaymentCheck.Valid -> emptyMap<Int, PaymentError>() to Money.ZERO
@@ -390,15 +588,26 @@ class BillingViewModel(
         }
     }
 
-    /** Keeps cart stock figures current; deleted variants become unavailable. */
-    private fun syncStock(cart: Cart, list: List<Product>): Cart {
-        val stock = list.flatMap { it.variants }.associate { it.id to it.stockQuantity }
-        return cart.copy(lines = cart.lines.map { it.copy(availableStock = stock[it.variantId]) })
+    /** Keeps cart stock figures current: deleted items and dishes taken off the menu become unavailable. */
+    private fun syncStock(cart: Cart): Cart {
+        val day = today
+        val stock = products.flatMap { it.variants }.associate { it.id to it.sellableQuantity(day) }
+        val dishes = allMenu.associateBy { it.id }
+        return cart.copy(
+            lines = cart.lines.map { line ->
+                val menuItemId = line.menuItemId
+                when {
+                    menuItemId == null -> line.copy(availableStock = stock[line.variantId])
+                    !menuLoaded -> line
+                    else -> line.copy(availableStock = if (dishes[menuItemId]?.available == true) CartLine.UNLIMITED else null)
+                }
+            },
+        )
     }
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
         val codes = BarcodeRules.equivalents(code)
-        return products.firstNotNullOfOrNull { product ->
+        return products.filter { it.category.isSold }.firstNotNullOfOrNull { product ->
             product.variants.firstOrNull { it.barcode in codes }?.let { product to it }
         }
     }
@@ -406,8 +615,9 @@ class BillingViewModel(
     private fun search(text: String): List<ProductSearchResult> {
         val query = text.trim()
         if (query.isEmpty()) return emptyList()
+        val day = today
         return products
-            .filter { InventoryFilter.matchesText(it, query) }
+            .filter { it.category.isSold && InventoryFilter.matchesText(it, query) }
             .flatMap { product ->
                 val variants = product.variants.filter { variant ->
                     // When the query names a variant (size, colour, code), show just that variant.
@@ -419,17 +629,44 @@ class BillingViewModel(
                 }
                 variants.map { ProductSearchResult(product, it) }
             }
-            .sortedWith(compareBy({ it.variant.stockQuantity <= 0 }, { it.product.name.lowercase() }))
+            .sortedWith(compareBy({ it.variant.sellableQuantity(day) <= 0 }, { it.product.name.lowercase() }))
             .take(MAX_RESULTS)
+    }
+
+    private fun searchMenu(text: String): List<MenuItem> {
+        val query = text.trim()
+        if (query.isEmpty()) return emptyList()
+        return allMenu
+            .filter { it.name.contains(query, ignoreCase = true) || it.section.contains(query, ignoreCase = true) }
+            .sortedWith(compareBy({ !it.available }, { it.name.lowercase() }))
+            .take(MAX_RESULTS)
+    }
+
+    private fun searchCustomers(text: String): List<CustomerAccount> {
+        val query = text.trim()
+        if (query.isEmpty()) return emptyList()
+        val digits = query.filter { it.isDigit() }
+        return accounts.filter { account ->
+            account.customer.name.contains(query, ignoreCase = true) ||
+                (digits.length >= 3 && account.customer.phone?.contains(digits) == true)
+        }.take(MAX_CUSTOMER_RESULTS)
     }
 
     companion object {
         const val MAX_RESULTS = 25
+        const val MAX_CUSTOMER_RESULTS = 6
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                BillingViewModel(container.inventoryRepository, container.settingsRepository, container.checkout)
+                BillingViewModel(
+                    inventory = container.inventoryRepository,
+                    settingsRepository = container.settingsRepository,
+                    checkout = container.checkout,
+                    customers = container.customerRepository,
+                    menuRepository = container.menuRepository,
+                    clock = container.clock,
+                )
             }
         }
     }

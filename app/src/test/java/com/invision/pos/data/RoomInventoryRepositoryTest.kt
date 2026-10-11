@@ -36,7 +36,7 @@ class RoomInventoryRepositoryTest {
         database = Room.inMemoryDatabaseBuilder(context, InvisionDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repository = RoomInventoryRepository(database.inventoryDao(), TestData.clock)
+        repository = RoomInventoryRepository(database, TestData.clock)
     }
 
     @After

@@ -187,6 +187,13 @@ private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> 
                     Modifier.fillMaxWidth(),
                     tone = InvisionThemeExtras.statusColors.success,
                 )
+                if (!totals.onAccount.isZero || !totals.accountPayments.isZero) {
+                    Text(
+                        stringResource(R.string.history_account_note, formatter.format(totals.onAccount), formatter.format(totals.accountPayments)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         if (state.payments.isEmpty()) {
@@ -204,7 +211,7 @@ private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> 
                     Column {
                         state.payments.forEachIndexed { index, payment ->
                             if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            PaymentRow(payment, onClick = { onOpenInvoice(payment.invoiceId) })
+                            PaymentRow(payment, onClick = { if (payment.invoiceId != 0L) onOpenInvoice(payment.invoiceId) })
                         }
                     }
                 }
@@ -227,11 +234,16 @@ private fun PaymentRow(payment: PaymentRecord, onClick: () -> Unit) {
     ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    if (refund) stringResource(R.string.history_refund_label, method) else method,
+                    when {
+                        refund -> stringResource(R.string.history_refund_label, method)
+                        payment.customerName != null -> stringResource(R.string.history_account_payment, method)
+                        else -> method
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    text = listOfNotNull(payment.invoiceNumber, DateFormats.dateTime(payment.createdAtMillis), payment.reference).joinToString(" · "),
+                    text = listOfNotNull(payment.invoiceNumber ?: payment.customerName, DateFormats.dateTime(payment.createdAtMillis), payment.reference)
+                        .joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

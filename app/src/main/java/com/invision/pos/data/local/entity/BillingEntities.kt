@@ -15,6 +15,7 @@ import androidx.room.Relation
         Index(value = ["number"], unique = true),
         Index("created_at"),
         Index("original_invoice_id"),
+        Index("customer_id"),
     ],
 )
 data class InvoiceEntity(
@@ -47,6 +48,8 @@ data class InvoiceEntity(
     @ColumnInfo(name = "original_invoice_id") val originalInvoiceId: Long?,
     @ColumnInfo(name = "original_invoice_number") val originalInvoiceNumber: String?,
     val note: String?,
+    /** Customer account the invoice belongs to. Added in version 3. */
+    @ColumnInfo(name = "customer_id") val customerId: Long? = null,
 )
 
 @Entity(
@@ -89,6 +92,8 @@ data class InvoiceLineEntity(
     @ColumnInfo(name = "returned_quantity") val returnedQuantity: Int,
     /** On credit notes: the sale line being returned. */
     @ColumnInfo(name = "original_line_id") val originalLineId: Long?,
+    /** Restaurant dish sold on this line. Added in version 3. */
+    @ColumnInfo(name = "menu_item_id") val menuItemId: Long? = null,
 )
 
 @Entity(

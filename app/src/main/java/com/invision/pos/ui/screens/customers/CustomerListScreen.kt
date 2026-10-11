@@ -1,0 +1,198 @@
+package com.invision.pos.ui.screens.customers
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.invision.pos.R
+import com.invision.pos.domain.model.CustomerAccount
+import com.invision.pos.ui.components.EmptyState
+import com.invision.pos.ui.components.ErrorState
+import com.invision.pos.ui.components.InvisionCard
+import com.invision.pos.ui.components.InvisionTextField
+import com.invision.pos.ui.components.InvisionTopAppBar
+import com.invision.pos.ui.components.LoadingState
+import com.invision.pos.ui.components.StatTile
+import com.invision.pos.ui.components.StatusChip
+import com.invision.pos.ui.format.DateFormats
+import com.invision.pos.ui.format.LocalMoneyFormatter
+import com.invision.pos.ui.theme.InvisionThemeExtras
+import com.invision.pos.ui.theme.Spacing
+import com.invision.pos.viewmodel.CustomerFilter
+import com.invision.pos.viewmodel.CustomerListUiState
+import com.invision.pos.viewmodel.CustomerListViewModel
+
+@Composable
+fun CustomerListScreen(
+    onOpenCustomer: (Long) -> Unit,
+    onAddCustomer: () -> Unit,
+    viewModel: CustomerListViewModel = viewModel(factory = CustomerListViewModel.Factory),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    Scaffold(
+        topBar = { InvisionTopAppBar(title = stringResource(R.string.customers_title)) },
+        floatingActionButton = {
+            if (uiState.customerCount > 0) {
+                ExtendedFloatingActionButton(
+                    onClick = onAddCustomer,
+                    icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
+                    text = { Text(stringResource(R.string.customers_add)) },
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        CustomerListContent(
+            state = uiState,
+            onQueryChange = viewModel::onQueryChange,
+            onFilterChange = viewModel::onFilterChange,
+            onRetry = viewModel::retry,
+            onOpenCustomer = onOpenCustomer,
+            onAddCustomer = onAddCustomer,
+            modifier = Modifier.padding(padding),
+        )
+    }
+}
+
+@Composable
+fun CustomerListContent(
+    state: CustomerListUiState,
+    onQueryChange: (String) -> Unit,
+    onFilterChange: (CustomerFilter) -> Unit,
+    onRetry: () -> Unit,
+    onOpenCustomer: (Long) -> Unit,
+    onAddCustomer: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val formatter = LocalMoneyFormatter.current
+    when {
+        state.isLoading -> LoadingState(modifier)
+        state.loadFailed -> ErrorState(stringResource(R.string.error_generic), onRetry, modifier)
+        state.customerCount == 0 -> EmptyState(
+            iconRes = R.drawable.ic_nav_customers,
+            title = stringResource(R.string.customers_empty_title),
+            message = stringResource(R.string.customers_empty_body),
+            actionLabel = stringResource(R.string.customers_add),
+            onAction = onAddCustomer,
+            modifier = modifier,
+        )
+        else -> LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .testTag("customer_list"),
+            contentPadding = PaddingValues(start = Spacing.screen, end = Spacing.screen, top = Spacing.sm, bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            item(key = "tiles") {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                    StatTile(
+                        label = stringResource(R.string.customers_count),
+                        value = state.customerCount.toString(),
+                        iconRes = R.drawable.ic_nav_customers,
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatTile(
+                        label = stringResource(R.string.customers_total_due),
+                        value = formatter.format(state.totalDue),
+                        iconRes = R.drawable.ic_wallet,
+                        tone = if (state.owingCount > 0) InvisionThemeExtras.statusColors.warning else null,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onFilterChange(CustomerFilter.OWING) },
+                    )
+                }
+            }
+            item(key = "filters") {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    InvisionTextField(
+                        value = state.query,
+                        onValueChange = onQueryChange,
+                        label = stringResource(R.string.customers_search),
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("customer_search"),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        FilterChip(
+                            selected = state.filter == CustomerFilter.ALL,
+                            onClick = { onFilterChange(CustomerFilter.ALL) },
+                            label = { Text(stringResource(R.string.filter_all)) },
+                        )
+                        FilterChip(
+                            selected = state.filter == CustomerFilter.OWING,
+                            onClick = { onFilterChange(CustomerFilter.OWING) },
+                            label = { Text(stringResource(R.string.customers_filter_owing, state.owingCount)) },
+                        )
+                    }
+                }
+            }
+            if (state.accounts.isEmpty()) {
+                item(key = "none") {
+                    Text(
+                        text = stringResource(
+                            if (state.filter == CustomerFilter.OWING && state.query.isBlank()) R.string.customers_none_owing else R.string.customers_no_results,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = Spacing.lg),
+                    )
+                }
+            }
+            items(state.accounts, key = { it.customer.id }) { account ->
+                CustomerRow(account, onClick = { onOpenCustomer(account.customer.id) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit) {
+    val customer = account.customer
+    InvisionCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(customer.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val details = listOfNotNull(
+                    customer.phone,
+                    account.lastActivityMillis?.let { stringResource(R.string.customer_last_activity, DateFormats.dateTime(it)) },
+                )
+                if (details.isNotEmpty()) {
+                    Text(
+                        details.joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            StatusChip(text = balanceText(account.balance), tone = balanceTone(account.balance))
+        }
+    }
+}

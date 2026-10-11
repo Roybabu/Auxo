@@ -37,6 +37,7 @@ import com.invision.pos.domain.inventory.StockAlert
 import com.invision.pos.domain.inventory.StockAlertType
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -60,6 +61,8 @@ fun HomeScreen(
     onOpenProduct: (Long) -> Unit,
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAlerts: () -> Unit = {},
+    onReceiveStock: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -71,6 +74,8 @@ fun HomeScreen(
         onOpenInventory = onOpenInventory,
         onRetry = viewModel::retry,
         modifier = modifier,
+        onOpenAlerts = onOpenAlerts,
+        onReceiveStock = onReceiveStock,
     )
 }
 
@@ -83,6 +88,8 @@ fun HomeContent(
     onOpenInventory: (StockFilter) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAlerts: () -> Unit = {},
+    onReceiveStock: () -> Unit = {},
 ) {
     when (uiState) {
         HomeUiState.Loading -> LoadingState(modifier)
@@ -98,6 +105,8 @@ fun HomeContent(
             onOpenProduct = onOpenProduct,
             onOpenInventory = onOpenInventory,
             modifier = modifier,
+            onOpenAlerts = onOpenAlerts,
+            onReceiveStock = onReceiveStock,
         )
     }
 }
@@ -110,6 +119,8 @@ private fun HomeDashboard(
     onOpenProduct: (Long) -> Unit,
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAlerts: () -> Unit = {},
+    onReceiveStock: () -> Unit = {},
 ) {
     val status = InvisionThemeExtras.statusColors
     val inventory = state.inventory
@@ -217,7 +228,7 @@ private fun HomeDashboard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpenInventory(StockFilter.EXPIRING_SOON) },
                 )
-                AlertsCard(alerts = inventory.alerts, onOpenProduct = onOpenProduct)
+                AlertsCard(alerts = inventory.alerts, onOpenProduct = onOpenProduct, onOpenAlerts = onOpenAlerts)
             }
         }
 
@@ -235,6 +246,11 @@ private fun HomeDashboard(
                 onClick = onAddProduct,
             )
             QuickAction(
+                label = stringResource(R.string.purchases_receive),
+                iconRes = R.drawable.ic_receive,
+                onClick = onReceiveStock,
+            )
+            QuickAction(
                 label = stringResource(R.string.home_action_add_customer),
                 iconRes = R.drawable.ic_nav_customers,
                 onClick = { onNavigate(TopLevelDestination.CUSTOMERS) },
@@ -244,14 +260,19 @@ private fun HomeDashboard(
 }
 
 @Composable
-private fun AlertsCard(alerts: List<StockAlert>, onOpenProduct: (Long) -> Unit) {
+private fun AlertsCard(alerts: List<StockAlert>, onOpenProduct: (Long) -> Unit, onOpenAlerts: () -> Unit) {
     InvisionCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = Spacing.sm)) {
-            Text(
-                text = stringResource(R.string.home_alerts),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = Spacing.lg, end = Spacing.sm)) {
+                Text(
+                    text = stringResource(R.string.home_alerts),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = Spacing.sm),
+                )
+                TextButton(onClick = onOpenAlerts) { Text(stringResource(R.string.home_alerts_open)) }
+            }
             if (alerts.isEmpty()) {
                 Text(
                     text = stringResource(R.string.home_no_alerts),
@@ -274,7 +295,11 @@ private fun AlertRow(alert: StockAlert, onClick: () -> Unit) {
         StockAlertType.EXPIRED -> stringResource(R.string.alert_expired, alert.expiryDate?.let(DateFormats::date).orEmpty())
         StockAlertType.EXPIRING_SOON -> stringResource(R.string.alert_expiring, alert.expiryDate?.let(DateFormats::date).orEmpty())
         StockAlertType.OUT_OF_STOCK -> stringResource(R.string.alert_out_of_stock)
-        StockAlertType.LOW_STOCK -> pluralStringResource(R.plurals.alert_low_stock, alert.stockQuantity, alert.stockQuantity)
+        StockAlertType.LOW_STOCK -> if (alert.stockUnit == StockUnit.UNIT) {
+            pluralStringResource(R.plurals.alert_low_stock, alert.stockQuantity, alert.stockQuantity)
+        } else {
+            stringResource(R.string.alert_low_stock_amount, alert.stockUnit.format(alert.stockQuantity))
+        }
     }
     Row(
         modifier = Modifier

@@ -3,7 +3,9 @@ package com.invision.pos.core.receipt
 import com.invision.pos.domain.billing.IndianStates
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceType
+import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentMethod
+import com.invision.pos.domain.model.PaymentRecord
 import com.invision.pos.domain.model.ReceiptPaper
 import java.time.Instant
 import java.time.ZoneId
@@ -58,6 +60,20 @@ internal object ReceiptText {
         PaymentMethod.CASH -> "Cash"
         PaymentMethod.UPI -> "UPI"
         PaymentMethod.CARD -> "Card"
+        PaymentMethod.CREDIT -> "Account"
+    }
+
+    /** "Paid by Cash", "On account", "Refund (UPI)" or "Credited to account". */
+    fun paymentLabel(payment: PaymentRecord, sheet: Boolean = false): String {
+        val method = method(payment.method)
+        val refund = payment.kind == PaymentKind.REFUND
+        return when {
+            payment.method == PaymentMethod.CREDIT && refund -> "Credited to account"
+            payment.method == PaymentMethod.CREDIT -> "On account"
+            refund && sheet -> "Refunded by $method"
+            refund -> "Refund ($method)"
+            else -> "Paid by $method"
+        }
     }
 
     fun placeOfSupply(code: String): String = IndianStates.byCode(code)?.let { "${it.name} (${it.code})" } ?: code

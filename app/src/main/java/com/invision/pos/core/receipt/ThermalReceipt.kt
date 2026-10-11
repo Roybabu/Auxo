@@ -4,7 +4,6 @@ import com.invision.pos.domain.billing.IndianNumberFormat
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.Money
-import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.ReceiptOptions
 import java.time.ZoneId
 
@@ -134,9 +133,7 @@ object ThermalReceiptBuilder {
 
         // Payments
         for (payment in invoice.payments) {
-            val method = ReceiptText.method(payment.method)
-            val label = if (payment.kind == PaymentKind.REFUND) "Refund ($method)" else "Paid by $method"
-            pair(label, IndianNumberFormat.amount(payment.amount))
+            pair(ReceiptText.paymentLabel(payment), IndianNumberFormat.amount(payment.amount))
             payment.reference?.let { left("  Ref: $it") }
             payment.tendered?.let { pair("  Cash received", IndianNumberFormat.amount(it)) }
             payment.change?.let { pair("  Change", IndianNumberFormat.amount(it)) }

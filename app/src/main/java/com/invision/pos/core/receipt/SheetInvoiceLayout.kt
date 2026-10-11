@@ -6,7 +6,6 @@ import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceLine
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.Money
-import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
 import java.time.ZoneId
@@ -145,9 +144,8 @@ object SheetInvoiceLayout {
         }
 
         val payments = invoice.payments.map { p ->
-            val method = ReceiptText.method(p.method)
             buildString {
-                append(if (p.kind == PaymentKind.REFUND) "Refunded by $method: " else "Paid by $method: ")
+                append(ReceiptText.paymentLabel(p, sheet = true) + ": ")
                 append(IndianNumberFormat.rupees(p.amount))
                 p.reference?.let { append(" (Ref $it)") }
                 if (p.tendered != null && p.change != null) {

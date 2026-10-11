@@ -4,9 +4,16 @@ import com.invision.pos.data.repository.BarcodeMatch
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.SaveProductResult
 import com.invision.pos.data.repository.StockChangeResult
+import com.invision.pos.domain.inventory.BatchAllocator
+import com.invision.pos.domain.inventory.BatchStock
+import com.invision.pos.domain.model.BatchDetails
+import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.Product
+import com.invision.pos.domain.model.ProductVariant
+import com.invision.pos.domain.model.StockBatch
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockMovementRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -29,6 +36,8 @@ class FakeInventoryRepository(initial: List<Product> = emptyList()) : InventoryR
     private var nextProductId = (initial.maxOfOrNull { it.id } ?: 0L) + 1
     private var nextVariantId = (initial.flatMap { it.variants }.maxOfOrNull { it.id } ?: 0L) + 100
     private var nextMovementId = 1L
+    private var nextBatchId = 1L
+    private val appliedRequests = mutableSetOf<String>()
 
     override fun observeProducts(): Flow<List<Product>> =
         if (failReads) flow { throw IOException("Simulated read failure") } else products
@@ -96,17 +105,89 @@ class FakeInventoryRepository(initial: List<Product> = emptyList()) : InventoryR
         products.value = products.value.filterNot { it.id == productId }
     }
 
-    override suspend fun recordStockChange(movement: StockMovement): StockChangeResult {
+    override suspend fun recordStockChange(movement: StockMovement, batch: BatchDetails, requestId: String?): StockChangeResult {
         val product = products.value.firstOrNull { p -> p.variants.any { it.id == movement.variantId } }
-            ?: return StockChangeResult.WouldGoNegative
+            ?: return StockChangeResult.ItemMissing
         val variant = product.variants.first { it.id == movement.variantId }
         val newStock = variant.stockQuantity + movement.quantityChange
         if (newStock < 0) return StockChangeResult.WouldGoNegative
-        val updated = product.copy(
-            variants = product.variants.map { if (it.id == variant.id) it.copy(stockQuantity = newStock) else it },
-        )
-        products.value = products.value.map { if (it.id == product.id) updated else it }
+        if (requestId != null && !appliedRequests.add(requestId)) return StockChangeResult.Applied
+        val tracked = product.category.tracksExpiry
+        val batches = when {
+            !tracked -> variant.batches
+            movement.quantityChange > 0 -> variant.batches + StockBatch(
+                id = nextBatchId++,
+                variantId = variant.id,
+                batchNumber = batch.batchNumber,
+                expiryDate = batch.expiryDate,
+                quantity = movement.quantityChange,
+            )
+            variant.batches.sumOf { it.quantity } >= -movement.quantityChange -> {
+                val takes = BatchAllocator.allocate(variant.batches.map { BatchStock(it.id, it.quantity) }, -movement.quantityChange)
+                    .orEmpty().associate { it.batchId to it.quantity }
+                variant.batches.map { it.copy(quantity = it.quantity - (takes[it.id] ?: 0)) }.filter { it.quantity > 0 }
+            }
+            else -> variant.batches
+        }
+        replaceVariant(product, variant.copy(stockQuantity = newStock, batches = batches))
         movements.value += movement.copy(id = nextMovementId++)
         return StockChangeResult.Applied
+    }
+
+    override fun observeBatches(): Flow<List<BatchWithProduct>> = products.map { list ->
+        list.flatMap { product ->
+            product.variants.flatMap { variant ->
+                variant.batches.filter { it.quantity > 0 }.map {
+                    BatchWithProduct(it, product.id, product.name, variant.attributesLabel, product.category, product.stockUnit, variant.costPrice)
+                }
+            }
+        }.sortedWith(compareBy({ it.batch.expiryDate == null }, { it.batch.expiryDate }))
+    }
+
+    override suspend fun writeOff(batchId: Long, quantity: Int, reason: StockChangeReason, note: String?, requestId: String): StockChangeResult {
+        val product = products.value.firstOrNull { p -> p.variants.any { v -> v.batches.any { it.id == batchId } } }
+            ?: return StockChangeResult.WouldGoNegative
+        val variant = product.variants.first { v -> v.batches.any { it.id == batchId } }
+        val batch = variant.batches.first { it.id == batchId }
+        if (batch.quantity < quantity) return StockChangeResult.WouldGoNegative
+        if (!appliedRequests.add(requestId)) return StockChangeResult.Applied
+        val batches = variant.batches.map { if (it.id == batchId) it.copy(quantity = it.quantity - quantity) else it }.filter { it.quantity > 0 }
+        replaceVariant(product, variant.copy(stockQuantity = variant.stockQuantity - quantity, batches = batches))
+        movements.value += StockMovement(
+            id = nextMovementId++,
+            variantId = variant.id,
+            quantityChange = -quantity,
+            reason = reason,
+            note = note,
+            createdAtMillis = 0,
+            batchId = batchId,
+        )
+        return StockChangeResult.Applied
+    }
+
+    override fun observeMovementHistory(fromMillis: Long, toMillis: Long): Flow<List<StockMovementRecord>> =
+        combine(products, movements) { list, all ->
+            val variants = list.flatMap { product -> product.variants.map { it.id to (product to it) } }.toMap()
+            all.filter { it.createdAtMillis in fromMillis until toMillis }
+                .sortedByDescending { it.createdAtMillis }
+                .mapNotNull { movement ->
+                    val (product, variant) = variants[movement.variantId] ?: return@mapNotNull null
+                    StockMovementRecord(
+                        movement = movement,
+                        productId = product.id,
+                        productName = product.name,
+                        variantLabel = variant.attributesLabel,
+                        category = product.category,
+                        stockUnit = product.stockUnit,
+                        batchNumber = null,
+                        reference = null,
+                        unitCost = variant.costPrice,
+                    )
+                }
+        }
+
+    private fun replaceVariant(product: Product, variant: ProductVariant) {
+        val updated = product.copy(variants = product.variants.map { if (it.id == variant.id) variant else it })
+        products.value = products.value.map { if (it.id == product.id) updated else it }
     }
 }

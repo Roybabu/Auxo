@@ -52,6 +52,7 @@ fun InvoiceWithDetails.toDomain(): Invoice = Invoice(
     originalInvoiceId = invoice.originalInvoiceId,
     originalInvoiceNumber = invoice.originalInvoiceNumber,
     note = invoice.note,
+    customerId = invoice.customerId,
 )
 
 fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
@@ -73,6 +74,7 @@ fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
     total = Money(totalMinor),
     returnedQuantity = returnedQuantity,
     originalLineId = originalLineId,
+    menuItemId = menuItemId,
 )
 
 fun PaymentEntity.toDomain(invoiceNumber: String? = null): PaymentRecord = PaymentRecord(
@@ -130,6 +132,7 @@ fun Invoice.toEntity(): InvoiceEntity = InvoiceEntity(
     originalInvoiceId = originalInvoiceId,
     originalInvoiceNumber = originalInvoiceNumber,
     note = note,
+    customerId = customerId,
 )
 
 fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity(
@@ -152,6 +155,7 @@ fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity
     totalMinor = total.minorUnits,
     returnedQuantity = returnedQuantity,
     originalLineId = originalLineId,
+    menuItemId = menuItemId,
 )
 
 fun PaymentRecord.toEntity(invoiceId: Long): PaymentEntity = PaymentEntity(

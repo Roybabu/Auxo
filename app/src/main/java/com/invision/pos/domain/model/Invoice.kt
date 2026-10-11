@@ -7,7 +7,23 @@ enum class InvoiceType {
     RETURN,
 }
 
-enum class PaymentMethod { CASH, UPI, CARD }
+enum class PaymentMethod {
+    CASH,
+    UPI,
+    CARD,
+
+    /** Put on the customer's account, to be paid later. */
+    CREDIT,
+    ;
+
+    /** True when money actually changes hands now; credit goes on the customer's account instead. */
+    val movesMoney: Boolean get() = this != CREDIT
+
+    companion object {
+        /** Ways to take or give back money now. */
+        val MONEY: List<PaymentMethod> = listOf(CASH, UPI, CARD)
+    }
+}
 
 enum class PaymentKind {
     /** Money received from the customer. */
@@ -31,6 +47,8 @@ data class PaymentRecord(
     val createdAtMillis: Long = 0,
     /** Invoice number, filled when listing payments. */
     val invoiceNumber: String? = null,
+    /** For payments received against a customer account (not tied to an invoice). */
+    val customerName: String? = null,
 )
 
 /** Seller details as printed on the invoice at the time of sale. */
@@ -71,6 +89,8 @@ data class InvoiceLine(
     val returnedQuantity: Int = 0,
     /** On a credit note: the sale line this return is for. */
     val originalLineId: Long? = null,
+    /** Set for restaurant dishes instead of [variantId]. */
+    val menuItemId: Long? = null,
 ) {
     val tax: Money get() = cgst + sgst + igst
     val returnableQuantity: Int get() = quantity - returnedQuantity
@@ -104,6 +124,8 @@ data class Invoice(
     val originalInvoiceNumber: String? = null,
     /** Return reason or other note. */
     val note: String? = null,
+    /** Customer account the invoice belongs to, if any. */
+    val customerId: Long? = null,
 ) {
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
     val itemCount: Int get() = lines.sumOf { it.quantity }

@@ -4,18 +4,28 @@ import android.content.Context
 import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.data.local.InvisionDatabase
 import com.invision.pos.data.repository.BillingRepository
+import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.MenuRepository
+import com.invision.pos.data.repository.PurchasingRepository
 import com.invision.pos.data.repository.RoomBillingRepository
+import com.invision.pos.data.repository.RoomCustomerRepository
 import com.invision.pos.data.repository.RoomInventoryRepository
+import com.invision.pos.data.repository.RoomMenuRepository
+import com.invision.pos.data.repository.RoomPurchasingRepository
 import com.invision.pos.data.repository.RoomSettingsRepository
 import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.InternalBarcodeGenerator
 import com.invision.pos.domain.usecase.AdjustStockUseCase
 import com.invision.pos.domain.usecase.CheckoutUseCase
+import com.invision.pos.domain.usecase.CreateReorderDraftsUseCase
 import com.invision.pos.domain.usecase.FindByBarcodeUseCase
 import com.invision.pos.domain.usecase.ObserveInventorySummaryUseCase
 import com.invision.pos.domain.usecase.ObserveStoreOverviewUseCase
 import com.invision.pos.domain.usecase.ProcessReturnUseCase
+import com.invision.pos.domain.usecase.ReceiveAccountPaymentUseCase
+import com.invision.pos.domain.usecase.ReceiveGoodsUseCase
+import com.invision.pos.domain.usecase.RecordWastageUseCase
 import com.invision.pos.domain.usecase.SaveProductUseCase
 import java.time.Clock
 
@@ -30,13 +40,17 @@ class AppContainer(context: Context) {
 
     private val database: InvisionDatabase by lazy { InvisionDatabase.create(appContext) }
 
-    val inventoryRepository: InventoryRepository by lazy {
-        RoomInventoryRepository(database.inventoryDao(), clock)
-    }
+    val inventoryRepository: InventoryRepository by lazy { RoomInventoryRepository(database, clock) }
 
-    val billingRepository: BillingRepository by lazy { RoomBillingRepository(database.billingDao()) }
+    val billingRepository: BillingRepository by lazy { RoomBillingRepository(database) }
 
-    val settingsRepository: SettingsRepository by lazy { RoomSettingsRepository(database.billingDao()) }
+    val settingsRepository: SettingsRepository by lazy { RoomSettingsRepository(database) }
+
+    val purchasingRepository: PurchasingRepository by lazy { RoomPurchasingRepository(database, clock) }
+
+    val customerRepository: CustomerRepository by lazy { RoomCustomerRepository(database, clock) }
+
+    val menuRepository: MenuRepository by lazy { RoomMenuRepository(database, clock) }
 
     val barcodeGenerator: InternalBarcodeGenerator by lazy { InternalBarcodeGenerator() }
 
@@ -56,7 +70,15 @@ class AppContainer(context: Context) {
 
     val findByBarcode: FindByBarcodeUseCase by lazy { FindByBarcodeUseCase(inventoryRepository) }
 
-    val checkout: CheckoutUseCase by lazy { CheckoutUseCase(billingRepository, settingsRepository, clock) }
+    val checkout: CheckoutUseCase by lazy { CheckoutUseCase(billingRepository, settingsRepository, clock, customerRepository) }
 
     val processReturn: ProcessReturnUseCase by lazy { ProcessReturnUseCase(billingRepository, settingsRepository, clock) }
+
+    val receiveGoods: ReceiveGoodsUseCase by lazy { ReceiveGoodsUseCase(purchasingRepository, clock) }
+
+    val recordWastage: RecordWastageUseCase by lazy { RecordWastageUseCase(inventoryRepository) }
+
+    val receiveAccountPayment: ReceiveAccountPaymentUseCase by lazy { ReceiveAccountPaymentUseCase(customerRepository) }
+
+    val createReorderDrafts: CreateReorderDraftsUseCase by lazy { CreateReorderDraftsUseCase(purchasingRepository) }
 }

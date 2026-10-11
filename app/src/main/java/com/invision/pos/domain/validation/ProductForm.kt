@@ -7,6 +7,7 @@ import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.QuantityUnit
+import com.invision.pos.domain.model.StockUnit
 import java.time.LocalDate
 
 /** Editable values for one variant row, kept as text until validated. */
@@ -31,11 +32,14 @@ data class VariantForm(
     val expiryDate: LocalDate? = null,
     /** Stock on hand for a saved variant, null for new ones. */
     val currentStock: Int? = null,
+    /** Quantity to order when restocking; blank lets reorder suggestions work it out. */
+    val reorderQuantity: String = "",
 ) {
     val isSaved: Boolean get() = id != 0L
 
     companion object {
-        fun fromVariant(variant: ProductVariant): VariantForm = VariantForm(
+        /** Quantities are shown in the entry unit of [unit]: kg or L for ingredients. */
+        fun fromVariant(variant: ProductVariant, unit: StockUnit = StockUnit.UNIT): VariantForm = VariantForm(
             key = "v${variant.id}",
             id = variant.id,
             size = variant.size.orEmpty(),
@@ -46,12 +50,13 @@ data class VariantForm(
             mrp = variant.mrp?.toDecimalString().orEmpty(),
             costPrice = variant.costPrice?.toDecimalString().orEmpty(),
             openingStock = "",
-            lowStockThreshold = variant.lowStockThreshold.toString(),
+            lowStockThreshold = unit.toEntryText(variant.lowStockThreshold),
             barcode = variant.barcode,
             sku = variant.sku.orEmpty(),
             batchNumber = variant.batchNumber.orEmpty(),
             expiryDate = variant.expiryDate,
             currentStock = variant.stockQuantity,
+            reorderQuantity = if (variant.reorderQuantity > 0) unit.toEntryText(variant.reorderQuantity) else "",
         )
     }
 }
@@ -82,6 +87,9 @@ data class ProductForm(
     val defaults: VariantDefaults = VariantDefaults(),
     val variants: List<VariantForm> = emptyList(),
     val createdAtMillis: Long = 0,
+    /** How stock is counted; only ingredients can use weight or volume. Fixed once saved. */
+    val stockUnit: StockUnit = StockUnit.UNIT,
+    val preferredSupplierId: Long? = null,
 ) {
     val isNew: Boolean get() = productId == 0L
 
@@ -110,8 +118,10 @@ data class ProductForm(
                     lowStockThreshold = it.lowStockThreshold.toString(),
                 )
             } ?: VariantDefaults(),
-            variants = product.variants.map(VariantForm::fromVariant),
+            variants = product.variants.map { VariantForm.fromVariant(it, product.stockUnit) },
             createdAtMillis = product.createdAtMillis,
+            stockUnit = product.stockUnit,
+            preferredSupplierId = product.preferredSupplierId,
         )
     }
 }

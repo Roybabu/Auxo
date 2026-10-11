@@ -19,6 +19,7 @@ fun PaymentMethod.labelRes(): Int = when (this) {
     PaymentMethod.CASH -> R.string.payment_method_cash
     PaymentMethod.UPI -> R.string.payment_method_upi
     PaymentMethod.CARD -> R.string.payment_method_card
+    PaymentMethod.CREDIT -> R.string.payment_method_credit
 }
 
 @StringRes
@@ -54,6 +55,8 @@ fun PaymentError.messageRes(): Int = when (this) {
     PaymentError.TENDERED_INVALID -> R.string.payment_error_tendered_invalid
     PaymentError.TENDERED_TOO_LOW -> R.string.payment_error_tendered_low
     PaymentError.REFERENCE_INVALID -> R.string.payment_error_reference
+    PaymentError.CREDIT_NEEDS_CUSTOMER -> R.string.payment_error_credit_customer
+    PaymentError.CREDIT_OVER_LIMIT -> R.string.payment_error_credit_limit
 }
 
 @StringRes
@@ -69,6 +72,7 @@ fun ReturnError.messageRes(): Int = when (this) {
     ReturnError.NOTHING_SELECTED -> R.string.return_none_selected
     ReturnError.QUANTITY_TOO_LARGE -> R.string.return_error_too_many
     ReturnError.NOT_A_SALE -> R.string.return_error_not_sale
+    ReturnError.NO_ACCOUNT -> R.string.return_error_no_account
 }
 
 @StringRes

@@ -10,10 +10,12 @@ import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.domain.inventory.StockAdjustment
 import com.invision.pos.domain.inventory.StockAdjustmentCalculator
 import com.invision.pos.domain.inventory.StockAdjustmentError
+import com.invision.pos.domain.model.BatchDetails
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.domain.usecase.AdjustStockResult
 import com.invision.pos.domain.usecase.AdjustStockUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.util.UUID
 
 sealed interface ProductDetailUiState {
     data object Loading : ProductDetailUiState
@@ -53,11 +56,25 @@ data class AdjustStockDialogState(
     val note: String = "",
     val error: StockAdjustmentError? = null,
     val isSaving: Boolean = false,
+    /** How the item's stock is counted; ingredients are typed in kg or L. */
+    val unit: StockUnit = StockUnit.UNIT,
+    /** Food, beverages and ingredients: stock added goes into a batch. */
+    val tracksBatches: Boolean = false,
+    val batchNumber: String = "",
+    val expiryDate: LocalDate? = null,
+    /** One id per dialog, so a repeated save is applied once. */
+    val requestId: String = UUID.randomUUID().toString(),
+    val reasons: List<StockChangeReason> = StockAdjustmentCalculator.manualReasons,
 ) {
+    private val adjustment: StockAdjustment.Valid?
+        get() = StockAdjustmentCalculator.calculate(reason, quantity, variant.stockQuantity, unit) as? StockAdjustment.Valid
+
     /** Stock after the change, or null while the input is incomplete or invalid. */
-    val newStock: Int?
-        get() = (StockAdjustmentCalculator.calculate(reason, quantity, variant.stockQuantity) as? StockAdjustment.Valid)
-            ?.let { variant.stockQuantity + it.quantityChange }
+    val newStock: Int? get() = adjustment?.let { variant.stockQuantity + it.quantityChange }
+
+    /** Batch fields apply when stock is being added to a batch-tracked item. */
+    val asksForBatch: Boolean
+        get() = tracksBatches && (adjustment?.quantityChange?.let { it > 0 } ?: (reason == StockChangeReason.RECEIVED || reason == StockChangeReason.RETURNED))
 }
 
 sealed interface ProductDetailEvent {
@@ -102,14 +119,26 @@ class ProductDetailViewModel(
     fun retry() = reload.update { it + 1 }
 
     fun startAdjust(variant: ProductVariant) {
-        _adjustDialog.value = AdjustStockDialogState(variant = variant)
+        val product = (uiState.value as? ProductDetailUiState.Ready)?.product
+        _adjustDialog.value = AdjustStockDialogState(
+            variant = variant,
+            unit = product?.stockUnit ?: StockUnit.UNIT,
+            tracksBatches = product?.category?.tracksExpiry == true,
+            reasons = product?.category?.let(StockAdjustmentCalculator::manualReasonsFor) ?: StockAdjustmentCalculator.manualReasons,
+        )
     }
 
     fun onAdjustReasonChange(reason: StockChangeReason) =
         _adjustDialog.update { it?.copy(reason = reason, error = null) }
 
-    fun onAdjustQuantityChange(quantity: String) =
-        _adjustDialog.update { it?.copy(quantity = quantity.filter(Char::isDigit).take(7), error = null) }
+    fun onAdjustQuantityChange(quantity: String) = _adjustDialog.update {
+        val allowed = if (it?.unit == StockUnit.UNIT) quantity.filter(Char::isDigit) else quantity.filter { c -> c.isDigit() || c == '.' }
+        it?.copy(quantity = allowed.take(10), error = null)
+    }
+
+    fun onAdjustBatchChange(batchNumber: String) = _adjustDialog.update { it?.copy(batchNumber = batchNumber.take(40), error = null) }
+
+    fun onAdjustExpiryChange(date: LocalDate?) = _adjustDialog.update { it?.copy(expiryDate = date, error = null) }
 
     fun onAdjustNoteChange(note: String) = _adjustDialog.update { it?.copy(note = note.take(120)) }
 
@@ -120,10 +149,20 @@ class ProductDetailViewModel(
     fun confirmAdjust() {
         val dialog = _adjustDialog.value ?: return
         if (dialog.isSaving) return
+        val batch = if (dialog.asksForBatch) {
+            val number = dialog.batchNumber.trim()
+            if (number.length > BATCH_MAX || dialog.expiryDate?.isBefore(LocalDate.now(clock)) == true) {
+                _adjustDialog.value = dialog.copy(error = StockAdjustmentError.BATCH_INVALID)
+                return
+            }
+            BatchDetails(batchNumber = number.ifEmpty { null }, expiryDate = dialog.expiryDate)
+        } else {
+            BatchDetails()
+        }
         _adjustDialog.value = dialog.copy(isSaving = true)
         viewModelScope.launch {
             val result = runCatching {
-                adjustStock(dialog.variant, dialog.reason, dialog.quantity, dialog.note)
+                adjustStock(dialog.variant, dialog.reason, dialog.quantity, dialog.note, dialog.unit, batch, dialog.requestId)
             }.getOrNull()
             when (result) {
                 AdjustStockResult.Done -> {
@@ -157,6 +196,7 @@ class ProductDetailViewModel(
 
     companion object {
         const val ARG_PRODUCT_ID = "productId"
+        const val BATCH_MAX = 32
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

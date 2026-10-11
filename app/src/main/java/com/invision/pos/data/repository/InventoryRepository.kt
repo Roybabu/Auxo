@@ -1,8 +1,12 @@
 package com.invision.pos.data.repository
 
+import com.invision.pos.domain.model.BatchDetails
+import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
+import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockMovementRecord
 import kotlinx.coroutines.flow.Flow
 
 sealed interface SaveProductResult {
@@ -18,6 +22,9 @@ sealed interface SaveProductResult {
 sealed interface StockChangeResult {
     data object Applied : StockChangeResult
     data object WouldGoNegative : StockChangeResult
+
+    /** The item was deleted in the meantime. */
+    data object ItemMissing : StockChangeResult
 }
 
 /** Barcode lookup result: the product and the variant the barcode belongs to. */
@@ -45,5 +52,24 @@ interface InventoryRepository {
 
     suspend fun deleteProduct(productId: Long)
 
-    suspend fun recordStockChange(movement: StockMovement): StockChangeResult
+    /**
+     * Records a manual stock change. For batch-tracked items a decrease comes out
+     * of the batch that expires first, and an increase goes into the batch given by
+     * [batch]. A [requestId] that was already used is ignored, so a retry can't
+     * apply the change twice.
+     */
+    suspend fun recordStockChange(
+        movement: StockMovement,
+        batch: BatchDetails = BatchDetails(),
+        requestId: String? = null,
+    ): StockChangeResult
+
+    /** Batches that still hold stock, earliest expiry first. */
+    fun observeBatches(): Flow<List<BatchWithProduct>>
+
+    /** Writes off units of one batch as wastage. A repeated [requestId] is ignored. */
+    suspend fun writeOff(batchId: Long, quantity: Int, reason: StockChangeReason, note: String?, requestId: String): StockChangeResult
+
+    /** Stock movements of every product between two instants, newest first. */
+    fun observeMovementHistory(fromMillis: Long, toMillis: Long): Flow<List<StockMovementRecord>>
 }
