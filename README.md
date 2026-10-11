@@ -224,7 +224,7 @@ Android 8.0 (API 26) and newer, phones and tablets (the navigation switches betw
 
 ## Data and privacy
 
-- **Persistence:** all data stays on the device in a Room (SQLite) database, `invision.db`, schema version 3. There is no server, account or sync; the app declares no network access of its own.
+- **Persistence:** all data stays on the device in a Room (SQLite) database, `invision.db`, schema version 3. There is no server, account or sync; the app's own code makes no network calls and its manifest requests no permissions. Libraries (the Google code scanner) may add their own, such as network access; the merged list is checked in CI but its exact contents were not read from a log.
 - **Not encrypted:** the database sits in the app's private storage, which other apps cannot read on an unmodified device, but it is not encrypted. Anyone with a rooted device or a full-disk image can read it.
 - **No backup:** Android backup and device-to-device transfer are turned off for app data. Uninstalling the app, clearing its data or losing the phone loses the store's data. There is no in-app backup or restore yet, so export reports to CSV regularly.
 - **Temporary files:** receipt PDFs and CSV exports are written to the app's cache only when sharing, are shared through a `FileProvider` with a read grant for the chosen app, and are cleared after a day.
