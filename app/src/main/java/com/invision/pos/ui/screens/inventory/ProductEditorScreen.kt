@@ -223,6 +223,7 @@ fun ProductEditorContent(
 ) {
     val form = uiState.form
     val errors = uiState.visibleErrors
+    val suppliersEnabled = LocalSuppliersEnabled.current
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -257,7 +258,7 @@ fun ProductEditorContent(
         }
 
         // Nothing to show here without suppliers unless the item can be counted in more than one unit.
-        if (LocalSuppliersEnabled.current || form.category.allowedStockUnits.size > 1) {
+        if (suppliersEnabled || form.category.allowedStockUnits.size > 1) {
             item(key = "purchasing") { PurchasingSection(form, uiState.suppliers, actions) }
         }
 
