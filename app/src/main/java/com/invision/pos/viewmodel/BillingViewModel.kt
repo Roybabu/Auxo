@@ -1,5 +1,6 @@
 package com.invision.pos.viewmodel
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -146,7 +147,7 @@ class BillingViewModel(
     private val checkout: CheckoutUseCase,
     private val customers: CustomerRepository? = null,
     private val menuRepository: MenuRepository? = null,
-    private val clock: Clock = Clock.systemDefaultZone(),
+    private val clock: Clock = BusinessTime.clock(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())

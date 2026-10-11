@@ -1,5 +1,6 @@
 package com.invision.pos.ui.screens.billing
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -156,7 +157,7 @@ fun InvoiceDetailContent(
     onOpenInvoice: (Long) -> Unit,
     onNewBill: () -> Unit,
     modifier: Modifier = Modifier,
-    zone: ZoneId = ZoneId.systemDefault(),
+    zone: ZoneId = BusinessTime.ZONE,
 ) {
     val invoice = state.invoice
     val pages = remember(invoice, state.receiptOptions) { ReceiptRenderer.pages(invoice, state.receiptOptions, zone) }

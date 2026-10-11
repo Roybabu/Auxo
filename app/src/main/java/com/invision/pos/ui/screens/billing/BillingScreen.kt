@@ -1,5 +1,6 @@
 package com.invision.pos.ui.screens.billing
 
+import com.invision.pos.domain.billing.BusinessTime
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -494,7 +495,7 @@ private fun SetupBanner(onOpenSettings: () -> Unit) {
 @Composable
 private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
     val formatter = LocalMoneyFormatter.current
-    val sellable = result.variant.sellableQuantity(LocalDate.now())
+    val sellable = result.variant.sellableQuantity(LocalDate.now(BusinessTime.ZONE))
     val outOfStock = sellable <= 0
     Row(
         modifier = Modifier
