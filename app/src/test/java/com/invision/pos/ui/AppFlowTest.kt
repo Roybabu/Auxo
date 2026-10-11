@@ -13,6 +13,7 @@ import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -21,6 +22,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.ui.theme.InvisionTheme
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,6 +62,15 @@ class AppFlowTest {
             .performClick()
     }
 
+    /** Home has no bottom bar, so other screens are reached through its quick actions. */
+    private fun homeAction(label: String) {
+        composeRule.onAllNodesWithText(label).onFirst().performClick()
+    }
+
+    private fun tabBarShown(): Boolean = composeRule.onAllNodes(
+        hasText("Customers") and hasClickAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
+    ).fetchSemanticsNodes().isNotEmpty()
+
     private fun screenshot(name: String) {
         composeRule.waitForIdle()
         val bitmap = composeRule.onAllNodes(isRoot()).onLast().captureToImage().asAndroidBitmap()
@@ -72,7 +84,7 @@ class AppFlowTest {
         waitForText("Add your first product")
         screenshot("10_app_home_empty")
 
-        clickTab("Billing")
+        homeAction("New bill")
         waitForText("No products to sell yet")
 
         clickTab("Inventory")
@@ -86,6 +98,7 @@ class AppFlowTest {
     fun addingAGarment_savesItAndShowsTheProduct() {
         composeRule.setContent { InvisionTheme { InvisionApp() } }
         waitForText("Add your first product")
+        homeAction("New bill")
         clickTab("Inventory")
         waitForText("No products yet")
         composeRule.onNodeWithText("Add product").performClick()
@@ -111,5 +124,64 @@ class AppFlowTest {
         clickTab("Home")
         waitForText("Units in stock")
         screenshot("13_app_home_with_product")
+    }
+
+    @Test
+    fun homeHidesTheTabBar_otherScreensShowIt() {
+        composeRule.setContent { InvisionTheme { InvisionApp() } }
+        waitForText("Add your first product")
+        assertFalse("The tab bar should be hidden on Home", tabBarShown())
+
+        homeAction("New bill")
+        waitForText("No products to sell yet")
+        assertTrue("The tab bar should show away from Home", tabBarShown())
+
+        clickTab("Home")
+        waitForText("Add your first product")
+        assertFalse(tabBarShown())
+    }
+
+    @Test
+    fun homeTab_alwaysReturnsHome_fromAScreenOpenedOnHome() {
+        composeRule.setContent { InvisionTheme { InvisionApp() } }
+        waitForText("Add your first product")
+
+        homeAction("Add product")
+        waitForTag("editor_name")
+        clickTab("Home")
+        waitForText("Add your first product")
+        assertFalse(tabBarShown())
+
+        homeAction("Receive stock")
+        composeRule.waitForIdle()
+        assertTrue(tabBarShown())
+        clickTab("Home")
+        waitForText("Add your first product")
+    }
+
+    @Test
+    fun moreTab_alwaysOpensItsMenu_notTheOptionYouLastUsed() {
+        composeRule.setContent { InvisionTheme { InvisionApp() } }
+        waitForText("Add your first product")
+
+        homeAction("More")
+        waitForTag("more_list")
+        composeRule.onNodeWithText("Businesses you buy from").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("more_list").fetchSemanticsNodes().isEmpty()
+        }
+
+        clickTab("Home")
+        waitForText("Add your first product")
+        homeAction("More")
+        waitForTag("more_list")
+
+        // Tapping More while already inside one of its pages also goes back to the menu.
+        composeRule.onNodeWithText("Businesses you buy from").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("more_list").fetchSemanticsNodes().isEmpty()
+        }
+        clickTab("More")
+        waitForTag("more_list")
     }
 }

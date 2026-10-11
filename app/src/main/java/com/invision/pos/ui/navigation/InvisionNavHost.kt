@@ -435,16 +435,30 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
 }
 
 /**
- * Switches tabs the standard way: one copy of each tab on the back stack,
- * with each tab's state saved and restored when you leave and return.
+ * Switches tabs. Billing, Inventory and Customers keep their place (a half-built bill, a
+ * scrolled list) when you leave and come back. Two tabs are deliberate exceptions:
+ *  - Home always returns to the Home screen, whatever screen you were on (editor, receive
+ *    stock, a new bill...). What you were doing is saved and comes back with its tab.
+ *  - More always opens its own menu page, never the option you last used from it.
  */
 fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
+    if (destination == TopLevelDestination.HOME) {
+        val home = TopLevelDestination.HOME.route
+        if (popBackStack(home, inclusive = false, saveState = true)) return
+        if (currentDestination?.route != home) {
+            navigate(home) {
+                popUpTo(graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+            }
+        }
+        return
+    }
     navigate(destination.route) {
         popUpTo(graph.findStartDestination().id) {
             saveState = true
         }
         launchSingleTop = true
-        restoreState = true
+        restoreState = destination != TopLevelDestination.MORE
     }
 }
 

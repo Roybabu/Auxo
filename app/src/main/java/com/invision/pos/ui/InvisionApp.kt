@@ -3,7 +3,10 @@ package com.invision.pos.ui
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
@@ -17,13 +20,16 @@ import com.invision.pos.ui.navigation.navigateToTopLevel
 
 /**
  * Root composable. The five main destinations appear as a bottom bar on phones
- * and as a side rail on tablets and other wide screens.
+ * and as a side rail on tablets and other wide screens. The bar is hidden on the Home
+ * screen, which has its own quick actions, and appears once you go anywhere else.
  */
 @Composable
 fun InvisionApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val onHome = currentDestination?.route == TopLevelDestination.HOME.route
+    val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -36,6 +42,7 @@ fun InvisionApp() {
                 )
             }
         },
+        layoutType = if (onHome) NavigationSuiteType.None else adaptiveLayout,
         containerColor = MaterialTheme.colorScheme.background,
     ) {
         InvisionNavHost(navController = navController)
