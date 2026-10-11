@@ -171,7 +171,7 @@ Not covered by automated tests:
 
 ## Continuous integration
 
-`.github/workflows/android-ci.yml` is meant to run on every push to `main`, on pull requests, and on demand. **Automatic CI is temporarily paused:** the push and pull request triggers are commented out for the current development period, so it only runs when started by hand from the Actions tab. Tests should be run locally or as targeted CI runs in the meantime. The triggers will be restored, and the full workflow (including the emulator tests) run, at the final release verification. It builds the debug APK, runs all tests and lint, measures unit test coverage in a separate job, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`; the new schema file is then attached to the run as a gzip+base64 annotation, so it can be committed even without a local Android build. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts. A `security` job scans the repository and builds an unsigned release variant. A further job runs the device tests on an Android 15 emulator and reports their results the same way.
+`.github/workflows/android-ci.yml` runs on every push to `main`, on pull requests, and on demand from the Actions tab. It builds the debug APK, runs all tests and lint, measures unit test coverage in a separate job, and reports results as annotations on the run and pull request. Compiler errors, failed tests and compiler warnings appear there too, so failures can be read without opening the logs. CI also fails if the Room schema changes without the new schema being committed in `app/schemas`; the new schema file is then attached to the run as a gzip+base64 annotation, so it can be committed even without a local Android build. The APK, test and lint reports, screenshots and the Room schema are uploaded as workflow artifacts. A `security` job scans the repository and builds an unsigned release variant. A further job runs the device tests on an Android 15 emulator and reports their results the same way.
 
 ## Project structure
 
@@ -245,7 +245,6 @@ Android 8.0 (API 26) and newer, phones and tablets (the navigation switches betw
 - Database layer code is not in the coverage figures, because Robolectric loads it in a way JaCoCo cannot see.
 - No code formatter or Kotlin static analyser (ktlint, detekt) is set up; only Android lint runs.
 - The release build is not minified or signed, and has only been checked to compile in CI.
-- Automatic CI is paused (see above).
 
 ## Roadmap
 
