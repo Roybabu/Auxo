@@ -32,6 +32,8 @@
 
     <!-- Home -->
     <string name="home_greeting">Welcome back</string>
+    <string name="home_cash_today">Cash today</string>
+    <string name="home_upi_today">UPI today</string>
     <string name="home_today">Today</string>
     <string name="home_sales_today">Sales</string>
     <string name="home_bills_today">Bills</string>

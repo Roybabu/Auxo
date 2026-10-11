@@ -1,34 +1,53 @@
 package com.invision.pos.ui.screens.home
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
@@ -48,6 +67,10 @@ import com.invision.pos.ui.components.StatusChip
 import com.invision.pos.ui.format.DateFormats
 import com.invision.pos.ui.navigation.TopLevelDestination
 import com.invision.pos.ui.screens.inventory.tone
+import com.invision.pos.ui.theme.HomeAvatar
+import com.invision.pos.ui.theme.HomeBadge
+import com.invision.pos.ui.theme.HomeGreen
+import com.invision.pos.ui.theme.HomeGreenDark
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
@@ -111,6 +134,21 @@ fun HomeContent(
     }
 }
 
+/**
+ * TEMPORARY (home redesign, step 2): placeholder balance figures. Real cash and UPI
+ * totals for today replace these when the data is wired in (step 4).
+ */
+private object TemporaryHomeData {
+    const val CASH_TODAY = "₹0.00"
+    const val UPI_TODAY = "₹0.00"
+}
+
+private val PanelShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+
+/** The white panel starts at about this fraction of the screen width from the top, as in the design. */
+private const val PANEL_TOP_WIDTH_RATIO = 0.975f
+private val PanelTopMax = 420.dp
+
 @Composable
 private fun HomeDashboard(
     state: HomeUiState.Ready,
@@ -122,25 +160,228 @@ private fun HomeDashboard(
     onOpenAlerts: () -> Unit = {},
     onReceiveStock: () -> Unit = {},
 ) {
+    // The header is dark green, so the status bar icons must be light while Home is showing.
+    LightStatusBarIcons(darkIcons = false)
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(HomeGreen)) {
+        val panelTop = (maxWidth * PANEL_TOP_WIDTH_RATIO).coerceAtMost(PanelTopMax)
+        HomeHeaderBlock(
+            storeName = state.storeName,
+            hasAlerts = state.inventory.alerts.isNotEmpty(),
+            onOpenAlerts = onOpenAlerts,
+            onOpenBalances = { onNavigate(TopLevelDestination.MORE) },
+            onNewBill = { onNavigate(TopLevelDestination.BILLING) },
+            onReceiveStock = onReceiveStock,
+            onAddProduct = onAddProduct,
+            onMore = { onNavigate(TopLevelDestination.MORE) },
+        )
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = panelTop),
+            shape = PanelShape,
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            HomePanelContent(
+                state = state,
+                onNavigate = onNavigate,
+                onAddProduct = onAddProduct,
+                onOpenProduct = onOpenProduct,
+                onOpenInventory = onOpenInventory,
+                onOpenAlerts = onOpenAlerts,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeHeaderBlock(
+    storeName: String,
+    hasAlerts: Boolean,
+    onOpenAlerts: () -> Unit,
+    onOpenBalances: () -> Unit,
+    onNewBill: () -> Unit,
+    onReceiveStock: () -> Unit,
+    onAddProduct: () -> Unit,
+    onMore: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = Spacing.lg),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(HomeAvatar),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_nav_home),
+                    contentDescription = null,
+                    tint = HomeGreenDark,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            Spacer(Modifier.width(Spacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = storeName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.home_greeting),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                    .clickable(onClick = onOpenAlerts),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_notifications),
+                    contentDescription = stringResource(R.string.home_alerts),
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp),
+                )
+                // Shown only when there is something to look at.
+                if (hasAlerts) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 11.dp, end = 12.dp)
+                            .size(8.dp)
+                            .background(HomeBadge, CircleShape),
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            BalanceCard(
+                label = stringResource(R.string.home_cash_today),
+                value = TemporaryHomeData.CASH_TODAY,
+                onClick = onOpenBalances,
+                modifier = Modifier.weight(1f),
+            )
+            BalanceCard(
+                label = stringResource(R.string.home_upi_today),
+                value = TemporaryHomeData.UPI_TODAY,
+                onClick = onOpenBalances,
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill)
+            QuickAction(stringResource(R.string.purchases_receive), R.drawable.ic_receive, onReceiveStock)
+            QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_nav_inventory, onAddProduct)
+            QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore)
+        }
+    }
+}
+
+@Composable
+private fun BalanceCard(label: String, value: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = HomeGreenDark,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = Spacing.lg, vertical = 14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier
+                        .size(16.dp)
+                        .rotate(180f),
+                )
+            }
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
+                color = Color.White,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = HomeGreenDark,
+                modifier = Modifier.size(26.dp),
+            )
+        }
+        Spacer(Modifier.height(Spacing.sm))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
+    }
+}
+
+/** What was on the Home dashboard before the redesign, kept inside the white panel. */
+@Composable
+private fun HomePanelContent(
+    state: HomeUiState.Ready,
+    onNavigate: (TopLevelDestination) -> Unit,
+    onAddProduct: () -> Unit,
+    onOpenProduct: (Long) -> Unit,
+    onOpenInventory: (StockFilter) -> Unit,
+    onOpenAlerts: () -> Unit,
+) {
     val status = InvisionThemeExtras.statusColors
     val inventory = state.inventory
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.screen, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.xl),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            Text(
-                text = stringResource(R.string.home_greeting),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(text = state.storeName, style = MaterialTheme.typography.headlineMedium)
-        }
-
         // Today
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             SectionHeader(title = stringResource(R.string.home_today))
@@ -231,31 +472,6 @@ private fun HomeDashboard(
                 AlertsCard(alerts = inventory.alerts, onOpenProduct = onOpenProduct, onOpenAlerts = onOpenAlerts)
             }
         }
-
-        // Quick actions
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-            SectionHeader(title = stringResource(R.string.home_quick_actions))
-            QuickAction(
-                label = stringResource(R.string.home_action_new_bill),
-                iconRes = R.drawable.ic_nav_billing,
-                onClick = { onNavigate(TopLevelDestination.BILLING) },
-            )
-            QuickAction(
-                label = stringResource(R.string.home_action_add_product),
-                iconRes = R.drawable.ic_add,
-                onClick = onAddProduct,
-            )
-            QuickAction(
-                label = stringResource(R.string.purchases_receive),
-                iconRes = R.drawable.ic_receive,
-                onClick = onReceiveStock,
-            )
-            QuickAction(
-                label = stringResource(R.string.home_action_add_customer),
-                iconRes = R.drawable.ic_nav_customers,
-                onClick = { onNavigate(TopLevelDestination.CUSTOMERS) },
-            )
-        }
     }
 }
 
@@ -328,16 +544,26 @@ private fun AlertRow(alert: StockAlert, onClick: () -> Unit) {
     }
 }
 
+/** Switches the status bar icons between dark and light while the calling screen is showing. */
 @Composable
-private fun QuickAction(label: String, iconRes: Int, onClick: () -> Unit) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Icon(painter = painterResource(iconRes), contentDescription = null, modifier = Modifier.size(20.dp))
-        Text(text = label, modifier = Modifier.padding(start = Spacing.sm))
+private fun LightStatusBarIcons(darkIcons: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    DisposableEffect(view, darkIcons) {
+        val window = view.context.findActivity()?.window
+        val controller = window?.let { WindowCompat.getInsetsController(it, view) }
+        val previous = controller?.isAppearanceLightStatusBars
+        controller?.isAppearanceLightStatusBars = darkIcons
+        onDispose {
+            if (controller != null && previous != null) controller.isAppearanceLightStatusBars = previous
+        }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 1200)

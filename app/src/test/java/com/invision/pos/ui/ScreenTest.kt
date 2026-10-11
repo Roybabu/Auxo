@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -104,7 +105,8 @@ class ScreenTest {
             )
         }
         composeRule.onNodeWithText("Roy Mart").assertIsDisplayed()
-        composeRule.onNodeWithText("Units in stock").assertIsDisplayed()
+        // The inventory figures sit in the white panel, below the header.
+        composeRule.onNodeWithText("Units in stock").performScrollTo().assertIsDisplayed()
         screenshot("01_home")
     }
 
