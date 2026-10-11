@@ -10,8 +10,17 @@ import kotlinx.coroutines.flow.Flow
 sealed interface SaleResult {
     data class Recorded(val invoiceId: Long, val number: String) : SaleResult
 
-    /** Nothing was saved: these variants are missing or don't have enough stock. */
+    /** Nothing was saved: these variants are missing or don't have enough unexpired stock. */
     data class StockShortage(val variantIds: Set<Long>) : SaleResult
+
+    /** Nothing was saved: dishes need more of these ingredients than are in stock. */
+    data class IngredientShortage(val variantIds: Set<Long>) : SaleResult
+
+    /** Nothing was saved: the amount on account would go past the customer's credit limit. */
+    data object CreditLimitExceeded : SaleResult
+
+    /** Nothing was saved: the customer account no longer exists. */
+    data object CustomerMissing : SaleResult
 }
 
 sealed interface ReturnResult {
@@ -39,10 +48,22 @@ interface BillingRepository {
 
     fun observeSalesTotals(fromMillis: Long, toMillis: Long): Flow<SalesTotals>
 
-    /** Saves a sale built by SaleBuilder, deducting stock in the same transaction. */
-    suspend fun recordSale(invoice: Invoice, invoicePrefix: String): SaleResult
+    /**
+     * Saves a sale built by SaleBuilder in one transaction: invoice, payments, stock
+     * (earliest expiry first, never expired stock), ingredients used by dishes, and
+     * the amount put on the customer's account. A [requestId] already used returns
+     * the sale saved the first time instead of saving again.
+     */
+    suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String? = null): SaleResult
 
-    /** Saves a credit note built by ReturnBuilder, restocking in the same transaction. */
+    /** Full invoices and credit notes in [fromMillis, toMillis), oldest first, for reports. */
+    suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice>
+
+    /**
+     * Saves a credit note built by ReturnBuilder in one transaction: puts the units
+     * back into the batches they were sold from and credits refunds made to the
+     * customer's account.
+     */
     suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String): ReturnResult
 }
 

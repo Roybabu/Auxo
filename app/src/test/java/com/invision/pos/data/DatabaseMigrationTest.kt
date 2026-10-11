@@ -35,7 +35,7 @@ import java.io.File
 /**
  * Builds a version 1 database from the committed schema (app/schemas/.../1.json),
  * fills it with Step 2 data, then opens it with the current app so Room runs the
- * 1 -> 2 migration and checks the result against the version 2 schema.
+ * 1 -> 2 and 2 -> 3 migrations and checks the result against the current schema.
  */
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
@@ -95,11 +95,11 @@ class DatabaseMigrationTest {
         createVersion1()
         val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
         database = db
-        val inventory = RoomInventoryRepository(db.inventoryDao(), TestData.clock)
+        val inventory = RoomInventoryRepository(db, TestData.clock)
 
-        // Opening runs the migration and Room validates every table against version 2.
+        // Opening runs the migrations and Room validates every table against the current version.
         val product = inventory.getProduct(1)!!
-        assertEquals(2, db.openHelper.readableDatabase.version)
+        assertEquals(3, db.openHelper.readableDatabase.version)
         assertEquals("Cotton T-Shirt", product.name)
         assertEquals(8, product.variants.single().stockQuantity)
         assertEquals(Money(49_900), product.variants.single().sellingPrice)
@@ -115,7 +115,7 @@ class DatabaseMigrationTest {
         val invoice = SaleBuilder.build(
             cart, totals, TestData.settings, listOf(PaymentRecord(method = PaymentMethod.CASH, amount = totals.grandTotal)), TestData.clock.millis(),
         )
-        val result = RoomBillingRepository(db.billingDao()).recordSale(invoice, "INV")
+        val result = RoomBillingRepository(db).recordSale(invoice, "INV")
         assertTrue(result is SaleResult.Recorded)
         assertEquals(6, inventory.getProduct(1)!!.variants.single().stockQuantity)
     }

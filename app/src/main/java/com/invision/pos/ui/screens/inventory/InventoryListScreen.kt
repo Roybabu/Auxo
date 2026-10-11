@@ -294,6 +294,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
     val low = product.lowestPrice
     val high = product.highestPrice
     val priceText = when {
+        !product.category.isSold -> ""
         low == null || high == null -> ""
         low == high -> formatter.format(low)
         else -> stringResource(R.string.price_range, formatter.format(low), formatter.format(high))
@@ -338,7 +339,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 StatusChip(text = chipText, tone = chipTone)
                 Text(
-                    text = pluralStringResource(R.plurals.units_in_stock, product.totalStock, product.totalStock),
+                    text = stockText(product.stockUnit, product.totalStock),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

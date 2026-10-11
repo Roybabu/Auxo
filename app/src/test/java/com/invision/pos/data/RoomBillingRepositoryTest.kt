@@ -59,9 +59,9 @@ class RoomBillingRepositoryTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.inMemoryDatabaseBuilder(context, InvisionDatabase::class.java).allowMainThreadQueries().build()
-        inventory = RoomInventoryRepository(database.inventoryDao(), TestData.clock)
-        billing = RoomBillingRepository(database.billingDao()) { ZoneOffset.UTC }
-        settings = RoomSettingsRepository(database.billingDao())
+        inventory = RoomInventoryRepository(database, TestData.clock)
+        billing = RoomBillingRepository(database) { ZoneOffset.UTC }
+        settings = RoomSettingsRepository(database)
     }
 
     @After

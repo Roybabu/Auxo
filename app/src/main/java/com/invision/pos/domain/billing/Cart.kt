@@ -1,12 +1,21 @@
 package com.invision.pos.domain.billing
 
 import com.invision.pos.domain.model.GstRate
+import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
+import java.time.LocalDate
 
-/** One variant in the cart, with the product details needed for the invoice. */
+/**
+ * One line in the cart: a shop product variant or a restaurant dish, with the
+ * details needed for the invoice.
+ */
 data class CartLine(
+    /**
+     * Identifies the line. For shop products this is the variant id; for dishes it
+     * is minus the menu item id (see [forMenuItem]), so the two never clash.
+     */
     val variantId: Long,
     val productId: Long,
     val productName: String,
@@ -18,11 +27,31 @@ data class CartLine(
     val gstRate: GstRate?,
     val quantity: Int,
     val discount: Discount? = null,
-    /** Units on hand right now, or null if the variant no longer exists. */
+    /**
+     * Units that can be sold right now, or null if the item no longer exists or
+     * can't be sold. Dishes have no stock limit of their own.
+     */
     val availableStock: Int?,
+    /** Set for restaurant dishes. */
+    val menuItemId: Long? = null,
 ) {
+    val isMenuItem: Boolean get() = menuItemId != null
+
+    /** The inventory variant sold, or null for a dish. */
+    val stockVariantId: Long? get() = if (menuItemId == null) variantId else null
+
     companion object {
-        fun from(product: Product, variant: ProductVariant, quantity: Int = 1) = CartLine(
+        /** No stock limit for dishes; ingredients are checked when the sale is saved. */
+        const val UNLIMITED = Int.MAX_VALUE
+
+        /** Line key for a dish. */
+        fun keyForMenuItem(menuItemId: Long): Long = -menuItemId
+
+        /**
+         * A shop product line. With [today], batch-tracked items can only sell
+         * stock that hasn't expired.
+         */
+        fun from(product: Product, variant: ProductVariant, quantity: Int = 1, today: LocalDate? = null) = CartLine(
             variantId = variant.id,
             productId = product.id,
             productName = product.name,
@@ -33,7 +62,22 @@ data class CartLine(
             mrp = variant.mrp,
             gstRate = product.gstRate,
             quantity = quantity,
-            availableStock = variant.stockQuantity,
+            availableStock = if (today != null) variant.sellableQuantity(today) else variant.stockQuantity,
+        )
+
+        fun forMenuItem(item: MenuItem, quantity: Int = 1) = CartLine(
+            variantId = keyForMenuItem(item.id),
+            productId = 0,
+            productName = item.name,
+            variantLabel = item.section,
+            barcode = "",
+            hsnCode = item.sacCode,
+            unitPrice = item.price,
+            mrp = null,
+            gstRate = GstRate.Fixed(item.gstRateBasisPoints),
+            quantity = quantity,
+            availableStock = if (item.available) UNLIMITED else null,
+            menuItemId = item.id,
         )
     }
 }
@@ -43,8 +87,10 @@ data class CustomerDetails(
     val name: String = "",
     val phone: String = "",
     val gstin: String = "",
+    /** Saved customer the bill is for; needed to put the bill on account. */
+    val customerId: Long? = null,
 ) {
-    val isWalkIn: Boolean get() = name.isBlank() && phone.isBlank() && gstin.isBlank()
+    val isWalkIn: Boolean get() = customerId == null && name.isBlank() && phone.isBlank() && gstin.isBlank()
 }
 
 data class Cart(

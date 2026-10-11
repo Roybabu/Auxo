@@ -61,15 +61,18 @@
         <item quantity="one">Only %d left</item>
         <item quantity="other">Only %d left</item>
     </plurals>
+    <string name="alert_low_stock_amount">Only %1$s left</string>
 
     <!-- Categories, filters and statuses -->
     <string name="category_garment">Garment</string>
     <string name="category_packaged_food">Packaged food</string>
     <string name="category_beverage">Beverage</string>
+    <string name="category_ingredient">Ingredient</string>
     <string name="filter_all">All</string>
     <string name="filter_garments">Garments</string>
     <string name="filter_packaged_food">Packaged food</string>
     <string name="filter_beverages">Beverages</string>
+    <string name="filter_ingredients">Ingredients</string>
     <string name="stock_filter_low">Low stock</string>
     <string name="stock_filter_out">Out of stock</string>
     <string name="stock_filter_expiring">Expiring</string>
@@ -85,6 +88,10 @@
         <item quantity="one">%d in stock</item>
         <item quantity="other">%d in stock</item>
     </plurals>
+    <string name="quantity_in_stock">%1$s in stock</string>
+    <string name="stock_unit_pieces">Pieces</string>
+    <string name="stock_unit_weight">Weight (kg)</string>
+    <string name="stock_unit_volume">Volume (L)</string>
     <plurals name="variant_count">
         <item quantity="one">%d variant</item>
         <item quantity="other">%d variants</item>
@@ -115,7 +122,14 @@
     <string name="detail_sku">SKU %1$s</string>
     <string name="detail_batch">Batch %1$s</string>
     <string name="detail_expiry">Expiry %1$s</string>
-    <string name="detail_low_stock_at">Reorder at %1$d</string>
+    <string name="detail_low_stock_at">Reorder at %1$s</string>
+    <string name="detail_reorder_quantity">Order %1$s at a time</string>
+    <string name="detail_cost_per">Cost %1$s per %2$s</string>
+    <string name="detail_cost_unknown">Cost not set</string>
+    <string name="detail_ingredient_note">Kitchen ingredient: used by menu recipes, not sold at the counter</string>
+    <string name="detail_batches">Batches</string>
+    <string name="detail_batch_none">No batch number</string>
+    <string name="detail_expired_stock">%1$s has expired and can\'t be sold. Write it off in Expiry and wastage.</string>
     <string name="action_adjust_stock">Adjust stock</string>
     <string name="action_print_labels">Print labels</string>
     <string name="delete_product_title">Delete product?</string>
@@ -124,22 +138,30 @@
 
     <!-- Stock adjustment -->
     <string name="adjust_title">Adjust stock</string>
-    <string name="adjust_current">Current stock: %1$d</string>
+    <string name="adjust_current">Current stock: %1$s</string>
     <string name="adjust_quantity">Quantity</string>
     <string name="adjust_counted">Counted quantity</string>
     <string name="adjust_note">Note (optional)</string>
-    <string name="adjust_new_stock">New stock: %1$d</string>
+    <string name="adjust_new_stock">New stock: %1$s</string>
+    <string name="adjust_quantity_unit">Quantity (%1$s)</string>
+    <string name="adjust_counted_unit">Counted quantity (%1$s)</string>
+    <string name="adjust_batch">Batch number (optional)</string>
     <string name="reason_initial">Opening stock</string>
     <string name="reason_received">Received</string>
     <string name="reason_returned">Returned</string>
     <string name="reason_sold">Sold</string>
     <string name="reason_damaged">Damaged</string>
     <string name="reason_correction">Count correction</string>
+    <string name="reason_expired">Expired</string>
+    <string name="reason_spoiled">Spoiled</string>
+    <string name="reason_used">Used in kitchen</string>
     <string name="adjust_error_required">Enter a quantity</string>
-    <string name="adjust_error_invalid">Enter a whole number greater than 0</string>
+    <string name="adjust_error_invalid">Enter a quantity greater than 0</string>
     <string name="adjust_error_too_large">That quantity is too large</string>
     <string name="adjust_error_negative">Stock can\'t go below zero</string>
     <string name="adjust_error_no_change">The counted quantity matches current stock</string>
+    <string name="adjust_error_item_missing">This item was deleted. Go back and check the product.</string>
+    <string name="adjust_error_batch">Use up to 32 characters for the batch, and an expiry date that hasn\'t passed</string>
 
     <!-- Product editor -->
     <string name="editor_title_new">Add product</string>
@@ -162,7 +184,15 @@
     <string name="editor_pack">Pack %1$d</string>
     <string name="editor_add_pack">Add pack size</string>
     <string name="editor_remove_variant">Remove variant</string>
-    <string name="editor_stock_locked">In stock: %1$d. Use Adjust stock to change it.</string>
+    <string name="editor_stock_locked">In stock: %1$s. Use Adjust stock to change it.</string>
+    <string name="editor_stock_and_cost">Stock and cost</string>
+    <string name="editor_batches_hint">Batches and expiry dates are kept from stock received. Use Adjust stock or Receive stock to add a batch.</string>
+    <string name="editor_purchasing">Stock and purchasing</string>
+    <string name="editor_stock_unit">Stock counted by</string>
+    <string name="editor_stock_unit_hint">Recipes use grams, millilitres or pieces. This can\'t be changed after saving.</string>
+    <string name="editor_supplier">Preferred supplier</string>
+    <string name="editor_supplier_none">None</string>
+    <string name="editor_supplier_hint">Reorder suggestions for this product go to this supplier</string>
     <plurals name="editor_fix_errors">
         <item quantity="one">Fix %d highlighted field</item>
         <item quantity="other">Fix %d highlighted fields</item>
@@ -173,6 +203,10 @@
     <string name="field_cost_price">Cost price</string>
     <string name="field_opening_stock">Opening stock</string>
     <string name="field_low_stock">Reorder level</string>
+    <string name="field_reorder_quantity">Reorder quantity</string>
+    <string name="field_reorder_quantity_hint">Leave blank to order back up to twice the reorder level</string>
+    <string name="field_cost_per">Cost per %1$s</string>
+    <string name="field_with_unit">%1$s (%2$s)</string>
     <string name="field_barcode">Barcode</string>
     <string name="field_barcode_hint">Leave blank to generate one</string>
     <string name="field_sku">SKU</string>
@@ -192,6 +226,7 @@
     <string name="error_invalid_quantity">Enter a whole number</string>
     <string name="error_quantity_too_large">That number is too large</string>
     <string name="error_invalid_net_quantity">Enter an amount like 500 or 1.5</string>
+    <string name="error_invalid_amount">Enter an amount like 2 or 1.25</string>
     <string name="error_unit_required">Choose a unit</string>
     <string name="error_barcode_check_digit">The last digit doesn\'t match. Check the barcode.</string>
     <string name="error_barcode_characters">Use letters, numbers and - . _ / only</string>
@@ -295,6 +330,20 @@
     <string name="billing_out_of_stock_message">%1$s is out of stock</string>
     <string name="billing_stock_limit">Only %2$d of %1$s in stock</string>
     <string name="billing_barcode_not_found">No item has barcode %1$s</string>
+    <string name="billing_ingredients_short">Not enough ingredients in stock for: %1$s</string>
+    <string name="billing_menu_title">Menu</string>
+    <string name="billing_menu_dish">Menu · %1$s</string>
+    <string name="menu_unavailable">Not available</string>
+    <string name="billing_customer_search">Find a saved customer</string>
+    <string name="billing_customer_change">Change customer</string>
+    <string name="billing_customer_save">Save as customer</string>
+    <string name="billing_customer_saved">%1$s saved as a customer</string>
+    <string name="billing_customer_missing">That customer no longer exists. Choose another one.</string>
+    <string name="billing_customer_save_name">Enter a name to save the customer</string>
+    <string name="billing_customer_save_invalid">Fix the customer details first</string>
+    <string name="billing_account_balance">Account balance: %1$s</string>
+    <string name="billing_account_limit">Credit limit: %1$s</string>
+    <string name="customer_error_phone_in_use">Another customer already has this mobile number</string>
     <string name="issue_unavailable">This item was removed from inventory</string>
     <string name="issue_not_enough_stock">Only %1$d in stock</string>
     <string name="issue_missing_gst">Set a GST rate for this product in Inventory</string>
@@ -312,6 +361,8 @@
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_upi">UPI</string>
     <string name="payment_method_card">Card</string>
+    <string name="payment_method_credit">On account</string>
+    <string name="payment_credit_note">Added to %1$s\'s account. Balance after this bill: %2$s</string>
     <string name="payment_amount">Amount</string>
     <string name="payment_tendered">Cash received</string>
     <string name="payment_change">Change to return: %1$s</string>
@@ -331,6 +382,8 @@
     <string name="payment_error_tendered_invalid">Enter the cash received</string>
     <string name="payment_error_tendered_low">Cash received is less than the amount</string>
     <string name="payment_error_reference">Check the reference</string>
+    <string name="payment_error_credit_customer">Choose a saved customer to put this bill on their account</string>
+    <string name="payment_error_credit_limit">This takes the customer over their credit limit</string>
     <string name="sale_completed">Sale saved: %1$s</string>
     <string name="sale_completed_change">Sale saved: %1$s. Return %2$s change.</string>
 
@@ -378,6 +431,8 @@
     <string name="history_net">Net received</string>
     <string name="history_no_payments">No payments in this period.</string>
     <string name="history_refund_label">Refund · %1$s</string>
+    <string name="history_account_payment">Account payment · %1$s</string>
+    <string name="history_account_note">Put on account: %1$s · Received against accounts: %2$s</string>
     <plurals name="history_items">
         <item quantity="one">%d item</item>
         <item quantity="other">%d items</item>
@@ -395,6 +450,7 @@
     <string name="return_none_selected">Choose the items being returned.</string>
     <string name="return_error_too_many">Can\'t return more than was sold</string>
     <string name="return_error_not_sale">Only sale invoices can be returned</string>
+    <string name="return_error_no_account">This invoice has no customer account to credit. Choose another refund method.</string>
     <string name="return_already_returned">Some items were already returned. The quantities have been refreshed.</string>
     <string name="return_completed">Credit note %1$s issued</string>
     <string name="return_nothing_left">Everything on this invoice has been returned.</string>

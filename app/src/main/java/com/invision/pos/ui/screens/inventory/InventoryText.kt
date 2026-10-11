@@ -14,6 +14,7 @@ import com.invision.pos.domain.model.formatRatePercent
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockStatus
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.domain.validation.FieldError
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.ToneColors
@@ -23,6 +24,7 @@ fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.string.category_garment
     ProductCategory.PACKAGED_FOOD -> R.string.category_packaged_food
     ProductCategory.BEVERAGE -> R.string.category_beverage
+    ProductCategory.INGREDIENT -> R.string.category_ingredient
 }
 
 /** Plural label used on filter chips, e.g. "Garments". */
@@ -31,6 +33,7 @@ fun ProductCategory.filterLabelRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.string.filter_garments
     ProductCategory.PACKAGED_FOOD -> R.string.filter_packaged_food
     ProductCategory.BEVERAGE -> R.string.filter_beverages
+    ProductCategory.INGREDIENT -> R.string.filter_ingredients
 }
 
 @DrawableRes
@@ -38,6 +41,7 @@ fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.drawable.ic_garment
     ProductCategory.PACKAGED_FOOD -> R.drawable.ic_food
     ProductCategory.BEVERAGE -> R.drawable.ic_beverage
+    ProductCategory.INGREDIENT -> R.drawable.ic_ingredient
 }
 
 @StringRes
@@ -78,7 +82,27 @@ fun StockChangeReason.labelRes(): Int = when (this) {
     StockChangeReason.SOLD -> R.string.reason_sold
     StockChangeReason.DAMAGED -> R.string.reason_damaged
     StockChangeReason.CORRECTION -> R.string.reason_correction
+    StockChangeReason.EXPIRED -> R.string.reason_expired
+    StockChangeReason.SPOILED -> R.string.reason_spoiled
+    StockChangeReason.USED -> R.string.reason_used
 }
+
+@StringRes
+fun StockUnit.labelRes(): Int = when (this) {
+    StockUnit.UNIT -> R.string.stock_unit_pieces
+    StockUnit.GRAM -> R.string.stock_unit_weight
+    StockUnit.MILLILITRE -> R.string.stock_unit_volume
+}
+
+/** "12 in stock" for counted items, "1.25 kg in stock" for ingredients. */
+@Composable
+@ReadOnlyComposable
+fun stockText(unit: StockUnit, quantity: Int): String =
+    if (unit == StockUnit.UNIT) {
+        androidx.compose.ui.res.pluralStringResource(R.plurals.units_in_stock, quantity, quantity)
+    } else {
+        androidx.compose.ui.res.stringResource(R.string.quantity_in_stock, unit.format(quantity))
+    }
 
 @StringRes
 fun DietType?.labelRes(): Int = when (this) {
@@ -111,6 +135,7 @@ fun FieldError.messageRes(): Int = when (this) {
     FieldError.INVALID_GST_RATE -> R.string.error_invalid_gst_rate
     FieldError.INVALID_HSN -> R.string.error_invalid_hsn
     FieldError.APPAREL_RULE_GARMENTS_ONLY -> R.string.error_apparel_rule_garments
+    FieldError.INVALID_AMOUNT -> R.string.error_invalid_amount
 }
 
 @StringRes
@@ -120,6 +145,8 @@ fun StockAdjustmentError.messageRes(): Int = when (this) {
     StockAdjustmentError.QUANTITY_TOO_LARGE -> R.string.adjust_error_too_large
     StockAdjustmentError.WOULD_GO_NEGATIVE -> R.string.adjust_error_negative
     StockAdjustmentError.NO_CHANGE -> R.string.adjust_error_no_change
+    StockAdjustmentError.ITEM_MISSING -> R.string.adjust_error_item_missing
+    StockAdjustmentError.BATCH_INVALID -> R.string.adjust_error_batch
 }
 
 /** "5%", "5% / 18% (apparel)" or "Not set". */

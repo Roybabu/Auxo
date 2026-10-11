@@ -7,11 +7,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.PurchasingRepository
 import com.invision.pos.data.repository.SaveProductResult
 import com.invision.pos.domain.barcode.InternalBarcodeGenerator
 import com.invision.pos.domain.model.DietType
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.ProductVariant
+import com.invision.pos.domain.model.StockUnit
+import com.invision.pos.domain.model.Supplier
 import com.invision.pos.domain.validation.FieldError
 import com.invision.pos.domain.validation.GarmentVariants
 import com.invision.pos.domain.validation.GstChoice
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,6 +45,8 @@ data class ProductEditorUiState(
     val errors: ProductFormErrors = ProductFormErrors(),
     val showErrors: Boolean = false,
     val isSaving: Boolean = false,
+    /** Active suppliers to choose a preferred one from. */
+    val suppliers: List<Supplier> = emptyList(),
 ) {
     val visibleErrors: ProductFormErrors get() = if (showErrors) errors else ProductFormErrors()
 }
@@ -57,6 +63,7 @@ class ProductEditorViewModel(
     private val repository: InventoryRepository,
     private val saveProduct: SaveProductUseCase,
     private val barcodeGenerator: InternalBarcodeGenerator,
+    private val purchasing: PurchasingRepository? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductEditorUiState(isLoading = productId != 0L))
@@ -74,6 +81,13 @@ class ProductEditorViewModel(
         } else {
             val category = if (initialBarcode != null) ProductCategory.PACKAGED_FOOD else ProductCategory.GARMENT
             setForm(newForm(category))
+        }
+        purchasing?.let { repository ->
+            viewModelScope.launch {
+                repository.observeSuppliers()
+                    .catch { emit(emptyList()) }
+                    .collect { suppliers -> _uiState.update { it.copy(suppliers = suppliers.filter(Supplier::active)) } }
+            }
         }
     }
 
@@ -110,7 +124,8 @@ class ProductEditorViewModel(
             category = category,
             variants = variants,
             dietType = base.dietType.takeIf { category == ProductCategory.PACKAGED_FOOD },
-            gst = gst,
+            gst = if (category.isSold) gst else GstChoice.NotSet,
+            stockUnit = base.stockUnit.takeIf { it in category.allowedStockUnits } ?: category.allowedStockUnits.first(),
         )
     }
 
@@ -148,6 +163,13 @@ class ProductEditorViewModel(
     fun onCustomGstRateChange(value: String) = editForm { it.copy(customGstRate = value.filter { c -> c.isDigit() || c == '.' }.take(6)) }
 
     fun onHsnChange(value: String) = editForm { it.copy(hsnCode = value.filter { c -> c.isDigit() }.take(8)) }
+
+    /** Ingredients can be counted by weight, volume or piece; fixed once the product is saved. */
+    fun onStockUnitChange(unit: StockUnit) = editForm { form ->
+        if (!form.isNew || unit !in form.category.allowedStockUnits) form else form.copy(stockUnit = unit)
+    }
+
+    fun onPreferredSupplierChange(supplierId: Long?) = editForm { it.copy(preferredSupplierId = supplierId) }
 
     // Garment sizes and colours
 
@@ -277,6 +299,7 @@ class ProductEditorViewModel(
                     repository = container.inventoryRepository,
                     saveProduct = container.saveProduct,
                     barcodeGenerator = container.barcodeGenerator,
+                    purchasing = container.purchasingRepository,
                 )
             }
         }

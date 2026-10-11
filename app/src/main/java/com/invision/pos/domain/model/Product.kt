@@ -21,8 +21,16 @@ data class ProductVariant(
     val costPrice: Money? = null,
     val stockQuantity: Int = 0,
     val lowStockThreshold: Int = 0,
+    /**
+     * For batch-tracked items, the batch that sells next (earliest expiry with stock);
+     * kept up to date from [batches].
+     */
     val batchNumber: String? = null,
     val expiryDate: LocalDate? = null,
+    /** Quantity to order when restocking; 0 means work it out from the low-stock level. */
+    val reorderQuantity: Int = 0,
+    /** Batches with stock, earliest expiry first. Empty for items not kept in batches. */
+    val batches: List<StockBatch> = emptyList(),
 ) {
     val stockStatus: StockStatus
         get() = when {
@@ -36,6 +44,12 @@ data class ProductVariant(
         get() = listOfNotNull(size, colour, netQuantity?.format()).joinToString(" · ")
 
     fun isExpired(today: LocalDate): Boolean = expiryDate?.isBefore(today) == true
+
+    /** Expired units still in stock; they can't be sold and should be written off. */
+    fun expiredQuantity(today: LocalDate): Int = batches.filter { it.isExpired(today) }.sumOf { it.quantity }
+
+    /** Units that can be sold on [today]: stock less any expired batches. */
+    fun sellableQuantity(today: LocalDate): Int = (stockQuantity - expiredQuantity(today)).coerceAtLeast(0)
 
     /** True if the expiry date falls between today and [days] days from now (inclusive). */
     fun expiresWithin(today: LocalDate, days: Long): Boolean {
@@ -57,6 +71,10 @@ data class Product(
     /** Null until set; GST-registered stores need it to bill the product. */
     val gstRate: GstRate? = null,
     val variants: List<ProductVariant> = emptyList(),
+    /** How stock is counted; only ingredients use grams or millilitres. */
+    val stockUnit: StockUnit = StockUnit.UNIT,
+    /** Supplier that low-stock purchase orders go to by default. */
+    val preferredSupplierId: Long? = null,
     val createdAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
 ) {

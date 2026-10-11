@@ -45,6 +45,7 @@ class FakeBillingRepository(private val inventory: FakeInventoryRepository) : Bi
     private var nextId = 1L
     private var nextLineId = 1L
     private val sequences = mutableMapOf<String, Long>()
+    private val requests = mutableMapOf<String, SaleResult>()
 
     override fun observeInvoice(invoiceId: Long): Flow<Invoice?> = invoices.map { list -> list.firstOrNull { it.id == invoiceId } }
 
@@ -70,9 +71,19 @@ class FakeBillingRepository(private val inventory: FakeInventoryRepository) : Bi
         SalesTotals(net, inRange.count { it.type == InvoiceType.SALE })
     }
 
-    override suspend fun recordSale(invoice: Invoice, invoicePrefix: String): SaleResult {
+    override suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice> =
+        invoices.value.filter { it.createdAtMillis in fromMillis until toMillis }.sortedBy { it.createdAtMillis }
+
+    override suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String?): SaleResult {
+        requestId?.let { id -> requests[id]?.let { return it } }
+        val result = saveSale(invoice, invoicePrefix)
+        if (requestId != null && result is SaleResult.Recorded) requests[requestId] = result
+        return result
+    }
+
+    private suspend fun saveSale(invoice: Invoice, invoicePrefix: String): SaleResult {
         val stock = inventory.products.value.flatMap { it.variants }.associate { it.id to it.stockQuantity }
-        val wanted = invoice.lines.groupBy { it.variantId!! }.mapValues { (_, l) -> l.sumOf { it.quantity } }
+        val wanted = invoice.lines.filter { it.variantId != null }.groupBy { it.variantId!! }.mapValues { (_, l) -> l.sumOf { it.quantity } }
         val short = wanted.filter { (id, qty) -> (stock[id] ?: -1) < qty }.keys
         if (short.isNotEmpty()) return SaleResult.StockShortage(short)
         val number = nextNumber(invoicePrefix, invoice.createdAtMillis)

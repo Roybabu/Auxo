@@ -37,6 +37,7 @@ import com.invision.pos.domain.inventory.StockAlert
 import com.invision.pos.domain.inventory.StockAlertType
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -274,7 +275,11 @@ private fun AlertRow(alert: StockAlert, onClick: () -> Unit) {
         StockAlertType.EXPIRED -> stringResource(R.string.alert_expired, alert.expiryDate?.let(DateFormats::date).orEmpty())
         StockAlertType.EXPIRING_SOON -> stringResource(R.string.alert_expiring, alert.expiryDate?.let(DateFormats::date).orEmpty())
         StockAlertType.OUT_OF_STOCK -> stringResource(R.string.alert_out_of_stock)
-        StockAlertType.LOW_STOCK -> pluralStringResource(R.plurals.alert_low_stock, alert.stockQuantity, alert.stockQuantity)
+        StockAlertType.LOW_STOCK -> if (alert.stockUnit == StockUnit.UNIT) {
+            pluralStringResource(R.plurals.alert_low_stock, alert.stockQuantity, alert.stockQuantity)
+        } else {
+            stringResource(R.string.alert_low_stock_amount, alert.stockUnit.format(alert.stockQuantity))
+        }
     }
     Row(
         modifier = Modifier

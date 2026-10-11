@@ -10,10 +10,12 @@ import com.invision.pos.domain.inventory.InventorySummaryCalculator
 import com.invision.pos.domain.inventory.StockAdjustment
 import com.invision.pos.domain.inventory.StockAdjustmentCalculator
 import com.invision.pos.domain.inventory.StockAdjustmentError
+import com.invision.pos.domain.model.BatchDetails
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
@@ -48,13 +50,21 @@ class AdjustStockUseCase(
     private val repository: InventoryRepository,
     private val clock: Clock,
 ) {
+    /**
+     * @param unit how the item's stock is counted (ingredients: g or ml, typed in kg or L)
+     * @param batch for batch-tracked items, the batch an increase goes into
+     * @param requestId one id per dialog, so a repeated save can't apply twice
+     */
     suspend operator fun invoke(
         variant: ProductVariant,
         reason: StockChangeReason,
         quantityText: String,
         note: String,
+        unit: StockUnit = StockUnit.UNIT,
+        batch: BatchDetails = BatchDetails(),
+        requestId: String? = null,
     ): AdjustStockResult {
-        val adjustment = StockAdjustmentCalculator.calculate(reason, quantityText, variant.stockQuantity)
+        val adjustment = StockAdjustmentCalculator.calculate(reason, quantityText, variant.stockQuantity, unit)
         if (adjustment is StockAdjustment.Invalid) return AdjustStockResult.Rejected(adjustment.error)
         adjustment as StockAdjustment.Valid
 
@@ -65,10 +75,11 @@ class AdjustStockUseCase(
             note = note.trim().ifEmpty { null },
             createdAtMillis = clock.millis(),
         )
-        return when (repository.recordStockChange(movement)) {
+        return when (repository.recordStockChange(movement, batch, requestId)) {
             StockChangeResult.Applied -> AdjustStockResult.Done
             // Stock changed elsewhere since the dialog opened.
             StockChangeResult.WouldGoNegative -> AdjustStockResult.Rejected(StockAdjustmentError.WOULD_GO_NEGATIVE)
+            StockChangeResult.ItemMissing -> AdjustStockResult.Rejected(StockAdjustmentError.ITEM_MISSING)
         }
     }
 }

@@ -35,7 +35,8 @@ object SaleBuilder {
         val mode = settings.taxModeFor(cart)
         val lines = cart.lines.zip(totals.lines).map { (line, amounts) ->
             InvoiceLine(
-                variantId = line.variantId,
+                variantId = line.stockVariantId,
+                menuItemId = line.menuItemId,
                 productName = line.productName,
                 variantLabel = line.variantLabel,
                 barcode = line.barcode,
@@ -77,11 +78,19 @@ object SaleBuilder {
             grandTotal = totals.grandTotal,
             savings = totals.savings,
             payments = payments.map { it.copy(kind = PaymentKind.PAYMENT, createdAtMillis = nowMillis) },
+            customerId = customer.customerId,
         )
     }
 }
 
-enum class ReturnError { NOTHING_SELECTED, QUANTITY_TOO_LARGE, NOT_A_SALE }
+enum class ReturnError {
+    NOTHING_SELECTED,
+    QUANTITY_TOO_LARGE,
+    NOT_A_SALE,
+
+    /** A refund to account needs a sale made to a customer account. */
+    NO_ACCOUNT,
+}
 
 sealed interface ReturnBuild {
     data class Ready(val creditNote: Invoice) : ReturnBuild
@@ -107,6 +116,7 @@ object ReturnBuilder {
         nowMillis: Long,
     ): ReturnBuild {
         if (original.type != InvoiceType.SALE) return ReturnBuild.Rejected(ReturnError.NOT_A_SALE)
+        if (refundMethod == PaymentMethod.CREDIT && original.customerId == null) return ReturnBuild.Rejected(ReturnError.NO_ACCOUNT)
         val selected = original.lines.filter { (quantities[it.id] ?: 0) > 0 }
         if (selected.isEmpty()) return ReturnBuild.Rejected(ReturnError.NOTHING_SELECTED)
         if (selected.any { quantities.getValue(it.id) > it.returnableQuantity }) {
@@ -155,6 +165,7 @@ object ReturnBuilder {
             originalInvoiceId = original.id,
             originalInvoiceNumber = original.number,
             note = reason.trim().ifEmpty { null },
+            customerId = original.customerId,
         )
         return ReturnBuild.Ready(creditNote)
     }

@@ -3,6 +3,7 @@ package com.invision.pos.domain.inventory
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.StockStatus
+import com.invision.pos.domain.model.StockUnit
 import java.time.LocalDate
 
 /** Most urgent first. */
@@ -16,6 +17,7 @@ data class StockAlert(
     val type: StockAlertType,
     val stockQuantity: Int,
     val expiryDate: LocalDate?,
+    val stockUnit: StockUnit = StockUnit.UNIT,
 )
 
 data class InventorySummary(
@@ -43,7 +45,9 @@ object InventorySummaryCalculator {
 
     /**
      * Counts are per variant. Stock value uses cost price where known; variants
-     * without a cost price are left out of the cost total.
+     * without a cost price are left out of the cost total. Units in stock and
+     * value at selling price count shop items only; ingredients are weighed or
+     * measured and not sold, so they add to the cost total alone.
      */
     fun calculate(
         products: List<Product>,
@@ -62,9 +66,11 @@ object InventorySummaryCalculator {
         for (product in products) {
             for (variant in product.variants) {
                 val inStock = variant.stockQuantity.coerceAtLeast(0)
-                units += inStock
-                variant.costPrice?.let { valueAtCost += it * inStock }
-                valueAtPrice += variant.sellingPrice * inStock
+                variant.costPrice?.let { valueAtCost += product.stockUnit.costOf(inStock, it) }
+                if (product.category.isSold) {
+                    units += inStock
+                    valueAtPrice += variant.sellingPrice * inStock
+                }
 
                 val alertType = when {
                     variant.isExpired(today) -> StockAlertType.EXPIRED
@@ -91,6 +97,7 @@ object InventorySummaryCalculator {
                         type = alertType,
                         stockQuantity = variant.stockQuantity,
                         expiryDate = variant.expiryDate,
+                        stockUnit = product.stockUnit,
                     )
                 }
             }

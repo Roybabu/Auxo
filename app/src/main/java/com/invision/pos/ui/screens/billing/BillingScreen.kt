@@ -73,6 +73,8 @@ import com.invision.pos.domain.billing.CustomerIssue
 import com.invision.pos.domain.billing.PaymentError
 import com.invision.pos.domain.billing.IndianStates
 import com.invision.pos.domain.billing.Upi
+import com.invision.pos.domain.model.CustomerAccount
+import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.ui.components.ActionIcon
@@ -94,22 +96,30 @@ import com.invision.pos.viewmodel.BillingEvent
 import com.invision.pos.viewmodel.BillingStage
 import com.invision.pos.viewmodel.BillingUiState
 import com.invision.pos.viewmodel.BillingViewModel
+import com.invision.pos.viewmodel.CustomerSaveError
 import com.invision.pos.viewmodel.DiscountInput
 import com.invision.pos.viewmodel.ProductSearchResult
+import java.time.LocalDate
 
 /** Callbacks from the billing UI, so the content can be tested without a ViewModel. */
 interface BillingActions {
     fun onSearchTextChange(text: String) = Unit
     fun onSearchSubmitted() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
-    fun onIncrement(variantId: Long) = Unit
-    fun onDecrement(variantId: Long) = Unit
-    fun onRemove(variantId: Long) = Unit
-    fun onToggleLineDiscount(variantId: Long) = Unit
-    fun onLineDiscountChange(variantId: Long, text: String, isPercent: Boolean) = Unit
+    fun onAddMenuItem(item: MenuItem) = Unit
+    fun onMenuSectionChange(section: String?) = Unit
+    fun onIncrement(lineKey: Long) = Unit
+    fun onDecrement(lineKey: Long) = Unit
+    fun onRemove(lineKey: Long) = Unit
+    fun onToggleLineDiscount(lineKey: Long) = Unit
+    fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) = Unit
     fun onBillDiscountChange(text: String, isPercent: Boolean) = Unit
     fun onToggleCustomer() = Unit
     fun onCustomerChange(customer: CustomerDetails) = Unit
+    fun onCustomerQueryChange(query: String) = Unit
+    fun onLinkCustomer(account: CustomerAccount) = Unit
+    fun onUnlinkCustomer() = Unit
+    fun onSaveCustomer() = Unit
     fun onPlaceOfSupplyChange(stateCode: String?) = Unit
     fun onCharge() = Unit
     fun onOpenSettings() = Unit
@@ -155,6 +165,13 @@ fun BillingScreen(
                 }
                 BillingEvent.ScannerUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.scan_unavailable))
                 BillingEvent.StockChanged -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_stock_changed))
+                is BillingEvent.IngredientsShort -> snackbarHostState.showSnackbar(
+                    resources.getString(R.string.billing_ingredients_short, event.names.joinToString(", ")),
+                    duration = SnackbarDuration.Long,
+                )
+                BillingEvent.CreditLimitExceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.payment_error_credit_limit))
+                BillingEvent.CustomerMissing -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_customer_missing))
+                is BillingEvent.CustomerSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_customer_saved, event.name))
                 BillingEvent.SetupRequired -> {
                     val result = snackbarHostState.showSnackbar(
                         message = resources.getString(R.string.billing_setup_body),
@@ -184,15 +201,21 @@ fun BillingScreen(
             override fun onSearchTextChange(text: String) = viewModel.onSearchTextChange(text)
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
-            override fun onIncrement(variantId: Long) = viewModel.increment(variantId)
-            override fun onDecrement(variantId: Long) = viewModel.decrement(variantId)
-            override fun onRemove(variantId: Long) = viewModel.removeLine(variantId)
-            override fun onToggleLineDiscount(variantId: Long) = viewModel.toggleLineDiscountEditor(variantId)
-            override fun onLineDiscountChange(variantId: Long, text: String, isPercent: Boolean) =
-                viewModel.onLineDiscountChange(variantId, text, isPercent)
+            override fun onAddMenuItem(item: MenuItem) = viewModel.addMenuItem(item)
+            override fun onMenuSectionChange(section: String?) = viewModel.onMenuSectionChange(section)
+            override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
+            override fun onDecrement(lineKey: Long) = viewModel.decrement(lineKey)
+            override fun onRemove(lineKey: Long) = viewModel.removeLine(lineKey)
+            override fun onToggleLineDiscount(lineKey: Long) = viewModel.toggleLineDiscountEditor(lineKey)
+            override fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) =
+                viewModel.onLineDiscountChange(lineKey, text, isPercent)
             override fun onBillDiscountChange(text: String, isPercent: Boolean) = viewModel.onBillDiscountChange(text, isPercent)
             override fun onToggleCustomer() = viewModel.toggleCustomer()
             override fun onCustomerChange(customer: CustomerDetails) = viewModel.onCustomerChange(customer)
+            override fun onCustomerQueryChange(query: String) = viewModel.onCustomerQueryChange(query)
+            override fun onLinkCustomer(account: CustomerAccount) = viewModel.linkCustomer(account)
+            override fun onUnlinkCustomer() = viewModel.unlinkCustomer()
+            override fun onSaveCustomer() = viewModel.saveTypedCustomer()
             override fun onPlaceOfSupplyChange(stateCode: String?) = viewModel.onPlaceOfSupplyChange(stateCode)
             override fun onCharge() = viewModel.proceedToPayment()
             override fun onOpenSettings() = currentOnSettings()
@@ -353,7 +376,19 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         }
 
         if (state.searchText.isNotBlank()) {
-            if (state.searchResults.isEmpty()) {
+            if (state.menuResults.isNotEmpty()) {
+                item(key = "menu_results") {
+                    InvisionCard(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            state.menuResults.forEachIndexed { index, dish ->
+                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                MenuResultRow(dish, onClick = { actions.onAddMenuItem(dish) })
+                            }
+                        }
+                    }
+                }
+            }
+            if (state.searchResults.isEmpty() && state.menuResults.isEmpty()) {
                 item(key = "no_results") {
                     Text(
                         text = stringResource(R.string.billing_no_results, state.searchText.trim()),
@@ -362,7 +397,7 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                         modifier = Modifier.padding(vertical = Spacing.sm),
                     )
                 }
-            } else {
+            } else if (state.searchResults.isNotEmpty()) {
                 item(key = "results") {
                     InvisionCard(modifier = Modifier.fillMaxWidth()) {
                         Column {
@@ -376,10 +411,14 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
             }
         }
 
+        if (state.searchText.isBlank() && state.menu.isNotEmpty()) {
+            item(key = "quick_menu") { QuickMenuCard(state, actions) }
+        }
+
         if (state.cart.isEmpty) {
-            if (state.searchText.isBlank()) {
+            if (state.searchText.isBlank() && state.menu.isEmpty()) {
                 item(key = "empty") {
-                    val noProducts = state.productCount == 0
+                    val noProducts = state.productCount == 0 && state.menu.isEmpty()
                     EmptyState(
                         iconRes = if (noProducts) R.drawable.ic_nav_inventory else R.drawable.ic_nav_billing,
                         title = stringResource(if (noProducts) R.string.billing_no_products_title else R.string.billing_empty_title),
@@ -393,6 +432,7 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 SectionHeader(title = stringResource(R.string.billing_items) + " (${state.cart.itemCount})")
             }
             items(state.cart.lines, key = { "line_${it.variantId}" }) { line ->
+                // Dishes are keyed by minus their menu item id, so the key never clashes with a variant.
                 val amounts = state.totals.lines.firstOrNull { it.variantId == line.variantId }
                 CartLineCard(
                     name = line.productName,
@@ -454,7 +494,8 @@ private fun SetupBanner(onOpenSettings: () -> Unit) {
 @Composable
 private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
     val formatter = LocalMoneyFormatter.current
-    val outOfStock = result.variant.stockQuantity <= 0
+    val sellable = result.variant.sellableQuantity(LocalDate.now())
+    val outOfStock = sellable <= 0
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -481,11 +522,66 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
                 text = if (outOfStock) {
                     stringResource(R.string.billing_out_of_stock)
                 } else {
-                    stringResource(R.string.billing_in_stock, result.variant.stockQuantity)
+                    stringResource(R.string.billing_in_stock, sellable)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (outOfStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun MenuResultRow(item: MenuItem, onClick: () -> Unit) {
+    val formatter = LocalMoneyFormatter.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = item.available, onClick = onClick)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                stringResource(R.string.billing_menu_dish, item.section),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(formatter.format(item.price), style = MaterialTheme.typography.titleSmall)
+            if (!item.available) {
+                Text(stringResource(R.string.menu_unavailable), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+/** Restaurant menu by section, for adding dishes with one tap. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun QuickMenuCard(state: BillingUiState, actions: BillingActions) {
+    val formatter = LocalMoneyFormatter.current
+    val sections = state.menuSections
+    val section = state.menuSection?.takeIf { it in sections } ?: sections.firstOrNull() ?: return
+    InvisionCard(modifier = Modifier.fillMaxWidth().testTag("quick_menu")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.billing_menu_title), style = MaterialTheme.typography.titleSmall)
+            if (sections.size > 1) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    sections.forEach { name ->
+                        FilterChip(selected = name == section, onClick = { actions.onMenuSectionChange(name) }, label = { Text(name) })
+                    }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                state.menu.filter { it.section == section }.forEach { dish ->
+                    OutlinedButton(onClick = { actions.onAddMenuItem(dish) }, modifier = Modifier.testTag("dish_${dish.id}")) {
+                        Text("${dish.name} · ${formatter.format(dish.price)}")
+                    }
+                }
+            }
         }
     }
 }
@@ -600,7 +696,9 @@ private fun DiscountEditor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomerCard(state: BillingUiState, actions: BillingActions) {
+    val formatter = LocalMoneyFormatter.current
     val customer = state.cart.customer
+    val account = state.account
     val issues = if (state.showErrors || customer.gstin.length >= 15 || customer.phone.filter { it.isDigit() }.length >= 10) {
         state.check.customerIssues
     } else {
@@ -622,12 +720,13 @@ private fun CustomerCard(state: BillingUiState, actions: BillingActions) {
                         text = customer.name.trim().ifEmpty { stringResource(R.string.billing_walk_in) },
                         style = MaterialTheme.typography.titleSmall,
                     )
-                    if (!state.customerExpanded) {
-                        Text(
-                            stringResource(R.string.billing_add_customer),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    val subtitle = when {
+                        account != null -> stringResource(R.string.billing_account_balance, formatter.format(account.balance))
+                        !state.customerExpanded -> stringResource(R.string.billing_add_customer)
+                        else -> null
+                    }
+                    if (subtitle != null) {
+                        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Icon(
@@ -636,37 +735,85 @@ private fun CustomerCard(state: BillingUiState, actions: BillingActions) {
                 )
             }
             if (state.customerExpanded) {
-                InvisionTextField(
-                    value = customer.name,
-                    onValueChange = { actions.onCustomerChange(customer.copy(name = it.take(70))) },
-                    label = stringResource(R.string.billing_customer_name),
-                    error = issues.firstOrNull { it == CustomerIssue.NAME_REQUIRED_WITH_GSTIN || it == CustomerIssue.NAME_TOO_LONG }
-                        ?.let { stringResource(it.messageRes()) },
-                    capitalization = KeyboardCapitalization.Words,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("customer_name"),
-                )
-                InvisionTextField(
-                    value = customer.phone,
-                    onValueChange = { actions.onCustomerChange(customer.copy(phone = it.filter { c -> c.isDigit() || c == '+' || c == ' ' }.take(16))) },
-                    label = stringResource(R.string.billing_customer_phone),
-                    error = issues.firstOrNull { it == CustomerIssue.INVALID_PHONE }?.let { stringResource(it.messageRes()) },
-                    keyboardType = KeyboardType.Phone,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("customer_phone"),
-                )
-                InvisionTextField(
-                    value = customer.gstin,
-                    onValueChange = { actions.onCustomerChange(customer.copy(gstin = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(15))) },
-                    label = stringResource(R.string.billing_customer_gstin),
-                    error = issues.firstOrNull { it == CustomerIssue.INVALID_GSTIN }?.let { stringResource(it.messageRes()) },
-                    capitalization = KeyboardCapitalization.Characters,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("customer_gstin"),
-                )
+                if (account != null) {
+                    account.customer.phone?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    account.customer.creditLimit?.let {
+                        Text(
+                            stringResource(R.string.billing_account_limit, formatter.format(it)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    TextButton(onClick = actions::onUnlinkCustomer) { Text(stringResource(R.string.billing_customer_change)) }
+                } else {
+                    InvisionTextField(
+                        value = state.customerQuery,
+                        onValueChange = { actions.onCustomerQueryChange(it.take(40)) },
+                        label = stringResource(R.string.billing_customer_search),
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("customer_search"),
+                    )
+                    state.customerResults.forEach { result ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { actions.onLinkCustomer(result) }
+                                .padding(vertical = Spacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(result.customer.name, style = MaterialTheme.typography.bodyLarge)
+                                result.customer.phone?.let {
+                                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            if (!result.balance.isZero) {
+                                Text(formatter.format(result.balance), style = MaterialTheme.typography.titleSmall)
+                            }
+                        }
+                    }
+                    InvisionTextField(
+                        value = customer.name,
+                        onValueChange = { actions.onCustomerChange(customer.copy(name = it.take(70))) },
+                        label = stringResource(R.string.billing_customer_name),
+                        error = issues.firstOrNull { it == CustomerIssue.NAME_REQUIRED_WITH_GSTIN || it == CustomerIssue.NAME_TOO_LONG }
+                            ?.let { stringResource(it.messageRes()) },
+                        capitalization = KeyboardCapitalization.Words,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("customer_name"),
+                    )
+                    InvisionTextField(
+                        value = customer.phone,
+                        onValueChange = { actions.onCustomerChange(customer.copy(phone = it.filter { c -> c.isDigit() || c == '+' || c == ' ' }.take(16))) },
+                        label = stringResource(R.string.billing_customer_phone),
+                        error = issues.firstOrNull { it == CustomerIssue.INVALID_PHONE }?.let { stringResource(it.messageRes()) },
+                        keyboardType = KeyboardType.Phone,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("customer_phone"),
+                    )
+                    InvisionTextField(
+                        value = customer.gstin,
+                        onValueChange = { actions.onCustomerChange(customer.copy(gstin = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(15))) },
+                        label = stringResource(R.string.billing_customer_gstin),
+                        error = issues.firstOrNull { it == CustomerIssue.INVALID_GSTIN }?.let { stringResource(it.messageRes()) },
+                        capitalization = KeyboardCapitalization.Characters,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("customer_gstin"),
+                    )
+                    if (customer.name.isNotBlank()) {
+                        TextButton(onClick = actions::onSaveCustomer, modifier = Modifier.testTag("customer_save")) {
+                            Text(stringResource(R.string.billing_customer_save))
+                        }
+                    }
+                    state.customerSaveError?.let {
+                        Text(stringResource(it.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    }
+                }
                 val settings = state.settings
                 if (settings != null && settings.gstRegistered && settings.stateCode.isNotEmpty()) {
                     StatePicker(
@@ -685,6 +832,15 @@ private fun CustomerCard(state: BillingUiState, actions: BillingActions) {
             }
         }
     }
+}
+
+@androidx.annotation.StringRes
+private fun CustomerSaveError.messageRes(): Int = when (this) {
+    CustomerSaveError.NAME_REQUIRED -> R.string.billing_customer_save_name
+    CustomerSaveError.INVALID_PHONE -> R.string.customer_issue_phone
+    CustomerSaveError.INVALID_DETAILS -> R.string.billing_customer_save_invalid
+    CustomerSaveError.PHONE_IN_USE -> R.string.customer_error_phone_in_use
+    CustomerSaveError.FAILED -> R.string.error_generic
 }
 
 /** Drop-down list of Indian states and union territories. */
@@ -813,7 +969,7 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                 Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), modifier = Modifier.weight(1f)) {
-                            PaymentMethod.entries.forEach { method ->
+                            state.paymentMethods.forEach { method ->
                                 FilterChip(
                                     selected = draft.method == method,
                                     onClick = { actions.onPaymentMethodChange(draft.key, method) },
@@ -883,6 +1039,20 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        PaymentMethod.CREDIT -> {
+                            val account = state.account
+                            val amount = Money.parseOrNull(draft.amount) ?: Money.ZERO
+                            if (account != null) {
+                                Text(
+                                    stringResource(R.string.payment_credit_note, account.customer.name, formatter.format(account.balance + amount)),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (error == PaymentError.CREDIT_NEEDS_CUSTOMER || error == PaymentError.CREDIT_OVER_LIMIT) {
+                                Text(stringResource(error.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     }
                 }
             }
