@@ -131,7 +131,7 @@ class InsightsSectionTest {
     @Test
     fun expenses_areSaidToBeUnavailable_notInvented() {
         show(InsightsUiState(isLoading = false, insights = sample))
-        composeRule.onNode(hasText("No data yet. Expense categories", substring = true)).assertExists()
+        composeRule.onNode(hasText("doesn't record expenses yet", substring = true)).assertExists()
     }
 
     @Test
@@ -148,9 +148,9 @@ class InsightsSectionTest {
             paymentMethods = emptyList(), departments = emptyList(), topProducts = emptyList(),
         )
         show(InsightsUiState(isLoading = false, insights = purchasesOnly))
-        composeRule.onNode(hasText("No data yet. Complete a bill", substring = true)).assertExists()
+        composeRule.onNode(hasText("No sales in this period.")).assertExists()
         composeRule.onNodeWithTag("chart_bars").assertExists()
-        composeRule.onNode(hasText("No data yet. Payments show here", substring = true)).assertExists()
+        composeRule.onNode(hasText("No payments in this period.")).assertExists()
     }
 
     @Test
