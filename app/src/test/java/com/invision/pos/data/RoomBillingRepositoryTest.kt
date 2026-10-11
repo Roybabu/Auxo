@@ -175,11 +175,11 @@ class RoomBillingRepositoryTest {
 
         assertEquals(first, again)
         assertEquals(1, billing.invoicesBetween(0, Long.MAX_VALUE).size)
-        assertEquals(8, stockOf(shirt))
+        assertEquals(6, stockOf(shirt)) // 8 in stock, 2 sold once
         // A different tap is a different sale.
         val other = billing.recordSale(bill, "INV", "tap-2") as SaleResult.Recorded
         assertEquals("INV/26-27/00002", other.number)
-        assertEquals(6, stockOf(shirt))
+        assertEquals(4, stockOf(shirt))
     }
 
     @Test
@@ -192,7 +192,7 @@ class RoomBillingRepositoryTest {
         assertTrue(results.all { it is SaleResult.Recorded })
         assertEquals(1, results.map { (it as SaleResult.Recorded).invoiceId }.toSet().size)
         assertEquals(1, billing.invoicesBetween(0, Long.MAX_VALUE).size)
-        assertEquals(9, stockOf(shirt))
+        assertEquals(7, stockOf(shirt)) // 8 in stock, 1 sold once
     }
 
     @Test

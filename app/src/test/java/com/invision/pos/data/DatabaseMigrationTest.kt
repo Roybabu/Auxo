@@ -274,9 +274,12 @@ class DatabaseMigrationTest {
         assertEquals(6, inventory.getProduct(1)!!.variants.single().stockQuantity)
 
         // The one unit already returned still counts: only one of the two sold units can come back.
-        val tooMany = ReturnBuilder.build(billing.getInvoice(1)!!, mapOf(1L to 2), PaymentMethod.CASH, "Test", TestData.clock.millis()) as ReturnBuild.Ready
-        assertEquals(ReturnResult.QuantityExceedsSold, billing.recordReturn(tooMany.creditNote, "CN"))
+        assertTrue(ReturnBuilder.build(billing.getInvoice(1)!!, mapOf(1L to 2), PaymentMethod.CASH, "Test", TestData.clock.millis()) is ReturnBuild.Rejected)
         val one = ReturnBuilder.build(billing.getInvoice(1)!!, mapOf(1L to 1), PaymentMethod.CASH, "Test", TestData.clock.millis()) as ReturnBuild.Ready
+        // Even a hand-made credit note for both units is refused by the database layer.
+        val tooMany = one.creditNote.copy(lines = one.creditNote.lines.map { it.copy(quantity = 2) })
+        assertEquals(ReturnResult.QuantityExceedsSold, billing.recordReturn(tooMany, "CN"))
+        assertEquals(6, inventory.getProduct(1)!!.variants.single().stockQuantity)
         assertEquals("CN/26-27/00002", (billing.recordReturn(one.creditNote, "CN") as ReturnResult.Recorded).number)
         assertEquals(7, inventory.getProduct(1)!!.variants.single().stockQuantity)
         assertEquals(7, db.inventoryDao().movementTotal(11))
