@@ -34,6 +34,8 @@ import com.invision.pos.domain.usecase.CheckoutUseCase
 import com.invision.pos.domain.usecase.ProcessReturnResult
 import com.invision.pos.domain.usecase.ProcessReturnUseCase
 import com.invision.pos.testutil.TestData
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -162,6 +164,36 @@ class RoomBillingRepositoryTest {
 
     /** A repository built the way the app builds it, with no zone override. */
     private fun billingInBusinessZone() = RoomBillingRepository(database)
+
+    @Test
+    fun repeatedRequestId_savesOneSale_andDeductsStockOnce() = runTest {
+        val shirt = saveNew(TestData.tShirt())
+        val bill = sale(CartLine.from(shirt, shirt.variants[0], quantity = 2))
+
+        val first = billing.recordSale(bill, "INV", "tap-1") as SaleResult.Recorded
+        val again = billing.recordSale(bill, "INV", "tap-1") as SaleResult.Recorded
+
+        assertEquals(first, again)
+        assertEquals(1, billing.invoicesBetween(0, Long.MAX_VALUE).size)
+        assertEquals(8, stockOf(shirt))
+        // A different tap is a different sale.
+        val other = billing.recordSale(bill, "INV", "tap-2") as SaleResult.Recorded
+        assertEquals("INV/26-27/00002", other.number)
+        assertEquals(6, stockOf(shirt))
+    }
+
+    @Test
+    fun simultaneousTapsWithOneRequestId_saveOneSale() = runTest {
+        val shirt = saveNew(TestData.tShirt())
+        val bill = sale(CartLine.from(shirt, shirt.variants[0], quantity = 1))
+
+        val results = (1..4).map { async { billing.recordSale(bill, "INV", "tap-1") } }.awaitAll()
+
+        assertTrue(results.all { it is SaleResult.Recorded })
+        assertEquals(1, results.map { (it as SaleResult.Recorded).invoiceId }.toSet().size)
+        assertEquals(1, billing.invoicesBetween(0, Long.MAX_VALUE).size)
+        assertEquals(9, stockOf(shirt))
+    }
 
     @Test
     fun return_restocksMarksLinesAndRecordsRefund() = runTest {

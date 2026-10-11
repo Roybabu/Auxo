@@ -6,18 +6,24 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.data.local.InvisionDatabase
+import com.invision.pos.data.repository.ReturnResult
 import com.invision.pos.data.repository.RoomBillingRepository
 import com.invision.pos.data.repository.RoomInventoryRepository
+import com.invision.pos.data.repository.RoomSettingsRepository
 import com.invision.pos.data.repository.SaleResult
 import com.invision.pos.domain.billing.BillCalculator
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartLine
+import com.invision.pos.domain.billing.ReturnBuild
+import com.invision.pos.domain.billing.ReturnBuilder
 import com.invision.pos.domain.billing.SaleBuilder
 import com.invision.pos.domain.billing.taxModeFor
 import com.invision.pos.domain.model.GstRate
 import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.PaymentRecord
+import com.invision.pos.domain.model.ReceiptPaper
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.testutil.TestData
@@ -178,5 +184,101 @@ class DatabaseMigrationTest {
         assertEquals(25, after.stockQuantity)
         assertEquals(25, after.batches.single().quantity)
         assertEquals(25, db.inventoryDao().movementTotal(21))
+    }
+
+    /**
+     * A shop that has been trading on version 2: settings, a sale with one unit already
+     * returned, its credit note, number counters and the stock movements behind them.
+     */
+    @Test
+    fun migrate2To3_keepsBillingHistory_andNumbersContinue() = runTest {
+        val soldAt = TestData.clock.millis() - 86_400_000
+        createFromSchema(2).apply {
+            execSQL(
+                "INSERT INTO store_settings (id, store_name, address, phone, gstin, state_code, gst_registered, prices_include_tax, round_off, " +
+                    "invoice_prefix, credit_note_prefix, upi_id, upi_payee_name, receipt_paper, receipt_footer, receipt_show_hsn, " +
+                    "receipt_show_tax_breakup, receipt_show_savings, receipt_show_customer, receipt_show_barcode) VALUES " +
+                    "(1, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', 1, 1, 1, 'INV', 'CN', " +
+                    "'roymart@okaxis', 'Roy Mart', 'THERMAL_58', 'Thank you', 1, 1, 1, 1, 0)",
+            )
+            execSQL(
+                "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at) " +
+                    "VALUES (1, 'Cotton T-Shirt', NULL, 'GARMENT', NULL, NULL, NULL, '6109', 'APPAREL', NULL, 100, 100)",
+            )
+            execSQL(
+                "INSERT INTO product_variants (id, product_id, sku, barcode, size, colour, net_quantity_milli, net_quantity_unit, " +
+                    "price_minor, mrp_minor, cost_minor, stock_quantity, low_stock_threshold, batch_number, expiry_epoch_day) VALUES " +
+                    "(11, 1, NULL, '${TestData.EAN[0]}', 'M', 'Navy', NULL, NULL, 49900, NULL, 25000, 7, 2, NULL, NULL)",
+            )
+            // Sale INV/26-27/00001 of two shirts, one of them returned on credit note CN/26-27/00001.
+            execSQL(
+                "INSERT INTO invoices (id, number, type, created_at, seller_name, seller_address, seller_phone, seller_gstin, seller_state_code, " +
+                    "buyer_name, buyer_phone, buyer_gstin, place_of_supply, gst_registered, prices_include_tax, inter_state, subtotal_minor, " +
+                    "discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor, round_off_minor, grand_total_minor, savings_minor, " +
+                    "original_invoice_id, original_invoice_number, note) VALUES " +
+                    "(1, 'INV/26-27/00001', 'SALE', $soldAt, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
+                    "NULL, NULL, NULL, '19', 1, 1, 0, 99800, 0, 95048, 2376, 2376, 0, 0, 99800, 0, NULL, NULL, NULL), " +
+                    "(2, 'CN/26-27/00001', 'RETURN', $soldAt, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
+                    "NULL, NULL, NULL, '19', 1, 1, 0, 49900, 0, 47524, 1188, 1188, 0, 0, 49900, 0, 1, 'INV/26-27/00001', 'Wrong size')",
+            )
+            execSQL(
+                "INSERT INTO invoice_lines (id, invoice_id, variant_id, product_name, variant_label, barcode, hsn_code, quantity, unit_price_minor, " +
+                    "mrp_minor, discount_minor, taxable_minor, gst_rate_bp, cgst_minor, sgst_minor, igst_minor, total_minor, returned_quantity, original_line_id) VALUES " +
+                    "(1, 1, 11, 'Cotton T-Shirt', 'M · Navy', '${TestData.EAN[0]}', '6109', 2, 49900, NULL, 0, 95048, 500, 2376, 2376, 0, 99800, 1, NULL), " +
+                    "(2, 2, 11, 'Cotton T-Shirt', 'M · Navy', '${TestData.EAN[0]}', '6109', 1, 49900, NULL, 0, 47524, 500, 1188, 1188, 0, 49900, 0, 1)",
+            )
+            execSQL(
+                "INSERT INTO payments (id, invoice_id, method, kind, amount_minor, reference, tendered_minor, change_minor, created_at) VALUES " +
+                    "(1, 1, 'UPI', 'PAYMENT', 99800, 'UTR123', NULL, NULL, $soldAt), (2, 2, 'CASH', 'REFUND', 49900, NULL, NULL, NULL, $soldAt)",
+            )
+            execSQL(
+                "INSERT INTO stock_movements (id, variant_id, quantity_change, reason, note, created_at, invoice_id) VALUES " +
+                    "(1, 11, 8, 'INITIAL', NULL, 100, NULL), (2, 11, -2, 'SOLD', 'INV/26-27/00001', $soldAt, 1), (3, 11, 1, 'RETURNED', 'CN/26-27/00001', $soldAt, 2)",
+            )
+            execSQL("INSERT INTO number_sequences (name, next_value) VALUES ('INV|2026', 2), ('CN|2026', 2)")
+            close()
+        }
+
+        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        database = db
+        val billing = RoomBillingRepository(db)
+        val inventory = RoomInventoryRepository(db, TestData.clock)
+
+        // Everything written before the upgrade reads back as it was.
+        val sale = billing.getInvoice(1)!!
+        assertEquals("INV/26-27/00001", sale.number)
+        assertEquals(Money(99_800), sale.grandTotal)
+        assertEquals(1, sale.lines.single().returnedQuantity)
+        assertEquals(PaymentMethod.UPI, sale.payments.single().method)
+        assertEquals("UTR123", sale.payments.single().reference)
+        assertNull(sale.customerId) // new column, nobody linked yet
+        val creditNote = billing.getInvoice(2)!!
+        assertEquals(1L, creditNote.originalInvoiceId)
+        assertEquals(PaymentKind.REFUND, creditNote.payments.single().kind)
+        assertEquals("Roy Mart", RoomSettingsRepository(db).getSettings().storeName)
+        assertEquals(ReceiptPaper.THERMAL_58, RoomSettingsRepository(db).getSettings().receipt.paper)
+        assertEquals("Thank you", RoomSettingsRepository(db).getSettings().receipt.footer)
+        assertEquals(7, inventory.getProduct(1)!!.variants.single().stockQuantity)
+        assertEquals(7, db.inventoryDao().movementTotal(11))
+
+        // Nothing is left pointing at a missing row.
+        db.openHelper.readableDatabase.query("PRAGMA foreign_key_check").use { assertEquals(0, it.count) }
+
+        // The counters carry on from where they were, and stock stays in step with the movements.
+        val product = inventory.getProduct(1)!!
+        val cart = Cart(lines = listOf(CartLine.from(product, product.variants.single(), quantity = 1)))
+        val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))
+        val next = SaleBuilder.build(cart, totals, TestData.settings, listOf(PaymentRecord(method = PaymentMethod.CASH, amount = totals.grandTotal)), TestData.clock.millis())
+        assertEquals("INV/26-27/00002", (billing.recordSale(next, "INV") as SaleResult.Recorded).number)
+        assertEquals(6, db.inventoryDao().movementTotal(11))
+        assertEquals(6, inventory.getProduct(1)!!.variants.single().stockQuantity)
+
+        // The one unit already returned still counts: only one of the two sold units can come back.
+        val tooMany = ReturnBuilder.build(billing.getInvoice(1)!!, mapOf(1L to 2), PaymentMethod.CASH, "Test", TestData.clock.millis()) as ReturnBuild.Ready
+        assertEquals(ReturnResult.QuantityExceedsSold, billing.recordReturn(tooMany.creditNote, "CN"))
+        val one = ReturnBuilder.build(billing.getInvoice(1)!!, mapOf(1L to 1), PaymentMethod.CASH, "Test", TestData.clock.millis()) as ReturnBuild.Ready
+        assertEquals("CN/26-27/00002", (billing.recordReturn(one.creditNote, "CN") as ReturnResult.Recorded).number)
+        assertEquals(7, inventory.getProduct(1)!!.variants.single().stockQuantity)
+        assertEquals(7, db.inventoryDao().movementTotal(11))
     }
 }
