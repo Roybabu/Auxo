@@ -3,7 +3,6 @@ package com.invision.pos.ui
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasTestTag
@@ -15,6 +14,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.ReceiptRenderer
+import com.invision.pos.core.receipt.isThermal
 import com.invision.pos.domain.billing.SampleSales
 import com.invision.pos.domain.inventory.InventorySummary
 import com.invision.pos.domain.model.ReceiptOptions

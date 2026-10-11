@@ -1,6 +1,10 @@
 package com.invision.pos.ui
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
@@ -106,7 +110,7 @@ class AppearanceScreenTest {
     fun appearanceScreen_changesApplyImmediately_andBackWorks() {
         var back = 0
         composeRule.setContent {
-            var settings by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(AppearanceSettings()) }
+            var settings by remember { mutableStateOf(AppearanceSettings()) }
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
                 AppearanceContent(
                     settings,
