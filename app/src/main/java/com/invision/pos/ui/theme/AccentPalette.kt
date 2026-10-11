@@ -5,7 +5,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.hsl
 import com.invision.pos.core.appearance.AppAccent
 
 /** Colours of the Home screen header, which follows the chosen accent. */
@@ -37,8 +36,17 @@ private fun AppAccent.hue(): Hue = when (this) {
     AppAccent.SLATE -> Hue(215f, 0.22f)
 }
 
-private fun hsl(hue: Float, saturation: Float, lightness: Float): Color =
-    Color.hsl(hue, saturation.coerceIn(0f, 1f), lightness.coerceIn(0f, 1f))
+private fun hsl(hue: Float, saturation: Float, lightness: Float): Color {
+    val s = saturation.coerceIn(0f, 1f)
+    val l = lightness.coerceIn(0f, 1f)
+    val h = ((hue % 360f) + 360f) % 360f
+    val chroma = (1f - kotlin.math.abs(2f * l - 1f)) * s
+    fun channel(offset: Float): Float {
+        val k = (offset + h / 30f) % 12f
+        return l - chroma / 2f * (minOf(k - 3f, 9f - k, 1f)).coerceIn(-1f, 1f)
+    }
+    return Color(channel(0f).coerceIn(0f, 1f), channel(8f).coerceIn(0f, 1f), channel(4f).coerceIn(0f, 1f))
+}
 
 /**
  * Builds the colours for an accent. The shapes of the two schemes follow Material 3: a strong
