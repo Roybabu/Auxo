@@ -50,6 +50,10 @@ jobs:
       - name: Check Room schema is committed
         run: python3 .github/scripts/schema_check.py
 
+      # Libraries add permissions of their own; this lists them and fails on any not expected.
+      - name: Check merged manifest permissions
+        run: python3 .github/scripts/manifest_permissions.py
+
       - name: Run unit tests
         shell: bash
         run: ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
@@ -81,6 +85,45 @@ jobs:
             app/build/outputs/screenshots/
             app/schemas/
             build-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Looks for committed secrets, unsafe manifest or workflow settings, and the prohibited
+  # integration name, then checks that the release variant still compiles (unsigned).
+  security:
+    name: Security checks and release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Scan tracked files
+        run: python3 .github/scripts/security_check.py
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # No signing keys are used; this only proves the release variant compiles and passes lint's vital checks.
+      - name: Build unsigned release APK
+        shell: bash
+        run: |
+          mkdir -p build-logs
+          ./gradlew assembleRelease 2>&1 | tee build-logs/release.log
+
+      - name: Upload release build log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-build-log
+          path: build-logs/
           if-no-files-found: ignore
           retention-days: 14
 
