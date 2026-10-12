@@ -282,7 +282,7 @@ class UserAccountsTest {
         auth.setEmployeeActive(2L, true)
         auth.resetEmployeePassword(2L, "Fresh-Start-77", "Fresh-Start-77")
         auth.signOut()
-        auth.signIn("asha.k", EMPLOYEE_PW)
+        auth.signIn("asha.k", "Fresh-Start-77")
 
         assertEquals(
             listOf(
