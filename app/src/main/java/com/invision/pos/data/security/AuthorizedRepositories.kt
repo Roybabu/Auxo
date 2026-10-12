@@ -45,6 +45,7 @@ import com.invision.pos.domain.model.StockMovementRecord
 import com.invision.pos.domain.model.StoreSettings
 import com.invision.pos.domain.model.Supplier
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 
 /**
@@ -542,5 +543,60 @@ class AuthorizedQuotationRepository(
     override suspend fun markConverted(id: Long, invoiceId: Long): Boolean {
         auth.require(Permission.SELL)
         return inner.markConverted(id, invoiceId)
+    }
+}
+
+/**
+ * Counting stock and posting the differences is stock adjustment, so it needs [Permission.ADJUST_STOCK].
+ * Starting, cancelling and posting a count are written to the activity log; the adjustments themselves are
+ * logged one by one by the stock repository.
+ */
+class AuthorizedStockCountRepository(
+    private val inner: com.invision.pos.data.repository.StockCountRepository,
+    private val auth: Authorizer,
+    private val audit: AuditTrail,
+) : com.invision.pos.data.repository.StockCountRepository {
+    override fun observeOpen(): Flow<com.invision.pos.domain.inventory.StockCount?> =
+        auth.guarded(Permission.ADJUST_STOCK) { inner.observeOpen() }
+
+    override suspend fun start(): com.invision.pos.domain.inventory.StockCount {
+        auth.require(Permission.ADJUST_STOCK)
+        val alreadyOpen = inner.observeOpen().first() != null
+        return audit.recording({ inner.start() }) { count ->
+            if (alreadyOpen) null else AuditDraft(AuditAction.STOCK_COUNT_STARTED, AuditEntity.STOCK_COUNT, count.id, "Started stock count #${count.id}")
+        }
+    }
+
+    override suspend fun setLine(countId: Long, line: com.invision.pos.domain.inventory.CountLine): Boolean {
+        auth.require(Permission.ADJUST_STOCK)
+        return inner.setLine(countId, line)
+    }
+
+    override suspend fun removeLine(countId: Long, variantId: Long): Boolean {
+        auth.require(Permission.ADJUST_STOCK)
+        return inner.removeLine(countId, variantId)
+    }
+
+    override suspend fun cancel(countId: Long) {
+        auth.require(Permission.ADJUST_STOCK)
+        audit.recording({ inner.cancel(countId) }) {
+            AuditDraft(AuditAction.STOCK_COUNT_CANCELLED, AuditEntity.STOCK_COUNT, countId, "Cancelled stock count #$countId without changing stock")
+        }
+    }
+
+    override suspend fun markPosted(countId: Long, reason: com.invision.pos.domain.inventory.CountReason, note: String, adjusted: Int): Boolean {
+        auth.require(Permission.ADJUST_STOCK)
+        return audit.recording({ inner.markPosted(countId, reason, note, adjusted) }) { closed ->
+            if (closed) {
+                AuditDraft(
+                    AuditAction.STOCK_COUNT_POSTED,
+                    AuditEntity.STOCK_COUNT,
+                    countId,
+                    "Posted stock count #$countId: $adjusted item(s) adjusted (${reason.label.lowercase()})",
+                )
+            } else {
+                null
+            }
+        }
     }
 }

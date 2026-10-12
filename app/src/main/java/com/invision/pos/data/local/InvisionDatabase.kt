@@ -18,6 +18,7 @@ import com.invision.pos.data.local.dao.InventoryDao
 import com.invision.pos.data.local.dao.MenuDao
 import com.invision.pos.data.local.dao.OperationDao
 import com.invision.pos.data.local.dao.PurchasingDao
+import com.invision.pos.data.local.dao.StockCountDao
 import com.invision.pos.data.local.entity.AppliedRequestEntity
 import com.invision.pos.data.local.entity.AuditLogEntity
 import com.invision.pos.data.local.entity.DayClosingEntity
@@ -39,6 +40,7 @@ import com.invision.pos.data.local.entity.PurchaseReceiptEntity
 import com.invision.pos.data.local.entity.PurchaseReceiptLineEntity
 import com.invision.pos.data.local.entity.RecipeLineEntity
 import com.invision.pos.data.local.entity.StockBatchEntity
+import com.invision.pos.data.local.entity.StockCountEntity
 import com.invision.pos.data.local.entity.StockMovementEntity
 import com.invision.pos.data.local.entity.StoreSettingsEntity
 import com.invision.pos.data.local.entity.SupplierEntity
@@ -65,6 +67,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
  * 12. Quotations: the quotations table. Written by hand ([MIGRATION_11_12]).
  * 13. The expiring-soon warning window (store_settings.expiry_warning_days, 30 for existing shops). Written by hand
  *     ([MIGRATION_12_13]).
+ * 14. Stock counts: the stock_counts table. Written by hand ([MIGRATION_13_14]).
  */
 @Database(
     entities = [
@@ -92,6 +95,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
         LoyaltySettingsEntity::class,
         HeldBillEntity::class,
         QuotationEntity::class,
+        StockCountEntity::class,
     ],
     version = InvisionDatabase.VERSION,
     exportSchema = true,
@@ -124,6 +128,8 @@ abstract class InvisionDatabase : RoomDatabase() {
 
     abstract fun quotationDao(): QuotationDao
 
+    abstract fun stockCountDao(): StockCountDao
+
     /**
      * Version 3 keeps food and beverage stock in batches. Existing stock becomes
      * one batch per variant, with the batch number and expiry saved on the variant.
@@ -144,7 +150,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 13
+        const val VERSION = 14
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -230,10 +236,21 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 14: stock counts. Nothing existing changes; the table starts empty. */
+        val MIGRATION_13_14: Migration = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS stock_counts (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, started_at INTEGER NOT NULL, " +
+                        "status TEXT NOT NULL, payload TEXT NOT NULL, finished_at INTEGER, reason TEXT, note TEXT, " +
+                        "adjusted_count INTEGER NOT NULL DEFAULT 0)",
+                )
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

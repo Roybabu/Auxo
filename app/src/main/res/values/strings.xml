@@ -1562,4 +1562,68 @@ in %2$s</string>
         <item quantity="one">%d item</item>
         <item quantity="other">%d items</item>
     </plurals>
+    <string name="count_title">Stock count</string>
+    <string name="more_count_body">Count the shelves and fix stock differences</string>
+    <string name="count_intro_title">Count your stock</string>
+    <string name="count_intro_body">Start a count, scan or search each item and type what is really on the shelf. Stock changes only after you review the differences and confirm.</string>
+    <string name="count_start">Start stock count</string>
+    <string name="count_search_hint">Scan or search an item to count</string>
+    <string name="count_scan">Scan barcode</string>
+    <string name="count_no_results">No matching item.</string>
+    <string name="count_nothing_yet">Nothing counted yet. Scan or search an item above.</string>
+    <plurals name="count_counted_items">
+        <item quantity="one">%d item counted</item>
+        <item quantity="other">%d items counted</item>
+    </plurals>
+    <string name="count_counted_chip">Counted</string>
+    <string name="count_in_stock">In stock now: %1$s</string>
+    <string name="count_line">Expected %1$s · Counted %2$s</string>
+    <string name="count_diff_short">%1$s short</string>
+    <string name="count_diff_extra">%1$s extra</string>
+    <string name="count_diff_match">Matches</string>
+    <string name="count_review">Review differences</string>
+    <string name="count_cancel">Cancel count</string>
+    <string name="count_cancel_title">Cancel this count?</string>
+    <string name="count_cancel_message">The quantities you entered will be thrown away. Stock does not change.</string>
+    <string name="count_cancel_confirm">Cancel count</string>
+    <string name="count_keep_counting">Keep counting</string>
+    <string name="count_editor_field">Counted (%1$s)</string>
+    <string name="count_editor_error">Enter the quantity you counted (0 or more).</string>
+    <string name="count_editor_save">Save count</string>
+    <string name="count_editor_remove">Remove from count</string>
+    <string name="count_review_none">Everything you counted matches your stock. Nothing to adjust.</string>
+    <plurals name="count_review_differences">
+        <item quantity="one">%d item differs from your stock</item>
+        <item quantity="other">%d items differ from your stock</item>
+    </plurals>
+    <string name="count_short_value">%1$d short, worth %2$s at cost</string>
+    <string name="count_extra_value">%1$d extra, worth %2$s at cost</string>
+    <string name="count_review_hint">Stock will be changed to match your count only after you confirm. Items you did not count are left alone.</string>
+    <string name="count_reason_heading">Reason for this count</string>
+    <string name="count_reason_routine">Routine count</string>
+    <string name="count_reason_year_end">Year-end count</string>
+    <string name="count_reason_spot_check">Spot check</string>
+    <string name="count_reason_other">Other</string>
+    <string name="count_note_label">Note (optional)</string>
+    <string name="count_post">Update stock</string>
+    <string name="count_finish">Finish count</string>
+    <string name="count_back">Back to counting</string>
+    <string name="count_confirm_title">Update stock?</string>
+    <plurals name="count_confirm_message">
+        <item quantity="one">This will change the stock of %d item to match your count. It is saved in the activity log.</item>
+        <item quantity="other">This will change the stock of %d items to match your count. It is saved in the activity log.</item>
+    </plurals>
+    <string name="count_finish_title">Finish count?</string>
+    <string name="count_finish_message">Everything matches your stock, so nothing will change.</string>
+    <plurals name="count_posted">
+        <item quantity="one">Stock updated for %d item.</item>
+        <item quantity="other">Stock updated for %d items.</item>
+    </plurals>
+    <string name="count_posted_none">Count finished. Nothing needed adjusting.</string>
+    <string name="count_partial">%1$d adjusted. %2$d could not be adjusted because stock has changed since. Check and recount them.</string>
+    <string name="count_cancelled">Count cancelled. Stock was not changed.</string>
+    <string name="count_closed">This count has already been finished.</string>
+    <string name="count_failed">Could not save. Please try again.</string>
+    <string name="count_barcode_missing">No item with barcode %1$s.</string>
+    <string name="count_scanner_unavailable">The scanner could not be opened. Type the barcode instead.</string>
 </resources>

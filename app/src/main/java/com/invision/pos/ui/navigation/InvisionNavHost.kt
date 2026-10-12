@@ -58,6 +58,7 @@ import com.invision.pos.ui.screens.purchasing.SupplierEditorScreen
 import com.invision.pos.ui.screens.purchasing.SupplierListScreen
 import com.invision.pos.ui.screens.reports.ReportsScreen
 import com.invision.pos.ui.screens.stock.StockAlertsScreen
+import com.invision.pos.ui.screens.stock.StockCountScreen
 import com.invision.pos.ui.screens.stock.StockMovementsScreen
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.ui.RequirePermission
@@ -309,6 +310,7 @@ fun InvisionNavHost(
                         override fun onOpenSuppliers() = navController.navigate(StockRoutes.suppliers())
                         override fun onOpenAlerts() = navController.navigate(StockRoutes.alerts())
                         override fun onOpenMovements() = navController.navigate(StockRoutes.movements())
+                        override fun onOpenCount() = navController.navigate(StockRoutes.count())
                         override fun onOpenMenu() = navController.navigate(MoreRoutes.MENU)
                         override fun onOpenReports() = navController.navigate(MoreRoutes.REPORTS)
                         override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
@@ -548,6 +550,9 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
             onOpenOrders = { navController.navigate(StockRoutes.purchases(PurchaseTab.ORDERS)) },
         )
+    }
+    guarded(navController, StockRoutes.COUNT) {
+        StockCountScreen(onBack = { navController.popBackStack() })
     }
 }
 

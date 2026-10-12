@@ -120,6 +120,12 @@ class AppContainer(context: Context) {
     val heldBillRepository: com.invision.pos.data.repository.HeldBillRepository by lazy {
         com.invision.pos.data.security.AuthorizedHeldBillRepository(com.invision.pos.data.repository.RoomHeldBillRepository(database, clock), authorizer)
     }
+    val stockCountRepository: com.invision.pos.data.repository.StockCountRepository by lazy {
+        com.invision.pos.data.security.AuthorizedStockCountRepository(com.invision.pos.data.repository.RoomStockCountRepository(database, clock), authorizer, auditTrail)
+    }
+    val postStockCount: com.invision.pos.domain.usecase.PostStockCountUseCase by lazy {
+        com.invision.pos.domain.usecase.PostStockCountUseCase(inventoryRepository, stockCountRepository, clock)
+    }
     val quotationRepository: com.invision.pos.data.repository.QuotationRepository by lazy {
         com.invision.pos.data.security.AuthorizedQuotationRepository(com.invision.pos.data.repository.RoomQuotationRepository(database, clock), authorizer)
     }

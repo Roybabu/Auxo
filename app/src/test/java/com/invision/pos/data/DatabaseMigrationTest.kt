@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To13_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersQuotationsAndThirtyDayExpiryWork() = runTest {
+    fun migrate4To14_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersQuotationsThirtyDayExpiryAndStockCountsWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -419,5 +419,15 @@ class DatabaseMigrationTest {
             }
             assertTrue("$table has table_number and service_type", "table_number" in columns && "service_type" in columns)
         }
+
+        // Stock counts: the table exists and starts empty; a count can be started, filled and cancelled with no
+        // effect on stock.
+        assertEquals(0, com.invision.pos.testutil.DataIntegrity.count(db, "stock_counts"))
+        val stockCounts = com.invision.pos.data.repository.RoomStockCountRepository(db, TestData.clock)
+        val openCount = stockCounts.start()
+        assertTrue(stockCounts.setLine(openCount.id, com.invision.pos.domain.inventory.CountLine(1, 5, 3)))
+        assertEquals(listOf(com.invision.pos.domain.inventory.CountLine(1, 5, 3)), stockCounts.observeOpen().first()!!.lines)
+        stockCounts.cancel(openCount.id)
+        assertNull(stockCounts.observeOpen().first())
     }
 }

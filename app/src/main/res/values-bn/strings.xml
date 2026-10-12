@@ -1562,4 +1562,68 @@
         <item quantity="one">%d টি পণ্য</item>
         <item quantity="other">%d টি পণ্য</item>
     </plurals>
+    <string name="count_title">স্টক গণনা</string>
+    <string name="more_count_body">তাক গুনুন এবং স্টকের গরমিল ঠিক করুন</string>
+    <string name="count_intro_title">আপনার স্টক গুনুন</string>
+    <string name="count_intro_body">গণনা শুরু করুন, প্রতিটি পণ্য স্ক্যান বা খুঁজুন এবং তাকে যা আছে তা লিখুন। গরমিল দেখে নিশ্চিত করার পরেই স্টক বদলাবে।</string>
+    <string name="count_start">স্টক গণনা শুরু করুন</string>
+    <string name="count_search_hint">গোনার জন্য পণ্য স্ক্যান বা খুঁজুন</string>
+    <string name="count_scan">বারকোড স্ক্যান করুন</string>
+    <string name="count_no_results">মেলে এমন কোনো পণ্য নেই।</string>
+    <string name="count_nothing_yet">এখনও কিছু গোনা হয়নি। উপরে পণ্য স্ক্যান বা খুঁজুন।</string>
+    <plurals name="count_counted_items">
+        <item quantity="one">%d টি পণ্য গোনা হয়েছে</item>
+        <item quantity="other">%d টি পণ্য গোনা হয়েছে</item>
+    </plurals>
+    <string name="count_counted_chip">গোনা হয়েছে</string>
+    <string name="count_in_stock">এখন স্টকে: %1$s</string>
+    <string name="count_line">প্রত্যাশিত %1$s · গোনা %2$s</string>
+    <string name="count_diff_short">%1$s কম</string>
+    <string name="count_diff_extra">%1$s বেশি</string>
+    <string name="count_diff_match">মিলেছে</string>
+    <string name="count_review">গরমিল দেখুন</string>
+    <string name="count_cancel">গণনা বাতিল করুন</string>
+    <string name="count_cancel_title">এই গণনা বাতিল করবেন?</string>
+    <string name="count_cancel_message">আপনার লেখা পরিমাণ বাদ যাবে। স্টক বদলাবে না।</string>
+    <string name="count_cancel_confirm">গণনা বাতিল করুন</string>
+    <string name="count_keep_counting">গণনা চালিয়ে যান</string>
+    <string name="count_editor_field">গোনা (%1$s)</string>
+    <string name="count_editor_error">যা গুনেছেন সেই পরিমাণ লিখুন (0 বা তার বেশি)।</string>
+    <string name="count_editor_save">গণনা সেভ করুন</string>
+    <string name="count_editor_remove">গণনা থেকে সরান</string>
+    <string name="count_review_none">আপনি যা গুনেছেন তা স্টকের সঙ্গে মিলেছে। বদলানোর কিছু নেই।</string>
+    <plurals name="count_review_differences">
+        <item quantity="one">%d টি পণ্য স্টকের সঙ্গে মেলেনি</item>
+        <item quantity="other">%d টি পণ্য স্টকের সঙ্গে মেলেনি</item>
+    </plurals>
+    <string name="count_short_value">%1$d কম, কেনা দামে %2$s</string>
+    <string name="count_extra_value">%1$d বেশি, কেনা দামে %2$s</string>
+    <string name="count_review_hint">নিশ্চিত করার পরেই স্টক আপনার গণনা অনুযায়ী বদলাবে। যেসব পণ্য গোনেননি সেগুলোতে হাত পড়বে না।</string>
+    <string name="count_reason_heading">এই গণনার কারণ</string>
+    <string name="count_reason_routine">নিয়মিত গণনা</string>
+    <string name="count_reason_year_end">বছর শেষের গণনা</string>
+    <string name="count_reason_spot_check">আকস্মিক যাচাই</string>
+    <string name="count_reason_other">অন্যান্য</string>
+    <string name="count_note_label">নোট (ঐচ্ছিক)</string>
+    <string name="count_post">স্টক আপডেট করুন</string>
+    <string name="count_finish">গণনা শেষ করুন</string>
+    <string name="count_back">গণনায় ফিরে যান</string>
+    <string name="count_confirm_title">স্টক আপডেট করবেন?</string>
+    <plurals name="count_confirm_message">
+        <item quantity="one">এতে %d টি পণ্যের স্টক আপনার গণনা অনুযায়ী বদলে যাবে। এটি কার্যকলাপের লগে থাকবে।</item>
+        <item quantity="other">এতে %d টি পণ্যের স্টক আপনার গণনা অনুযায়ী বদলে যাবে। এটি কার্যকলাপের লগে থাকবে।</item>
+    </plurals>
+    <string name="count_finish_title">গণনা শেষ করবেন?</string>
+    <string name="count_finish_message">সব স্টকের সঙ্গে মিলেছে, তাই কিছু বদলাবে না।</string>
+    <plurals name="count_posted">
+        <item quantity="one">%d টি পণ্যের স্টক আপডেট হয়েছে।</item>
+        <item quantity="other">%d টি পণ্যের স্টক আপডেট হয়েছে।</item>
+    </plurals>
+    <string name="count_posted_none">গণনা শেষ হয়েছে। কিছু বদলাতে হয়নি।</string>
+    <string name="count_partial">%1$d টি বদলানো হয়েছে। %2$d টি বদলানো যায়নি কারণ এর মধ্যে স্টক বদলে গেছে। সেগুলো দেখে আবার গুনুন।</string>
+    <string name="count_cancelled">গণনা বাতিল হয়েছে। স্টক বদলায়নি।</string>
+    <string name="count_closed">এই গণনা আগেই শেষ হয়ে গেছে।</string>
+    <string name="count_failed">সেভ করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="count_barcode_missing">বারকোড %1$s-এর কোনো পণ্য নেই।</string>
+    <string name="count_scanner_unavailable">স্ক্যানার খোলা যায়নি। বারকোড নিজে লিখুন।</string>
 </resources>

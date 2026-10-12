@@ -1562,4 +1562,68 @@
         <item quantity="one">%d सामान</item>
         <item quantity="other">%d सामान</item>
     </plurals>
+    <string name="count_title">स्टॉक गिनती</string>
+    <string name="more_count_body">शेल्फ गिनें और स्टॉक का अंतर ठीक करें</string>
+    <string name="count_intro_title">अपना स्टॉक गिनें</string>
+    <string name="count_intro_body">गिनती शुरू करें, हर सामान को स्कैन या खोजें और शेल्फ पर जितना है वह लिखें। अंतर देखकर पुष्टि करने के बाद ही स्टॉक बदलेगा।</string>
+    <string name="count_start">स्टॉक गिनती शुरू करें</string>
+    <string name="count_search_hint">गिनने के लिए सामान स्कैन या खोजें</string>
+    <string name="count_scan">बारकोड स्कैन करें</string>
+    <string name="count_no_results">कोई मिलता-जुलता सामान नहीं।</string>
+    <string name="count_nothing_yet">अभी कुछ नहीं गिना। ऊपर सामान स्कैन या खोजें।</string>
+    <plurals name="count_counted_items">
+        <item quantity="one">%d सामान गिना गया</item>
+        <item quantity="other">%d सामान गिने गए</item>
+    </plurals>
+    <string name="count_counted_chip">गिना गया</string>
+    <string name="count_in_stock">अभी स्टॉक में: %1$s</string>
+    <string name="count_line">अपेक्षित %1$s · गिना %2$s</string>
+    <string name="count_diff_short">%1$s कम</string>
+    <string name="count_diff_extra">%1$s ज़्यादा</string>
+    <string name="count_diff_match">मिलान</string>
+    <string name="count_review">अंतर देखें</string>
+    <string name="count_cancel">गिनती रद्द करें</string>
+    <string name="count_cancel_title">यह गिनती रद्द करें?</string>
+    <string name="count_cancel_message">आपकी लिखी मात्राएँ हटा दी जाएँगी। स्टॉक नहीं बदलेगा।</string>
+    <string name="count_cancel_confirm">गिनती रद्द करें</string>
+    <string name="count_keep_counting">गिनती जारी रखें</string>
+    <string name="count_editor_field">गिना हुआ (%1$s)</string>
+    <string name="count_editor_error">गिनी हुई मात्रा लिखें (0 या अधिक)।</string>
+    <string name="count_editor_save">गिनती सेव करें</string>
+    <string name="count_editor_remove">गिनती से हटाएँ</string>
+    <string name="count_review_none">आपने जो गिना वह स्टॉक से मेल खाता है। कुछ बदलने की ज़रूरत नहीं।</string>
+    <plurals name="count_review_differences">
+        <item quantity="one">%d सामान स्टॉक से अलग है</item>
+        <item quantity="other">%d सामान स्टॉक से अलग हैं</item>
+    </plurals>
+    <string name="count_short_value">%1$d कम, लागत पर %2$s का</string>
+    <string name="count_extra_value">%1$d ज़्यादा, लागत पर %2$s का</string>
+    <string name="count_review_hint">पुष्टि करने के बाद ही स्टॉक आपकी गिनती के अनुसार बदलेगा। जो सामान नहीं गिना उसे छुआ नहीं जाएगा।</string>
+    <string name="count_reason_heading">इस गिनती का कारण</string>
+    <string name="count_reason_routine">नियमित गिनती</string>
+    <string name="count_reason_year_end">साल के अंत की गिनती</string>
+    <string name="count_reason_spot_check">औचक जाँच</string>
+    <string name="count_reason_other">अन्य</string>
+    <string name="count_note_label">नोट (वैकल्पिक)</string>
+    <string name="count_post">स्टॉक अपडेट करें</string>
+    <string name="count_finish">गिनती पूरी करें</string>
+    <string name="count_back">गिनती पर वापस</string>
+    <string name="count_confirm_title">स्टॉक अपडेट करें?</string>
+    <plurals name="count_confirm_message">
+        <item quantity="one">इससे %d सामान का स्टॉक आपकी गिनती के अनुसार बदल जाएगा। यह गतिविधि लॉग में दर्ज होगा।</item>
+        <item quantity="other">इससे %d सामान का स्टॉक आपकी गिनती के अनुसार बदल जाएगा। यह गतिविधि लॉग में दर्ज होगा।</item>
+    </plurals>
+    <string name="count_finish_title">गिनती पूरी करें?</string>
+    <string name="count_finish_message">सब कुछ स्टॉक से मेल खाता है, इसलिए कुछ नहीं बदलेगा।</string>
+    <plurals name="count_posted">
+        <item quantity="one">%d सामान का स्टॉक अपडेट हुआ।</item>
+        <item quantity="other">%d सामान का स्टॉक अपडेट हुआ।</item>
+    </plurals>
+    <string name="count_posted_none">गिनती पूरी हुई। कुछ बदलने की ज़रूरत नहीं पड़ी।</string>
+    <string name="count_partial">%1$d बदले गए। %2$d नहीं बदले जा सके क्योंकि स्टॉक तब से बदल गया है। उन्हें जाँचकर दोबारा गिनें।</string>
+    <string name="count_cancelled">गिनती रद्द हुई। स्टॉक नहीं बदला।</string>
+    <string name="count_closed">यह गिनती पहले ही पूरी हो चुकी है।</string>
+    <string name="count_failed">सेव नहीं हो सका। कृपया दोबारा कोशिश करें।</string>
+    <string name="count_barcode_missing">बारकोड %1$s वाला कोई सामान नहीं।</string>
+    <string name="count_scanner_unavailable">स्कैनर नहीं खुल सका। बारकोड खुद लिखें।</string>
 </resources>

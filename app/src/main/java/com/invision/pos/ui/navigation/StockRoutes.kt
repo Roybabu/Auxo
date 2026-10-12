@@ -30,6 +30,7 @@ object StockRoutes {
     const val RECEIPT = "$PREFIX/receipt/{$ARG_RECEIPT_ID}"
     const val MOVEMENTS = "$PREFIX/movements"
     const val ALERTS = "$PREFIX/alerts?$ARG_ALERTS_TAB={$ARG_ALERTS_TAB}"
+    const val COUNT = "$PREFIX/count"
 
     fun suppliers(): String = SUPPLIERS
 
@@ -51,6 +52,8 @@ object StockRoutes {
     fun receipt(receiptId: Long): String = "$PREFIX/receipt/$receiptId"
 
     fun movements(): String = MOVEMENTS
+
+    fun count(): String = COUNT
 
     fun alerts(tab: AlertsTab = AlertsTab.LOW_STOCK): String = "$PREFIX/alerts?$ARG_ALERTS_TAB=${tab.name}"
 }

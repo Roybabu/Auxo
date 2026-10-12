@@ -28,6 +28,9 @@ enum class AuditAction {
     PRODUCT_DELETED,
     STOCK_CHANGED,
     STOCK_WRITTEN_OFF,
+    STOCK_COUNT_STARTED,
+    STOCK_COUNT_POSTED,
+    STOCK_COUNT_CANCELLED,
     CUSTOMER_SAVED,
     ACCOUNT_PAYMENT_RECEIVED,
     SUPPLIER_SAVED,
@@ -59,6 +62,7 @@ object AuditEntity {
     const val PRODUCT = "product"
     const val VARIANT = "variant"
     const val BATCH = "batch"
+    const val STOCK_COUNT = "stock_count"
     const val CUSTOMER = "customer"
     const val SUPPLIER = "supplier"
     const val PURCHASE_ORDER = "purchase_order"

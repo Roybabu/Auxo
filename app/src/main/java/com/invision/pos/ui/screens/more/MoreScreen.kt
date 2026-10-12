@@ -41,6 +41,7 @@ interface MoreActions {
     fun onOpenSuppliers() = Unit
     fun onOpenAlerts() = Unit
     fun onOpenMovements() = Unit
+    fun onOpenCount() = Unit
     fun onOpenMenu() = Unit
     fun onOpenReports() = Unit
     fun onOpenHistory() = Unit
@@ -154,7 +155,8 @@ fun MoreScreen(
 
             val showSuppliers = LocalSuppliersEnabled.current && can(Permission.MANAGE_SUPPLIERS)
             val showStockRecords = can(Permission.VIEW_STOCK_RECORDS)
-            if (showSuppliers || showStockRecords) {
+            val showCount = can(Permission.ADJUST_STOCK)
+            if (showSuppliers || showStockRecords || showCount) {
                 SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
                 if (showSuppliers) {
                     MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
@@ -162,6 +164,9 @@ fun MoreScreen(
                 if (showStockRecords) {
                     MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
                     MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
+                }
+                if (showCount) {
+                    MoreItem(R.drawable.ic_nav_inventory, stringResource(R.string.count_title), stringResource(R.string.more_count_body), actions::onOpenCount, modifier = Modifier.testTag("more_stock_count"))
                 }
             }
 

@@ -43,6 +43,7 @@ object RouteAccess {
         StockRoutes.RECEIVE to Permission.RECEIVE_GOODS,
         StockRoutes.MOVEMENTS to Permission.VIEW_STOCK_RECORDS,
         StockRoutes.ALERTS to Permission.VIEW_STOCK_RECORDS,
+        StockRoutes.COUNT to Permission.ADJUST_STOCK,
 
         MoreRoutes.MENU to Permission.MANAGE_MENU,
         MoreRoutes.MENU_EDITOR to Permission.MANAGE_MENU,
