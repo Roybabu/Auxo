@@ -618,7 +618,6 @@
     <string name="customer_history_total_spend">कुल खर्च</string>
     <string name="customer_history_total_spend_note">बिक्री में से वापसी घटाकर</string>
     <string name="customer_history_visits">बार आए</string>
-    <string name="customer_history_visits_note">खरीदारी वाले दिन</string>
     <string name="customer_history_last_visit">आखिरी बार</string>
     <string name="customer_history_average">औसत बिल</string>
     <string name="customer_history_never">अभी कोई खरीदारी नहीं</string>
@@ -1041,7 +1040,6 @@
     <string name="auth_error_password_identifier">पासवर्ड में आपका यूज़रनेम या ईमेल का नाम नहीं होना चाहिए।</string>
     <string name="auth_error_confirm_required">पासवर्ड फिर से लिखें।</string>
     <string name="auth_error_confirm_mismatch">पासवर्ड मेल नहीं खाते।</string>
-    <string name="auth_login_title">साइन इन</string>
     <string name="auth_login_welcome">वापसी पर स्वागत है</string>
     <string name="auth_login_action">साइन इन करें</string>
     <string name="auth_login_working">साइन इन हो रहा है…</string>
@@ -1531,7 +1529,6 @@
     <string name="reminder_button">WhatsApp पर याद दिलाएँ</string>
     <string name="reminder_share_title">याद दिलाने का संदेश भेजें</string>
     <string name="reminder_failed">WhatsApp नहीं खुल सका।</string>
-    <string name="reminder_no_phone">इस ग्राहक का फ़ोन नंबर सेव नहीं है। WhatsApp में चैट चुनें।</string>
     <string name="reminder_note">कुछ भी अपने आप नहीं भेजा जाता। WhatsApp संदेश के साथ खुलता है और आप भेजें दबाते हैं।</string>
     <string name="owing_sort_amount">सबसे ज़्यादा बकाया</string>
     <string name="owing_sort_age">सबसे पुराना पहले</string>

@@ -618,7 +618,6 @@
     <string name="customer_history_total_spend">মোট খরচ</string>
     <string name="customer_history_total_spend_note">বিক্রি থেকে ফেরত বাদ দিয়ে</string>
     <string name="customer_history_visits">এসেছেন</string>
-    <string name="customer_history_visits_note">যে দিনগুলোতে কেনাকাটা হয়েছে</string>
     <string name="customer_history_last_visit">শেষবার</string>
     <string name="customer_history_average">গড় বিল</string>
     <string name="customer_history_never">এখনও কোনো কেনাকাটা নেই</string>
@@ -1041,7 +1040,6 @@
     <string name="auth_error_password_identifier">পাসওয়ার্ডে আপনার ইউজারনেম বা ইমেলের নাম থাকা চলবে না।</string>
     <string name="auth_error_confirm_required">পাসওয়ার্ড আবার লিখুন।</string>
     <string name="auth_error_confirm_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
-    <string name="auth_login_title">সাইন ইন</string>
     <string name="auth_login_welcome">আবার স্বাগতম</string>
     <string name="auth_login_action">সাইন ইন করুন</string>
     <string name="auth_login_working">সাইন ইন হচ্ছে…</string>
@@ -1531,7 +1529,6 @@
     <string name="reminder_button">WhatsApp-এ মনে করান</string>
     <string name="reminder_share_title">মনে করানোর বার্তা পাঠান</string>
     <string name="reminder_failed">WhatsApp খোলা যায়নি।</string>
-    <string name="reminder_no_phone">এই গ্রাহকের ফোন নম্বর সেভ করা নেই। WhatsApp-এ চ্যাট বেছে নিন।</string>
     <string name="reminder_note">কিছুই নিজে থেকে পাঠানো হয় না। WhatsApp বার্তা সহ খোলে এবং আপনি পাঠান চাপেন।</string>
     <string name="owing_sort_amount">সবচেয়ে বেশি বকেয়া</string>
     <string name="owing_sort_age">সবচেয়ে পুরনো আগে</string>

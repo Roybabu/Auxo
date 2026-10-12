@@ -618,7 +618,6 @@
     <string name="customer_history_total_spend">Total spend</string>
     <string name="customer_history_total_spend_note">Sales less returns</string>
     <string name="customer_history_visits">Visits</string>
-    <string name="customer_history_visits_note">Days with a purchase</string>
     <string name="customer_history_last_visit">Last visit</string>
     <string name="customer_history_average">Average bill</string>
     <string name="customer_history_never">No purchases yet</string>
@@ -1042,7 +1041,6 @@ in %2$s</string>
     <string name="auth_error_password_identifier">The password must not contain your username or email name.</string>
     <string name="auth_error_confirm_required">Enter the password again.</string>
     <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
-    <string name="auth_login_title">Sign in</string>
     <string name="auth_login_welcome">Welcome back</string>
     <string name="auth_login_action">Sign in</string>
     <string name="auth_login_working">Signing in…</string>
@@ -1531,7 +1529,6 @@ in %2$s</string>
     <string name="reminder_button">Remind on WhatsApp</string>
     <string name="reminder_share_title">Send reminder</string>
     <string name="reminder_failed">Could not open WhatsApp.</string>
-    <string name="reminder_no_phone">No phone number is saved for this customer. Pick a chat in WhatsApp.</string>
     <string name="reminder_note">Nothing is sent automatically. WhatsApp opens with the message ready and you press send.</string>
     <string name="owing_sort_amount">Most owed</string>
     <string name="owing_sort_age">Oldest first</string>
