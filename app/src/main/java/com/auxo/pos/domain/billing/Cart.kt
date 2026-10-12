@@ -40,8 +40,6 @@ data class CartLine(
     /** A one-off item typed in at the counter: not in the shop's list, so no stock is tracked. */
     val isCustom: Boolean = false,
 ) {
-    val isMenuItem: Boolean get() = menuItemId != null
-
     /** True while one more unit can still be sold: the "+" button is on only then. */
     val canIncrease: Boolean get() = availableStock != null && quantity < availableStock
 
@@ -119,9 +117,7 @@ data class CustomerDetails(
     val gstin: String = "",
     /** Saved customer the bill is for; needed to put the bill on account. */
     val customerId: Long? = null,
-) {
-    val isWalkIn: Boolean get() = customerId == null && name.isBlank() && phone.isBlank() && gstin.isBlank()
-}
+)
 
 data class Cart(
     val lines: List<CartLine> = emptyList(),

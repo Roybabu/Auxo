@@ -52,9 +52,6 @@ abstract class InventoryDao {
     @Update
     abstract suspend fun updateVariant(variant: ProductVariantEntity)
 
-    @Query("SELECT * FROM product_variants WHERE id = :variantId")
-    abstract suspend fun getVariant(variantId: Long): ProductVariantEntity?
-
     @Query("DELETE FROM product_variants WHERE id IN (:variantIds)")
     abstract suspend fun deleteVariants(variantIds: List<Long>)
 

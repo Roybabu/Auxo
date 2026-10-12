@@ -6,12 +6,9 @@ import androidx.compose.ui.graphics.Color
 val Emerald700 = Color(0xFF047857)
 val Emerald900 = Color(0xFF064E3B)
 val Emerald100 = Color(0xFFD1FAE5)
-val Emerald50 = Color(0xFFECFDF5)
 
 // Supporting green-grey
 val Sage600 = Color(0xFF4D6359)
-val Sage100 = Color(0xFFDCEBE3)
-val Sage900 = Color(0xFF10201A)
 
 // Accent for highlights such as low-stock warnings
 val Amber700 = Color(0xFFB45309)

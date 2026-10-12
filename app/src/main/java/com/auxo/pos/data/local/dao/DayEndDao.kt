@@ -27,9 +27,6 @@ interface DayEndDao {
     @Query("SELECT * FROM day_closings ORDER BY business_date DESC")
     fun observeAll(): Flow<List<DayClosingEntity>>
 
-    @Query("SELECT * FROM day_closings WHERE business_date = :date")
-    fun observeForDate(date: String): Flow<DayClosingEntity?>
-
     /** Payments and refunds saved with bills and credit notes between two instants, per method and kind. */
     @Query(
         "SELECT method AS method, kind AS kind, COALESCE(SUM(amount_minor), 0) AS total_minor FROM payments " +

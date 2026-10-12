@@ -8,13 +8,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.data.repository.InventoryRepository
 import com.auxo.pos.data.repository.MenuRepository
-import com.auxo.pos.domain.inventory.PickableItem
 import com.auxo.pos.domain.menu.MenuError
 import com.auxo.pos.domain.menu.MenuField
 import com.auxo.pos.domain.menu.MenuItemForm
 import com.auxo.pos.domain.menu.MenuValidation
 import com.auxo.pos.domain.menu.MenuValidator
-import com.auxo.pos.domain.menu.RecipeLineForm
 import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
@@ -158,7 +156,6 @@ data class MenuEditorUiState(
     val picker: ItemPickerState = ItemPickerState(),
 ) {
     val visibleErrors: Map<MenuField, MenuError> get() = if (showErrors) errors else emptyMap()
-    val visibleRecipeErrors: Map<String, MenuError> get() = if (showErrors) recipeErrors else emptyMap()
 }
 
 sealed interface MenuEditorEvent {
@@ -183,7 +180,6 @@ class MenuEditorViewModel(
 
     private var existing: MenuItem? = null
     private var products: List<Product> = emptyList()
-    private var nextKey = 0
     private var jobs: List<Job> = emptyList()
 
     init {
@@ -243,39 +239,8 @@ class MenuEditorViewModel(
         )
     }
 
-    private fun newKey(): String = "ingredient-${nextKey++}"
-
     fun onFormChange(form: MenuItemForm) {
         _uiState.update { it.copy(form = form) }
-        revalidate()
-    }
-
-    fun onIngredientQueryChange(query: String) = _uiState.update {
-        it.copy(picker = ItemPickerState(query.take(40), pickItems(products, query, ::isRecipeIngredient)))
-    }
-
-    fun addIngredient(item: PickableItem) {
-        val form = _uiState.value.form
-        if (form.recipe.any { it.variantId == item.variant.id }) {
-            eventChannel.trySend(MenuEditorEvent.AlreadyAdded(item.label))
-            _uiState.update { it.copy(picker = ItemPickerState()) }
-            return
-        }
-        val line = RecipeLineForm(newKey(), item.variant.id, item.label, item.product.stockUnit)
-        _uiState.update { it.copy(form = form.copy(recipe = form.recipe + line), picker = ItemPickerState()) }
-        revalidate()
-    }
-
-    fun onIngredientQuantityChange(key: String, text: String) {
-        val clean = text.filter { it.isDigit() || it == '.' }.take(10)
-        _uiState.update { state ->
-            state.copy(form = state.form.copy(recipe = state.form.recipe.map { if (it.key == key) it.copy(quantity = clean) else it }))
-        }
-        revalidate()
-    }
-
-    fun removeIngredient(key: String) {
-        _uiState.update { state -> state.copy(form = state.form.copy(recipe = state.form.recipe.filterNot { it.key == key })) }
         revalidate()
     }
 

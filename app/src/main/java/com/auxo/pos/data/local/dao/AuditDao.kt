@@ -14,7 +14,4 @@ interface AuditDao {
 
     @Query("SELECT * FROM audit_log ORDER BY created_at DESC, id DESC LIMIT :limit")
     fun observeRecent(limit: Int): Flow<List<AuditLogEntity>>
-
-    @Query("SELECT * FROM audit_log WHERE entity_type = :entityType AND entity_id = :entityId ORDER BY created_at DESC, id DESC")
-    suspend fun forEntity(entityType: String, entityId: Long): List<AuditLogEntity>
 }

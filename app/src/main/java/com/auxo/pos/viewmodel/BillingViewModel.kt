@@ -80,9 +80,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 /** One variant offered while searching. */
-data class ProductSearchResult(val product: Product, val variant: ProductVariant) {
-    val inCartKey: Long get() = variant.id
-}
+data class ProductSearchResult(val product: Product, val variant: ProductVariant)
 
 enum class BillingStage { CART, PAYMENT }
 

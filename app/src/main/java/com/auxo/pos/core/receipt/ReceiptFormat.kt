@@ -21,9 +21,7 @@ data class PaperSpec(
     val marginMm: Float,
     /** Characters per line for thermal layouts. */
     val charsPerLine: Int,
-) {
-    val printableWidthMm: Float get() = paperWidthMm - marginMm * 2
-}
+)
 
 val ReceiptPaper.spec: PaperSpec
     get() = when (this) {
