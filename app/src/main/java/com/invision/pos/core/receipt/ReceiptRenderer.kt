@@ -408,18 +408,18 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         y += line * 0.5f
         text.textSize = base * 0.9f
         for (note in doc.notes) {
-            text.draw(canvas, fit(note, contentWidth, text), margin, y + line * 0.8f, text)
+            text.draw(canvas, fit(note, contentWidth, text), margin, y + line * 0.8f)
             y += line
         }
         text.textSize = base
 
         if (doc.footer.isNotBlank()) {
-            val shown = fit(doc.footer, contentWidth)
-            text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
+            val shown = fit(doc.footer, contentWidth, text)
+            text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line)
             y += line * 1.5f
         }
         if (doc.feedbackNote.isNotBlank()) {
-            val shown = fit(doc.feedbackNote, contentWidth)
+            val shown = fit(doc.feedbackNote, contentWidth, text)
             text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line)
             y += line * 1.5f
         }
