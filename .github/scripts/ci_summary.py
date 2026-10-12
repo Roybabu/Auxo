@@ -92,10 +92,14 @@ def lint():
         where = ""
         if location is not None:
             where = f" ({short_path(location.get('file', ''))}:{location.get('line', '?')})"
-        messages.setdefault(issue.get("id", "?"), issue.get("message", "").strip() + where)
+        severity = issue.get("severity", "Unknown")
+        label = ("ERROR " if severity in ("Error", "Fatal") else "") + issue.get("id", "?")
+        messages.setdefault(label, issue.get("message", "").strip() + where)
     errors = by_severity["Error"] + by_severity["Fatal"]
     summary = f"{errors} errors, {by_severity['Warning']} warnings"
-    for issue_id, message in list(messages.items())[:15]:
+    # Errors first: they are what stops the build.
+    ordered = sorted(messages.items(), key=lambda item: not item[0].startswith("ERROR "))
+    for issue_id, message in ordered[:15]:
         summary += f" | {issue_id}: {message}"
     return summary
 

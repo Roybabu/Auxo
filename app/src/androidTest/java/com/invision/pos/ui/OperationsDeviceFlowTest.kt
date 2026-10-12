@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
@@ -129,7 +130,7 @@ class OperationsDeviceFlowTest {
         clickTab("More")
         // Purchase orders now live inside Suppliers.
         waitFor(hasText("Suppliers") and hasClickAction(), "Suppliers entry")
-        composeRule.onNode(hasText("Suppliers") and hasClickAction()).performClick()
+        composeRule.onNode(hasText("Suppliers") and hasClickAction()).performScrollTo().performClick()
         waitFor(hasTestTag("supplier_purchase_orders"), "Purchase orders entry")
         composeRule.onNodeWithTag("supplier_purchase_orders").performClick()
         waitFor(hasText(orderNumber) and hasClickAction(), "order $orderNumber")
