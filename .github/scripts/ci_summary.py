@@ -119,7 +119,14 @@ def annotate(level, title, items):
 errors, warnings = build_problems()
 test_summary, test_failures = test_results(DEVICE_RESULTS if DEVICE else UNIT_RESULTS)
 annotate("error", "Build errors", errors)
-annotate("error", "Device test failures" if DEVICE else "Test failures", test_failures)
+# GitHub cuts an annotation at about 4 KB, so one long list loses most failures. First a short list of just the
+# names, then each failure on its own with a trimmed reason.
+failure_title = "Device test failures" if DEVICE else "Test failures"
+annotate("error", failure_title + " - names", [f.split(": ", 1)[0] for f in test_failures])
+for failure in test_failures[:30]:
+    name, _, reason = failure.partition(": ")
+    short = " | ".join(reason.split(" | ")[:3])[:600]
+    print(f"::error title={name.rsplit('.', 2)[-2]}.{name.rsplit('.', 1)[-1]}::{escape(short)}")
 annotate("warning", "Compiler warnings", warnings)
 
 if DEVICE:

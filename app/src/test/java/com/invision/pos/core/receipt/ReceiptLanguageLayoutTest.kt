@@ -46,6 +46,9 @@ class ReceiptLanguageLayoutTest {
     fun anEnglishBill_isIdenticalWhetherOrNotLabelsComeFromResources() {
         val builtIn = ThermalReceiptBuilder.build(sale, ReceiptOptions(), 48, ZoneOffset.UTC)
         val fromResources = ThermalReceiptBuilder.build(sale, ReceiptOptions(), 48, ZoneOffset.UTC, ReceiptLabels.from(context, Language.ENGLISH))
+        // Compared line by line so a failure names the one line that differs.
+        assertEquals(builtIn.elements.size, fromResources.elements.size)
+        builtIn.elements.zip(fromResources.elements).forEachIndexed { index, (expected, actual) -> assertEquals("line $index", expected, actual) }
         assertEquals(builtIn, fromResources)
     }
 

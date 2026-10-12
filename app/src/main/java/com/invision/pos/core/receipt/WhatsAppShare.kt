@@ -60,10 +60,16 @@ object WhatsAppShare {
      * Opens WhatsApp with [message] ready for [number] (or for the user to pick a chat). Falls back to the share
      * sheet when WhatsApp is not installed. Returns false if nothing could open.
      */
+    /** Starts [intent]; from a context that is not an Activity (a service, a test) Android needs a new task for it. */
+    private fun start(context: Context, intent: Intent) {
+        if (context !is android.app.Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+
     fun openText(context: Context, number: String?, message: String, chooserTitle: String): Boolean {
         for (pkg in PACKAGES) {
             try {
-                context.startActivity(textIntent(number, message, pkg))
+                start(context, textIntent(number, message, pkg))
                 return true
             } catch (e: ActivityNotFoundException) {
                 // Try the next WhatsApp.
@@ -74,7 +80,7 @@ object WhatsAppShare {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, message)
             }
-            context.startActivity(Intent.createChooser(send, chooserTitle))
+            start(context, Intent.createChooser(send, chooserTitle))
             true
         } catch (e: ActivityNotFoundException) {
             false
@@ -99,13 +105,13 @@ object WhatsAppShare {
         return try {
             for (pkg in PACKAGES) {
                 try {
-                    context.startActivity(invoiceIntent(context, file, invoice, caption, pkg))
+                    start(context, invoiceIntent(context, file, invoice, caption, pkg))
                     return true
                 } catch (e: ActivityNotFoundException) {
                     // Try the next WhatsApp.
                 }
             }
-            context.startActivity(Intent.createChooser(invoiceIntent(context, file, invoice, caption, null), chooserTitle))
+            start(context, Intent.createChooser(invoiceIntent(context, file, invoice, caption, null), chooserTitle))
             true
         } catch (e: ActivityNotFoundException) {
             false
