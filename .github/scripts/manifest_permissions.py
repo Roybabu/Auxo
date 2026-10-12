@@ -11,6 +11,11 @@ EXPECTED = {
     "android.permission.ACCESS_NETWORK_STATE",
     "android.permission.WAKE_LOCK",
     "android.permission.FOREGROUND_SERVICE",
+    "android.permission.BLUETOOTH",  # the app's own: Bluetooth receipt printer on Android 11 and older (maxSdk 30)
+    "android.permission.BLUETOOTH_CONNECT",  # the app's own: Bluetooth receipt printer on Android 12 and newer
+    "android.permission.RECEIVE_BOOT_COMPLETED",  # added by WorkManager (scheduled backups)
+    "android.permission.USE_BIOMETRIC",  # added by the AndroidX biometric library
+    "android.permission.USE_FINGERPRINT",  # added by the AndroidX biometric library
 }
 DYNAMIC = re.compile(r"\.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION$")
 
