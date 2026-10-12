@@ -78,6 +78,7 @@ object SheetInvoiceLayout {
         val details = buildList {
             add((if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
             add(labels.dateHeading to ReceiptText.dateTime(invoice.createdAtMillis, zone))
+            ReceiptText.serviceLine(invoice, labels)?.let { add(labels.serviceHeading to it) }
             invoice.originalInvoiceNumber?.let { add(labels.againstInvoice to it) }
         }
         val buyerLines = if (options.showCustomer) {

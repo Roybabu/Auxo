@@ -88,6 +88,7 @@ object ThermalReceiptBuilder {
         center(ReceiptText.title(invoice, labels), bold = true)
         left(fillIn(if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
         left(fillIn(labels.date, ReceiptText.dateTime(invoice.createdAtMillis, zone)))
+        ReceiptText.serviceLine(invoice, labels)?.let { left(it) }
         invoice.originalInvoiceNumber?.let { left(fillIn(labels.against, it)) }
         if (options.showCustomer) {
             left(fillIn(labels.customer, invoice.buyer.name ?: labels.walkInCustomer))

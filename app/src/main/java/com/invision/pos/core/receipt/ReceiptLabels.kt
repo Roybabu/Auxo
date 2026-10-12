@@ -88,6 +88,9 @@ data class ReceiptLabels(
     val authorisedSignatory: String = "Authorised signatory",
     val pageOf: String = "Page %1\$d of %2\$d",
     val continued: String = "(continued)",
+    val serviceHeading: String = "Service",
+    val dineInTable: String = "Dine-in · Table %1\$s",
+    val takeaway: String = "Takeaway",
     /** Printed after the footer on bills; empty when there is none. */
     val thankYou: String = "",
 ) {
@@ -173,6 +176,9 @@ data class ReceiptLabels(
             authorisedSignatory = resources.getString(R.string.receipt_authorised_signatory),
             pageOf = resources.getString(R.string.receipt_page_of),
             continued = resources.getString(R.string.receipt_continued),
+            serviceHeading = resources.getString(R.string.receipt_service_heading),
+            dineInTable = resources.getString(R.string.receipt_dine_in_table),
+            takeaway = resources.getString(R.string.receipt_takeaway),
         )
 
         /** Every resource this wording reads, in the order of the fields; used to check each language is complete. */
@@ -251,6 +257,9 @@ data class ReceiptLabels(
             R.string.receipt_authorised_signatory,
             R.string.receipt_page_of,
             R.string.receipt_continued,
+            R.string.receipt_service_heading,
+            R.string.receipt_dine_in_table,
+            R.string.receipt_takeaway,
         )
     }
 }

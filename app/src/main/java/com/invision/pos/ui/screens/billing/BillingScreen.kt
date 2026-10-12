@@ -101,6 +101,14 @@ import com.invision.pos.ui.components.rememberBarcodeScanner
 import com.invision.pos.ui.format.LocalMoneyFormatter
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import com.invision.pos.core.receipt.KitchenTicketOutput
+import com.invision.pos.core.receipt.KotLabels
+import com.invision.pos.domain.billing.KitchenTicket
+import com.invision.pos.domain.model.Language
+import com.invision.pos.domain.model.ReceiptPaper
+import kotlinx.coroutines.launch
 import com.invision.pos.viewmodel.BillingEvent
 import com.invision.pos.viewmodel.BillingStage
 import com.invision.pos.viewmodel.BillingUiState
@@ -149,6 +157,9 @@ interface BillingActions {
     fun onPutRestOnAccount() = Unit
     fun onRemovePayment(key: Int) = Unit
     fun onCompleteSale() = Unit
+    fun onServiceTypeChange(type: com.invision.pos.domain.billing.ServiceType?) = Unit
+    fun onTableNumberChange(text: String) = Unit
+    fun onPlaceOrder() = Unit
 }
 
 @Composable
@@ -169,6 +180,10 @@ fun BillingScreen(
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var showHold by rememberSaveable { mutableStateOf(false) }
     var showHeld by rememberSaveable { mutableStateOf(false) }
+    // The ticket of the order just sent, until the cashier has printed or shared it (or chosen to skip).
+    var placedTicket by remember { mutableStateOf<KitchenTicket?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     // Adding a product or opening store settings are management jobs; an Employee only sees the message.
     val canManageSettings = can(Permission.MANAGE_SETTINGS)
     val canAddProduct = can(Permission.MANAGE_PRODUCTS)
@@ -208,6 +223,9 @@ fun BillingScreen(
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
                 BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
                 BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
+                is BillingEvent.OrderPlaced -> placedTicket = event.ticket
+                is BillingEvent.TableInUse -> snackbarHostState.showSnackbar(resources.getString(R.string.order_table_in_use, event.table), duration = SnackbarDuration.Long)
+                BillingEvent.NothingNewForKitchen -> snackbarHostState.showSnackbar(resources.getString(R.string.order_nothing_new))
             }
         }
     }
@@ -263,6 +281,9 @@ fun BillingScreen(
             override fun onPutRestOnAccount() = viewModel.putRemainingOnAccount()
             override fun onRemovePayment(key: Int) = viewModel.removePayment(key)
             override fun onCompleteSale() = viewModel.completeSale()
+            override fun onServiceTypeChange(type: com.invision.pos.domain.billing.ServiceType?) = viewModel.onServiceTypeChange(type)
+            override fun onTableNumberChange(text: String) = viewModel.onTableNumberChange(text)
+            override fun onPlaceOrder() = viewModel.placeOrder()
         }
     }
 
@@ -320,6 +341,29 @@ fun BillingScreen(
         }
     }
 
+    placedTicket?.let { ticket ->
+        val receipt = uiState.settings?.receipt
+        val paper = receipt?.paper ?: ReceiptPaper.THERMAL_80
+        val language = receipt?.language ?: Language.DEFAULT
+        OrderPlacedDialog(
+            kotNumber = ticket.kotNumber,
+            onPrint = {
+                if (!KitchenTicketOutput.print(context, ticket, paper, KotLabels.from(context, language))) {
+                    scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.order_print_failed)) }
+                }
+            },
+            onShare = {
+                scope.launch {
+                    val shared = KitchenTicketOutput.share(
+                        context, ticket, paper, KotLabels.from(context, language),
+                        resources.getString(R.string.order_share),
+                    )
+                    if (!shared) snackbarHostState.showSnackbar(resources.getString(R.string.order_share_failed))
+                }
+            },
+            onDone = { placedTicket = null },
+        )
+    }
     if (showHold) {
         HoldBillDialog(
             suggestion = uiState.cart.customer.name,
@@ -516,6 +560,9 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 }
             }
         } else {
+            if (state.restaurantMode && state.canHold) {
+                item(key = "service") { ServiceCard(state, actions) }
+            }
             item(key = "items_header") {
                 SectionHeader(title = stringResource(R.string.billing_items) + " (${state.cart.itemCount})")
             }

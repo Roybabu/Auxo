@@ -1425,6 +1425,20 @@ in %2$s</string>
     <string name="receipt_authorised_signatory">Authorised signatory</string>
     <string name="receipt_page_of">Page %1$d of %2$d</string>
     <string name="receipt_continued">(continued)</string>
+    <string name="receipt_service_heading">Service</string>
+    <string name="receipt_dine_in_table">Dine-in · Table %1$s</string>
+    <string name="receipt_takeaway">Takeaway</string>
+    <string name="kot_title">KITCHEN ORDER</string>
+    <string name="kot_add_on">ADD-ON ITEMS</string>
+    <string name="kot_number">KOT: %1$s</string>
+    <string name="kot_table">TABLE %1$s</string>
+    <string name="kot_takeaway">TAKEAWAY</string>
+    <string name="kot_date">Date: %1$s</string>
+    <string name="kot_order_for">For: %1$s</string>
+    <string name="kot_new_items">NEW ITEMS</string>
+    <string name="kot_cancelled">CANCELLED - DO NOT MAKE</string>
+    <string name="kot_line">%1$d x %2$s</string>
+    <string name="kot_total_new">Total new items: %1$d</string>
     <string name="issue_discount_reason_missing">Say why this discount is given.</string>
     <string name="issue_discount_above_limit">This discount is above your limit. Ask the Super Admin.</string>
     <string name="billing_discount_reason">Reason for discount</string>
@@ -1454,5 +1468,26 @@ in %2$s</string>
     <plurals name="held_items">
         <item quantity="one">%d item</item>
         <item quantity="other">%d items</item>
+    </plurals>
+    <string name="order_service_title">Order type</string>
+    <string name="order_dine_in">Dine-in</string>
+    <string name="order_takeaway">Takeaway</string>
+    <string name="order_table">Table number</string>
+    <string name="order_table_required">Enter the table number.</string>
+    <string name="order_service_required">Choose dine-in or takeaway.</string>
+    <string name="order_place">Send to kitchen</string>
+    <string name="order_table_in_use">Table %1$s already has an open order. Resume it from Held bills to add items.</string>
+    <string name="order_nothing_new">Nothing new to send to the kitchen.</string>
+    <string name="order_placed_title">Order sent</string>
+    <string name="order_placed_body">Kitchen ticket %1$s is ready. Print it or share it with the kitchen.</string>
+    <string name="order_placed_note">The bill stays open. Settle it from Held bills when the guest is ready to pay.</string>
+    <string name="order_print">Print ticket</string>
+    <string name="order_share">Share ticket</string>
+    <string name="order_print_failed">Could not start printing.</string>
+    <string name="order_share_failed">Could not share the ticket.</string>
+    <string name="order_dine_in_table">Dine-in · Table %1$s</string>
+    <plurals name="order_kots">
+        <item quantity="one">%d kitchen ticket</item>
+        <item quantity="other">%d kitchen tickets</item>
     </plurals>
 </resources>

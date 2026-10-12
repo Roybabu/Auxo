@@ -1425,6 +1425,20 @@
     <string name="receipt_authorised_signatory">अधिकृत हस्ताक्षरकर्ता</string>
     <string name="receipt_page_of">पृष्ठ %1$d / %2$d</string>
     <string name="receipt_continued">(जारी)</string>
+    <string name="receipt_service_heading">सेवा</string>
+    <string name="receipt_dine_in_table">यहीं खाना · टेबल %1$s</string>
+    <string name="receipt_takeaway">टेकअवे</string>
+    <string name="kot_title">किचन ऑर्डर</string>
+    <string name="kot_add_on">अतिरिक्त आइटम</string>
+    <string name="kot_number">KOT: %1$s</string>
+    <string name="kot_table">टेबल %1$s</string>
+    <string name="kot_takeaway">टेकअवे</string>
+    <string name="kot_date">दिनांक: %1$s</string>
+    <string name="kot_order_for">ग्राहक: %1$s</string>
+    <string name="kot_new_items">नए आइटम</string>
+    <string name="kot_cancelled">रद्द - न बनाएँ</string>
+    <string name="kot_line">%1$d x %2$s</string>
+    <string name="kot_total_new">कुल नए आइटम: %1$d</string>
     <string name="issue_discount_reason_missing">बताएँ कि यह छूट क्यों दी जा रही है।</string>
     <string name="issue_discount_above_limit">यह छूट आपकी सीमा से अधिक है। सुपर एडमिन से पूछें।</string>
     <string name="billing_discount_reason">छूट का कारण</string>
@@ -1454,5 +1468,26 @@
     <plurals name="held_items">
         <item quantity="one">%d आइटम</item>
         <item quantity="other">%d आइटम</item>
+    </plurals>
+    <string name="order_service_title">ऑर्डर का प्रकार</string>
+    <string name="order_dine_in">यहीं खाना</string>
+    <string name="order_takeaway">टेकअवे</string>
+    <string name="order_table">टेबल नंबर</string>
+    <string name="order_table_required">टेबल नंबर डालें।</string>
+    <string name="order_service_required">यहीं खाना या टेकअवे चुनें।</string>
+    <string name="order_place">किचन को भेजें</string>
+    <string name="order_table_in_use">टेबल %1$s पर पहले से एक खुला ऑर्डर है। आइटम जोड़ने के लिए उसे होल्ड बिल से फिर शुरू करें।</string>
+    <string name="order_nothing_new">किचन को भेजने के लिए कुछ नया नहीं है।</string>
+    <string name="order_placed_title">ऑर्डर भेज दिया गया</string>
+    <string name="order_placed_body">किचन टिकट %1$s तैयार है। इसे प्रिंट करें या किचन को भेजें।</string>
+    <string name="order_placed_note">बिल खुला रहेगा। मेहमान के भुगतान करने पर उसे होल्ड बिल से पूरा करें।</string>
+    <string name="order_print">टिकट प्रिंट करें</string>
+    <string name="order_share">टिकट शेयर करें</string>
+    <string name="order_print_failed">प्रिंट शुरू नहीं हो सका।</string>
+    <string name="order_share_failed">टिकट शेयर नहीं हो सका।</string>
+    <string name="order_dine_in_table">यहीं खाना · टेबल %1$s</string>
+    <plurals name="order_kots">
+        <item quantity="one">%d किचन टिकट</item>
+        <item quantity="other">%d किचन टिकट</item>
     </plurals>
 </resources>

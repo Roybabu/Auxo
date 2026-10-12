@@ -44,9 +44,15 @@ object ReceiptRenderer {
 
     // Thermal rolls
 
-    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels, fonts: ReceiptFonts): ReceiptPage {
-        val spec = options.paper.spec
-        val receipt = ThermalReceiptBuilder.build(invoice, options, spec.charsPerLine, zone, labels)
+    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels, fonts: ReceiptFonts): ReceiptPage =
+        drawThermal(ThermalReceiptBuilder.build(invoice, options, options.paper.spec.charsPerLine, zone, labels), options.paper, logo, fonts)
+
+    /** Any text laid out for a thermal roll (a kitchen ticket, say), drawn as one tall page. */
+    fun thermalPages(receipt: ThermalReceipt, paper: ReceiptPaper, fonts: ReceiptFonts = ReceiptFonts.system): List<ReceiptPage> =
+        listOf(drawThermal(receipt, paper, null, fonts))
+
+    private fun drawThermal(receipt: ThermalReceipt, paper: ReceiptPaper, logo: Bitmap?, fonts: ReceiptFonts): ReceiptPage {
+        val spec = paper.spec
         val widthPt = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
         val margin = LabelSheetLayout.mmToPoints(spec.marginMm)
         val printable = widthPt - margin * 2

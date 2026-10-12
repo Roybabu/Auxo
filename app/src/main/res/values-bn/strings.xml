@@ -1425,6 +1425,20 @@
     <string name="receipt_authorised_signatory">অনুমোদিত স্বাক্ষরকারী</string>
     <string name="receipt_page_of">পৃষ্ঠা %1$d / %2$d</string>
     <string name="receipt_continued">(চলমান)</string>
+    <string name="receipt_service_heading">পরিষেবা</string>
+    <string name="receipt_dine_in_table">এখানে খাওয়া · টেবিল %1$s</string>
+    <string name="receipt_takeaway">টেকওয়ে</string>
+    <string name="kot_title">কিচেন অর্ডার</string>
+    <string name="kot_add_on">অতিরিক্ত আইটেম</string>
+    <string name="kot_number">KOT: %1$s</string>
+    <string name="kot_table">টেবিল %1$s</string>
+    <string name="kot_takeaway">টেকওয়ে</string>
+    <string name="kot_date">তারিখ: %1$s</string>
+    <string name="kot_order_for">গ্রাহক: %1$s</string>
+    <string name="kot_new_items">নতুন আইটেম</string>
+    <string name="kot_cancelled">বাতিল - বানাবেন না</string>
+    <string name="kot_line">%1$d x %2$s</string>
+    <string name="kot_total_new">মোট নতুন আইটেম: %1$d</string>
     <string name="issue_discount_reason_missing">এই ছাড় কেন দেওয়া হচ্ছে তা লিখুন।</string>
     <string name="issue_discount_above_limit">এই ছাড় আপনার সীমার বেশি। সুপার অ্যাডমিনকে জিজ্ঞাসা করুন।</string>
     <string name="billing_discount_reason">ছাড়ের কারণ</string>
@@ -1454,5 +1468,26 @@
     <plurals name="held_items">
         <item quantity="one">%d টি পণ্য</item>
         <item quantity="other">%d টি পণ্য</item>
+    </plurals>
+    <string name="order_service_title">অর্ডারের ধরন</string>
+    <string name="order_dine_in">এখানে খাওয়া</string>
+    <string name="order_takeaway">টেকওয়ে</string>
+    <string name="order_table">টেবিল নম্বর</string>
+    <string name="order_table_required">টেবিল নম্বর লিখুন।</string>
+    <string name="order_service_required">এখানে খাওয়া বা টেকওয়ে বেছে নিন।</string>
+    <string name="order_place">রান্নাঘরে পাঠান</string>
+    <string name="order_table_in_use">টেবিল %1$s-এ আগে থেকেই একটি খোলা অর্ডার আছে। আইটেম যোগ করতে হোল্ড করা বিল থেকে সেটি আবার খুলুন।</string>
+    <string name="order_nothing_new">রান্নাঘরে পাঠানোর মতো নতুন কিছু নেই।</string>
+    <string name="order_placed_title">অর্ডার পাঠানো হয়েছে</string>
+    <string name="order_placed_body">কিচেন টিকিট %1$s তৈরি। এটি প্রিন্ট করুন বা রান্নাঘরে শেয়ার করুন।</string>
+    <string name="order_placed_note">বিলটি খোলা থাকবে। অতিথি টাকা দিতে চাইলে হোল্ড করা বিল থেকে এটি শেষ করুন।</string>
+    <string name="order_print">টিকিট প্রিন্ট করুন</string>
+    <string name="order_share">টিকিট শেয়ার করুন</string>
+    <string name="order_print_failed">প্রিন্ট শুরু করা যায়নি।</string>
+    <string name="order_share_failed">টিকিট শেয়ার করা যায়নি।</string>
+    <string name="order_dine_in_table">এখানে খাওয়া · টেবিল %1$s</string>
+    <plurals name="order_kots">
+        <item quantity="one">%d টি কিচেন টিকিট</item>
+        <item quantity="other">%d টি কিচেন টিকিট</item>
     </plurals>
 </resources>
