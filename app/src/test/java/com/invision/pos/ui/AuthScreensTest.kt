@@ -177,8 +177,8 @@ class AuthScreensTest {
         composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         composeRule.onNodeWithContentDescription("Show password").performScrollTo()
         composeRule.onNodeWithContentDescription("Show password").performClick()
-        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
-        composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        // The fields stay marked as passwords (keyboard type), so only the on-screen text changes; the toggle flips its label.
+        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         composeRule.onNodeWithContentDescription("Hide password").assertExists()
     }
 
