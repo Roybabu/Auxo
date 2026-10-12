@@ -81,7 +81,11 @@ class FakeBillingRepository(private val inventory: FakeInventoryRepository) : Bi
         return result
     }
 
+    /** When set, a sale that uses loyalty points is refused, as if the rules or balance had changed. */
+    var loyaltyUnavailable = false
+
     private suspend fun saveSale(invoice: Invoice, invoicePrefix: String): SaleResult {
+        if (loyaltyUnavailable && invoice.loyaltyPointsRedeemed > 0) return SaleResult.LoyaltyUnavailable
         val stock = inventory.products.value.flatMap { it.variants }.associate { it.id to it.stockQuantity }
         val wanted = invoice.lines.filter { it.variantId != null }.groupBy { it.variantId!! }.mapValues { (_, l) -> l.sumOf { it.quantity } }
         val short = wanted.filter { (id, qty) -> (stock[id] ?: -1) < qty }.keys

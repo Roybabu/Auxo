@@ -58,6 +58,8 @@ data class BillTotals(
     /** Difference between MRP and what the customer pays, for lines with an MRP. */
     val savings: Money,
     val taxSummary: List<TaxSummaryRow>,
+    /** The part of [billDiscountTotal] that is loyalty points. */
+    val loyaltyDiscount: Money = Money.ZERO,
 ) {
     val discountTotal: Money get() = lineDiscountTotal + billDiscountTotal
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
@@ -73,8 +75,8 @@ data class BillTotals(
 /**
  * Works out discounts, GST and totals for a cart. All arithmetic is in paise.
  *
- * Order: line discounts, then the bill discount shared across lines in proportion
- * to their value, then GST per line on the discounted value. Lines without a GST
+ * Order: line discounts, then the bill discount and any loyalty points (together) shared across lines in
+ * proportion to their value, then GST per line on the discounted value. Lines without a GST
  * rate are taxed at 0% here; the cart validator blocks checkout for them.
  */
 object BillCalculator {
@@ -86,7 +88,10 @@ object BillCalculator {
         val lineDiscounts = cart.lines.mapIndexed { i, line -> line.discount?.amountOn(gross[i]) ?: Money.ZERO }
         val afterLineDiscount = gross.mapIndexed { i, value -> value - lineDiscounts[i] }
         val base = afterLineDiscount.fold(Money.ZERO) { acc, m -> acc + m }
-        val billDiscount = cart.billDiscount?.amountOn(base) ?: Money.ZERO
+        val manualDiscount = cart.billDiscount?.amountOn(base) ?: Money.ZERO
+        // Loyalty points come off last, and never take more than is left after the other discounts.
+        val loyaltyDiscount = cart.loyalty?.amount?.let { if (it > base - manualDiscount) base - manualDiscount else it } ?: Money.ZERO
+        val billDiscount = manualDiscount + loyaltyDiscount
         val shares = allocate(billDiscount, afterLineDiscount)
 
         val lines = cart.lines.mapIndexed { i, line ->
@@ -129,6 +134,7 @@ object BillCalculator {
             grandTotal = grandTotal,
             savings = savings,
             taxSummary = taxSummary(lines),
+            loyaltyDiscount = loyaltyDiscount,
         )
     }
 

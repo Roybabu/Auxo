@@ -321,6 +321,16 @@
     <string name="billing_discount_value">Discount value</string>
     <string name="billing_discount_invalid">Enter an amount, or a percentage up to 100</string>
     <string name="billing_bill_discount">Bill discount</string>
+    <string name="loyalty_title">Loyalty points</string>
+    <string name="loyalty_balance">%1$d points (worth %2$s)</string>
+    <string name="loyalty_field">Points to use</string>
+    <string name="loyalty_max">Up to %1$d points on this bill</string>
+    <string name="loyalty_use_all">Use all</string>
+    <string name="loyalty_clear">Clear</string>
+    <string name="loyalty_using">Using %1$d points: −%2$s</string>
+    <string name="loyalty_invalid">These points cannot be used on this bill</string>
+    <string name="loyalty_none_usable">The points cannot be used on this bill yet (the bill is too small)</string>
+    <string name="loyalty_unavailable">Loyalty points can no longer be used on this bill. Check the total and try again.</string>
     <string name="billing_customer">Customer</string>
     <string name="billing_walk_in">Walk-in Customer</string>
     <string name="billing_add_customer">Add customer details (optional)</string>

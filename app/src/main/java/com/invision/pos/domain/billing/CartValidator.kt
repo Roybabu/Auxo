@@ -17,12 +17,14 @@ enum class CustomerIssue { NAME_REQUIRED_WITH_GSTIN, NAME_TOO_LONG, INVALID_PHON
 data class CartCheck(
     val lineIssues: Map<Long, LineIssue> = emptyMap(),
     val billDiscountTooLarge: Boolean = false,
+    /** Loyalty points were asked for beyond the bill, or without a saved customer. */
+    val loyaltyInvalid: Boolean = false,
     val customerIssues: Set<CustomerIssue> = emptySet(),
     val isEmpty: Boolean = false,
     val totalNotPositive: Boolean = false,
 ) {
     val canCheckout: Boolean
-        get() = !isEmpty && lineIssues.isEmpty() && !billDiscountTooLarge && customerIssues.isEmpty() && !totalNotPositive
+        get() = !isEmpty && lineIssues.isEmpty() && !billDiscountTooLarge && !loyaltyInvalid && customerIssues.isEmpty() && !totalNotPositive
 }
 
 object CartValidator {
@@ -45,9 +47,12 @@ object CartValidator {
         }
         val afterLineDiscounts = totals.subtotal - totals.lineDiscountTotal
         val billDiscountTooLarge = (cart.billDiscount as? Discount.Amount)?.let { it.value > afterLineDiscounts } == true
+        val manualDiscount = totals.billDiscountTotal - totals.loyaltyDiscount
+        val loyaltyInvalid = cart.loyalty?.let { it.amount > afterLineDiscounts - manualDiscount || cart.customer.customerId == null } == true
         return CartCheck(
             lineIssues = lineIssues,
             billDiscountTooLarge = billDiscountTooLarge,
+            loyaltyInvalid = loyaltyInvalid,
             customerIssues = checkCustomer(cart.customer),
             isEmpty = cart.isEmpty,
             totalNotPositive = !cart.isEmpty && totals.grandTotal <= Money.ZERO,

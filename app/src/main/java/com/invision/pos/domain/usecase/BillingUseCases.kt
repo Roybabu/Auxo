@@ -47,6 +47,9 @@ sealed interface CheckoutResult {
     /** The customer account on the bill no longer exists; nothing was saved. */
     data object CustomerMissing : CheckoutResult
 
+    /** The loyalty points on the bill can no longer be used (rules changed, or the balance is lower); nothing was saved. */
+    data object LoyaltyUnavailable : CheckoutResult
+
     /** Billing settings are incomplete (for example GSTIN missing for a GST-registered store). */
     data object SetupRequired : CheckoutResult
 }
@@ -87,6 +90,7 @@ class CheckoutUseCase(
             is SaleResult.IngredientShortage -> CheckoutResult.IngredientsShort(result.variantIds)
             SaleResult.CreditLimitExceeded -> CheckoutResult.CreditLimitExceeded
             SaleResult.CustomerMissing -> CheckoutResult.CustomerMissing
+            SaleResult.LoyaltyUnavailable -> CheckoutResult.LoyaltyUnavailable
         }
     }
 }

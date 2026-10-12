@@ -189,7 +189,7 @@ class FakeCustomerRepository(customers: List<Customer> = emptyList()) : Customer
 
     private fun account(customer: Customer, entries: List<LedgerEntry>): CustomerAccount {
         val own = entries.filter { it.customerId == customer.id }
-        return CustomerAccount(customer, own.fold(Money.ZERO) { acc, e -> acc + e.amount }, own.maxOfOrNull { it.createdAtMillis })
+        return CustomerAccount(customer, own.fold(Money.ZERO) { acc, e -> acc + e.amount }, own.maxOfOrNull { it.createdAtMillis }, own.sumOf { it.points })
     }
 
     override fun observeAccount(customerId: Long): Flow<CustomerAccount?> = combine(customers, ledger) { list, entries ->
@@ -274,5 +274,17 @@ class FakeMenuRepository(items: List<MenuItem> = emptyList()) : MenuRepository {
 
     override suspend fun deleteItem(menuItemId: Long) {
         items.value = items.value.filterNot { it.id == menuItemId }
+    }
+}
+
+class FakeLoyaltyRepository(rules: com.invision.pos.domain.loyalty.LoyaltyRules = com.invision.pos.domain.loyalty.LoyaltyRules.OFF) :
+    com.invision.pos.data.repository.LoyaltyRepository {
+    val rules = MutableStateFlow(rules)
+    var saves = 0
+    override fun observeRules(): Flow<com.invision.pos.domain.loyalty.LoyaltyRules> = rules
+    override suspend fun getRules() = rules.value
+    override suspend fun saveRules(rules: com.invision.pos.domain.loyalty.LoyaltyRules) {
+        saves++
+        this.rules.value = rules
     }
 }

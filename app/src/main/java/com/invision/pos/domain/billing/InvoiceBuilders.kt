@@ -79,6 +79,7 @@ object SaleBuilder {
             savings = totals.savings,
             payments = payments.map { it.copy(kind = PaymentKind.PAYMENT, createdAtMillis = nowMillis) },
             customerId = customer.customerId,
+            loyaltyPointsRedeemed = cart.loyalty?.points ?: 0,
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.invision.pos.domain.billing
 
+import com.invision.pos.domain.loyalty.LoyaltyRedemption
 import com.invision.pos.domain.model.GstRate
 import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
@@ -123,6 +124,8 @@ data class CustomerDetails(
 data class Cart(
     val lines: List<CartLine> = emptyList(),
     val billDiscount: Discount? = null,
+    /** Loyalty points being used on this bill. Taken off after [billDiscount]; needs a saved customer. */
+    val loyalty: LoyaltyRedemption? = null,
     val customer: CustomerDetails = CustomerDetails(),
     /** Two-digit GST state code where the goods are supplied; null means the store's state. */
     val placeOfSupplyStateCode: String? = null,

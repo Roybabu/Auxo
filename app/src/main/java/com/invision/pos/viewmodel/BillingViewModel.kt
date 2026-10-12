@@ -15,7 +15,11 @@ import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
 import com.invision.pos.domain.billing.AmountInput
+import com.invision.pos.data.repository.LoyaltyRepository
 import com.invision.pos.domain.billing.BillCalculator
+import com.invision.pos.domain.loyalty.LoyaltyMath
+import com.invision.pos.domain.loyalty.LoyaltyRedemption
+import com.invision.pos.domain.loyalty.LoyaltyRules
 import com.invision.pos.domain.billing.BillTotals
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartCheck
@@ -96,6 +100,12 @@ data class BillingUiState(
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
     val billDiscount: DiscountInput = DiscountInput(),
+    /** The shop's loyalty rules (off unless the Super Admin switched them on). */
+    val loyaltyRules: LoyaltyRules = LoyaltyRules.OFF,
+    /** Points being used on this bill, already kept within the balance and the bill. */
+    val loyaltyPoints: Int = 0,
+    /** Most points that can be used on this bill right now. */
+    val loyaltyMax: Int = 0,
     val customerExpanded: Boolean = false,
     /** Search text for saved customers. */
     val customerQuery: String = "",
@@ -138,6 +148,12 @@ data class BillingUiState(
     val paymentMethods: List<PaymentMethod>
         get() = if (account != null) PaymentMethod.entries else PaymentMethod.MONEY
 
+    /** True when the loyalty row shows: loyalty is on and the bill is for a saved customer. */
+    val loyaltyAvailable: Boolean get() = loyaltyRules.enabled && account != null
+
+    /** What the points being used take off. */
+    val loyaltyDiscount: Money get() = totals.loyaltyDiscount
+
     /** Menu sections with available dishes, in menu order. */
     val menuSections: List<String> get() = menu.map { it.section }.distinct()
 }
@@ -153,6 +169,7 @@ sealed interface BillingEvent {
     data class IngredientsShort(val names: List<String>) : BillingEvent
     data object CreditLimitExceeded : BillingEvent
     data object CustomerMissing : BillingEvent
+    data object LoyaltyUnavailable : BillingEvent
     data object SetupRequired : BillingEvent
     data object FixCart : BillingEvent
     data object SaveFailed : BillingEvent
@@ -168,6 +185,7 @@ class BillingViewModel(
     private val clock: Clock = BusinessTime.clock(),
     private val billing: BillingRepository? = null,
     private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
+    private val loyalty: LoyaltyRepository? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -248,12 +266,19 @@ class BillingViewModel(
                     .catch { _uiState.update { it.copy(loadFailed = true) } }
                     .collect { list ->
                         accounts = list
-                        _uiState.update { state ->
+                        recalculate { state ->
                             val linkedId = state.account?.customer?.id
                             val linked = linkedId?.let { id -> list.firstOrNull { it.customer.id == id } }
                             state.copy(customerResults = searchCustomers(state.customerQuery), account = linked ?: state.account)
                         }
                     }
+            }
+        }
+        val loyaltyJob = loyalty?.let { repository ->
+            viewModelScope.launch {
+                repository.observeRules()
+                    .catch { recalculate { it.copy(loyaltyRules = LoyaltyRules.OFF, loyaltyPoints = 0) } }
+                    .collect { rules -> recalculate { it.copy(loyaltyRules = rules) } }
             }
         }
         val shopJob = shop?.let { prefs ->
@@ -269,7 +294,7 @@ class BillingViewModel(
                 }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob)
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob)
     }
 
     // Search and adding items
@@ -413,6 +438,18 @@ class BillingViewModel(
         }
     }
 
+    // Loyalty points
+
+    /** Points typed by the cashier. Kept within the customer's balance and the bill. */
+    fun onLoyaltyPointsChange(text: String) {
+        val wanted = text.filter { it.isDigit() }.take(9).toIntOrNull() ?: 0
+        recalculate { it.copy(loyaltyPoints = wanted) }
+    }
+
+    fun useAllLoyaltyPoints() = recalculate { it.copy(loyaltyPoints = Int.MAX_VALUE) }
+
+    fun clearLoyaltyPoints() = recalculate { it.copy(loyaltyPoints = 0) }
+
     // Customer and place of supply
 
     fun toggleCustomer() = _uiState.update { it.copy(customerExpanded = !it.customerExpanded) }
@@ -496,6 +533,7 @@ class BillingViewModel(
         _uiState.update {
             BillingUiState(
                 settings = it.settings,
+                loyaltyRules = it.loyaltyRules,
                 productsLoaded = it.productsLoaded,
                 productCount = it.productCount,
                 menu = it.menu,
@@ -616,6 +654,11 @@ class BillingViewModel(
                     _uiState.update { it.copy(stage = BillingStage.CART) }
                     eventChannel.send(BillingEvent.CustomerMissing)
                 }
+                CheckoutResult.LoyaltyUnavailable -> {
+                    // Rules or balance changed under the bill: drop the points and let the cashier review the new total.
+                    recalculate { it.copy(loyaltyPoints = 0, stage = BillingStage.CART) }
+                    eventChannel.send(BillingEvent.LoyaltyUnavailable)
+                }
                 CheckoutResult.SetupRequired -> eventChannel.send(BillingEvent.SetupRequired)
                 null -> eventChannel.send(BillingEvent.SaveFailed)
             }
@@ -649,9 +692,25 @@ class BillingViewModel(
 
     private fun recalculate(transform: (BillingUiState) -> BillingUiState) {
         _uiState.update { current ->
-            val next = transform(current)
-            val settings = next.settings ?: StoreSettings()
-            val totals = BillCalculator.calculate(next.cart, settings.taxModeFor(next.cart))
+            val changed = transform(current)
+            val settings = changed.settings ?: StoreSettings()
+            val mode = settings.taxModeFor(changed.cart)
+            // Loyalty points come off after every other discount, so work out the bill without them first.
+            val withoutPoints = changed.cart.copy(loyalty = null)
+            val before = BillCalculator.calculate(withoutPoints, mode)
+            val billBeforePoints = before.subtotal - before.lineDiscountTotal - before.billDiscountTotal
+            val max = changed.account?.let { LoyaltyMath.maxRedeemable(changed.loyaltyRules, it.points, billBeforePoints) } ?: 0
+            val points = changed.loyaltyPoints.coerceIn(0, max)
+            val next = changed.copy(
+                cart = if (points > 0) {
+                    withoutPoints.copy(loyalty = LoyaltyRedemption(points, LoyaltyMath.valueOf(changed.loyaltyRules, points)))
+                } else {
+                    withoutPoints
+                },
+                loyaltyPoints = points,
+                loyaltyMax = max,
+            )
+            val totals = BillCalculator.calculate(next.cart, mode)
             next.copy(totals = totals, check = CartValidator.check(next.cart, totals, settings.gstRegistered))
         }
     }
@@ -737,6 +796,7 @@ class BillingViewModel(
                     clock = container.clock,
                     billing = container.billingRepository,
                     shop = container.shopPreferences,
+                    loyalty = container.loyaltyRepository,
                 )
             }
         }

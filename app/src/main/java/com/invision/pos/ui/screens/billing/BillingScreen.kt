@@ -77,6 +77,7 @@ import com.invision.pos.domain.billing.CustomerIssue
 import com.invision.pos.domain.billing.PaymentError
 import com.invision.pos.domain.billing.IndianStates
 import com.invision.pos.domain.billing.Upi
+import com.invision.pos.domain.loyalty.LoyaltyMath
 import com.invision.pos.domain.model.CustomerAccount
 import com.invision.pos.domain.model.MenuItem
 import com.invision.pos.domain.model.Money
@@ -125,6 +126,9 @@ interface BillingActions {
     fun onLinkCustomer(account: CustomerAccount) = Unit
     fun onUnlinkCustomer() = Unit
     fun onSaveCustomer() = Unit
+    fun onLoyaltyPointsChange(text: String) = Unit
+    fun onUseAllLoyaltyPoints() = Unit
+    fun onClearLoyaltyPoints() = Unit
     fun onPlaceOfSupplyChange(stateCode: String?) = Unit
     fun onCharge() = Unit
     fun onOpenSettings() = Unit
@@ -182,6 +186,7 @@ fun BillingScreen(
                 )
                 BillingEvent.CreditLimitExceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.payment_error_credit_limit))
                 BillingEvent.CustomerMissing -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_customer_missing))
+                BillingEvent.LoyaltyUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.loyalty_unavailable))
                 is BillingEvent.CustomerSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_customer_saved, event.name))
                 BillingEvent.SetupRequired -> {
                     val result = snackbarHostState.showSnackbar(
@@ -229,6 +234,9 @@ fun BillingScreen(
             override fun onLinkCustomer(account: CustomerAccount) = viewModel.linkCustomer(account)
             override fun onUnlinkCustomer() = viewModel.unlinkCustomer()
             override fun onSaveCustomer() = viewModel.saveTypedCustomer()
+            override fun onLoyaltyPointsChange(text: String) = viewModel.onLoyaltyPointsChange(text)
+            override fun onUseAllLoyaltyPoints() = viewModel.useAllLoyaltyPoints()
+            override fun onClearLoyaltyPoints() = viewModel.clearLoyaltyPoints()
             override fun onPlaceOfSupplyChange(stateCode: String?) = viewModel.onPlaceOfSupplyChange(stateCode)
             override fun onCharge() = viewModel.proceedToPayment()
             override fun onOpenSettings() = currentOnSettings()
@@ -500,6 +508,9 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 )
             }
             item(key = "customer") { CustomerCard(state, actions) }
+            if (state.loyaltyAvailable) {
+                item(key = "loyalty") { LoyaltyCard(state, actions) }
+            }
             item(key = "totals") { TotalsCard(state) }
             if (state.check.totalNotPositive) {
                 item(key = "total_issue") {
@@ -695,6 +706,63 @@ private fun CartLineCard(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = Spacing.xs),
                 )
+            }
+        }
+    }
+}
+
+/** Lets the cashier use some of the customer's loyalty points as a discount on this bill. */
+@Composable
+private fun LoyaltyCard(state: BillingUiState, actions: BillingActions) {
+    val formatter = LocalMoneyFormatter.current
+    val account = state.account ?: return
+    val rules = state.loyaltyRules
+    InvisionCard(modifier = Modifier.fillMaxWidth().testTag("loyalty_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.loyalty_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.loyalty_balance, account.points, formatter.format(LoyaltyMath.valueOf(rules, account.points))),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("loyalty_balance"),
+            )
+            if (state.loyaltyMax > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    InvisionTextField(
+                        value = if (state.loyaltyPoints > 0) state.loyaltyPoints.toString() else "",
+                        onValueChange = { actions.onLoyaltyPointsChange(it) },
+                        label = stringResource(R.string.loyalty_field),
+                        error = if (state.check.loyaltyInvalid) stringResource(R.string.loyalty_invalid) else null,
+                        keyboardType = KeyboardType.Number,
+                        modifier = Modifier.weight(1f).testTag("loyalty_points"),
+                    )
+                    TextButton(onClick = actions::onUseAllLoyaltyPoints, modifier = Modifier.testTag("loyalty_use_all")) {
+                        Text(stringResource(R.string.loyalty_use_all))
+                    }
+                }
+                Text(
+                    stringResource(R.string.loyalty_max, state.loyaltyMax),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (account.points > 0) {
+                Text(
+                    stringResource(R.string.loyalty_none_usable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("loyalty_none_usable"),
+                )
+            }
+            if (state.loyaltyPoints > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.loyalty_using, state.loyaltyPoints, formatter.format(state.loyaltyDiscount)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("loyalty_using"),
+                    )
+                    TextButton(onClick = actions::onClearLoyaltyPoints, modifier = Modifier.testTag("loyalty_clear")) {
+                        Text(stringResource(R.string.loyalty_clear))
+                    }
+                }
             }
         }
     }

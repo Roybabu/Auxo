@@ -16,6 +16,7 @@ import com.invision.pos.data.local.toDomain
 import com.invision.pos.data.local.toEntity
 import com.invision.pos.domain.billing.InvoiceIntegrity
 import com.invision.pos.domain.billing.InvoiceNumbers
+import com.invision.pos.domain.loyalty.LoyaltyMath
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceSummary
 import com.invision.pos.domain.model.InvoiceType
@@ -33,6 +34,9 @@ import java.time.ZoneId
 
 /** Thrown inside a sale transaction when its customer account no longer exists. */
 private class CustomerMissingException : RuntimeException("Customer not found")
+
+/** Thrown inside a sale transaction when the loyalty points on the bill cannot be used. */
+private class LoyaltyUnavailableException : RuntimeException("Loyalty points cannot be used")
 
 class RoomBillingRepository(
     private val database: InvisionDatabase,
@@ -117,6 +121,7 @@ class RoomBillingRepository(
                         ),
                     )
                 }
+                recordLoyaltyForSale(invoice, invoiceId)
                 if (requestId != null) operations.setRequestResult(requestId, invoiceId)
                 SaleResult.Recorded(invoiceId, number)
             }
@@ -128,8 +133,59 @@ class RoomBillingRepository(
             SaleResult.CreditLimitExceeded
         } catch (e: CustomerMissingException) {
             SaleResult.CustomerMissing
+        } catch (e: LoyaltyUnavailableException) {
+            SaleResult.LoyaltyUnavailable
         }
     }
+
+    /**
+     * Points used on the sale come off the customer's balance, and the sale earns new ones, as ledger entries in
+     * the sale's own transaction. The earned points are worked out here from the saved rules and the invoice
+     * total, never taken from the caller. Any failure here undoes the whole sale.
+     */
+    private suspend fun recordLoyaltyForSale(invoice: Invoice, invoiceId: Long) {
+        val customerId = invoice.customerId
+        val redeemed = invoice.loyaltyPointsRedeemed
+        if (customerId == null) {
+            if (redeemed > 0) throw LoyaltyUnavailableException()
+            return
+        }
+        val rules = customers.getLoyalty().toRules()
+        if (redeemed > 0) {
+            if (customers.getCustomer(customerId) == null) throw CustomerMissingException()
+            val enough = rules.enabled && customers.pointsBalance(customerId) >= redeemed
+            // The discount on the invoice must cover what the points are worth, or the bill was altered.
+            if (!enough || LoyaltyMath.valueOf(rules, redeemed) > invoice.discountTotal) throw LoyaltyUnavailableException()
+            customers.insertEntry(pointsEntry(customerId, LedgerEntryType.POINTS_REDEEMED, -redeemed, invoiceId, invoice.createdAtMillis))
+        }
+        val earned = LoyaltyMath.earned(rules, invoice.grandTotal)
+        if (earned > 0 && customers.getCustomer(customerId) != null) {
+            customers.insertEntry(pointsEntry(customerId, LedgerEntryType.POINTS_EARNED, earned, invoiceId, invoice.createdAtMillis))
+        }
+    }
+
+    /** Takes back points earned on the returned sale, in proportion to what is being returned. */
+    private suspend fun reverseLoyaltyForReturn(saleId: Long, customerId: Long?, creditNoteId: Long, atMillis: Long) {
+        if (customerId == null) return
+        val earned = customers.pointsEarnedOn(saleId)
+        if (earned <= 0) return
+        val saleTotal = Money(dao.grandTotalOf(saleId) ?: return)
+        val credited = Money(dao.creditedTotal(saleId)) // includes the credit note just saved
+        val points = LoyaltyMath.reversal(earned, saleTotal, credited, customers.pointsReversedFor(saleId), customers.pointsBalance(customerId))
+        if (points > 0) customers.insertEntry(pointsEntry(customerId, LedgerEntryType.POINTS_REVERSED, -points, creditNoteId, atMillis))
+    }
+
+    private fun pointsEntry(customerId: Long, type: LedgerEntryType, points: Int, invoiceId: Long, atMillis: Long) = LedgerEntryEntity(
+        customerId = customerId,
+        type = type.name,
+        amountMinor = 0,
+        invoiceId = invoiceId,
+        method = null,
+        reference = null,
+        note = null,
+        createdAt = atMillis,
+        points = points,
+    )
 
     /** Ingredients needed by the dishes on [invoice] whose recipes deduct stock, per variant. */
     private suspend fun ingredientsFor(invoice: Invoice): Map<Long, Int> {
@@ -207,6 +263,7 @@ class RoomBillingRepository(
                         ),
                     )
                 }
+                reverseLoyaltyForReturn(saleId, customerId, creditNoteId, creditNote.createdAtMillis)
                 if (requestId != null) operations.setRequestResult(requestId, creditNoteId)
                 ReturnResult.Recorded(creditNoteId, number)
             }

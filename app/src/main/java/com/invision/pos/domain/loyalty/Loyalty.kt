@@ -24,6 +24,13 @@ data class LoyaltyRules(
     }
 }
 
+/** Points a customer is using on the bill being made, and what they take off. */
+data class LoyaltyRedemption(val points: Int, val amount: Money) {
+    init {
+        require(points > 0 && amount > Money.ZERO) { "A redemption needs points and a value" }
+    }
+}
+
 enum class LoyaltyRuleError { SPEND_REQUIRED, SPEND_INVALID, SPEND_OUT_OF_RANGE, VALUE_REQUIRED, VALUE_INVALID, VALUE_OUT_OF_RANGE, VALUE_ABOVE_SPEND }
 
 sealed interface LoyaltyRuleCheck {

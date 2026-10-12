@@ -21,6 +21,12 @@ sealed interface SaleResult {
 
     /** Nothing was saved: the customer account no longer exists. */
     data object CustomerMissing : SaleResult
+
+    /**
+     * Nothing was saved: the loyalty points on the bill cannot be used. Loyalty was switched off, the customer
+     * has fewer points than the bill uses, or the discount does not match the points.
+     */
+    data object LoyaltyUnavailable : SaleResult
 }
 
 sealed interface ReturnResult {

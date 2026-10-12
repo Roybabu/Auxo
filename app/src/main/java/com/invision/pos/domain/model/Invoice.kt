@@ -126,6 +126,11 @@ data class Invoice(
     val note: String? = null,
     /** Customer account the invoice belongs to, if any. */
     val customerId: Long? = null,
+    /**
+     * Loyalty points used on this sale. Their value is already inside [discountTotal]. Not stored on the
+     * invoice itself: the points are recorded on the customer's ledger when the sale is saved.
+     */
+    val loyaltyPointsRedeemed: Int = 0,
 ) {
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
     val itemCount: Int get() = lines.sumOf { it.quantity }
