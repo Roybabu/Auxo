@@ -227,6 +227,7 @@ class LocalAuthRepository(
     private val worker: CoroutineDispatcher = Dispatchers.Default,
     private val listener: AccountEventListener? = null,
     private val lockSettings: LockSettingsStore = InMemoryLockSettings(),
+    private val lockouts: LockoutStore = InMemoryLockoutStore(),
 ) : AuthRepository {
 
     private val gate = Mutex()
@@ -246,13 +247,25 @@ class LocalAuthRepository(
     // A code that has been shown but not yet confirmed. Kept in memory only, so closing the app discards it.
     private var pendingCode: String? = null
 
-    // Wrong recovery codes are counted apart from wrong passwords.
-    private var codeFailures = 0
-    private var codeLockedUntilMillis = 0L
+    // Wrong recovery codes are counted apart from wrong passwords. Both counters are kept in [lockouts], so they
+    // survive the app being closed. A saved time further away than the longest lock (the phone's clock was set
+    // back) counts as the longest lock.
+    private var codeFailures: Int
+        get() = lockouts.read(LockoutKind.RECOVERY_CODE).failures
+        set(value) = lockouts.write(LockoutKind.RECOVERY_CODE, lockouts.read(LockoutKind.RECOVERY_CODE).copy(failures = value))
+    private var codeLockedUntilMillis: Long
+        get() = lockouts.read(LockoutKind.RECOVERY_CODE).lockedUntilMillis.limited()
+        set(value) = lockouts.write(LockoutKind.RECOVERY_CODE, lockouts.read(LockoutKind.RECOVERY_CODE).copy(lockedUntilMillis = value))
 
-    // Failed sign-ins are counted in memory only; they slow down guessing, they are not a security boundary.
-    private var failures = 0
-    private var lockedUntilMillis = 0L
+    // Failed sign-ins slow down guessing; they are not a security boundary against someone who can read the phone's storage.
+    private var failures: Int
+        get() = lockouts.read(LockoutKind.PASSWORD).failures
+        set(value) = lockouts.write(LockoutKind.PASSWORD, lockouts.read(LockoutKind.PASSWORD).copy(failures = value))
+    private var lockedUntilMillis: Long
+        get() = lockouts.read(LockoutKind.PASSWORD).lockedUntilMillis.limited()
+        set(value) = lockouts.write(LockoutKind.PASSWORD, lockouts.read(LockoutKind.PASSWORD).copy(lockedUntilMillis = value))
+
+    private fun Long.limited(): Long = min(this, clock.millis() + MAX_LOCK_MILLIS)
 
     private fun initialState(): AuthState = when (store.read()) {
         StoredAccounts.Missing -> AuthState.NeedsSetup

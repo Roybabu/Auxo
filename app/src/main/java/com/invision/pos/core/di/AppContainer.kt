@@ -22,6 +22,7 @@ import com.invision.pos.data.security.AuthorizedStoreLogoRepository
 import com.invision.pos.core.auth.FileAccountStore
 import com.invision.pos.core.auth.LocalAuthRepository
 import com.invision.pos.core.auth.SharedPrefsLockSettings
+import com.invision.pos.core.auth.SharedPrefsLockoutStore
 import com.invision.pos.core.shop.FileStoreLogoRepository
 import com.invision.pos.core.shop.ShopPreferences
 import com.invision.pos.core.shop.StoreLogoRepository
@@ -91,6 +92,7 @@ class AppContainer(context: Context) {
             FileAccountStore(appContext.filesDir),
             clock = clock,
             lockSettings = SharedPrefsLockSettings(appContext),
+            lockouts = SharedPrefsLockoutStore(appContext),
             listener = AccountEventListener { event ->
                 // Best effort and off the caller's thread: the account change has already been saved.
                 background.launch { runCatching { auditTrail.record(event.toAuditDraft(), event.actor) } }
