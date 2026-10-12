@@ -18,16 +18,32 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 
 Money is stored in whole paise, never as decimals. A sale saves the invoice, payments, stock and customer account in a single transaction, so it either all happens or none of it does. Double taps can't save a bill twice. Thousands of random bills in the tests add up to the paisa.
 
-## Try it
+## Get started
 
-You need JDK 17+ and the Android SDK (Platform 37).
+**You need**
+- Git
+- JDK 17 or newer (Android Studio includes one)
+- Android Studio recent enough for Android Gradle Plugin 9.4
+- Android SDK Platform 37 and Build Tools 36.0.0 or newer (install from Android Studio's SDK Manager)
+- A phone (Android 8.0+) with USB debugging, or an emulator. Camera scanning needs Google Play services.
+- Internet on the first build, so Gradle can download itself and the libraries. The app itself needs none.
 
+**Clone and run**
+```bash
+git clone https://github.com/Roybabu/Invision.git
+cd Invision
+git checkout -b my-change          # work on your own branch
+```
+Open the folder in Android Studio, let it sync, pick a device and press Run. If you build from the command line, create `local.properties` with `sdk.dir=/path/to/Android/sdk` (Android Studio does this for you).
+
+**Build and test**
 ```bash
 ./gradlew assembleDebug             # APK in app/build/outputs/apk/debug/
 ./gradlew testDebugUnitTest         # unit, database and screen tests
 ./gradlew lintDebug                 # Android lint
 ./gradlew connectedDebugAndroidTest # device tests (phone or emulator)
 ```
+Before you commit, run `python3 .github/scripts/security_check.py` (the same secret and manifest check CI runs). If you change the database, bump the version, add a migration and its test, and commit the new file in `app/schemas`.
 
 Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.github/workflows/android-ci.yml`) builds, tests, lints and runs device tests on an emulator.
 
