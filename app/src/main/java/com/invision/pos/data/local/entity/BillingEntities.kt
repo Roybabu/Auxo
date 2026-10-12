@@ -145,6 +145,8 @@ data class StoreSettingsEntity(
     @ColumnInfo(name = "receipt_show_savings") val receiptShowSavings: Boolean,
     @ColumnInfo(name = "receipt_show_customer") val receiptShowCustomer: Boolean,
     @ColumnInfo(name = "receipt_show_barcode") val receiptShowBarcode: Boolean,
+    /** [com.invision.pos.domain.model.Language] tag the bill is printed in. Added in version 7; null means English. */
+    @ColumnInfo(name = "receipt_language") val receiptLanguage: String? = null,
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1

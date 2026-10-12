@@ -16,6 +16,7 @@ import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.PaymentRecord
+import com.invision.pos.domain.model.Language
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
 import com.invision.pos.domain.model.SellerDetails
@@ -191,6 +192,7 @@ fun StoreSettingsEntity.toDomain(): StoreSettings = StoreSettings(
         showSavings = receiptShowSavings,
         showCustomer = receiptShowCustomer,
         showInvoiceBarcode = receiptShowBarcode,
+        language = Language.fromTag(receiptLanguage) ?: Language.DEFAULT,
     ),
 )
 
@@ -214,4 +216,5 @@ fun StoreSettings.toEntity(): StoreSettingsEntity = StoreSettingsEntity(
     receiptShowSavings = receipt.showSavings,
     receiptShowCustomer = receipt.showCustomer,
     receiptShowBarcode = receipt.showInvoiceBarcode,
+    receiptLanguage = receipt.language.tag,
 )

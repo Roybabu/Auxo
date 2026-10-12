@@ -22,6 +22,11 @@ data class ReceiptOptions(
     val showSavings: Boolean = true,
     val showCustomer: Boolean = true,
     val showInvoiceBarcode: Boolean = true,
+    /**
+     * The language bills and credit notes are printed and shared in. It belongs to the shop, not to a phone, so
+     * every phone prints the same bill. Product and customer names are printed exactly as entered.
+     */
+    val language: Language = Language.DEFAULT,
 )
 
 data class StoreSettings(

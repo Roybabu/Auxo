@@ -305,12 +305,13 @@ class DatabaseMigrationTest {
     }
 
     /**
-     * A shop with a customer who owes money, opened from version 4. It goes 4 -> 5 (automatic) and 5 -> 6
-     * (by hand): every balance stays as it was, nobody holds points, and loyalty is off until the Super Admin
-     * switches it on. (Version 5's own schema file is not needed: the chain runs through it.)
+     * A shop with a customer who owes money, opened from version 4. It goes 4 -> 5 (automatic), then 5 -> 6 and
+     * 6 -> 7 (by hand): every balance stays as it was, nobody holds points, loyalty is off until the Super Admin
+     * switches it on, and bills keep printing in English. (Version 5's own schema file is not needed: the chain
+     * runs through it.)
      */
     @Test
-    fun migrate4To6_keepsBalances_startsWithNoPoints_andLoyaltyOff() = runTest {
+    fun migrate4To7_keepsBalances_startsWithNoPoints_loyaltyOff_andBillsInEnglish() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -346,5 +347,11 @@ class DatabaseMigrationTest {
         assertEquals(Money(30_000), customers.observeAccount(1).first()!!.balance)
         loyalty.saveRules(com.invision.pos.domain.loyalty.LoyaltyRules(true, Money(5_000), Money(50)))
         assertEquals(com.invision.pos.domain.loyalty.LoyaltyRules(true, Money(5_000), Money(50)), loyalty.getRules())
+
+        // The bill language: English until the shop chooses, then saved.
+        val settings = RoomSettingsRepository(db)
+        assertEquals(com.invision.pos.domain.model.Language.ENGLISH, settings.getSettings().receipt.language)
+        settings.saveSettings(TestData.settings.let { it.copy(receipt = it.receipt.copy(language = com.invision.pos.domain.model.Language.HINDI)) })
+        assertEquals(com.invision.pos.domain.model.Language.HINDI, settings.getSettings().receipt.language)
     }
 }

@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.domain.billing.InvoiceNumbers
 import com.invision.pos.domain.billing.SettingsField
+import com.invision.pos.domain.model.Language
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
 import com.invision.pos.domain.model.StoreSettings
@@ -276,6 +277,22 @@ fun BillingSettingsContent(
                         )
                     }
                 }
+                Text(stringResource(R.string.settings_bill_language), style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Language.entries.forEach { language ->
+                        FilterChip(
+                            selected = settings.receipt.language == language,
+                            onClick = { receipt { it.copy(language = language) } },
+                            label = { Text(language.nativeName) },
+                            modifier = Modifier.testTag("settings_bill_language_${language.tag}"),
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.settings_bill_language_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 InvisionTextField(
                     value = settings.receipt.footer,
                     onValueChange = { v -> receipt { it.copy(footer = v.take(140)) } },

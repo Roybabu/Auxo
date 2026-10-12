@@ -138,6 +138,7 @@ class AppContainer(context: Context) {
     val moneyFormatter: MoneyFormatter by lazy { MoneyFormatter() }
 
     val appearanceRepository: AppearanceRepository by lazy { SharedPrefsAppearanceRepository(appContext) }
+    val languageRepository: com.invision.pos.core.locale.LanguageRepository by lazy { com.invision.pos.core.locale.SharedPrefsLanguageRepository(appContext) }
 
     private val rawShopPreferences: ShopPreferences by lazy { SharedPrefsShopPreferences(appContext) }
 

@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.core.appearance.AppAccent
 import com.invision.pos.core.appearance.AppearanceSettings
+import com.invision.pos.domain.model.Language
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTopAppBar
 import com.invision.pos.ui.theme.AccentPalette
@@ -47,7 +48,26 @@ import com.invision.pos.viewmodel.AppearanceViewModel
 @Composable
 fun AppearanceScreen(onBack: () -> Unit, viewModel: AppearanceViewModel = viewModel(factory = AppearanceViewModel.Factory)) {
     val appearance by viewModel.settings.collectAsStateWithLifecycle()
-    AppearanceContent(appearance, onBack, viewModel::onAccentChange, viewModel::onDarkModeChange)
+    val language by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val activity = androidx.compose.ui.platform.LocalContext.current.findActivity()
+    AppearanceContent(
+        appearance,
+        onBack,
+        viewModel::onAccentChange,
+        viewModel::onDarkModeChange,
+        appLanguage = language,
+        onAppLanguageChange = { chosen ->
+            viewModel.onAppLanguageChange(chosen)
+            // The screens are rebuilt in the new language. The bill in progress is kept: it lives in the view model.
+            activity?.recreate()
+        },
+    )
+}
+
+private tailrec fun android.content.Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
@@ -56,6 +76,9 @@ fun AppearanceContent(
     onBack: () -> Unit,
     onAccentChange: (AppAccent) -> Unit,
     onDarkModeChange: (Boolean) -> Unit,
+    /** The language chosen for the app (null follows the phone). The language card shows only when [onAppLanguageChange] is given. */
+    appLanguage: Language? = null,
+    onAppLanguageChange: ((Language?) -> Unit)? = null,
 ) {
     Scaffold(
         topBar = { InvisionTopAppBar(title = stringResource(R.string.appearance_title), onBack = onBack) },
@@ -70,6 +93,9 @@ fun AppearanceContent(
                 .testTag("appearance_screen"),
         ) {
             AppearanceCard(appearance, onAccentChange, onDarkModeChange)
+            if (onAppLanguageChange != null) {
+                LanguageCard(appLanguage, onAppLanguageChange, modifier = Modifier.padding(top = Spacing.lg))
+            }
         }
     }
 }
@@ -122,6 +148,41 @@ internal fun AppearanceCard(
                 }
             }
         }
+    }
+}
+
+/** Which language the app's screens use: the phone's, or one chosen here. */
+@Composable
+internal fun LanguageCard(selected: Language?, onChange: (Language?) -> Unit, modifier: Modifier = Modifier) {
+    InvisionCard(modifier = modifier.fillMaxWidth().testTag("language_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.language_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            LanguageRow(stringResource(R.string.language_phone), selected == null, "language_phone") { onChange(null) }
+            Language.entries.forEach { language ->
+                LanguageRow(language.nativeName, selected == language, "language_${language.tag}") { onChange(language) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .testTag(tag)
+            .padding(vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        androidx.compose.material3.RadioButton(selected = selected, onClick = null)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
 

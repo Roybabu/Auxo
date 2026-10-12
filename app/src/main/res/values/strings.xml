@@ -512,6 +512,8 @@
     <string name="settings_paper_80">80 mm roll (78–80 mm)</string>
     <string name="settings_paper_a5">A5 sheet</string>
     <string name="settings_paper_a4">A4 sheet</string>
+    <string name="settings_bill_language">Bill language</string>
+    <string name="settings_bill_language_hint">The language bills and credit notes are printed and shared in, on every phone. Product and customer names are printed exactly as entered.</string>
     <string name="settings_footer">Receipt footer</string>
     <string name="settings_show_hsn">Show HSN and GST rate per item</string>
     <string name="settings_show_tax_breakup">Show GST summary</string>
@@ -542,6 +544,9 @@
     <string name="shop_restaurant_menu_body">Turn this on if you sell dishes. You can then add dishes and prices, and sell them from the billing page.</string>
     <string name="store_details_title">Store details</string>
     <string name="store_details_body">Name, address, GST, UPI, receipts and logo</string>
+    <string name="language_title">Language</string>
+    <string name="language_body">The language of the app\'s screens on this phone. Bills are printed in the bill language set in Shop settings.</string>
+    <string name="language_phone">Same as the phone</string>
     <string name="appearance_title">Appearance</string>
     <string name="appearance_row_body">Theme and app colors</string>
     <string name="store_logo_title">Store logo</string>

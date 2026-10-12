@@ -22,6 +22,11 @@ import kotlinx.coroutines.delay
 
 class MainActivity : FragmentActivity() {
 
+    /** Every screen reads its text through this context, so the chosen app language applies to all of them. */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.invision.pos.core.locale.LocaleContext.wrapForSaved(newBase))
+    }
+
     override fun onStart() {
         super.onStart()
         // Sign out anyone whose account was turned off or changed while the app was away.
