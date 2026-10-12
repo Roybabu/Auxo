@@ -1428,6 +1428,12 @@
     <string name="receipt_service_heading">পরিষেবা</string>
     <string name="receipt_dine_in_table">এখানে খাওয়া · টেবিল %1$s</string>
     <string name="receipt_takeaway">টেকওয়ে</string>
+    <string name="receipt_quotation">কোটেশন</string>
+    <string name="receipt_quote_no">কোটেশন নং: %1$s</string>
+    <string name="receipt_quotation_no">কোটেশন নম্বর</string>
+    <string name="receipt_valid_until">মেয়াদ: %1$s</string>
+    <string name="receipt_valid_until_heading">মেয়াদ</string>
+    <string name="receipt_not_tax_invoice">এটি কোটেশন, ট্যাক্স ইনভয়েস নয়। দাম ও স্টক বদলাতে পারে।</string>
     <string name="kot_title">কিচেন অর্ডার</string>
     <string name="kot_add_on">অতিরিক্ত আইটেম</string>
     <string name="kot_number">KOT: %1$s</string>
@@ -1489,5 +1495,32 @@
     <plurals name="order_kots">
         <item quantity="one">%d টি কিচেন টিকিট</item>
         <item quantity="other">%d টি কিচেন টিকিট</item>
+    </plurals>
+    <string name="quotes_icon">কোটেশন</string>
+    <string name="quotes_title">কোটেশন</string>
+    <string name="quotes_note">কোটেশন ট্যাক্স ইনভয়েস নয়। এতে স্টক কমে না এবং ইনভয়েস নম্বর লাগে না।</string>
+    <string name="quotes_save_heading">এই বিলটি কোটেশন হিসেবে সেভ করুন</string>
+    <string name="quotes_valid_for">মেয়াদ</string>
+    <string name="quotes_save">কোটেশন সেভ করুন</string>
+    <string name="quotes_empty">এখনও কোনো কোটেশন নেই।</string>
+    <string name="quotes_counter_busy">কোটেশন বিলে বদলানোর আগে বর্তমান বিল হোল্ড বা মুছে ফেলুন।</string>
+    <string name="quotes_valid_until">%1$s পর্যন্ত বৈধ</string>
+    <string name="quotes_expired">%1$s-এ মেয়াদ শেষ</string>
+    <string name="quotes_converted">বিলে বদলানো হয়েছে</string>
+    <string name="quotes_on_counter">এখন কাউন্টারে আছে</string>
+    <string name="quotes_convert">বিলে বদলান</string>
+    <string name="quotes_share">PDF শেয়ার করুন</string>
+    <string name="quotes_delete">মুছুন</string>
+    <string name="quotes_delete_title">এই কোটেশন মুছবেন?</string>
+    <string name="quotes_delete_body">%1$s মুছে ফেলা হবে। এটি ফেরানো যাবে না।</string>
+    <string name="billing_quote_saved">কোটেশন %1$s সেভ হয়েছে। স্টক থেকে কিছু কমেনি।</string>
+    <string name="billing_quote_loaded">কোটেশন %1$s আজকের দামে কাউন্টারে আছে।</string>
+    <string name="billing_quote_prices_changed">এগুলির দাম বা ট্যাক্স বদলেছে: %1$s</string>
+    <string name="billing_quote_unavailable">এই কোটেশন আর নেই।</string>
+    <string name="quotes_share_failed">কোটেশন শেয়ার করা যায়নি।</string>
+    <string name="quotes_share_title">কোটেশন শেয়ার করুন</string>
+    <plurals name="quotes_days">
+        <item quantity="one">%d দিন</item>
+        <item quantity="other">%d দিন</item>
     </plurals>
 </resources>

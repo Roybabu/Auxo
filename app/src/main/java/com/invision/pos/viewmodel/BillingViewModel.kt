@@ -34,6 +34,13 @@ import com.invision.pos.domain.billing.HeldBillSummary
 import com.invision.pos.domain.billing.KitchenOrders
 import com.invision.pos.domain.billing.KitchenTicket
 import com.invision.pos.domain.billing.PlaceOrderResult
+import com.invision.pos.data.repository.QuotationRepository
+import com.invision.pos.domain.billing.QuotationRepricing
+import com.invision.pos.domain.billing.QuotationStatus
+import com.invision.pos.domain.billing.QuotationSummary
+import com.invision.pos.domain.billing.Quotations
+import com.invision.pos.domain.billing.SaleBuilder
+import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.billing.ServiceType
 import com.invision.pos.data.repository.HeldBillRepository
 import com.invision.pos.domain.billing.DiscountPolicy
@@ -142,6 +149,12 @@ data class BillingUiState(
     /** Set after "Place order" is pressed with the service or table missing, to show what is needed. */
     val orderShowErrors: Boolean = false,
     val isPlacingOrder: Boolean = false,
+    /** Quotations, newest first. */
+    val quotations: List<QuotationSummary> = emptyList(),
+    /** True when the shop can make quotations at all. */
+    val canQuote: Boolean = false,
+    /** The quotation now on the counter, if the cart came from one. It is marked converted when the sale is saved. */
+    val convertingQuotationId: Long? = null,
 ) {
     val needsSetup: Boolean
         get() = settings != null && (settings.needsGstinSetup || (settings.gstRegistered && settings.stateCode.isEmpty()))
@@ -209,6 +222,18 @@ sealed interface BillingEvent {
 
     /** The parked bill was finished or discarded meanwhile, or cannot be read. */
     data object HeldBillUnavailable : BillingEvent
+
+    /** A quotation was saved under [number]. */
+    data class QuotationSaved(val number: String) : BillingEvent
+
+    /** A quotation was put on the counter at today's prices; [changed] names items whose price or tax rate moved. */
+    data class QuotationLoaded(val number: String, val changed: List<String>) : BillingEvent
+
+    /** The quotation was deleted, converted meanwhile, or cannot be read. */
+    data object QuotationUnavailable : BillingEvent
+
+    /** The quotation as a document, ready to share as a PDF. */
+    data class QuotationDocument(val invoice: Invoice) : BillingEvent
 }
 
 class BillingViewModel(
@@ -225,6 +250,8 @@ class BillingViewModel(
     private val canExceedDiscountLimit: () -> Boolean = { true },
     /** Where parked bills are kept; without it the Hold button is not offered. */
     private val heldBills: HeldBillRepository? = null,
+    /** Where quotations are kept; without it the quotation buttons are not offered. */
+    private val quotations: QuotationRepository? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState(restaurantMode = shop?.restaurantMenu?.value ?: false))
@@ -341,7 +368,14 @@ class BillingViewModel(
                     .collect { list -> _uiState.update { it.copy(heldBills = list, canHold = true) } }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob, heldJob)
+        val quotationJob = quotations?.let { repository ->
+            viewModelScope.launch {
+                repository.observeAll()
+                    .catch { _uiState.update { it.copy(quotations = emptyList()) } }
+                    .collect { list -> _uiState.update { it.copy(quotations = list, canQuote = true) } }
+            }
+        }
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob, heldJob, quotationJob)
     }
 
     // Search and adding items
@@ -594,6 +628,8 @@ class BillingViewModel(
                 heldBills = it.heldBills,
                 canHold = it.canHold,
                 restaurantMode = it.restaurantMode,
+                quotations = it.quotations,
+                canQuote = it.canQuote,
             )
         }
     }
@@ -647,6 +683,103 @@ class BillingViewModel(
                 PlaceOrderResult.NothingNew -> eventChannel.send(BillingEvent.NothingNewForKitchen)
                 null -> eventChannel.send(BillingEvent.SaveFailed)
             }
+        }
+    }
+
+    // Quotations
+
+    /**
+     * Saves the bill on the counter as a quotation valid for [validityDays], then clears the counter. A quotation
+     * takes nothing out of stock and uses no invoice number. A customer name is not required.
+     */
+    fun saveQuotation(validityDays: Int) {
+        val store = quotations ?: return
+        val state = _uiState.value
+        val settings = state.settings
+        if (state.cart.isEmpty || state.isSaving || settings == null) return
+        // Loyalty points are not kept on a quotation, so its total is worked out without them.
+        val cart = state.cart.copy(loyalty = null)
+        val total = BillCalculator.calculate(cart, settings.taxModeFor(cart)).grandTotal
+        viewModelScope.launch {
+            val saved = runCatching { store.save(cart, total, Quotations.validUntil(today, validityDays)) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            if (saved != null) {
+                clearCart()
+                eventChannel.send(BillingEvent.QuotationSaved(saved.number))
+                quotationInvoice(saved, cart, settings)?.let { eventChannel.send(BillingEvent.QuotationDocument(it)) }
+            } else {
+                eventChannel.send(BillingEvent.SaveFailed)
+            }
+        }
+    }
+
+    private fun quotationInvoice(summary: QuotationSummary, cart: Cart, settings: StoreSettings?): Invoice? {
+        settings ?: return null
+        val totals = BillCalculator.calculate(cart, settings.taxModeFor(cart))
+        return SaleBuilder.build(cart, totals, settings, emptyList(), summary.createdAtMillis)
+            .copy(number = summary.number, quotationValidUntil = summary.validUntil)
+    }
+
+    /** Sends a saved quotation to the share sheet as a PDF document. */
+    fun shareQuotation(id: Long) {
+        val store = quotations ?: return
+        val settings = _uiState.value.settings ?: return
+        viewModelScope.launch {
+            val quotation = runCatching { store.get(id) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            val invoice = quotation?.let { quotationInvoice(it.summary, it.cart, settings) }
+            eventChannel.send(if (invoice != null) BillingEvent.QuotationDocument(invoice) else BillingEvent.QuotationUnavailable)
+        }
+    }
+
+    /**
+     * Puts a quotation on the counter as a normal bill, in one step. Prices, tax rates and stock are looked up
+     * again now, so the bill follows today's shop prices and a line that is no longer in stock is flagged. Nothing
+     * is saved until the sale is paid; only then does the quotation count as converted. Only when the counter is
+     * empty, so nothing being typed is lost.
+     */
+    fun convertQuotation(id: Long) {
+        val store = quotations ?: return
+        val current = _uiState.value
+        if (!current.cart.isEmpty || current.convertingQuotationId == id) return
+        viewModelScope.launch {
+            val quotation = runCatching { store.get(id) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            if (quotation == null || quotation.summary.status != QuotationStatus.OPEN) {
+                eventChannel.send(BillingEvent.QuotationUnavailable)
+                return@launch
+            }
+            val repriced = QuotationRepricing.reprice(quotation.cart, products, allMenu)
+            val account = repriced.cart.customer.customerId?.let { cid -> accounts.firstOrNull { it.customer.id == cid } }
+            val customer = if (account == null) repriced.cart.customer.copy(customerId = null) else repriced.cart.customer
+            val cart = repriced.cart.copy(customer = customer)
+            cart.lines.filter { it.isCustom }.maxOfOrNull { CartLine.CUSTOM_KEY_BASE - it.variantId }?.let {
+                nextCustomKey = maxOf(nextCustomKey, it + 1)
+            }
+            saleRequestId = UUID.randomUUID().toString()
+            recalculate { state ->
+                state.copy(
+                    cart = syncStock(cart),
+                    lineDiscounts = cart.lines.mapNotNull { line -> line.discount?.let { line.variantId to inputFor(it) } }.toMap(),
+                    billDiscount = inputFor(cart.billDiscount),
+                    account = account,
+                    convertingQuotationId = id,
+                    customerExpanded = customer.name.isNotBlank() || customer.phone.isNotBlank(),
+                )
+            }
+            eventChannel.send(BillingEvent.QuotationLoaded(quotation.summary.number, repriced.changed))
+        }
+    }
+
+    /** Deletes a quotation. The screen asks first. */
+    fun deleteQuotation(id: Long) {
+        val store = quotations ?: return
+        viewModelScope.launch {
+            runCatching { store.delete(id) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            _uiState.update { if (it.convertingQuotationId == id) it.copy(convertingQuotationId = null) else it }
         }
     }
 
@@ -824,6 +957,8 @@ class BillingViewModel(
                 is CheckoutResult.Completed -> {
                     // The bill is finished, so its parked copy (if it was resumed) goes.
                     state.resumedHeldId?.let { held -> runCatching { heldBills?.discard(held) } }
+                    // A quotation that became this sale is marked used; saving the sale already settled everything else.
+                    state.convertingQuotationId?.let { id -> runCatching { quotations?.markConverted(id, result.invoiceId) } }
                     clearCart()
                     eventChannel.send(BillingEvent.Completed(result.invoiceId, result.number, result.change))
                 }
@@ -997,6 +1132,7 @@ class BillingViewModel(
                     loyalty = container.loyaltyRepository,
                     canExceedDiscountLimit = { container.authorizer.can(com.invision.pos.core.auth.Permission.UNLIMITED_DISCOUNT) },
                     heldBills = container.heldBillRepository,
+                    quotations = container.quotationRepository,
                 )
             }
         }

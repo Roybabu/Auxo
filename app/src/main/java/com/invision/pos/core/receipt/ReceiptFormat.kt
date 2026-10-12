@@ -39,10 +39,15 @@ val ReceiptPaper.isThermal: Boolean get() = spec.paperHeightMm == null
 internal object ReceiptText {
     private val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH)
 
+    private val DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH)
+
+    fun date(day: java.time.LocalDate): String = DATE.format(day)
+
     fun dateTime(epochMillis: Long, zone: ZoneId): String =
         DATE_TIME.format(Instant.ofEpochMilli(epochMillis).atZone(zone)).replace("am", "AM").replace("pm", "PM")
 
     fun title(invoice: Invoice, labels: ReceiptLabels): String = when {
+        invoice.isQuotation -> labels.quotation
         invoice.type == InvoiceType.RETURN -> labels.creditNote
         invoice.gstRegistered -> labels.taxInvoice
         else -> labels.billOfSupply

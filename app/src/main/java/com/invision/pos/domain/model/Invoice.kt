@@ -144,7 +144,13 @@ data class Invoice(
      * employee discount limit with it left out, because points are not a discount given at the counter.
      */
     val loyaltyDiscount: Money = Money.ZERO,
+    /**
+     * Set only on the document made from a quotation (never on a saved invoice): the last day its prices hold.
+     * Such a document is titled "Quotation", carries the quotation's number and is not a tax invoice.
+     */
+    val quotationValidUntil: java.time.LocalDate? = null,
 ) {
+    val isQuotation: Boolean get() = quotationValidUntil != null
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
     val itemCount: Int get() = lines.sumOf { it.quantity }
     val isFullyReturned: Boolean get() = type == InvoiceType.SALE && lines.all { it.returnableQuantity <= 0 }

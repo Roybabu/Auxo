@@ -91,6 +91,12 @@ data class ReceiptLabels(
     val serviceHeading: String = "Service",
     val dineInTable: String = "Dine-in · Table %1\$s",
     val takeaway: String = "Takeaway",
+    val quotation: String = "QUOTATION",
+    val quoteNo: String = "Quote No: %1\$s",
+    val quotationNo: String = "Quotation no.",
+    val validUntil: String = "Valid until: %1\$s",
+    val validUntilHeading: String = "Valid until",
+    val notTaxInvoice: String = "Quotation, not a tax invoice. Prices and stock may change.",
     /** Printed after the footer on bills; empty when there is none. */
     val thankYou: String = "",
 ) {
@@ -179,6 +185,12 @@ data class ReceiptLabels(
             serviceHeading = resources.getString(R.string.receipt_service_heading),
             dineInTable = resources.getString(R.string.receipt_dine_in_table),
             takeaway = resources.getString(R.string.receipt_takeaway),
+            quotation = resources.getString(R.string.receipt_quotation),
+            quoteNo = resources.getString(R.string.receipt_quote_no),
+            quotationNo = resources.getString(R.string.receipt_quotation_no),
+            validUntil = resources.getString(R.string.receipt_valid_until),
+            validUntilHeading = resources.getString(R.string.receipt_valid_until_heading),
+            notTaxInvoice = resources.getString(R.string.receipt_not_tax_invoice),
         )
 
         /** Every resource this wording reads, in the order of the fields; used to check each language is complete. */
@@ -260,6 +272,12 @@ data class ReceiptLabels(
             R.string.receipt_service_heading,
             R.string.receipt_dine_in_table,
             R.string.receipt_takeaway,
+            R.string.receipt_quotation,
+            R.string.receipt_quote_no,
+            R.string.receipt_quotation_no,
+            R.string.receipt_valid_until,
+            R.string.receipt_valid_until_heading,
+            R.string.receipt_not_tax_invoice,
         )
     }
 }

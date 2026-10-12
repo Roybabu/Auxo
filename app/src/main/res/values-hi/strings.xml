@@ -1428,6 +1428,12 @@
     <string name="receipt_service_heading">सेवा</string>
     <string name="receipt_dine_in_table">यहीं खाना · टेबल %1$s</string>
     <string name="receipt_takeaway">टेकअवे</string>
+    <string name="receipt_quotation">कोटेशन</string>
+    <string name="receipt_quote_no">कोटेशन नं: %1$s</string>
+    <string name="receipt_quotation_no">कोटेशन नंबर</string>
+    <string name="receipt_valid_until">मान्य तिथि: %1$s</string>
+    <string name="receipt_valid_until_heading">मान्य तिथि</string>
+    <string name="receipt_not_tax_invoice">यह कोटेशन है, टैक्स इनवॉइस नहीं। कीमत और स्टॉक बदल सकते हैं।</string>
     <string name="kot_title">किचन ऑर्डर</string>
     <string name="kot_add_on">अतिरिक्त आइटम</string>
     <string name="kot_number">KOT: %1$s</string>
@@ -1489,5 +1495,32 @@
     <plurals name="order_kots">
         <item quantity="one">%d किचन टिकट</item>
         <item quantity="other">%d किचन टिकट</item>
+    </plurals>
+    <string name="quotes_icon">कोटेशन</string>
+    <string name="quotes_title">कोटेशन</string>
+    <string name="quotes_note">कोटेशन टैक्स इनवॉइस नहीं है। इससे स्टॉक कम नहीं होता और इनवॉइस नंबर इस्तेमाल नहीं होता।</string>
+    <string name="quotes_save_heading">इस बिल को कोटेशन के रूप में सेव करें</string>
+    <string name="quotes_valid_for">मान्यता</string>
+    <string name="quotes_save">कोटेशन सेव करें</string>
+    <string name="quotes_empty">अभी कोई कोटेशन नहीं है।</string>
+    <string name="quotes_counter_busy">कोटेशन को बिल में बदलने से पहले मौजूदा बिल होल्ड या साफ़ करें।</string>
+    <string name="quotes_valid_until">%1$s तक मान्य</string>
+    <string name="quotes_expired">%1$s को समाप्त</string>
+    <string name="quotes_converted">बिल में बदला जा चुका है</string>
+    <string name="quotes_on_counter">अभी काउंटर पर है</string>
+    <string name="quotes_convert">बिल में बदलें</string>
+    <string name="quotes_share">PDF शेयर करें</string>
+    <string name="quotes_delete">हटाएँ</string>
+    <string name="quotes_delete_title">यह कोटेशन हटाएँ?</string>
+    <string name="quotes_delete_body">%1$s हटा दिया जाएगा। इसे वापस नहीं किया जा सकता।</string>
+    <string name="billing_quote_saved">कोटेशन %1$s सेव हो गया। स्टॉक से कुछ कम नहीं हुआ।</string>
+    <string name="billing_quote_loaded">कोटेशन %1$s आज की कीमतों पर काउंटर पर है।</string>
+    <string name="billing_quote_prices_changed">इनकी कीमत या टैक्स बदला: %1$s</string>
+    <string name="billing_quote_unavailable">यह कोटेशन अब उपलब्ध नहीं है।</string>
+    <string name="quotes_share_failed">कोटेशन शेयर नहीं हो सका।</string>
+    <string name="quotes_share_title">कोटेशन शेयर करें</string>
+    <plurals name="quotes_days">
+        <item quantity="one">%d दिन</item>
+        <item quantity="other">%d दिन</item>
     </plurals>
 </resources>

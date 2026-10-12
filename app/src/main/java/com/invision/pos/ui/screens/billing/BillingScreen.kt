@@ -104,6 +104,7 @@ import com.invision.pos.ui.theme.Spacing
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import com.invision.pos.core.receipt.KitchenTicketOutput
+import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.KotLabels
 import com.invision.pos.domain.billing.KitchenTicket
 import com.invision.pos.domain.model.Language
@@ -180,10 +181,12 @@ fun BillingScreen(
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var showHold by rememberSaveable { mutableStateOf(false) }
     var showHeld by rememberSaveable { mutableStateOf(false) }
+    var showQuotes by rememberSaveable { mutableStateOf(false) }
     // The ticket of the order just sent, until the cashier has printed or shared it (or chosen to skip).
     var placedTicket by remember { mutableStateOf<KitchenTicket?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val currentReceipt by rememberUpdatedState(uiState.settings?.receipt)
     // Adding a product or opening store settings are management jobs; an Employee only sees the message.
     val canManageSettings = can(Permission.MANAGE_SETTINGS)
     val canAddProduct = can(Permission.MANAGE_PRODUCTS)
@@ -224,6 +227,25 @@ fun BillingScreen(
                 BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
                 BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
                 is BillingEvent.OrderPlaced -> placedTicket = event.ticket
+                is BillingEvent.QuotationSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_quote_saved, event.number))
+                is BillingEvent.QuotationLoaded -> {
+                    showQuotes = false
+                    snackbarHostState.showSnackbar(
+                        if (event.changed.isEmpty()) {
+                            resources.getString(R.string.billing_quote_loaded, event.number)
+                        } else {
+                            resources.getString(R.string.billing_quote_loaded, event.number) + " " +
+                                resources.getString(R.string.billing_quote_prices_changed, event.changed.joinToString(", "))
+                        },
+                        duration = SnackbarDuration.Long,
+                    )
+                }
+                BillingEvent.QuotationUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_quote_unavailable))
+                is BillingEvent.QuotationDocument -> {
+                    val receipt = currentReceipt
+                    val shared = receipt != null && ReceiptOutput.share(context, event.invoice, receipt, resources.getString(R.string.quotes_share_title))
+                    if (!shared) snackbarHostState.showSnackbar(resources.getString(R.string.quotes_share_failed))
+                }
                 is BillingEvent.TableInUse -> snackbarHostState.showSnackbar(resources.getString(R.string.order_table_in_use, event.table), duration = SnackbarDuration.Long)
                 BillingEvent.NothingNewForKitchen -> snackbarHostState.showSnackbar(resources.getString(R.string.order_nothing_new))
             }
@@ -306,6 +328,9 @@ fun BillingScreen(
                                 }
                             }
                         }
+                        if (uiState.canQuote) {
+                            ActionIcon(R.drawable.ic_quote, stringResource(R.string.quotes_icon), { showQuotes = true }, Modifier.testTag("quotes_open"))
+                        }
                         if (!uiState.cart.isEmpty) {
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
@@ -372,6 +397,23 @@ fun BillingScreen(
                 viewModel.holdBill(label)
             },
             onDismiss = { showHold = false },
+        )
+    }
+    if (showQuotes) {
+        QuotationsDialog(
+            quotations = uiState.quotations,
+            canSave = !uiState.cart.isEmpty && uiState.convertingQuotationId == null,
+            counterIsEmpty = uiState.cart.isEmpty,
+            convertingId = uiState.convertingQuotationId,
+            today = remember(showQuotes) { LocalDate.now(BusinessTime.ZONE) },
+            onSave = { days ->
+                showQuotes = false
+                viewModel.saveQuotation(days)
+            },
+            onConvert = viewModel::convertQuotation,
+            onShare = viewModel::shareQuotation,
+            onDelete = viewModel::deleteQuotation,
+            onDismiss = { showQuotes = false },
         )
     }
     if (showHeld) {

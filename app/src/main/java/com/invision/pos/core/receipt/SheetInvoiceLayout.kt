@@ -76,8 +76,9 @@ object SheetInvoiceLayout {
             if (seller.gstin.isNotBlank()) add(fillIn(labels.gstin, seller.gstin))
         }
         val details = buildList {
-            add((if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
+            add((if (invoice.isQuotation) labels.quotationNo else if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
             add(labels.dateHeading to ReceiptText.dateTime(invoice.createdAtMillis, zone))
+            invoice.quotationValidUntil?.let { add(labels.validUntilHeading to ReceiptText.date(it)) }
             ReceiptText.serviceLine(invoice, labels)?.let { add(labels.serviceHeading to it) }
             invoice.originalInvoiceNumber?.let { add(labels.againstInvoice to it) }
         }
@@ -174,6 +175,7 @@ object SheetInvoiceLayout {
         }
 
         val notes = buildList {
+            if (invoice.isQuotation) add(labels.notTaxInvoice)
             invoice.note?.let { add(fillIn(labels.returnReason, it)) }
             invoice.discountReason?.let { add(fillIn(labels.discountReason, it)) }
             if (wide) {
@@ -209,7 +211,7 @@ object SheetInvoiceLayout {
             signatoryCaption = labels.authorisedSignatory,
             pageNumberTemplate = labels.pageOf,
             continuedLabel = labels.continued,
-            barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() },
+            barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() && !invoice.isQuotation },
             upiQr = options.upiLinkFor(invoice),
             upiCaption = fillIn(labels.scanToPay, IndianNumberFormat.rupees(invoice.grandTotal)),
         )

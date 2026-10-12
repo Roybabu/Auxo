@@ -86,8 +86,10 @@ object ThermalReceiptBuilder {
 
         // Invoice details
         center(ReceiptText.title(invoice, labels), bold = true)
-        left(fillIn(if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
+        invoice.quotationValidUntil?.let { center(labels.notTaxInvoice) }
+        left(fillIn(if (invoice.isQuotation) labels.quoteNo else if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
         left(fillIn(labels.date, ReceiptText.dateTime(invoice.createdAtMillis, zone)))
+        invoice.quotationValidUntil?.let { left(fillIn(labels.validUntil, ReceiptText.date(it))) }
         ReceiptText.serviceLine(invoice, labels)?.let { left(it) }
         invoice.originalInvoiceNumber?.let { left(fillIn(labels.against, it)) }
         if (options.showCustomer) {
@@ -167,7 +169,7 @@ object ThermalReceiptBuilder {
             out += ThermalElement.Gap
             out += ThermalElement.Qr(link, fillIn(labels.scanToPay, IndianNumberFormat.amount(invoice.grandTotal)))
         }
-        if (options.showInvoiceBarcode && invoice.number.isNotEmpty()) {
+        if (options.showInvoiceBarcode && invoice.number.isNotEmpty() && !invoice.isQuotation) {
             out += ThermalElement.Gap
             out += ThermalElement.Barcode(invoice.number)
         }

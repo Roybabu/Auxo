@@ -1428,6 +1428,12 @@ in %2$s</string>
     <string name="receipt_service_heading">Service</string>
     <string name="receipt_dine_in_table">Dine-in · Table %1$s</string>
     <string name="receipt_takeaway">Takeaway</string>
+    <string name="receipt_quotation">QUOTATION</string>
+    <string name="receipt_quote_no">Quote No: %1$s</string>
+    <string name="receipt_quotation_no">Quotation no.</string>
+    <string name="receipt_valid_until">Valid until: %1$s</string>
+    <string name="receipt_valid_until_heading">Valid until</string>
+    <string name="receipt_not_tax_invoice">Quotation, not a tax invoice. Prices and stock may change.</string>
     <string name="kot_title">KITCHEN ORDER</string>
     <string name="kot_add_on">ADD-ON ITEMS</string>
     <string name="kot_number">KOT: %1$s</string>
@@ -1489,5 +1495,32 @@ in %2$s</string>
     <plurals name="order_kots">
         <item quantity="one">%d kitchen ticket</item>
         <item quantity="other">%d kitchen tickets</item>
+    </plurals>
+    <string name="quotes_icon">Quotations</string>
+    <string name="quotes_title">Quotations</string>
+    <string name="quotes_note">A quotation is not a tax invoice. It takes nothing out of stock and uses no invoice number.</string>
+    <string name="quotes_save_heading">Save this bill as a quotation</string>
+    <string name="quotes_valid_for">Valid for</string>
+    <string name="quotes_save">Save quotation</string>
+    <string name="quotes_empty">No quotations yet.</string>
+    <string name="quotes_counter_busy">Hold or clear the current bill before converting a quotation.</string>
+    <string name="quotes_valid_until">Valid until %1$s</string>
+    <string name="quotes_expired">Expired on %1$s</string>
+    <string name="quotes_converted">Converted to a bill</string>
+    <string name="quotes_on_counter">On the counter now</string>
+    <string name="quotes_convert">Convert to bill</string>
+    <string name="quotes_share">Share PDF</string>
+    <string name="quotes_delete">Delete</string>
+    <string name="quotes_delete_title">Delete this quotation?</string>
+    <string name="quotes_delete_body">%1$s will be deleted. This cannot be undone.</string>
+    <string name="billing_quote_saved">Quotation %1$s saved. Nothing was taken out of stock.</string>
+    <string name="billing_quote_loaded">Quotation %1$s is on the counter at today\'s prices.</string>
+    <string name="billing_quote_prices_changed">Prices or tax updated for: %1$s</string>
+    <string name="billing_quote_unavailable">That quotation is no longer available.</string>
+    <string name="quotes_share_failed">Could not share the quotation.</string>
+    <string name="quotes_share_title">Share quotation</string>
+    <plurals name="quotes_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
     </plurals>
 </resources>

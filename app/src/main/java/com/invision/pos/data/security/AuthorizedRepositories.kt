@@ -513,3 +513,32 @@ class AuthorizedHeldBillRepository(
         return inner.placeOrder(cart, total, label, replacingId)
     }
 }
+
+/** Making and converting quotations is part of billing, so it needs the same permission as selling. */
+class AuthorizedQuotationRepository(
+    private val inner: com.invision.pos.data.repository.QuotationRepository,
+    private val auth: Authorizer,
+) : com.invision.pos.data.repository.QuotationRepository {
+    override fun observeAll(): Flow<List<com.invision.pos.domain.billing.QuotationSummary>> =
+        auth.guarded(Permission.SELL) { inner.observeAll() }
+
+    override suspend fun save(cart: com.invision.pos.domain.billing.Cart, total: Money, validUntil: java.time.LocalDate): com.invision.pos.domain.billing.QuotationSummary {
+        auth.require(Permission.SELL)
+        return inner.save(cart, total, validUntil)
+    }
+
+    override suspend fun get(id: Long): com.invision.pos.domain.billing.Quotation? {
+        auth.require(Permission.SELL)
+        return inner.get(id)
+    }
+
+    override suspend fun delete(id: Long) {
+        auth.require(Permission.SELL)
+        inner.delete(id)
+    }
+
+    override suspend fun markConverted(id: Long, invoiceId: Long): Boolean {
+        auth.require(Permission.SELL)
+        return inner.markConverted(id, invoiceId)
+    }
+}

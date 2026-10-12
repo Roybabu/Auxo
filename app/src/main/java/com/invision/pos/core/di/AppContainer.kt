@@ -120,6 +120,9 @@ class AppContainer(context: Context) {
     val heldBillRepository: com.invision.pos.data.repository.HeldBillRepository by lazy {
         com.invision.pos.data.security.AuthorizedHeldBillRepository(com.invision.pos.data.repository.RoomHeldBillRepository(database, clock), authorizer)
     }
+    val quotationRepository: com.invision.pos.data.repository.QuotationRepository by lazy {
+        com.invision.pos.data.security.AuthorizedQuotationRepository(com.invision.pos.data.repository.RoomQuotationRepository(database, clock), authorizer)
+    }
 
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 

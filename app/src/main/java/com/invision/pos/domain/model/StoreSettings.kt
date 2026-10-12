@@ -76,6 +76,6 @@ data class StoreSettings(
  * ID is missing or invalid, the document is a credit note (nothing to collect) or has no number yet.
  */
 fun ReceiptOptions.upiLinkFor(invoice: Invoice): String? {
-    if (!showUpiQr || invoice.type != InvoiceType.SALE || invoice.number.isBlank()) return null
+    if (!showUpiQr || invoice.type != InvoiceType.SALE || invoice.isQuotation || invoice.number.isBlank()) return null
     return com.invision.pos.domain.billing.Upi.billLink(upiId, upiPayeeName, shopName, invoice.grandTotal, invoice.number)
 }

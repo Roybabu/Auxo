@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To11_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsAndOpenOrdersWork() = runTest {
+    fun migrate4To12_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersAndQuotationsWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -400,6 +400,13 @@ class DatabaseMigrationTest {
         assertEquals("T2", held.observeHeld().first().first { it.id == order.orderId }.tableNumber)
         // The bill parked before is still just a parked bill.
         assertNull(held.observeHeld().first().first { it.id == id }.serviceType)
+        // Quotations: the table exists and starts empty; the first quotation is QT/..../00001 and moves no stock.
+        assertEquals(0, com.invision.pos.testutil.DataIntegrity.count(db, "quotations"))
+        val quotes = com.invision.pos.data.repository.RoomQuotationRepository(db, TestData.clock)
+        val quote = quotes.save(cart, Money(100_00), java.time.LocalDate.of(2026, 10, 25))
+        assertEquals("QT/26-27/00001", quote.number)
+        assertEquals(quote.number, quotes.get(quote.id)!!.summary.number)
+        assertEquals(0, com.invision.pos.testutil.DataIntegrity.count(db, "invoices"))
         for (table in listOf("held_bills", "invoices")) {
             val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
                 generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()

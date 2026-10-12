@@ -372,6 +372,29 @@ class PermissionEnforcementTest {
         denied(Permission.SELL) { nobody.observeHeld().first() }
     }
 
+    // Quotations belong to billing
+
+    @Test
+    fun quotations_needTheSellPermission() = runTest {
+        val shirt = savedShirt()
+        val cart = Cart(lines = listOf(CartLine.from(shirt, shirt.variants[0])))
+        val until = java.time.LocalDate.of(2026, 10, 25)
+        val room = com.invision.pos.data.repository.RoomQuotationRepository(database, TestData.clock)
+        val staff = com.invision.pos.data.security.AuthorizedQuotationRepository(room, FixedAuthorizer(Role.EMPLOYEE))
+        val saved = staff.save(cart, Money(499_00), until)
+        assertEquals(saved.number, staff.observeAll().first().single().number)
+        assertNotNull(staff.get(saved.id))
+        assertTrue(staff.markConverted(saved.id, 5))
+        staff.delete(saved.id)
+
+        val nobody = com.invision.pos.data.security.AuthorizedQuotationRepository(room, FixedAuthorizer(null))
+        denied(Permission.SELL) { nobody.save(cart, Money(499_00), until) }
+        denied(Permission.SELL) { nobody.get(1) }
+        denied(Permission.SELL) { nobody.delete(1) }
+        denied(Permission.SELL) { nobody.markConverted(1, 1) }
+        denied(Permission.SELL) { nobody.observeAll().first() }
+    }
+
     // Counting sales for "back up every N invoices"
 
     @Test
