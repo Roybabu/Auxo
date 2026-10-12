@@ -75,7 +75,7 @@ class GstReportTest {
         assertEquals(m("3800"), amountsOf(table.rows[0]).first())
         assertEquals(m("600"), amountsOf(table.rows[1]).first())
         assertEquals(m("3200"), amountsOf(table.totals!!).first())
-        assertEquals(m("3535"), amountsOf(table.totals!!).last())
+        assertEquals(m("3535"), amountsOf(table.totals).last())
     }
 
     @Test
@@ -84,7 +84,7 @@ class GstReportTest {
         assertEquals(3, listOf(table.rows[0], table.rows[1], table.totals!!).size)
         assertEquals(listOf(m("2200"), Money.ZERO, Money.ZERO, m("250"), m("250"), Money.ZERO, m("2450")), amountsOf(table.rows[0]))
         assertEquals(listOf(m("1000"), m("42.50"), m("42.50"), Money.ZERO, m("85"), Money.ZERO, m("1085")), amountsOf(table.rows[1]))
-        assertEquals(m("3535"), amountsOf(table.totals!!).last())
+        assertEquals(m("3535"), amountsOf(table.totals).last())
     }
 
     @Test
