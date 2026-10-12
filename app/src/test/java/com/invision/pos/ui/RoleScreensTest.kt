@@ -26,7 +26,9 @@ import com.invision.pos.ui.screens.home.EmployeeHomeContent
 import com.invision.pos.ui.screens.more.ActivityLogContent
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
+import com.invision.pos.ui.screens.more.LocalInlineForms
 import com.invision.pos.ui.screens.more.UserManagementScreen
+import androidx.compose.runtime.CompositionLocalProvider
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.ActivityLogUiState
 import com.invision.pos.viewmodel.ShopUiState
@@ -72,11 +74,11 @@ class RoleScreensTest {
         composeRule.onNodeWithTag("more_user_management").assertIsDisplayed()
         composeRule.onNodeWithTag("more_activity_log").assertIsDisplayed()
         composeRule.onNodeWithTag("more_shop_settings").assertIsDisplayed()
+        composeRule.onNodeWithTag("more_signed_in").assertIsDisplayed()
         composeRule.onNodeWithTag("more_list").performScrollToNode(hasText("Reports"))
         composeRule.onNodeWithText("Reports").assertIsDisplayed()
         composeRule.onNodeWithTag("more_list").performScrollToNode(hasText("Backup and restore"))
         composeRule.onNodeWithText("Backup and restore").assertIsDisplayed()
-        composeRule.onNodeWithTag("more_signed_in").assertIsDisplayed()
     }
 
     @Test
@@ -160,7 +162,11 @@ class RoleScreensTest {
             if (withEmployee) auth.createEmployee("Asha K", "asha.k", STAFF_PW, STAFF_PW)
         }
         composeRule.setContent {
-            InvisionTheme { UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth)) }
+            InvisionTheme {
+                CompositionLocalProvider(LocalInlineForms provides true) {
+                    UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth))
+                }
+            }
         }
         composeRule.waitUntil(5_000) { composeRule.onAllNodesWithTag("users_list").fetchSemanticsNodes().isNotEmpty() }
     }
@@ -249,7 +255,11 @@ class RoleScreensTest {
             auth.signOut()
             auth.signIn("asha.k", STAFF_PW)
         }
-        composeRule.setContent { InvisionTheme { UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth)) } }
+        composeRule.setContent { InvisionTheme {
+                CompositionLocalProvider(LocalInlineForms provides true) {
+                    UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth))
+                }
+            } }
         // The data layer refused to list anyone, so the screen shows an error and no accounts.
         composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("Something went wrong. Please try again.").fetchSemanticsNodes().isNotEmpty() }
         composeRule.onAllNodesWithTag("user_roy.babu").assertCountEquals(0)

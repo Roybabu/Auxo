@@ -1,6 +1,7 @@
 package com.invision.pos.ui.screens.more
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -215,7 +217,7 @@ private fun CreateEmployeeDialog(
     onDismiss: () -> Unit,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(
+    FormDialog(
         onDismissRequest = { if (!form.isSaving) onDismiss() },
         title = { Text(stringResource(R.string.users_add)) },
         text = {
@@ -293,7 +295,7 @@ private fun ResetPasswordDialog(
     onDismiss: () -> Unit,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(
+    FormDialog(
         onDismissRequest = { if (!form.isSaving) onDismiss() },
         title = { Text(stringResource(R.string.users_reset_title, form.user.name)) },
         text = {
@@ -341,4 +343,35 @@ private fun ResetPasswordDialog(
             TextButton(onClick = onDismiss, enabled = !form.isSaving) { Text(stringResource(R.string.action_cancel)) }
         },
     )
+}
+
+/**
+ * Tests set this so a form is drawn in the page instead of a dialog window, because a text field inside a
+ * dialog window never reports idle under Robolectric. Real use always shows a dialog.
+ */
+internal val LocalInlineForms = compositionLocalOf { false }
+
+@Composable
+private fun FormDialog(
+    onDismissRequest: () -> Unit,
+    title: @Composable () -> Unit,
+    text: @Composable () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable () -> Unit,
+) {
+    if (LocalInlineForms.current) {
+        Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(Spacing.lg)) {
+            title()
+            text()
+            Row { dismissButton(); confirmButton() }
+        }
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismissRequest,
+            title = title,
+            text = text,
+            confirmButton = confirmButton,
+            dismissButton = dismissButton,
+        )
+    }
 }

@@ -162,6 +162,7 @@ class RoleAccessFlowTest {
     fun theSuperAdmin_reachesUserManagement_fromMore() {
         SignIn.asSuperAdmin()
         showApp(Role.SUPER_ADMIN, "Test Owner")
+        composeRule.waitUntil(10_000) { composeRule.onAllNodesWithText("More").fetchSemanticsNodes().isNotEmpty() }
         composeRule.onAllNodesWithText("More").onFirst().performClick()
         waitForTag("more_user_management")
         composeRule.onNodeWithTag("more_user_management").performClick()
