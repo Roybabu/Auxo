@@ -6,7 +6,7 @@ Output: design/auxo/*.png and the Android drawables under app/src/main/res/drawa
 
 What it does to the pixels:
   * crops (the symbol, wordmark, tagline and colours are the original pixels);
-  * on white panels, turns the white background into transparency. Solid pixels keep their exact
+  * on the panels with a flat background (white, deep green, light grey), turns that background into transparency. Solid pixels keep their exact
     colour and stay fully opaque; only the anti-aliased edge pixels get partial transparency;
   * for the symbol on its own, keeps only the pixels that belong to the symbol, so the neighbouring
     wordmark letter is left out;
@@ -52,6 +52,24 @@ def to_alpha_on_white(rgb: np.ndarray) -> np.ndarray:
     alpha[ink < 10] = 0.0                       # the board has faint haze (up to 5) around the art
     out = np.where(solid[..., None], px, nearest)      # edge pixels take the colour of the artwork beside them
     return np.dstack([out, alpha * 255.0]).round().clip(0, 255).astype(np.uint8)
+
+
+def to_alpha_on_colour(rgb: np.ndarray, background: tuple, solid_distance: float, noise: float = 16) -> np.ndarray:
+    """Like to_alpha_on_white, for a panel with a flat background colour (deep green, light grey).
+    Pixels far from the background keep their exact colour; only the soft edge pixels become partly transparent."""
+    px = rgb.astype(float)
+    bg = np.array(background, float)
+    dist = np.linalg.norm(px - bg, axis=2)
+    solid = dist > solid_distance
+    _, (iy, ix) = ndi.distance_transform_edt(~solid, return_indices=True)
+    nearest = px[iy, ix]
+    span = nearest - bg
+    alpha = np.clip(((px - bg) * span).sum(axis=2) / np.maximum((span * span).sum(axis=2), 1e-6), 0, 1)
+    alpha[solid] = 1.0
+    alpha[dist < noise] = 0.0                          # compression noise in the flat background
+    out = np.dstack([np.where(solid[..., None], px, nearest), alpha * 255.0]).round().clip(0, 255).astype(np.uint8)
+    out[out[..., 3] == 0] = 0
+    return out
 
 
 def trim(rgba: np.ndarray, pad: int = 0) -> np.ndarray:
@@ -140,10 +158,9 @@ def main() -> None:
     save(horizontal, DESIGN / "auxo-logo-horizontal.png")
     save(horizontal, RES / "auxo_logo_horizontal.png")      # sign-in screens
     save(trim(to_alpha_on_white(crop(board, VERTICAL)), pad=12), DESIGN / "auxo-logo-vertical.png")
-    for name, box in (("auxo-logo-horizontal-dark.png", DARK), ("auxo-logo-mono.png", MONO)):
-        x0, y0, x1, y1 = box
-        panel = np.dstack([crop(board, box), np.full((y1 - y0, x1 - x0), 255, np.uint8)])
-        save(panel, DESIGN / name)
+    # The dark version has a white wordmark (for dark backgrounds); the grey one has a black wordmark (for light ones).
+    save(trim(to_alpha_on_colour(crop(board, DARK)[:, :-6], (8, 34, 29), 28), pad=12), DESIGN / "auxo-logo-horizontal-dark.png")
+    save(trim(to_alpha_on_colour(crop(board, MONO), (244, 244, 244), 22), pad=12), DESIGN / "auxo-logo-mono.png")
 
     symbol = symbol_only(board)
     save(symbol, DESIGN / "auxo-symbol.png")
