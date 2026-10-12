@@ -42,6 +42,7 @@ import com.invision.pos.R
 import com.invision.pos.core.export.FileExport
 import com.invision.pos.domain.billing.IndianStates
 import com.invision.pos.domain.customers.LedgerLine
+import com.invision.pos.domain.model.LedgerEntry
 import com.invision.pos.domain.model.Money
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.EmptyState
@@ -203,10 +204,27 @@ fun CustomerDetailContent(
                 StatTile(stringResource(R.string.customer_paid), formatter.format(state.paid), Modifier.weight(1f))
             }
         }
+        if (state.hasPoints) {
+            item(key = "points_balance") {
+                StatTile(
+                    stringResource(R.string.customer_points_balance),
+                    state.account.points.toString(),
+                    Modifier.fillMaxWidth().testTag("customer_points"),
+                )
+            }
+        }
         item(key = "tabs") {
             PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.customer_statement)) })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.customer_bills, state.invoices.size)) })
+                if (state.hasPoints) {
+                    Tab(
+                        selected = tab == 2,
+                        onClick = { tab = 2 },
+                        text = { Text(stringResource(R.string.customer_points_tab, state.pointsHistory.size)) },
+                        modifier = Modifier.testTag("customer_points_tab"),
+                    )
+                }
             }
         }
         if (tab == 0) {
@@ -220,6 +238,17 @@ fun CustomerDetailContent(
                                 if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                                 LedgerRow(line, onOpenInvoice)
                             }
+                        }
+                    }
+                }
+            }
+        } else if (tab == 2 && state.hasPoints) {
+            item(key = "points") {
+                InvisionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.testTag("customer_points_list")) {
+                        state.pointsHistory.forEachIndexed { index, entry ->
+                            if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            PointsRow(entry, onOpenInvoice)
                         }
                     }
                 }
@@ -244,6 +273,33 @@ private fun EmptyLine(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(vertical = Spacing.md),
     )
+}
+
+@Composable
+private fun PointsRow(entry: LedgerEntry, onOpenInvoice: (Long) -> Unit) {
+    val status = InvisionThemeExtras.statusColors
+    val gained = entry.points > 0
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(entry.invoiceId?.let { id -> Modifier.clickable { onOpenInvoice(id) } } ?: Modifier)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+            Text(stringResource(entry.type.labelRes()), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = listOfNotNull(DateFormats.dateTime(entry.createdAtMillis), entry.invoiceNumber, entry.note).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = if (gained) stringResource(R.string.customer_points_gained, entry.points) else stringResource(R.string.customer_points_used, -entry.points),
+            style = MaterialTheme.typography.titleSmall,
+            color = if (gained) status.success.accent else status.warning.content,
+        )
+    }
 }
 
 @Composable

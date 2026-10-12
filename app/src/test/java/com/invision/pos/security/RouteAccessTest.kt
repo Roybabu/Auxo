@@ -29,7 +29,7 @@ class RouteAccessTest {
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
-        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.RECOVERY_CODE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route,
+        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.LOYALTY, MoreRoutes.RECOVERY_CODE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route,
     )
 
     @Test
@@ -64,6 +64,14 @@ class RouteAccessTest {
         assertTrue(allowed(Role.SUPER_ADMIN, MoreRoutes.GST_REPORT))
         assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.GST_REPORT))
         assertFalse(openWith(*PermissionOptions.all.toTypedArray()).contains(MoreRoutes.GST_REPORT))
+    }
+
+    @Test
+    fun theLoyaltySettings_areSuperAdminOnly() {
+        assertEquals(Permission.MANAGE_LOYALTY, RouteAccess.permissionFor(MoreRoutes.LOYALTY))
+        assertTrue(allowed(Role.SUPER_ADMIN, MoreRoutes.LOYALTY))
+        assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.LOYALTY))
+        assertFalse(openWith(*PermissionOptions.all.toTypedArray()).contains(MoreRoutes.LOYALTY))
     }
 
     @Test
@@ -103,7 +111,7 @@ class RouteAccessTest {
     @Test
     fun givingEveryOption_stillLeavesUserManagementAndBackupToTheSuperAdmin() {
         val open = openWith(*PermissionOptions.all.toTypedArray())
-        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.RECOVERY_CODE - MoreRoutes.BACKUP - MoreRoutes.GST_REPORT, open)
+        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.RECOVERY_CODE - MoreRoutes.BACKUP - MoreRoutes.GST_REPORT - MoreRoutes.LOYALTY, open)
     }
 
     @Test

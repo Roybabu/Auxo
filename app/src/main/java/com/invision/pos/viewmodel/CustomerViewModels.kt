@@ -24,6 +24,7 @@ import com.invision.pos.domain.customers.LedgerLine
 import com.invision.pos.domain.model.Customer
 import com.invision.pos.domain.model.CustomerAccount
 import com.invision.pos.domain.model.InvoiceSummary
+import com.invision.pos.domain.model.LedgerEntry
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.reports.ReportCsv
@@ -134,7 +135,11 @@ sealed interface CustomerDetailUiState {
         /** Sales put on the account and payments received, all time. */
         val charged: Money,
         val paid: Money,
-    ) : CustomerDetailUiState
+        /** Loyalty point entries, newest first. Empty if the customer never had any. */
+        val pointsHistory: List<LedgerEntry> = emptyList(),
+    ) : CustomerDetailUiState {
+        val hasPoints: Boolean get() = pointsHistory.isNotEmpty()
+    }
 }
 
 sealed interface CustomerDetailEvent {
@@ -169,6 +174,7 @@ class CustomerDetailViewModel(
                         invoices = invoices,
                         charged = charged,
                         paid = paid,
+                        pointsHistory = Ledger.pointsHistory(ledger),
                     )
                 }
             }.catch<CustomerDetailUiState> { emit(CustomerDetailUiState.Failed) }

@@ -43,6 +43,7 @@ import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.AppearanceScreen
 import com.invision.pos.ui.screens.more.ShopSettingsScreen
 import com.invision.pos.ui.screens.more.StoreDetailsScreen
+import com.invision.pos.ui.screens.more.LoyaltySettingsScreen
 import com.invision.pos.ui.screens.more.QuickUnlockScreen
 import com.invision.pos.ui.screens.more.UserManagementScreen
 import com.invision.pos.ui.screens.auth.RecoveryCodeScreen
@@ -320,6 +321,7 @@ fun InvisionNavHost(
                         override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
                         override fun onOpenDayEnd() = navController.navigate(MoreRoutes.DAY_END)
                         override fun onOpenGstReport() = navController.navigate(MoreRoutes.GST_REPORT)
+                        override fun onOpenLoyalty() = navController.navigate(MoreRoutes.LOYALTY)
                         override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
                 )
@@ -342,6 +344,9 @@ fun InvisionNavHost(
             }
             guarded(navController, MoreRoutes.GST_REPORT) {
                 GstReportScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController, MoreRoutes.LOYALTY) {
+                LoyaltySettingsScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController, MoreRoutes.DAY_END) {
                 DayEndScreen(

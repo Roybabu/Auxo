@@ -54,6 +54,7 @@ object RouteAccess {
         MoreRoutes.RECOVERY_CODE to Permission.MANAGE_USERS,
         MoreRoutes.ACTIVITY_LOG to Permission.VIEW_ACTIVITY_LOG,
         MoreRoutes.GST_REPORT to Permission.GST_REPORT,
+        MoreRoutes.LOYALTY to Permission.MANAGE_LOYALTY,
         MoreRoutes.DAY_END to Permission.CLOSE_DAY,
         MoreRoutes.DAY_CLOSING to Permission.CLOSE_DAY,
     )

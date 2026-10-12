@@ -121,3 +121,9 @@ object LoyaltyPoints {
 
     fun usedTotal(entries: List<LedgerEntry>): Int = entries.filter { it.points < 0 }.sumOf { -it.points }
 }
+
+/** What a point gives back as a share of the spending that earned it, e.g. "1" or "0.5" (percent). */
+fun LoyaltyRules.returnPercentText(): String =
+    java.math.BigDecimal(pointValue.minorUnits).multiply(java.math.BigDecimal(100))
+        .divide(java.math.BigDecimal(spendPerPoint.minorUnits), 2, java.math.RoundingMode.HALF_UP)
+        .stripTrailingZeros().toPlainString()

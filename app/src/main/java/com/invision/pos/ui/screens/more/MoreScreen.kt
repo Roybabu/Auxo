@@ -53,6 +53,7 @@ interface MoreActions {
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
     fun onOpenGstReport() = Unit
+    fun onOpenLoyalty() = Unit
     fun onSignOut() = Unit
 }
 
@@ -84,7 +85,7 @@ fun MoreScreen(
                 modifier = Modifier.testTag("more_signed_in"),
             )
 
-            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG) || can(Permission.CLOSE_DAY) || can(Permission.GST_REPORT)) {
+            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG) || can(Permission.CLOSE_DAY) || can(Permission.GST_REPORT) || can(Permission.MANAGE_LOYALTY)) {
                 SectionHeader(stringResource(R.string.more_section_business), modifier = Modifier.padding(top = Spacing.sm))
             }
             if (can(Permission.MANAGE_SETTINGS)) {
@@ -103,6 +104,15 @@ fun MoreScreen(
                     stringResource(R.string.more_gst_body),
                     actions::onOpenGstReport,
                     modifier = Modifier.testTag("more_gst_report"),
+                )
+            }
+            if (can(Permission.MANAGE_LOYALTY)) {
+                MoreItem(
+                    R.drawable.ic_wallet,
+                    stringResource(R.string.loyalty_settings_title),
+                    stringResource(R.string.more_loyalty_body),
+                    actions::onOpenLoyalty,
+                    modifier = Modifier.testTag("more_loyalty"),
                 )
             }
             if (can(Permission.CLOSE_DAY)) {

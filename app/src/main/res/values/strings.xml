@@ -627,6 +627,10 @@
     <string name="ledger_points_earned">Points earned</string>
     <string name="ledger_points_redeemed">Points used</string>
     <string name="ledger_points_reversed">Points taken back</string>
+    <string name="customer_points_balance">Loyalty points</string>
+    <string name="customer_points_tab">Points (%1$d)</string>
+    <string name="customer_points_gained">+%1$d points</string>
+    <string name="customer_points_used">−%1$d points</string>
     <string name="account_payment_title">Receive payment</string>
     <string name="account_payment_due">Owes %1$s</string>
     <string name="account_payment_nothing_due">Nothing is due on this account.</string>
@@ -1307,6 +1311,20 @@ in %2$s</string>
     <string name="dayend_output_failed">Could not print or share the summary.</string>
     <!-- GST report -->
     <string name="gst_title">GST report</string>
+    <string name="loyalty_settings_title">Loyalty points</string>
+    <string name="more_loyalty_body">Let customers earn points and use them as a discount.</string>
+    <string name="loyalty_settings_intro">Customers with a saved account earn points on every bill. They can use their points as a discount on later bills. Loyalty is off until you switch it on.</string>
+    <string name="loyalty_settings_switch">Loyalty points</string>
+    <string name="loyalty_settings_on">On: customers earn and can use points</string>
+    <string name="loyalty_settings_off">Off: no points are earned or used</string>
+    <string name="loyalty_settings_spend">Spend for 1 point (₹)</string>
+    <string name="loyalty_settings_value">Value of 1 point (₹)</string>
+    <string name="loyalty_settings_example">Example: a %1$s bill earns %2$d points. %2$d points are worth %3$s off (%4$s%% back).</string>
+    <string name="loyalty_settings_rules_note">Changes apply to new bills only. Points already earned stay with the customer and are worth the new value. Points taken as a discount are not given back when goods are returned.</string>
+    <string name="loyalty_settings_saved">Saved</string>
+    <string name="loyalty_error_spend_range">Enter between ₹1 and ₹1,00,000</string>
+    <string name="loyalty_error_value_range">Enter between ₹0.01 and ₹1,000</string>
+    <string name="loyalty_error_value_above_spend">A point cannot be worth more than the spending that earns it</string>
     <string name="more_gst_body">Tax by rate, HSN summary and B2B / B2C for your accountant.</string>
     <string name="gst_mode_month">Month</string>
     <string name="gst_mode_range">Date range</string>
