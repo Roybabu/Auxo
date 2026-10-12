@@ -39,6 +39,9 @@ enum class AuditAction {
     MENU_ITEM_DELETED,
     SETTINGS_SAVED,
     BACKUP_CREATED,
+    AUTO_BACKUP_SAVED,
+    AUTO_BACKUP_FAILED,
+    AUTO_BACKUP_SETTINGS_CHANGED,
 }
 
 /** The record an action touched, as a short type name and an id. */

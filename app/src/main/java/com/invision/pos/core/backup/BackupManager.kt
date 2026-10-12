@@ -6,6 +6,8 @@ import com.invision.pos.core.appearance.AppAccent
 import com.invision.pos.core.appearance.AppearanceRepository
 import com.invision.pos.data.local.InvisionDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
@@ -42,6 +44,11 @@ class BackupManager(
     override fun lastBackupMillis(): Long? = prefs.getLong(KEY_LAST_BACKUP, 0L).takeIf { it > 0 }
 
     override suspend fun backUp(): SavedBackup = withContext(Dispatchers.IO) {
+        // A manual and an automatic backup share one working folder, so only one may run at a time.
+        BACKUP_LOCK.withLock { makeBackup() }
+    }
+
+    private fun makeBackup(): SavedBackup {
         val work = workDir()
         try {
             val snapshot = File(work, BackupArchive.DATABASE_ENTRY)
@@ -67,7 +74,7 @@ class BackupManager(
                 )
             }
             prefs.edit().putLong(KEY_LAST_BACKUP, now).apply()
-            saved
+            return saved
         } finally {
             work.deleteRecursively()
         }
@@ -144,6 +151,7 @@ class BackupManager(
     }
 
     companion object {
+        private val BACKUP_LOCK = Mutex()
         private const val PREFS = "backup"
         private const val KEY_LAST_BACKUP = "last_backup_millis"
         const val PREF_ACCENT = "accent"

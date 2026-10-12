@@ -22,6 +22,8 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // Sign out anyone whose account was turned off or changed while the app was away.
         (application as InvisionApplication).container.authRepository.revalidate()
+        // Make any automatic backup that came due while the app was closed.
+        (application as InvisionApplication).container.checkAutoBackup()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

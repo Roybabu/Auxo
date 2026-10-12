@@ -348,4 +348,29 @@ class PermissionEnforcementTest {
         assertTrue(everything.can(Permission.RECEIVE_GOODS))
         assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE), Permission.entries.filterNot { everything.can(it) }.toSet())
     }
+
+    // Counting sales for "back up every N invoices"
+
+    @Test
+    fun aRecordedSale_isCountedOnce_andARefusedOneNotAtAll() = runTest {
+        val shirt = savedShirt()
+        var counted = 0
+        val staff = FixedAuthorizer(Role.EMPLOYEE)
+        val billing = AuthorizedBillingRepository(RoomBillingRepository(database) { ZoneOffset.UTC }, staff, trailFor(staff), onSaleRecorded = { counted++ })
+        billing.recordSale(saleOf(shirt), "INV")
+        assertEquals(1, counted)
+
+        val nobody = FixedAuthorizer(null)
+        val locked = AuthorizedBillingRepository(RoomBillingRepository(database) { ZoneOffset.UTC }, nobody, trailFor(nobody), onSaleRecorded = { counted++ })
+        denied(Permission.SELL) { locked.recordSale(saleOf(shirt), "INV") }
+        assertEquals(1, counted)
+    }
+
+    @Test
+    fun aCounterThatFails_neverStopsASaleBeingRecorded() = runTest {
+        val shirt = savedShirt()
+        val staff = FixedAuthorizer(Role.EMPLOYEE)
+        val billing = AuthorizedBillingRepository(RoomBillingRepository(database) { ZoneOffset.UTC }, staff, trailFor(staff), onSaleRecorded = { error("counter broke") })
+        assertTrue(billing.recordSale(saleOf(shirt), "INV") is SaleResult.Recorded)
+    }
 }

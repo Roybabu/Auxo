@@ -55,7 +55,13 @@ private fun <T> Authorizer.guarded(permission: Permission, source: () -> Flow<T>
     source().collect { emit(it) }
 }
 
-class AuthorizedBillingRepository(private val inner: BillingRepository, private val auth: Authorizer, private val audit: AuditTrail) : BillingRepository {
+class AuthorizedBillingRepository(
+    private val inner: BillingRepository,
+    private val auth: Authorizer,
+    private val audit: AuditTrail,
+    /** Told after a sale has been saved, for "back up every N invoices". It must not throw. */
+    private val onSaleRecorded: () -> Unit = {},
+) : BillingRepository {
     override fun observeInvoice(invoiceId: Long): Flow<Invoice?> = auth.guarded(Permission.VIEW_INVOICES) { inner.observeInvoice(invoiceId) }
 
     override suspend fun getInvoice(invoiceId: Long): Invoice? {
@@ -77,11 +83,13 @@ class AuthorizedBillingRepository(private val inner: BillingRepository, private 
 
     override suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String?): SaleResult {
         auth.require(Permission.SELL)
-        return audit.recording({ inner.recordSale(invoice, invoicePrefix, requestId) }) { result ->
-            (result as? SaleResult.Recorded)?.let {
+        val result = audit.recording({ inner.recordSale(invoice, invoicePrefix, requestId) }) { saleResult ->
+            (saleResult as? SaleResult.Recorded)?.let {
                 AuditDraft(AuditAction.SALE_RECORDED, AuditEntity.INVOICE, it.invoiceId, "Sale ${it.number}, total ${invoice.grandTotal.toDecimalString()}")
             }
         }
+        if (result is SaleResult.Recorded) runCatching { onSaleRecorded() }
+        return result
     }
 
     override suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice> {

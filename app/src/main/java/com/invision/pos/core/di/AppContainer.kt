@@ -26,6 +26,17 @@ import com.invision.pos.core.shop.ShopPreferences
 import com.invision.pos.core.shop.StoreLogoRepository
 import com.invision.pos.core.shop.SharedPrefsShopPreferences
 import com.invision.pos.core.appearance.SharedPrefsAppearanceRepository
+import android.net.Uri
+import com.invision.pos.core.auth.Role
+import com.invision.pos.core.auth.SessionUser
+import com.invision.pos.core.backup.auto.AutoBackupRunner
+import com.invision.pos.core.backup.auto.AutoBackupScheduler
+import com.invision.pos.core.backup.auto.AutoBackupSettingsStore
+import com.invision.pos.core.backup.auto.DocumentTreeFolder
+import com.invision.pos.core.backup.auto.SharedPrefsAutoBackupStore
+import com.invision.pos.core.backup.auto.WorkManagerAutoBackupScheduler
+import com.invision.pos.data.security.AuthorizedAutoBackupService
+import com.invision.pos.data.security.AutoBackupService
 import com.invision.pos.core.backup.BackupManager
 import com.invision.pos.core.backup.BackupService
 import com.invision.pos.core.backup.DocumentsBackupStorage
@@ -93,7 +104,13 @@ class AppContainer(context: Context) {
     // Every repository the screens use is wrapped, so the checks sit below the screens and view models.
     val inventoryRepository: InventoryRepository by lazy { AuthorizedInventoryRepository(RoomInventoryRepository(database, clock), authorizer, auditTrail) }
 
-    val billingRepository: BillingRepository by lazy { AuthorizedBillingRepository(RoomBillingRepository(database), authorizer, auditTrail) }
+    val billingRepository: BillingRepository by lazy { AuthorizedBillingRepository(RoomBillingRepository(database), authorizer, auditTrail, onSaleRecorded = { onSaleRecorded() }) }
+
+    /** A finished sale counts towards "back up every N invoices", and may make that backup due. */
+    private fun onSaleRecorded() {
+        autoBackupRunner.onInvoiceRecorded()
+        if (autoBackupRunner.isDueNow()) background.launch { runCatching { autoBackupRunner.runIfDue() } }
+    }
 
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
@@ -121,6 +138,32 @@ class AppContainer(context: Context) {
             authorizer,
             auditTrail,
         )
+    }
+
+    val autoBackupSettings: AutoBackupSettingsStore by lazy { SharedPrefsAutoBackupStore(appContext) }
+
+    val autoBackupScheduler: AutoBackupScheduler by lazy { WorkManagerAutoBackupScheduler(appContext) }
+
+    /** Makes the scheduled backups. It acts for the app itself, so it needs nobody signed in. */
+    val autoBackupRunner: AutoBackupRunner by lazy {
+        val system = SessionUser(0L, "Automatic backup", Role.SUPER_ADMIN, emptySet())
+        AutoBackupRunner(
+            store = autoBackupSettings,
+            folderFor = { uri -> DocumentTreeFolder(appContext, Uri.parse(uri)) },
+            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences).backUp() },
+            clock = clock,
+            log = { draft -> auditTrail.record(draft, system) },
+        )
+    }
+
+    val autoBackupService: AutoBackupService by lazy {
+        AuthorizedAutoBackupService(autoBackupSettings, autoBackupRunner, autoBackupScheduler, authorizer, auditTrail, background)
+    }
+
+    /** Called when the app opens: catches up on a backup that came due while the phone was off or the app closed. */
+    fun checkAutoBackup() {
+        autoBackupScheduler.sync(autoBackupSettings.settings.value.isActive)
+        background.launch { runCatching { autoBackupRunner.runIfDue() } }
     }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {
