@@ -73,6 +73,7 @@ object MoreRoutes {
     const val ACTIVITY_LOG = "$PREFIX/activity"
     const val ARG_CLOSING_ID = "closingId"
     const val DAY_END = "$PREFIX/day-end"
+    const val GST_REPORT = "$PREFIX/gst-report"
     const val DAY_CLOSING = "$PREFIX/day-end/{$ARG_CLOSING_ID}"
 
     fun dayClosing(closingId: Long): String = "$PREFIX/day-end/$closingId"

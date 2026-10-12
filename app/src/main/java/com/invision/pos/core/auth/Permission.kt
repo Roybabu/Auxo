@@ -25,6 +25,9 @@ enum class Permission {
     VIEW_FINANCIALS,
     VIEW_REPORTS,
 
+    /** The GST report and its Excel/CSV export for the accountant. Super Admin only: it cannot be given to an employee. */
+    GST_REPORT,
+
     /** Sales today, stock value and insights on Home. */
     VIEW_DASHBOARD,
 

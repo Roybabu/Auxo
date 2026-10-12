@@ -405,3 +405,18 @@ class AuthorizedDayEndRepository(
         }
     }
 }
+
+/**
+ * Builds the GST report for the Super Admin. It reads saved invoices and credit notes through [billing] and
+ * refuses anyone who does not hold [Permission.GST_REPORT], which no employee can be given.
+ */
+class GstReportService(
+    private val billing: BillingRepository,
+    private val auth: Authorizer,
+) {
+    suspend fun report(period: com.invision.pos.domain.reports.ReportPeriod, zone: java.time.ZoneId): com.invision.pos.domain.gst.GstReport {
+        auth.require(Permission.GST_REPORT)
+        val (from, to) = period.bounds(zone)
+        return com.invision.pos.domain.gst.GstReportBuilder.build(billing.invoicesBetween(from, to), period, zone)
+    }
+}

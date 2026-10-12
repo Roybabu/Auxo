@@ -118,6 +118,10 @@ class AppContainer(context: Context) {
 
     val customerRepository: CustomerRepository by lazy { AuthorizedCustomerRepository(RoomCustomerRepository(database, clock), authorizer, auditTrail) }
 
+    val gstReportService: com.invision.pos.data.security.GstReportService by lazy {
+        com.invision.pos.data.security.GstReportService(billingRepository, authorizer)
+    }
+
     val dayEndRepository: com.invision.pos.data.repository.DayEndRepository by lazy {
         com.invision.pos.data.security.AuthorizedDayEndRepository(com.invision.pos.data.repository.RoomDayEndRepository(database, clock), authorizer, auditTrail)
     }

@@ -29,7 +29,7 @@ class RouteAccessTest {
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
-        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, TopLevelDestination.HOME.route,
+        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, TopLevelDestination.HOME.route,
     )
 
     @Test
@@ -59,6 +59,14 @@ class RouteAccessTest {
     }
 
     @Test
+    fun theGstReport_isSuperAdminOnly() {
+        assertEquals(Permission.GST_REPORT, RouteAccess.permissionFor(MoreRoutes.GST_REPORT))
+        assertTrue(allowed(Role.SUPER_ADMIN, MoreRoutes.GST_REPORT))
+        assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.GST_REPORT))
+        assertFalse(openWith(*PermissionOptions.all.toTypedArray()).contains(MoreRoutes.GST_REPORT))
+    }
+
+    @Test
     fun aPageNobodyListed_isSuperAdminOnly() {
         assertEquals(Permission.MANAGE_USERS, RouteAccess.permissionFor("some/new/page"))
         assertFalse(allowed(Role.EMPLOYEE, "some/new/page"))
@@ -81,7 +89,7 @@ class RouteAccessTest {
     @Test
     fun givingEveryOption_stillLeavesUserManagementAndBackupToTheSuperAdmin() {
         val open = openWith(*PermissionOptions.all.toTypedArray())
-        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.BACKUP, open)
+        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.BACKUP - MoreRoutes.GST_REPORT, open)
     }
 
     @Test

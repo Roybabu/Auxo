@@ -74,6 +74,24 @@ object FileExport {
         }
     }
 
+    /** Like [share], for a binary file such as a spreadsheet workbook. */
+    suspend fun shareBytes(context: Context, fileName: String, bytes: ByteArray, mimeType: String, chooserTitle: String): Boolean {
+        val file = runCatching {
+            withContext(Dispatchers.IO) {
+                val dir = File(context.cacheDir, EXPORT_DIR).apply { mkdirs() }
+                File(dir, safeFileName(fileName)).also { it.writeBytes(bytes) }
+            }
+        }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: return false
+        return try {
+            context.startActivity(shareIntent(context, file, mimeType, chooserTitle))
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        } catch (e: IllegalArgumentException) {
+            false
+        }
+    }
+
     /** Opens the share sheet with plain text, such as a purchase order for WhatsApp or SMS. */
     fun shareText(context: Context, subject: String, text: String, chooserTitle: String): Boolean {
         val send = Intent(Intent.ACTION_SEND).apply {

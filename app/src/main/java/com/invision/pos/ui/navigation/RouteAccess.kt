@@ -50,6 +50,7 @@ object RouteAccess {
         MoreRoutes.STORE_DETAILS to Permission.MANAGE_SETTINGS,
         MoreRoutes.USER_MANAGEMENT to Permission.MANAGE_USERS,
         MoreRoutes.ACTIVITY_LOG to Permission.VIEW_ACTIVITY_LOG,
+        MoreRoutes.GST_REPORT to Permission.GST_REPORT,
         MoreRoutes.DAY_END to Permission.CLOSE_DAY,
         MoreRoutes.DAY_CLOSING to Permission.CLOSE_DAY,
     )

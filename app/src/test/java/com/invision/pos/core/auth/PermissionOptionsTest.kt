@@ -13,12 +13,13 @@ class PermissionOptionsTest {
         assertFalse(Permission.VIEW_INVOICES in PermissionOptions.all)
         assertFalse(Permission.MANAGE_USERS in PermissionOptions.all)
         assertFalse(Permission.BACKUP_AND_RESTORE in PermissionOptions.all)
+        assertFalse(Permission.GST_REPORT in PermissionOptions.all)
         assertEquals(PermissionOptions.all.size, PermissionOptions.all.toSet().size)
     }
 
     @Test
     fun everyPermission_isEitherAnOption_aBasic_orSuperAdminOnly() {
-        val accounted = PermissionOptions.all.toSet() + RolePermissions.BASE + setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE)
+        val accounted = PermissionOptions.all.toSet() + RolePermissions.BASE + setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT)
         assertEquals(Permission.entries.toSet(), accounted)
     }
 
