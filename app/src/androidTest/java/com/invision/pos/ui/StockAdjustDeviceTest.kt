@@ -33,7 +33,10 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class StockAdjustDeviceTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val signedIn = com.invision.pos.SignedInRule()
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private val app: InvisionApplication = ApplicationProvider.getApplicationContext()

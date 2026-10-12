@@ -74,3 +74,29 @@ object DeviceFixtures {
         return built.copy(id = 7, number = "INV/26-27/00007", lines = built.lines.mapIndexed { i, l -> l.copy(id = 100L + i) })
     }
 }
+
+/**
+ * The app opens to Admin Setup or Login, so a device test that drives the real MainActivity signs in first:
+ * it creates the administrator when the device has none, or signs in when one already exists.
+ * Declare it with a lower order than the compose rule so it runs before the activity launches.
+ */
+class SignedInRule : org.junit.rules.ExternalResource() {
+    override fun before() {
+        val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<InvisionApplication>()
+        val auth = app.container.authRepository
+        kotlinx.coroutines.runBlocking {
+            when (auth.state.value) {
+                com.invision.pos.core.auth.AuthState.NeedsSetup ->
+                    auth.createAdministrator("Device Admin", USERNAME, PASSWORD, PASSWORD)
+                com.invision.pos.core.auth.AuthState.SignedOut -> auth.signIn(USERNAME, PASSWORD)
+                else -> Unit
+            }
+        }
+        check(auth.state.value is com.invision.pos.core.auth.AuthState.SignedIn) { "Could not sign in for the device test" }
+    }
+
+    companion object {
+        const val USERNAME = "deviceadmin"
+        const val PASSWORD = "DevicePass1!"
+    }
+}

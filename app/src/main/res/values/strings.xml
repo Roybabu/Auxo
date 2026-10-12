@@ -972,4 +972,45 @@ in %2$s</string>
         <item quantity="one">%d bill</item>
         <item quantity="other">%d bills</item>
     </plurals>
+
+    <!-- Administrator setup and sign-in -->
+    <string name="auth_tagline">Billing and inventory for your shop</string>
+    <string name="auth_setup_title">Set up your administrator</string>
+    <string name="auth_setup_body">Create the one administrator account for this device. You will use it to sign in each time the app opens. It is stored only on this device.</string>
+    <string name="auth_field_name">Your name</string>
+    <string name="auth_field_identifier">Username or email</string>
+    <string name="auth_field_identifier_hint">Letters, numbers, dot, dash or underscore, or an email address</string>
+    <string name="auth_field_password">Password</string>
+    <string name="auth_field_password_hint">At least 8 characters, with a letter and a number</string>
+    <string name="auth_field_confirm">Confirm password</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
+    <string name="auth_setup_action">Create administrator</string>
+    <string name="auth_setup_working">Creating…</string>
+    <string name="auth_setup_failed">The account could not be saved. Check that the device has free storage and try again.</string>
+    <string name="auth_setup_notice">There is no way to recover this password, so keep it somewhere safe.</string>
+    <string name="auth_error_name_required">Enter your name.</string>
+    <string name="auth_error_name_too_long">Use 60 characters or fewer.</string>
+    <string name="auth_error_identifier_required">Enter a username or email address.</string>
+    <string name="auth_error_identifier_invalid">Use 3 to 32 letters, numbers, dots, dashes or underscores, or a valid email address.</string>
+    <string name="auth_error_password_required">Enter a password.</string>
+    <string name="auth_error_password_short">Use at least 8 characters.</string>
+    <string name="auth_error_password_long">Use 128 characters or fewer.</string>
+    <string name="auth_error_password_mix">Include at least one letter and one number.</string>
+    <string name="auth_error_password_common">That password is too easy to guess. Choose another.</string>
+    <string name="auth_error_password_identifier">The password must not contain your username or email name.</string>
+    <string name="auth_error_confirm_required">Enter the password again.</string>
+    <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
+    <string name="auth_login_title">Sign in</string>
+    <string name="auth_login_welcome">Welcome back</string>
+    <string name="auth_login_action">Sign in</string>
+    <string name="auth_login_working">Signing in…</string>
+    <string name="auth_login_rejected">Incorrect username or password.</string>
+    <string name="auth_login_unavailable">Sign-in is not available right now. Close the app and open it again.</string>
+    <plurals name="auth_login_locked">
+        <item quantity="one">Too many attempts. Try again in %d second.</item>
+        <item quantity="other">Too many attempts. Try again in %d seconds.</item>
+    </plurals>
+    <string name="auth_unreadable_title">Administrator account unreadable</string>
+    <string name="auth_unreadable_body">The saved administrator account could not be read, so the app cannot open. For safety, it will not offer to create a new one. Close and reopen the app to try again. If this keeps happening, the data on this device may be damaged.</string>
 </resources>

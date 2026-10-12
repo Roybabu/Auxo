@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.invision.pos.R
@@ -44,6 +45,7 @@ fun InvisionTextField(
     readOnly: Boolean = false,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val supporting = error ?: supportingText
     OutlinedTextField(
@@ -79,6 +81,7 @@ fun InvisionTextField(
             imeAction = imeAction,
         ),
         keyboardActions = keyboardActions,
+        visualTransformation = visualTransformation,
         shape = MaterialTheme.shapes.small,
     )
 }

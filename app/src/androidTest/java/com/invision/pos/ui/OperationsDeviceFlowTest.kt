@@ -48,7 +48,10 @@ import kotlin.random.Random
 @RunWith(AndroidJUnit4::class)
 class OperationsDeviceFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val signedIn = com.invision.pos.SignedInRule()
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private val app: InvisionApplication = ApplicationProvider.getApplicationContext()
