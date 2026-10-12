@@ -135,6 +135,8 @@ interface BillingActions {
     fun onTenderedDone(key: Int) = Unit
     fun onReferenceChange(key: Int, reference: String) = Unit
     fun onAddSplit() = Unit
+
+    fun onPutRestOnAccount() = Unit
     fun onRemovePayment(key: Int) = Unit
     fun onCompleteSale() = Unit
 }
@@ -237,6 +239,8 @@ fun BillingScreen(
             override fun onTenderedDone(key: Int) = viewModel.onTenderedDone(key)
             override fun onReferenceChange(key: Int, reference: String) = viewModel.onReferenceChange(key, reference)
             override fun onAddSplit() = viewModel.addSplitPayment()
+
+            override fun onPutRestOnAccount() = viewModel.putRemainingOnAccount()
             override fun onRemovePayment(key: Int) = viewModel.removePayment(key)
             override fun onCompleteSale() = viewModel.completeSale()
         }
@@ -1100,6 +1104,13 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                 Text(stringResource(R.string.payment_add_split), modifier = Modifier.padding(start = Spacing.sm))
             }
         }
+        if (state.account != null && state.paymentRemaining > Money.ZERO) {
+            item(key = "rest_on_account") {
+                OutlinedButton(onClick = actions::onPutRestOnAccount, modifier = Modifier.fillMaxWidth().testTag("rest_on_account")) {
+                    Text(stringResource(R.string.payment_rest_on_account, formatter.format(state.paymentRemaining)))
+                }
+            }
+        }
         item(key = "status") {
             val remaining = state.paymentRemaining
             val status = InvisionThemeExtras.statusColors
@@ -1113,6 +1124,19 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                     Text(text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.testTag("payment_status"))
                     if (state.change > Money.ZERO) {
                         Text(stringResource(R.string.payment_change, formatter.format(state.change)), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    val balanceAfter = state.balanceAfterBill
+                    if (balanceAfter != null && !state.onAccountAmount.isZero) {
+                        Text(
+                            stringResource(R.string.payment_split_summary, formatter.format(state.paidNowAmount), formatter.format(state.onAccountAmount)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.testTag("payment_split_summary"),
+                        )
+                        Text(
+                            stringResource(R.string.payment_balance_after, formatter.format(balanceAfter)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.testTag("payment_balance_after"),
+                        )
                     }
                 }
             }

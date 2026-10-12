@@ -121,6 +121,19 @@ data class BillingUiState(
             if (tendered > amount) acc + (tendered - amount) else acc
         }
 
+    /** What goes on the customer's account with these payments (valid amounts only). */
+    val onAccountAmount: Money
+        get() = payments.filter { it.method == PaymentMethod.CREDIT }
+            .fold(Money.ZERO) { acc, draft -> acc + (Money.parseOrNull(draft.amount) ?: Money.ZERO) }
+
+    /** What is paid now, in cash, UPI or card: the bill minus what goes on account. */
+    val paidNowAmount: Money
+        get() = payments.filter { it.method != PaymentMethod.CREDIT }
+            .fold(Money.ZERO) { acc, draft -> acc + (Money.parseOrNull(draft.amount) ?: Money.ZERO) }
+
+    /** The customer's balance once this bill is on their account; null without a customer. */
+    val balanceAfterBill: Money? get() = account?.let { it.balance + onAccountAmount }
+
     /** Payment methods offered: "On account" only for a saved customer. */
     val paymentMethods: List<PaymentMethod>
         get() = if (account != null) PaymentMethod.entries else PaymentMethod.MONEY
@@ -534,6 +547,24 @@ class BillingViewModel(
         val remaining = state.paymentRemaining.takeIf { it > Money.ZERO } ?: Money.ZERO
         val draft = PaymentDraft(key = nextPaymentKey++, method = method, amount = if (remaining.isZero) "" else remaining.toDecimalString())
         updatePayments(state.payments + draft)
+    }
+
+    /**
+     * Puts whatever is still unpaid on the customer's account (part payment). Adds to the "on account"
+     * row if there already is one. Does nothing without a saved customer or when nothing is left to pay.
+     */
+    fun putRemainingOnAccount() {
+        val state = _uiState.value
+        val remaining = state.paymentRemaining
+        if (state.account == null || remaining <= Money.ZERO) return
+        val existing = state.payments.firstOrNull { it.method == PaymentMethod.CREDIT }
+        if (existing != null) {
+            val current = Money.parseOrNull(existing.amount) ?: Money.ZERO
+            updatePayment(existing.key) { it.copy(amount = (current + remaining).toDecimalString()) }
+        } else {
+            val draft = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CREDIT, amount = remaining.toDecimalString())
+            updatePayments(state.payments + draft)
+        }
     }
 
     fun removePayment(key: Int) {

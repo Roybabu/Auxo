@@ -386,6 +386,9 @@
     <string name="payment_upi_qr">Customer scans to pay %1$s</string>
     <string name="payment_upi_not_set">Add your UPI ID in Billing settings to show a payment QR code.</string>
     <string name="payment_add_split">Split payment</string>
+    <string name="payment_rest_on_account">Put the remaining %1$s on account</string>
+    <string name="payment_split_summary">Paid now %1$s, on account %2$s</string>
+    <string name="payment_balance_after">Customer owes %1$s after this bill</string>
     <string name="payment_remove">Remove payment</string>
     <string name="payment_remaining">Remaining: %1$s</string>
     <string name="payment_overpaid">Paid %1$s too much</string>
