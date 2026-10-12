@@ -50,6 +50,12 @@ android {
 }
 
 tasks.withType<Test>().configureEach {
+    // Put the assertion message of a failed test in the CI log, not only its line number.
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
+        showCauses = true
+    }
     // Robolectric and Compose UI tests need more than the default 512 MB.
     maxHeapSize = "2g"
     // Robolectric's Android 16+ sandbox sets FileDescriptor internals through
