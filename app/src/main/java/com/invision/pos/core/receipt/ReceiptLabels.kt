@@ -83,6 +83,9 @@ data class ReceiptLabels(
     val billTo: String = "Bill to",
     val customerHeading: String = "Customer",
     val signatureFor: String = "For %1\$s",
+    val authorisedSignatory: String = "Authorised signatory",
+    val pageOf: String = "Page %1\$d of %2\$d",
+    val continued: String = "(continued)",
     /** Printed after the footer on bills; empty when there is none. */
     val thankYou: String = "",
 ) {
@@ -163,6 +166,9 @@ data class ReceiptLabels(
             billTo = resources.getString(R.string.receipt_bill_to),
             customerHeading = resources.getString(R.string.receipt_customer_heading),
             signatureFor = resources.getString(R.string.receipt_signature_for),
+            authorisedSignatory = resources.getString(R.string.receipt_authorised_signatory),
+            pageOf = resources.getString(R.string.receipt_page_of),
+            continued = resources.getString(R.string.receipt_continued),
         )
 
         /** Every resource this wording reads, in the order of the fields; used to check each language is complete. */
@@ -236,6 +242,9 @@ data class ReceiptLabels(
             R.string.receipt_bill_to,
             R.string.receipt_customer_heading,
             R.string.receipt_signature_for,
+            R.string.receipt_authorised_signatory,
+            R.string.receipt_page_of,
+            R.string.receipt_continued,
         )
     }
 }

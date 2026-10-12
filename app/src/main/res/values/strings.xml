@@ -1419,4 +1419,7 @@ in %2$s</string>
     <string name="receipt_bill_to">Bill to</string>
     <string name="receipt_customer_heading">Customer</string>
     <string name="receipt_signature_for">For %1$s</string>
+    <string name="receipt_authorised_signatory">Authorised signatory</string>
+    <string name="receipt_page_of">Page %1$d of %2$d</string>
+    <string name="receipt_continued">(continued)</string>
 </resources>

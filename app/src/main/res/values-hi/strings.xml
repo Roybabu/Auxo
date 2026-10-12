@@ -70,4 +70,7 @@
     <string name="receipt_bill_to">बिल प्राप्तकर्ता</string>
     <string name="receipt_customer_heading">ग्राहक</string>
     <string name="receipt_signature_for">%1$s के लिए</string>
+    <string name="receipt_authorised_signatory">अधिकृत हस्ताक्षरकर्ता</string>
+    <string name="receipt_page_of">पृष्ठ %1$d / %2$d</string>
+    <string name="receipt_continued">(जारी)</string>
 </resources>

@@ -76,7 +76,7 @@ object ReceiptOutput {
         val cutoff = System.currentTimeMillis() - STALE_AFTER_MILLIS
         dir.listFiles()?.filter { it.lastModified() < cutoff }?.forEach { it.delete() }
         val file = File(dir, fileName(invoice))
-        FileOutputStream(file).use { writePdf(ReceiptRenderer.pages(invoice, options, zone, logo, ReceiptLabels.from(context, options.language)), it) }
+        FileOutputStream(file).use { writePdf(ReceiptRenderer.pages(invoice, options, zone, logo, ReceiptLabels.from(context, options.language), ReceiptFonts.from(context)), it) }
         return file
     }
 
@@ -121,7 +121,7 @@ object ReceiptOutput {
      */
     fun print(context: Context, invoice: Invoice, options: ReceiptOptions, logo: Bitmap? = null): Boolean {
         val printManager = context.getSystemService(PrintManager::class.java) ?: return false
-        val pages = ReceiptRenderer.pages(invoice, options, BusinessTime.ZONE, logo, ReceiptLabels.from(context, options.language))
+        val pages = ReceiptRenderer.pages(invoice, options, BusinessTime.ZONE, logo, ReceiptLabels.from(context, options.language), ReceiptFonts.from(context))
         val first = pages.first()
         val mediaSize = when (options.paper) {
             ReceiptPaper.A4 -> PrintAttributes.MediaSize.ISO_A4

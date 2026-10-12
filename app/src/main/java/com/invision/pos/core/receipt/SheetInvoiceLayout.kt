@@ -16,6 +16,8 @@ data class SheetColumn(
     /** Share of the table width. */
     val weight: Float,
     val alignRight: Boolean,
+    /** The column that holds the item name; it wraps onto more lines instead of being cut short. */
+    val isItem: Boolean = false,
     val value: (index: Int, line: InvoiceLine) -> String,
 )
 
@@ -42,6 +44,12 @@ data class SheetInvoice(
     /** Last line of the invoice, asking the customer for feedback. */
     val feedbackNote: String,
     val signatureLabel: String,
+    /** The caption under the signature line. */
+    val signatoryCaption: String,
+    /** Page number wording with %1\$d (page) and %2\$d (pages). */
+    val pageNumberTemplate: String,
+    /** Added after the title on pages after the first. */
+    val continuedLabel: String,
     val barcode: String?,
 )
 
@@ -82,7 +90,7 @@ object SheetInvoiceLayout {
         val wide = paper == ReceiptPaper.A4
         val columns = buildList {
             add(SheetColumn("#", 0.05f, alignRight = false) { i, _ -> (i + 1).toString() })
-            add(SheetColumn(labels.item, if (wide) 0.30f else 0.34f, alignRight = false) { _, l ->
+            add(SheetColumn(labels.item, if (wide) 0.30f else 0.34f, alignRight = false, isItem = true) { _, l ->
                 listOf(l.productName, l.variantLabel).filter { it.isNotBlank() }.joinToString(" · ")
             })
             if (showHsn) add(SheetColumn(labels.hsnHeading, 0.10f, alignRight = false) { _, l -> l.hsnCode.orEmpty() })
@@ -185,6 +193,9 @@ object SheetInvoiceLayout {
             footer = options.footer,
             feedbackNote = labels.feedbackNote,
             signatureLabel = fill(labels.signatureFor, seller.name),
+            signatoryCaption = labels.authorisedSignatory,
+            pageNumberTemplate = labels.pageOf,
+            continuedLabel = labels.continued,
             barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() },
         )
     }

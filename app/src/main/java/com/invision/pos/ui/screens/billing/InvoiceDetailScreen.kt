@@ -49,6 +49,7 @@ import com.invision.pos.R
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.ui.can
 import com.invision.pos.core.receipt.ReceiptOutput
+import com.invision.pos.core.receipt.ReceiptFonts
 import com.invision.pos.core.receipt.ReceiptLabels
 import com.invision.pos.core.receipt.ReceiptRenderer
 import com.invision.pos.core.receipt.isThermal
@@ -168,7 +169,7 @@ fun InvoiceDetailContent(
     val logo = LocalStoreLogo.current
     val context = LocalContext.current
     val labels = remember(state.receiptOptions.language) { ReceiptLabels.from(context, state.receiptOptions.language) }
-    val pages = remember(invoice, state.receiptOptions, logo, labels) { ReceiptRenderer.pages(invoice, state.receiptOptions, zone, logo, labels) }
+    val pages = remember(invoice, state.receiptOptions, logo, labels) { ReceiptRenderer.pages(invoice, state.receiptOptions, zone, logo, labels, ReceiptFonts.from(context)) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = Spacing.screen, vertical = Spacing.md),

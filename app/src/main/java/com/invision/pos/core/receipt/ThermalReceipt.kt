@@ -20,6 +20,13 @@ sealed interface ThermalElement {
         val align: Align = Align.LEFT,
         val bold: Boolean = false,
         val large: Boolean = false,
+        /**
+         * Set on a line that is a label with an amount at the right edge. [text] is the same line laid out on the
+         * character grid (for plain-text uses); the renderer draws [label] at the left and [value] at the right
+         * with real text widths, because letters of Hindi or Bengali are not all the same width.
+         */
+        val label: String? = null,
+        val value: String? = null,
     ) : ThermalElement
 
     data class Divider(val char: Char = '-') : ThermalElement
@@ -62,7 +69,7 @@ object ThermalReceiptBuilder {
             }
         }
         fun pair(label: String, value: String, bold: Boolean = false) {
-            out += ThermalElement.Line(twoColumns(label, value, width), Align.LEFT, bold)
+            out += ThermalElement.Line(twoColumns(label, value, width), Align.LEFT, bold, label = label, value = value)
         }
 
         // Seller
@@ -86,7 +93,7 @@ object ThermalReceiptBuilder {
         out += ThermalElement.Divider()
 
         // Items
-        out += ThermalElement.Line(twoColumns(labels.item, labels.amount, width), bold = true)
+        out += ThermalElement.Line(twoColumns(labels.item, labels.amount, width), bold = true, label = labels.item, value = labels.amount)
         out += ThermalElement.Divider()
         for (line in invoice.lines) {
             val name = listOf(line.productName, line.variantLabel).filter { it.isNotBlank() }.joinToString(" ")
@@ -123,7 +130,7 @@ object ThermalReceiptBuilder {
         val totalLabel = if (invoice.type == InvoiceType.RETURN) labels.refund else labels.total
         val totalValue = IndianNumberFormat.amount(invoice.grandTotal)
         if (totalLabel.length + 1 + totalValue.length <= width / 2) {
-            out += ThermalElement.Line(twoColumns(totalLabel, totalValue, width / 2), bold = true, large = true)
+            out += ThermalElement.Line(twoColumns(totalLabel, totalValue, width / 2), bold = true, large = true, label = totalLabel, value = totalValue)
         } else {
             pair(fill(labels.rupeeLabel, totalLabel), totalValue, bold = true)
         }

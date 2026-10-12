@@ -246,6 +246,10 @@ Android 8.0 (API 26) and newer, phones and tablets (the navigation switches betw
 - No code formatter or Kotlin static analyser (ktlint, detekt) is set up; only Android lint runs.
 - The release build is not minified or signed, and has only been checked to compile in CI.
 
+## Languages and fonts
+
+The app and the bills can be in English, Hindi or Bengali. The app language is a per-device setting (Appearance); the bill language is a shop setting (Billing settings) so every phone prints the same bill. Product and customer names are always printed as entered. Receipt and PDF text in Hindi and Bengali is drawn with Noto Sans Devanagari and Noto Sans Bengali (Regular and Bold) bundled in `app/src/main/assets/fonts`, licensed under the SIL Open Font License 1.1 (`OFL.txt` in the same folder), so it does not depend on the fonts a phone has.
+
 ## Roadmap
 
 1. **Foundation** — buildable project, architecture, theme, navigation shell, CI

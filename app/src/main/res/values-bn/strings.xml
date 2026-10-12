@@ -70,4 +70,7 @@
     <string name="receipt_bill_to">বিল গ্রহীতা</string>
     <string name="receipt_customer_heading">ক্রেতা</string>
     <string name="receipt_signature_for">%1$s-এর পক্ষে</string>
+    <string name="receipt_authorised_signatory">অনুমোদিত স্বাক্ষরকারী</string>
+    <string name="receipt_page_of">পৃষ্ঠা %1$d / %2$d</string>
+    <string name="receipt_continued">(চলমান)</string>
 </resources>

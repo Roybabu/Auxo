@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.TextPaint
-import android.text.TextUtils
 import com.invision.pos.core.label.LabelRenderer
 import com.invision.pos.core.label.LabelSheetLayout
 import com.invision.pos.core.shop.LogoSizing
@@ -28,11 +27,14 @@ class ReceiptPage(val widthPt: Float, val heightPt: Float, val draw: (Canvas) ->
 object ReceiptRenderer {
 
     /** [logo] is the shop's logo; when it is null no room is left for one. */
-    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap? = null, labels: ReceiptLabels = ReceiptLabels(language = options.language)): List<ReceiptPage> =
+    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap? = null,
+        labels: ReceiptLabels = ReceiptLabels(language = options.language),
+        fonts: ReceiptFonts = ReceiptFonts.system,
+    ): List<ReceiptPage> =
         if (options.paper.isThermal) {
-            listOf(thermalPage(invoice, options, zone, logo, labels))
+            listOf(thermalPage(invoice, options, zone, logo, labels, fonts))
         } else {
-            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone, labels), options.paper, logo).pages()
+            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone, labels), options.paper, logo, fonts).pages()
         }
 
     /** Where a logo goes on a thermal roll: centred above the shop name, at most this big. */
@@ -41,7 +43,7 @@ object ReceiptRenderer {
 
     // Thermal rolls
 
-    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels): ReceiptPage {
+    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels, fonts: ReceiptFonts): ReceiptPage {
         val spec = options.paper.spec
         val receipt = ThermalReceiptBuilder.build(invoice, options, spec.charsPerLine, zone, labels)
         val widthPt = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
@@ -55,6 +57,8 @@ object ReceiptRenderer {
         val fontSize = 10f * (printable / spec.charsPerLine) / charWidthAt10
         val lineHeight = fontSize * 1.3f
         val barcodeHeight = fontSize * 4f
+        val regularStyle = ScriptPaint(fonts, bold = false, mono = true, size = fontSize)
+        val boldStyle = ScriptPaint(fonts, bold = true, mono = true, size = fontSize)
         val logoSize = logo?.let { thermalLogoSize(it, printable, lineHeight) }
         val logoBlock = logoSize?.let { it.second + lineHeight / 2 } ?: 0f
 
@@ -81,30 +85,47 @@ object ReceiptRenderer {
                     is ThermalElement.Line -> {
                         val size = if (element.large) fontSize * 2 else fontSize
                         val height = if (element.large) lineHeight * 2 else lineHeight
-                        paint.textSize = size
-                        paint.typeface = Typeface.create(Typeface.MONOSPACE, if (element.bold) Typeface.BOLD else Typeface.NORMAL)
-                        val textWidth = paint.measureText(element.text)
-                        val x = when (element.align) {
-                            Align.LEFT -> margin
-                            Align.CENTER -> margin + (printable - textWidth) / 2
-                            Align.RIGHT -> margin + printable - textWidth
+                        val style = if (element.bold) boldStyle else regularStyle
+                        style.textSize = size
+                        val baseline = y + height * 0.78f
+                        if (element.label != null && element.value != null) {
+                            // A label and its amount: the amount stays at the right edge whatever the font, and
+                            // the label is cut short if there is not room for both.
+                            val charWidth = charWidthAt10 / 10f * size
+                            val indent = element.label.takeWhile { it == ' ' }.length * charWidth
+                            val label = element.label.trimStart()
+                            val valueWidth = style.measureText(element.value)
+                            style.draw(canvas, element.value, margin + printable - valueWidth, baseline)
+                            style.draw(canvas, style.fit(label, printable - valueWidth - indent - charWidth), margin + indent, baseline)
+                        } else {
+                            // A line in a wider script can be wider than the roll: shrink it a little rather than cut it.
+                            var textWidth = style.measureText(element.text)
+                            if (textWidth > printable) {
+                                style.textSize = size * max(printable / textWidth, 0.7f)
+                                textWidth = style.measureText(element.text)
+                            }
+                            val shown = if (textWidth > printable) style.fit(element.text, printable) else element.text
+                            val shownWidth = style.measureText(shown)
+                            val x = when (element.align) {
+                                Align.LEFT -> margin
+                                Align.CENTER -> margin + (printable - shownWidth) / 2
+                                Align.RIGHT -> margin + printable - shownWidth
+                            }
+                            style.draw(canvas, shown, x, baseline)
                         }
-                        canvas.drawText(element.text, x, y + height * 0.78f, paint)
                         y += height
                     }
                     is ThermalElement.Divider -> {
-                        paint.textSize = fontSize
-                        paint.typeface = Typeface.MONOSPACE
-                        canvas.drawText(element.char.toString().repeat(receipt.width), margin, y + lineHeight * 0.78f, paint)
+                        regularStyle.textSize = fontSize
+                        regularStyle.draw(canvas, element.char.toString().repeat(receipt.width), margin, y + lineHeight * 0.78f)
                         y += lineHeight
                     }
                     is ThermalElement.Barcode -> {
                         LabelRenderer.drawBarcode(canvas, element.value, margin, y, printable, barcodeHeight)
                         y += barcodeHeight
-                        paint.textSize = fontSize
-                        paint.typeface = Typeface.MONOSPACE
-                        val w = paint.measureText(element.value)
-                        canvas.drawText(element.value, margin + (printable - w) / 2, y + lineHeight * 0.78f, paint)
+                        regularStyle.textSize = fontSize
+                        val w = regularStyle.measureText(element.value)
+                        regularStyle.draw(canvas, element.value, margin + (printable - w) / 2, y + lineHeight * 0.78f)
                         y += lineHeight
                     }
                     ThermalElement.Gap -> y += lineHeight / 2
@@ -122,7 +143,7 @@ object ReceiptRenderer {
 }
 
 /** Draws an A5 or A4 tax invoice, adding pages when the item table is long. */
-private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, private val logo: Bitmap? = null) {
+private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, private val logo: Bitmap? = null, fonts: ReceiptFonts = ReceiptFonts.system) {
     private val spec = paper.spec
     private val pageWidth = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
     private val pageHeight = LabelSheetLayout.mmToPoints(spec.paperHeightMm ?: 297f)
@@ -132,12 +153,8 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
     private val line = base * 1.45f
     private val cellPadding = base * 0.4f
 
-    private val text = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply { color = Color.BLACK; textSize = base }
-    private val bold = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.LINEAR_TEXT_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
-        color = Color.BLACK
-        textSize = base
-        typeface = Typeface.DEFAULT_BOLD
-    }
+    private val text = ScriptPaint(fonts, bold = false, size = base)
+    private val bold = ScriptPaint(fonts, bold = true, size = base)
     private val rule = Paint().apply { color = Color.BLACK; strokeWidth = 0.6f }
     private val fill = Paint().apply { color = Color.rgb(235, 235, 235); style = Paint.Style.FILL }
     private val logoPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -182,7 +199,7 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
                     y = drawHeader(canvas, y)
                 } else {
                     text.textSize = base * 0.9f
-                    canvas.drawText("${doc.title} ${doc.detailLines.first().second} (continued)", margin, y + line * 0.8f, text)
+                    text.draw(canvas, "${doc.title} ${doc.detailLines.first().second} ${doc.continuedLabel}", margin, y + line * 0.8f)
                     text.textSize = base
                     y += line
                 }
@@ -211,24 +228,24 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
             y += logoBlock
         }
         bold.textSize = base * 1.6f
-        canvas.drawText(fit(doc.sellerName, contentWidth * 0.55f, bold), margin, y + line * 1.2f, bold)
+        bold.draw(canvas, fit(doc.sellerName, contentWidth * 0.55f, bold), margin, y + line * 1.2f)
         bold.textSize = base
         var leftY = y + line * 1.6f
         for (sellerLine in doc.sellerLines) {
-            canvas.drawText(fit(sellerLine, contentWidth * 0.55f, text), margin, leftY + line * 0.8f, text)
+            text.draw(canvas, fit(sellerLine, contentWidth * 0.55f, text), margin, leftY + line * 0.8f)
             leftY += line
         }
 
         bold.textSize = base * 1.3f
         val titleWidth = bold.measureText(doc.title)
-        canvas.drawText(doc.title, margin + contentWidth - titleWidth, y + line * 1.2f, bold)
+        bold.draw(canvas, doc.title, margin + contentWidth - titleWidth, y + line * 1.2f)
         bold.textSize = base
         var rightY = y + line * 1.6f
         for ((label, value) in doc.detailLines) {
             val valueWidth = bold.measureText(value)
-            canvas.drawText(value, margin + contentWidth - valueWidth, rightY + line * 0.8f, bold)
+            bold.draw(canvas, value, margin + contentWidth - valueWidth, rightY + line * 0.8f)
             val labelText = "$label: "
-            canvas.drawText(labelText, margin + contentWidth - valueWidth - text.measureText(labelText), rightY + line * 0.8f, text)
+            text.draw(canvas, labelText, margin + contentWidth - valueWidth - text.measureText(labelText), rightY + line * 0.8f)
             rightY += line
         }
 
@@ -237,10 +254,10 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         y += line * 0.5f
 
         if (doc.buyerLines.isNotEmpty()) {
-            canvas.drawText(doc.buyerHeading, margin, y + line * 0.8f, bold)
+            bold.draw(canvas, doc.buyerHeading, margin, y + line * 0.8f)
             y += line
             doc.buyerLines.forEachIndexed { i, buyerLine ->
-                canvas.drawText(fit(buyerLine, contentWidth, if (i == 0) bold else text), margin, y + line * 0.8f, if (i == 0) bold else text)
+                (if (i == 0) bold else text).draw(canvas, fit(buyerLine, contentWidth, if (i == 0) bold else text), margin, y + line * 0.8f)
                 y += line
             }
             y += line * 0.5f
@@ -255,7 +272,7 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         return doc.columns.map { contentWidth * it.weight / totalWeight }
     }
 
-    private val itemColumn: Int get() = doc.columns.indexOfFirst { it.title == "Item" }
+    private val itemColumn: Int get() = doc.columns.indexOfFirst { it.isItem }
 
     private fun itemLines(row: Int): List<String> {
         val width = columnWidths()[itemColumn] - cellPadding * 2
@@ -300,10 +317,10 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         return y
     }
 
-    private fun drawCell(canvas: Canvas, value: String, left: Float, top: Float, width: Float, alignRight: Boolean, paint: TextPaint) {
+    private fun drawCell(canvas: Canvas, value: String, left: Float, top: Float, width: Float, alignRight: Boolean, paint: ScriptPaint) {
         val shown = fit(value, width - cellPadding * 2, paint)
         val x = if (alignRight) left + width - cellPadding - paint.measureText(shown) else left + cellPadding
-        canvas.drawText(shown, x, top + line * 0.75f, paint)
+        paint.draw(canvas, shown, x, top + line * 0.75f)
     }
 
     // Totals, tax summary, payments, notes and signature
@@ -324,20 +341,20 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         var y = top
         val labelX = margin + contentWidth * 0.55f
         for ((label, value) in doc.totals) {
-            canvas.drawText(label, labelX, y + line * 0.8f, text)
-            canvas.drawText(value, margin + contentWidth - text.measureText(value), y + line * 0.8f, text)
+            text.draw(canvas, label, labelX, y + line * 0.8f)
+            text.draw(canvas, value, margin + contentWidth - text.measureText(value), y + line * 0.8f)
             y += line
         }
         canvas.drawLine(labelX, y + 1f, margin + contentWidth, y + 1f, rule)
         bold.textSize = base * 1.2f
         val (grandLabel, grandValue) = doc.grandTotal
-        canvas.drawText(grandLabel, labelX, y + line * 0.95f, bold)
-        canvas.drawText(grandValue, margin + contentWidth - bold.measureText(grandValue), y + line * 0.95f, bold)
+        bold.draw(canvas, grandLabel, labelX, y + line * 0.95f)
+        bold.draw(canvas, grandValue, margin + contentWidth - bold.measureText(grandValue), y + line * 0.95f)
         bold.textSize = base
         y += line * 1.6f
 
         for (wordsLine in wrapToWidth(doc.amountInWords, contentWidth, text)) {
-            canvas.drawText(wordsLine, margin, y + line * 0.8f, text)
+            text.draw(canvas, wordsLine, margin, y + line * 0.8f)
             y += line
         }
         y += line * 0.5f
@@ -365,25 +382,25 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         }
 
         for (payment in doc.paymentLines) {
-            canvas.drawText(fit(payment, contentWidth, text), margin, y + line * 0.8f, text)
+            text.draw(canvas, fit(payment, contentWidth, text), margin, y + line * 0.8f)
             y += line
         }
         y += line * 0.5f
         text.textSize = base * 0.9f
         for (note in doc.notes) {
-            canvas.drawText(fit(note, contentWidth, text), margin, y + line * 0.8f, text)
+            text.draw(canvas, fit(note, contentWidth, text), margin, y + line * 0.8f, text)
             y += line
         }
         text.textSize = base
 
         if (doc.footer.isNotBlank()) {
-            val shown = fit(doc.footer, contentWidth, text)
-            canvas.drawText(shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
+            val shown = fit(doc.footer, contentWidth)
+            text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
             y += line * 1.5f
         }
         if (doc.feedbackNote.isNotBlank()) {
-            val shown = fit(doc.feedbackNote, contentWidth, text)
-            canvas.drawText(shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line, text)
+            val shown = fit(doc.feedbackNote, contentWidth)
+            text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line)
             y += line * 1.5f
         }
 
@@ -393,23 +410,22 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         }
         val signTop = y + line * 0.5f
         val sign = fit(doc.signatureLabel, contentWidth * 0.4f, bold)
-        canvas.drawText(sign, margin + contentWidth - bold.measureText(sign), signTop + line * 0.8f, bold)
-        val authorised = "Authorised signatory"
-        canvas.drawText(authorised, margin + contentWidth - text.measureText(authorised), signTop + line * 3.3f, text)
+        bold.draw(canvas, sign, margin + contentWidth - bold.measureText(sign), signTop + line * 0.8f)
+        val authorised = doc.signatoryCaption
+        text.draw(canvas, authorised, margin + contentWidth - text.measureText(authorised), signTop + line * 3.3f)
     }
 
     private fun drawPageNumber(canvas: Canvas, page: Int, count: Int) {
         if (count <= 1) return
         text.textSize = base * 0.8f
-        val label = "Page $page of $count"
-        canvas.drawText(label, margin + contentWidth - text.measureText(label), pageHeight - margin / 2, text)
+        val label = fill(doc.pageNumberTemplate, page, count)
+        text.draw(canvas, label, margin + contentWidth - text.measureText(label), pageHeight - margin / 2)
         text.textSize = base
     }
 
-    private fun fit(value: String, width: Float, paint: TextPaint): String =
-        TextUtils.ellipsize(value, paint, width, TextUtils.TruncateAt.END).toString()
+    private fun fit(value: String, width: Float, paint: ScriptPaint): String = paint.fit(value, width)
 
-    private fun wrapToWidth(value: String, width: Float, paint: TextPaint): List<String> {
+    private fun wrapToWidth(value: String, width: Float, paint: ScriptPaint): List<String> {
         val words = value.split(' ').filter { it.isNotEmpty() }
         val result = mutableListOf<String>()
         var current = ""
