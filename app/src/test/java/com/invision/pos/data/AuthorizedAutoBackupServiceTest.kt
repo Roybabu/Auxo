@@ -116,10 +116,10 @@ class AuthorizedAutoBackupServiceTest {
         assertEquals(1, backups)
         assertEquals(1, folder.files.size)
         // The run finishes on another thread; wait for it to record its time instead of racing it.
-        kotlinx.coroutines.withTimeout(5_000) {
+        kotlinx.coroutines.withTimeoutOrNull(5_000) {
             while (store.settings.value.lastSuccessMillis == null) kotlinx.coroutines.delay(10)
         }
-        assertEquals(clock.now, store.settings.value.lastSuccessMillis)
+        assertEquals(store.settings.value.toString(), clock.now, store.settings.value.lastSuccessMillis)
     }
 
     @Test

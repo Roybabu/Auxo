@@ -128,7 +128,7 @@ class RoomBillingRepositoryTest {
         val saved = billing.recordSale(sale(CartLine.from(biscuits, biscuits.variants[0])), "INV") as SaleResult.Recorded
         assertEquals("INV/26-27/00001", saved.number)
         assertEquals("INV/26-27/00002", billing.previewInvoiceNumber("INV", day))
-        assertEquals("INV/26-27/00001", billing.previewInvoiceNumber("EST", day))
+        assertEquals("EST/26-27/00001", billing.previewInvoiceNumber("EST", day))
     }
 
     @Test
@@ -272,9 +272,11 @@ class RoomBillingRepositoryTest {
     fun settings_defaultUntilSaved_thenRoundTrip() = runTest {
         assertEquals(StoreSettings(), settings.getSettings())
         val custom = store.copy(gstRegistered = true, pricesIncludeTax = false, receipt = store.receipt.copy(paper = ReceiptPaper.A5, showSavings = false))
+        // Reading copies the shop name and UPI details into the receipt options.
+        val expected = custom.copy(receipt = custom.receipt.copy(upiId = custom.upiId, upiPayeeName = custom.upiPayeeName, shopName = custom.storeName))
         settings.saveSettings(custom)
-        assertEquals(custom, settings.getSettings())
-        assertEquals(custom, settings.observeSettings().first())
+        assertEquals(expected, settings.getSettings())
+        assertEquals(expected, settings.observeSettings().first())
     }
 
     @Test

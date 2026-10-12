@@ -2,6 +2,7 @@ package com.invision.pos.ui
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -197,7 +198,7 @@ class AutoBackupScreenTest {
     fun home_whenWorking_showsTheLastBackupTime() {
         notice(AutoBackupUiState(settings = withFolder.copy(lastSuccessMillis = 1_700_000_000_000), status = AutoBackupStatus.OK))
         composeRule.onNodeWithText("Backups are working").assertIsDisplayed()
-        composeRule.onNodeWithTag("home_backup_detail").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_backup_detail").assertTextContains("Last automatic backup:", substring = true)
     }
 
     @Test

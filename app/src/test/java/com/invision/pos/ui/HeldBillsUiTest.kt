@@ -26,7 +26,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w392dp-h3200dp-xhdpi")
+@Config(qualifiers = "w392dp-h850dp-xhdpi")
 class HeldBillsUiTest {
 
     @get:Rule

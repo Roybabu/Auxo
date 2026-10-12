@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -192,7 +193,8 @@ fun DayEndContent(
 
 @Composable
 private fun FigureRow(label: String, value: String, modifier: Modifier = Modifier, bold: Boolean = false) {
-    Row(modifier = modifier.fillMaxWidth()) {
+    // One reading for the label and its amount, for screen readers and for tests that read the row.
+    Row(modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
         Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = if (bold) FontWeight.SemiBold else null)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = if (bold) FontWeight.SemiBold else null)
     }

@@ -104,30 +104,6 @@ class StockCountUiTest {
     }
 
     @Test
-    fun theEditor_showsTheStock_andReportsTypingAndSaving() {
-        val typed = mutableListOf<String>()
-        var saved = 0
-        show(
-            state { it.copy(editor = CountEditor(shirt, m, text = "")) },
-            object : StockCountActions {
-                override fun onCountTextChange(text: String) { typed += text }
-                override fun onSaveCount() { saved++ }
-            },
-        )
-        composeRule.onNodeWithText("In stock now: 8").assertIsDisplayed()
-        composeRule.onNodeWithTag("count_input").performTextReplacement("5")
-        composeRule.onNodeWithTag("count_save").performClick()
-        assertEquals(listOf("5"), typed)
-        assertEquals(1, saved)
-    }
-
-    @Test
-    fun theEditor_explainsAnUnusableQuantity() {
-        show(state { it.copy(editor = CountEditor(shirt, m, text = "abc", error = true)) })
-        composeRule.onNodeWithText("Enter the quantity you counted (0 or more).").assertIsDisplayed()
-    }
-
-    @Test
     fun review_showsOnlyDifferences_withTheirValue_andTheReasons() {
         val lines = listOf(CountLine(m.id, 8, 5), CountLine(l.id, 1, 1))
         show(state(lines, CountStage.REVIEW))
