@@ -24,6 +24,7 @@ import com.invision.pos.viewmodel.AutoBackupUiState
 import com.invision.pos.viewmodel.BackupUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.semantics.getOrNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
