@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.domain.inventory.CountLine
@@ -15,7 +16,7 @@ import com.invision.pos.domain.inventory.StockCount
 import com.invision.pos.domain.inventory.StockCounts
 import com.invision.pos.testutil.TestData
 import com.invision.pos.ui.screens.stock.StockCountActions
-import com.invision.pos.ui.screens.stock.StockCountContent
+import com.invision.pos.ui.screens.stock.CountEditorForm
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.CountCandidate
 import com.invision.pos.viewmodel.CountEditor
@@ -61,8 +62,9 @@ class StockCountEditorUiTest {
         )
     }
 
-    private fun show(state: StockCountUiState, actions: StockCountActions = object : StockCountActions {}) {
-        composeRule.setContent { InvisionTheme { StockCountContent(state, actions) } }
+    private fun show(editor: CountEditor, onText: (String) -> Unit = {}, onSave: () -> Unit = {}) {
+        // The form is tested without the dialog window: text fields inside a dialog never become idle in these tests.
+        composeRule.setContent { InvisionTheme { CountEditorForm(editor, alreadyCounted = false, onTextChange = onText, onSave = onSave, onRemove = {}) } }
         composeRule.waitForIdle()
     }
 
@@ -70,23 +72,17 @@ class StockCountEditorUiTest {
     fun theEditor_showsTheStock_andReportsTypingAndSaving() {
         val typed = mutableListOf<String>()
         var saved = 0
-        show(
-            state { it.copy(editor = CountEditor(shirt, m, text = "")) },
-            object : StockCountActions {
-                override fun onCountTextChange(text: String) { typed += text }
-                override fun onSaveCount() { saved++ }
-            },
-        )
+        show(CountEditor(shirt, m, text = ""), onText = { typed += it }, onSave = { saved++ })
         composeRule.onNodeWithText("In stock now: 8").assertIsDisplayed()
         composeRule.onNodeWithTag("count_input").performTextReplacement("5")
-        composeRule.onNodeWithTag("count_save").performClick()
+        composeRule.onNodeWithTag("count_input").performImeAction()
         assertEquals(listOf("5"), typed)
         assertEquals(1, saved)
     }
 
     @Test
     fun theEditor_explainsAnUnusableQuantity() {
-        show(state { it.copy(editor = CountEditor(shirt, m, text = "abc", error = true)) })
+        show(CountEditor(shirt, m, text = "abc", error = true))
         composeRule.onNodeWithText("Enter the quantity you counted (0 or more).").assertIsDisplayed()
     }
 }

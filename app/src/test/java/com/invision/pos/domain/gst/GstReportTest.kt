@@ -96,7 +96,7 @@ class GstReportTest {
         assertEquals(ReportValue.Text(GstTestData.GSTIN), table.rows[0][4])
         assertEquals(ReportValue.Day(LocalDate.of(2026, 10, 5)), table.rows[0][0])
         assertEquals(m("2555"), (table.rows[0][11] as ReportValue.Amount).value)
-        assertEquals(m("-105"), (table.rows[1][11] as ReportValue.Amount).value)
+        assertEquals(Money(-m("105").minorUnits), (table.rows[1][11] as ReportValue.Amount).value)
         assertEquals(m("2450"), (table.totals!![11] as ReportValue.Amount).value)
     }
 

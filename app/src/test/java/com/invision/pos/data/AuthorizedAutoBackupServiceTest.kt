@@ -119,7 +119,7 @@ class AuthorizedAutoBackupServiceTest {
         kotlinx.coroutines.withTimeoutOrNull(5_000) {
             while (store.settings.value.lastSuccessMillis == null) kotlinx.coroutines.delay(10)
         }
-        assertEquals(store.settings.value.toString(), clock.now, store.settings.value.lastSuccessMillis)
+        assertEquals("failure=${store.settings.value.lastFailure} at ${store.settings.value.lastFailureMillis}", clock.now, store.settings.value.lastSuccessMillis)
     }
 
     @Test

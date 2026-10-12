@@ -441,39 +441,49 @@ private fun CountEditorDialog(
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val unit = editor.product.stockUnit
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(itemName(editor.product.name, editor.variant.attributesLabel)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(
-                    stringResource(R.string.count_in_stock, unit.format(editor.variant.stockQuantity)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                InvisionTextField(
-                    value = editor.text,
-                    onValueChange = onTextChange,
-                    label = stringResource(R.string.count_editor_field, unit.entrySymbol),
-                    error = if (editor.error) stringResource(R.string.count_editor_error) else null,
-                    keyboardType = if (unit.scale == 1) KeyboardType.Number else KeyboardType.Decimal,
-                    imeAction = ImeAction.Done,
-                    keyboardActions = KeyboardActions(onDone = { onSave() }),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("count_input"),
-                )
-                if (alreadyCounted) {
-                    TextButton(onClick = onRemove, modifier = Modifier.testTag("count_remove")) {
-                        Text(stringResource(R.string.count_editor_remove), color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-        },
+        text = { CountEditorForm(editor, alreadyCounted, onTextChange, onSave, onRemove) },
         confirmButton = { TextButton(onClick = onSave, modifier = Modifier.testTag("count_save")) { Text(stringResource(R.string.count_editor_save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
+}
+
+/** What the count dialog asks for. Kept apart from the dialog window so it can be tested on its own. */
+@Composable
+fun CountEditorForm(
+    editor: CountEditor,
+    alreadyCounted: Boolean,
+    onTextChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val unit = editor.product.stockUnit
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(
+            stringResource(R.string.count_in_stock, unit.format(editor.variant.stockQuantity)),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        InvisionTextField(
+            value = editor.text,
+            onValueChange = onTextChange,
+            label = stringResource(R.string.count_editor_field, unit.entrySymbol),
+            error = if (editor.error) stringResource(R.string.count_editor_error) else null,
+            keyboardType = if (unit.scale == 1) KeyboardType.Number else KeyboardType.Decimal,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(onDone = { onSave() }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("count_input"),
+        )
+        if (alreadyCounted) {
+            TextButton(onClick = onRemove, modifier = Modifier.testTag("count_remove")) {
+                Text(stringResource(R.string.count_editor_remove), color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
 }
 
 private fun itemName(name: String, label: String): String = listOf(name, label).filter { it.isNotBlank() }.joinToString(" · ")

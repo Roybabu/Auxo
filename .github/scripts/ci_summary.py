@@ -127,7 +127,7 @@ for failure in test_failures:
     name, _, reason = failure.partition(": ")
     parts = reason.split(' | ')
     frame = next((p.strip() for p in parts[1:] if 'com.invision.pos' in p), '')
-    line = f"{name.replace('com.invision.pos.', '')}: {parts[0][:150]} {frame.replace('com.invision.pos.', '')[:90]}\n"
+    line = f"{name.replace('com.invision.pos.', '')}: {parts[0][:330]} {frame.replace('com.invision.pos.', '')[:90]}\n"
     if len(chunk) + len(line) > 3800:
         packed.append(chunk)
         chunk = ""

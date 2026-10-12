@@ -46,24 +46,28 @@ fun HoldBillDialog(suggestion: String, onHold: (String) -> Unit, onDismiss: () -
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hold_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(R.string.hold_body), style = MaterialTheme.typography.bodyMedium)
-                InvisionTextField(
-                    value = label,
-                    onValueChange = { label = it.take(HeldBills.LABEL_MAX) },
-                    label = stringResource(R.string.hold_label),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("hold_label"),
-                )
-            }
-        },
+        text = { HoldBillForm(label = label, onLabelChange = { label = it }) },
         confirmButton = {
             TextButton(onClick = { onHold(label) }, modifier = Modifier.testTag("hold_confirm")) { Text(stringResource(R.string.hold_action)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
+}
+
+/** What the hold dialog asks for. Kept apart from the dialog window so it can be tested on its own. */
+@Composable
+fun HoldBillForm(label: String, onLabelChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(stringResource(R.string.hold_body), style = MaterialTheme.typography.bodyMedium)
+        InvisionTextField(
+            value = label,
+            onValueChange = { onLabelChange(it.take(HeldBills.LABEL_MAX)) },
+            label = stringResource(R.string.hold_label),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("hold_label"),
+        )
+    }
 }
 
 /** The parked bills, each with Resume and Discard. Discard asks for confirmation first. */
