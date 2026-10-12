@@ -1556,4 +1556,10 @@ in %2$s</string>
         <item quantity="one">%d item has expired stock. Expired stock is never billed.</item>
         <item quantity="other">%d items have expired stock. Expired stock is never billed.</item>
     </plurals>
+    <string name="alerts_order_quantity">Order (%1$s)</string>
+    <string name="alerts_order_quantity_invalid">Enter a quantity</string>
+    <plurals name="alerts_group_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
 </resources>

@@ -1556,4 +1556,10 @@
         <item quantity="one">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। মেয়াদ শেষ স্টক কখনও বিল হয় না।</item>
         <item quantity="other">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। মেয়াদ শেষ স্টক কখনও বিল হয় না।</item>
     </plurals>
+    <string name="alerts_order_quantity">অর্ডার (%1$s)</string>
+    <string name="alerts_order_quantity_invalid">পরিমাণ লিখুন</string>
+    <plurals name="alerts_group_items">
+        <item quantity="one">%d টি পণ্য</item>
+        <item quantity="other">%d টি পণ্য</item>
+    </plurals>
 </resources>

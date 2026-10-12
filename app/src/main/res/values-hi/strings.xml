@@ -1556,4 +1556,10 @@
         <item quantity="one">%d सामान का स्टॉक एक्सपायर हो चुका है। एक्सपायर स्टॉक कभी बिल नहीं होता।</item>
         <item quantity="other">%d सामान का स्टॉक एक्सपायर हो चुका है। एक्सपायर स्टॉक कभी बिल नहीं होता।</item>
     </plurals>
+    <string name="alerts_order_quantity">ऑर्डर (%1$s)</string>
+    <string name="alerts_order_quantity_invalid">मात्रा लिखें</string>
+    <plurals name="alerts_group_items">
+        <item quantity="one">%d सामान</item>
+        <item quantity="other">%d सामान</item>
+    </plurals>
 </resources>

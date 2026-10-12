@@ -5,6 +5,7 @@ import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.PurchaseOrder
 import com.invision.pos.domain.model.PurchaseOrderLine
+import com.invision.pos.domain.model.Supplier
 
 /** A variant at or below its low-stock level, with how much to order. */
 data class ReorderSuggestion(
@@ -17,7 +18,39 @@ data class ReorderSuggestion(
     val supplierId: Long? get() = product.preferredSupplierId
 }
 
+/** Reorder items that go to the same supplier ([supplierId] null: no preferred supplier). */
+data class ReorderGroup(val supplierId: Long?, val items: List<ReorderSuggestion>)
+
 object ReorderPlanner {
+
+    /**
+     * [suggestions] grouped by preferred supplier: suppliers by name, then the items with no supplier last.
+     * Items keep their order (out of stock first) inside a group. A supplier that is not in [suppliers]
+     * (hidden, say) is treated as no supplier.
+     */
+    fun groups(suggestions: List<ReorderSuggestion>, suppliers: List<Supplier>): List<ReorderGroup> {
+        val known = suppliers.associateBy { it.id }
+        val grouped = suggestions.groupBy { s -> s.supplierId?.takeIf { it in known } }
+        val named = grouped.filterKeys { it != null }.entries
+            .sortedBy { known.getValue(it.key!!).name.lowercase() }
+            .map { ReorderGroup(it.key, it.value) }
+        return named + listOfNotNull(grouped[null]?.let { ReorderGroup(null, it) })
+    }
+
+    /**
+     * Applies quantities the person typed (in the entry unit: pcs, kg or L), keyed by variant id. A blank or
+     * invalid text keeps the suggestion; use [invalidQuantities] to find those.
+     */
+    fun withQuantities(suggestions: List<ReorderSuggestion>, texts: Map<Long, String>): List<ReorderSuggestion> =
+        suggestions.map { s ->
+            val typed = texts[s.variant.id]?.let { s.product.stockUnit.parse(it) }
+            if (typed != null) s.copy(suggestedQuantity = typed) else s
+        }
+
+    /** Variants whose typed quantity can't be used (not a number, zero, too precise or too large). */
+    fun invalidQuantities(suggestions: List<ReorderSuggestion>, texts: Map<Long, String>): Set<Long> =
+        suggestions.filter { s -> texts[s.variant.id]?.let { s.product.stockUnit.parse(it) == null } == true }
+            .map { it.variant.id }.toSet()
 
     /**
      * Variants that are out of stock or low (1 unit or fewer, or at or below the level set on the item).

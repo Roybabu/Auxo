@@ -44,9 +44,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
+import com.invision.pos.domain.inventory.ReorderGroup
 import com.invision.pos.domain.inventory.ReorderSuggestion
 import com.invision.pos.domain.model.BatchWithProduct
 import com.invision.pos.domain.model.StockChangeReason
@@ -100,6 +102,7 @@ interface StockAlertsActions {
     fun onToggle(variantId: Long) = Unit
     fun onSelectAll(selected: Boolean) = Unit
     fun onFallbackSupplierChange(supplierId: Long?) = Unit
+    fun onQuantityChange(variantId: Long, text: String) = Unit
     fun onCreateDrafts() = Unit
     fun onExpiryWindowChange(window: ExpiryWindow) = Unit
     fun onWriteOff(batch: BatchWithProduct) = Unit
@@ -146,6 +149,7 @@ fun StockAlertsScreen(
             override fun onToggle(variantId: Long) = viewModel.toggleSelected(variantId)
             override fun onSelectAll(selected: Boolean) = viewModel.selectAll(selected)
             override fun onFallbackSupplierChange(supplierId: Long?) = viewModel.onFallbackSupplierChange(supplierId)
+            override fun onQuantityChange(variantId: Long, text: String) = viewModel.onQuantityChange(variantId, text)
             override fun onCreateDrafts() = viewModel.createDraftOrders()
             override fun onExpiryWindowChange(window: ExpiryWindow) = viewModel.onExpiryWindowChange(window)
             override fun onWriteOff(batch: BatchWithProduct) = viewModel.startWriteOff(batch)
@@ -256,7 +260,7 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
                 }
                 if (suppliersOn) Button(
                     onClick = actions::onCreateDrafts,
-                    enabled = selected.isNotEmpty() && !state.isCreating,
+                    enabled = state.canCreate,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("alerts_create_drafts"),
@@ -265,16 +269,56 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
                 }
             }
         }
-        items(state.suggestions, key = { it.variant.id }) { suggestion ->
-            SuggestionRow(
-                suggestion = suggestion,
-                checked = suggestion.variant.id !in state.deselected,
-                supplierName = state.supplierName(suggestion.supplierId),
-                showSupplier = suppliersOn,
-                onToggle = { actions.onToggle(suggestion.variant.id) },
-                onOpen = { actions.onOpenProduct(suggestion.product.id) },
-            )
+        // With suppliers, the list is grouped by preferred supplier, so each group is one purchase order.
+        val groups = if (suppliersOn) state.groups else listOf(ReorderGroup(null, state.suggestions))
+        groups.forEach { group ->
+            if (suppliersOn) {
+                item(key = "group_${group.supplierId ?: 0}") {
+                    SupplierGroupHeader(
+                        name = state.supplierName(group.supplierId) ?: stringResource(R.string.alerts_no_supplier),
+                        noSupplier = group.supplierId == null,
+                        count = group.items.size,
+                        tag = "reorder_group_${group.supplierId ?: 0}",
+                    )
+                }
+            }
+            items(group.items, key = { it.variant.id }) { suggestion ->
+                SuggestionRow(
+                    suggestion = suggestion,
+                    checked = suggestion.variant.id !in state.deselected,
+                    showOrder = suppliersOn,
+                    quantityText = state.quantityTexts[suggestion.variant.id],
+                    quantityInvalid = suggestion.variant.id in state.invalidQuantities,
+                    onToggle = { actions.onToggle(suggestion.variant.id) },
+                    onQuantityChange = { actions.onQuantityChange(suggestion.variant.id, it) },
+                    onOpen = { actions.onOpenProduct(suggestion.product.id) },
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun SupplierGroupHeader(name: String, noSupplier: Boolean, count: Int, tag: String) {
+    val status = InvisionThemeExtras.statusColors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.sm)
+            .testTag(tag),
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleSmall,
+            color = if (noSupplier) status.warning.content else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = pluralStringResource(R.plurals.alerts_group_items, count, count),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -282,9 +326,11 @@ private fun LowStockTab(state: StockAlertsUiState, actions: StockAlertsActions) 
 private fun SuggestionRow(
     suggestion: ReorderSuggestion,
     checked: Boolean,
-    supplierName: String?,
-    showSupplier: Boolean,
+    showOrder: Boolean,
+    quantityText: String?,
+    quantityInvalid: Boolean,
     onToggle: () -> Unit,
+    onQuantityChange: (String) -> Unit,
     onOpen: () -> Unit,
 ) {
     val status = InvisionThemeExtras.statusColors
@@ -295,7 +341,7 @@ private fun SuggestionRow(
             modifier = Modifier.padding(end = Spacing.lg, top = Spacing.sm, bottom = Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (showSupplier) {
+            if (showOrder) {
                 Checkbox(checked = checked, onCheckedChange = { onToggle() }, modifier = Modifier.testTag("suggestion_${variant.id}"))
             } else {
                 Spacer(Modifier.width(Spacing.lg))
@@ -312,20 +358,25 @@ private fun SuggestionRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (showSupplier) {
-                    Text(
-                        text = supplierName ?: stringResource(R.string.alerts_no_supplier),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (supplierName == null) status.warning.content else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (suggestion.isOutOfStock) {
                     StatusChip(stringResource(R.string.stock_status_out), status.danger)
                 } else {
                     StatusChip(stringResource(R.string.stock_status_low), status.warning)
                 }
+            }
+            if (showOrder) {
+                // The suggested quantity, which can be changed before the draft orders are made.
+                InvisionTextField(
+                    value = quantityText ?: unit.toEntryText(suggestion.suggestedQuantity),
+                    onValueChange = onQuantityChange,
+                    label = stringResource(R.string.alerts_order_quantity, unit.entrySymbol),
+                    error = if (quantityInvalid) stringResource(R.string.alerts_order_quantity_invalid) else null,
+                    keyboardType = if (unit.scale == 1) KeyboardType.Number else KeyboardType.Decimal,
+                    modifier = Modifier
+                        .width(120.dp)
+                        .testTag("reorder_qty_${variant.id}"),
+                )
+            } else {
                 Text(stringResource(R.string.alerts_suggested, unit.format(suggestion.suggestedQuantity)), style = MaterialTheme.typography.labelLarge)
             }
         }

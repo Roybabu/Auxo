@@ -10,6 +10,7 @@ import com.invision.pos.core.export.ExportFile
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.PurchasingRepository
 import com.invision.pos.data.repository.SettingsRepository
+import com.invision.pos.domain.inventory.ReorderGroup
 import com.invision.pos.domain.inventory.ReorderPlanner
 import com.invision.pos.domain.inventory.ReorderSuggestion
 import com.invision.pos.domain.model.BatchWithProduct
@@ -202,6 +203,10 @@ data class StockAlertsUiState(
     /** Supplier for chosen items that have no preferred supplier. */
     val fallbackSupplierId: Long? = null,
     val isCreating: Boolean = false,
+    /** Order quantities typed by the person, by variant id, in the entry unit (pcs, kg or L). */
+    val quantityTexts: Map<Long, String> = emptyMap(),
+    /** Variants whose typed quantity is not usable. */
+    val invalidQuantities: Set<Long> = emptySet(),
     val expiryWindow: ExpiryWindow = ExpiryWindow.WITHIN_30_DAYS,
     /** Batches in the window, soonest expiry first. */
     val batches: List<BatchWithProduct> = emptyList(),
@@ -216,6 +221,12 @@ data class StockAlertsUiState(
         get() = if (fallbackSupplierId != null) 0 else selected.count { it.supplierId == null }
 
     fun supplierName(id: Long?): String? = suppliers.firstOrNull { it.id == id }?.name
+
+    /** The suggestions grouped by supplier, for the list. */
+    val groups: List<ReorderGroup> get() = ReorderPlanner.groups(suggestions, suppliers)
+
+    /** Draft orders can be made when something is chosen and no chosen quantity is unusable. */
+    val canCreate: Boolean get() = selected.isNotEmpty() && selected.none { it.variant.id in invalidQuantities } && !isCreating
 }
 
 sealed interface StockAlertsEvent {
@@ -230,6 +241,7 @@ private data class AlertFilters(
     val tab: AlertsTab,
     val deselected: Set<Long> = emptySet(),
     val fallbackSupplierId: Long? = null,
+    val quantityTexts: Map<Long, String> = emptyMap(),
     /** Null until the user picks one; then the shop's expiring-soon setting applies. */
     val expiryWindow: ExpiryWindow? = null,
 )
@@ -269,7 +281,8 @@ class StockAlertsViewModel(
                 val catalogue = products.map { product ->
                     if (product.preferredSupplierId != null && product.preferredSupplierId !in activeIds) product.copy(preferredSupplierId = null) else product
                 }
-                val suggestions = ReorderPlanner.suggestions(catalogue)
+                val planned = ReorderPlanner.suggestions(catalogue)
+                val suggestions = ReorderPlanner.withQuantities(planned, f.quantityTexts)
                 val expired = batches.filter { it.batch.isExpired(today) }
                 StockAlertsUiState(
                     isLoading = false,
@@ -280,6 +293,8 @@ class StockAlertsViewModel(
                     suppliers = active,
                     fallbackSupplierId = f.fallbackSupplierId?.takeIf { it in activeIds },
                     isCreating = isCreating,
+                    quantityTexts = f.quantityTexts,
+                    invalidQuantities = ReorderPlanner.invalidQuantities(planned, f.quantityTexts),
                     // Until the user picks a window, the list opens on the shop's expiring-soon setting.
                     expiryWindow = f.expiryWindow ?: ExpiryWindow.forWarningDays(days),
                     batches = batches.filter { (f.expiryWindow ?: ExpiryWindow.forWarningDays(days)).includes(it.batch, today) },
@@ -304,12 +319,18 @@ class StockAlertsViewModel(
 
     fun onFallbackSupplierChange(supplierId: Long?) = filters.update { it.copy(fallbackSupplierId = supplierId) }
 
+    /** The person typed an order quantity for one item (entry unit); blank goes back to the suggestion. */
+    fun onQuantityChange(variantId: Long, text: String) = filters.update { f ->
+        f.copy(quantityTexts = if (text.isBlank()) f.quantityTexts - variantId else f.quantityTexts + (variantId to text.trim()))
+    }
+
     fun retry() = reload.update { it + 1 }
 
     /** One draft purchase order per supplier for the chosen items. */
     fun createDraftOrders() {
         val state = uiState.value
         if (state.isCreating || creating.value) return
+        if (state.selected.any { it.variant.id in state.invalidQuantities }) return
         val chosen = state.selected
         val orderable = chosen.filter { it.supplierId != null || state.fallbackSupplierId != null }
         if (orderable.isEmpty()) {
@@ -323,7 +344,7 @@ class StockAlertsViewModel(
             if (ids == null) {
                 eventChannel.send(StockAlertsEvent.Failed)
             } else {
-                filters.update { it.copy(deselected = emptySet()) }
+                filters.update { it.copy(deselected = emptySet(), quantityTexts = emptyMap()) }
                 eventChannel.send(StockAlertsEvent.DraftsCreated(ids, chosen.size - orderable.size))
             }
         }
