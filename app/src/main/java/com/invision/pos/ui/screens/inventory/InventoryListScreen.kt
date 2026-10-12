@@ -58,7 +58,10 @@ import com.invision.pos.ui.LocalExpiryWarningDays
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import com.invision.pos.ui.components.InvisionCard
+import com.invision.pos.ui.components.ProductPhoto
 import com.invision.pos.ui.components.InvisionTextField
 import com.invision.pos.ui.components.InvisionTopAppBar
 import com.invision.pos.ui.components.LoadingState
@@ -315,6 +318,9 @@ private fun InventoryFilters(
     }
 }
 
+/** Size of a product photo in the product list. */
+private val PHOTO_SIZE = 44.dp
+
 @Composable
 fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val formatter = LocalMoneyFormatter.current
@@ -344,15 +350,24 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(
-                    painter = painterResource(product.category.iconRes()),
-                    contentDescription = stringResource(product.category.labelRes()),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .padding(Spacing.sm)
-                        .size(24.dp),
-                )
+            ProductPhoto(
+                photoFile = product.photoFile,
+                contentDescription = product.name,
+                modifier = Modifier
+                    .size(PHOTO_SIZE)
+                    .clip(RoundedCornerShape(10.dp)),
+                maxSidePx = 160,
+            ) {
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                    Icon(
+                        painter = painterResource(product.category.iconRes()),
+                        contentDescription = stringResource(product.category.labelRes()),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier
+                            .padding(Spacing.sm)
+                            .size(24.dp),
+                    )
+                }
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(

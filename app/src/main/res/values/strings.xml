@@ -1686,4 +1686,9 @@ in %2$s</string>
         <item quantity="one">%d product added</item>
         <item quantity="other">%d products added</item>
     </plurals>
+    <string name="editor_photo">Photo</string>
+    <string name="editor_photo_take">Take photo</string>
+    <string name="editor_photo_choose">Choose from gallery</string>
+    <string name="editor_photo_remove">Remove photo</string>
+    <string name="editor_photo_failed">That picture could not be used. Try another, or check that a camera app is installed.</string>
 </resources>

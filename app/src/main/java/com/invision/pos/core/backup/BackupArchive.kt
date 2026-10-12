@@ -1,5 +1,6 @@
 package com.invision.pos.core.backup
 
+import com.invision.pos.core.photos.PhotoFiles
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -52,12 +53,15 @@ class ExtractedBackup(
     val manifest: BackupManifest,
     val database: File,
     val preferences: Map<String, String>,
+    /** Product photo files unpacked from the backup (empty for a backup without photos). */
+    val photos: List<File> = emptyList(),
 )
 
 /**
  * The backup file: one zip holding the database (every product, bill, customer and setting
- * entered in the app), the appearance choices, and a small manifest that says which app and
- * version made it. The format number only goes up when old versions could not read a file.
+ * entered in the app), the appearance choices, the product photos (`photos/<name>.jpg`) and a small manifest that
+ * says which app and version made it. The format number only goes up when old versions could not read a file; an
+ * older version simply ignores the photo entries.
  */
 object BackupArchive {
     const val APP_ID = "invision"
@@ -71,7 +75,7 @@ object BackupArchive {
     const val MAX_DATABASE_BYTES = 1L shl 30
     private const val MAX_TEXT_BYTES = 64L * 1024
 
-    fun write(out: OutputStream, manifest: BackupManifest, database: File, preferences: Map<String, String>) {
+    fun write(out: OutputStream, manifest: BackupManifest, database: File, preferences: Map<String, String>, photos: List<File> = emptyList()) {
         ZipOutputStream(out).use { zip ->
             zip.putNextEntry(ZipEntry(MANIFEST_ENTRY))
             zip.write(toText(manifestProperties(manifest)).toByteArray(Charsets.UTF_8))
@@ -84,18 +88,27 @@ object BackupArchive {
             zip.putNextEntry(ZipEntry(PREFERENCES_ENTRY))
             zip.write(toText(Properties().apply { preferences.forEach { (k, v) -> setProperty(k, v) } }).toByteArray(Charsets.UTF_8))
             zip.closeEntry()
+
+            for (photo in photos) {
+                if (!PhotoFiles.isValidName(photo.name) || !photo.isFile) continue
+                zip.putNextEntry(ZipEntry(PhotoFiles.backupEntry(photo.name)))
+                photo.inputStream().use { it.copyTo(zip) }
+                zip.closeEntry()
+            }
         }
     }
 
     /**
-     * Reads a backup from [input], unpacking the database into [workDir]. Only the three known
-     * entries are read, and nothing is ever written to a path taken from the file.
+     * Reads a backup from [input], unpacking the database and the photos into [workDir]. Only the known
+     * entries are read (photo entries only with a well-formed name), and nothing is ever written to a path
+     * taken from the file.
      */
     fun read(input: InputStream, workDir: File): ExtractedBackup {
         workDir.mkdirs()
         var manifestText: String? = null
         var preferencesText: String? = null
         var database: File? = null
+        val photos = mutableListOf<File>()
         try {
             ZipInputStream(input).use { zip ->
                 while (true) {
@@ -107,6 +120,14 @@ object BackupArchive {
                             val target = File(workDir, DATABASE_ENTRY)
                             target.outputStream().use { out -> zip.copyLimited(out, MAX_DATABASE_BYTES) }
                             database = target
+                        }
+                        else -> {
+                            val photoName = PhotoFiles.nameFromBackupEntry(entry.name)
+                            if (photoName != null && photos.size < PhotoFiles.MAX_FILES) {
+                                val target = File(File(workDir, "photos").apply { mkdirs() }, photoName)
+                                target.outputStream().use { out -> zip.copyLimited(out, PhotoFiles.MAX_FILE_BYTES) }
+                                photos += target
+                            }
                         }
                     }
                 }
@@ -142,6 +163,7 @@ object BackupArchive {
             manifest = manifest,
             database = file,
             preferences = preferences.stringPropertyNames().associateWith { preferences.getProperty(it) },
+            photos = photos,
         )
     }
 

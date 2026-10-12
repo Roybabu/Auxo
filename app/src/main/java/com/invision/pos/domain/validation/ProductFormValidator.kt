@@ -164,6 +164,7 @@ object ProductFormValidator {
             createdAtMillis = form.createdAtMillis,
             stockUnit = unit,
             preferredSupplierId = form.preferredSupplierId,
+            photoFile = form.photoFile,
         )
         return ProductValidation.Valid(product)
     }

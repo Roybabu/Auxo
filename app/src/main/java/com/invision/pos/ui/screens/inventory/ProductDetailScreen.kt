@@ -60,7 +60,10 @@ import com.invision.pos.ui.components.ConfirmDialog
 import com.invision.pos.ui.components.DateField
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import com.invision.pos.ui.components.InvisionCard
+import com.invision.pos.ui.components.ProductPhoto
 import com.invision.pos.ui.components.InvisionTextField
 import com.invision.pos.ui.components.InvisionTopAppBar
 import com.invision.pos.ui.components.LoadingState
@@ -225,6 +228,17 @@ fun ProductDetailContent(
 private fun ProductHeader(product: Product) {
     InvisionCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            // Nothing is shown (not even a placeholder) for a product with no photo.
+            ProductPhoto(
+                photoFile = product.photoFile,
+                contentDescription = product.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .testTag("detail_photo"),
+                maxSidePx = 800,
+            ) {}
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 StatusChip(
                     text = stringResource(product.category.labelRes()),

@@ -39,6 +39,7 @@ fun ProductWithVariants.toDomain(): Product = Product(
     updatedAtMillis = product.updatedAt,
     stockUnit = stockUnitOf(product.stockUnit),
     preferredSupplierId = product.preferredSupplierId,
+    photoFile = product.photoFile,
 )
 
 fun VariantWithBatches.toDomain(): ProductVariant = variant.toDomain().copy(
@@ -99,6 +100,7 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     updatedAt = nowMillis,
     stockUnit = stockUnit.takeIf { it != StockUnit.UNIT }?.name,
     preferredSupplierId = preferredSupplierId,
+    photoFile = photoFile,
 )
 
 fun ProductVariant.toEntity(productId: Long): ProductVariantEntity = ProductVariantEntity(

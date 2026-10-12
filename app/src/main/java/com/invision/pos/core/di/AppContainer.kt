@@ -157,11 +157,14 @@ class AppContainer(context: Context) {
 
     val shopPreferences: ShopPreferences by lazy { AuthorizedShopPreferences(rawShopPreferences, authorizer) }
 
+    /** Product photo files in the app's private storage. */
+    val productPhotos: com.invision.pos.core.photos.ProductPhotoStore by lazy { com.invision.pos.core.photos.FileProductPhotoStore(appContext) }
+
     val storeLogoRepository: StoreLogoRepository by lazy { AuthorizedStoreLogoRepository(FileStoreLogoRepository(appContext), authorizer) }
 
     val backupService: BackupService by lazy {
         AuthorizedBackupService(
-            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences),
+            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos),
             authorizer,
             auditTrail,
         )
@@ -177,7 +180,7 @@ class AppContainer(context: Context) {
         AutoBackupRunner(
             store = autoBackupSettings,
             folderFor = { uri -> DocumentTreeFolder(appContext, Uri.parse(uri)) },
-            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences).backUp() },
+            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },
         )

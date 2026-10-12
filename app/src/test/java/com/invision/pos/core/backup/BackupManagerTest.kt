@@ -113,6 +113,38 @@ class BackupManagerTest {
     }
 
     @Test
+    fun photos_goIntoTheBackup_andComeBackWithTheirProducts() = runBlocking {
+        val photos = com.invision.pos.core.photos.FileProductPhotoStore(context)
+        val dir = java.io.File(context.filesDir, com.invision.pos.core.photos.PhotoFiles.DIRECTORY).apply {
+            deleteRecursively()
+            mkdirs()
+        }
+        val kept = "0123456789abcdef0123456789abcdef.jpg"
+        val later = "ffffffffffffffffffffffffffffffff.jpg"
+        java.io.File(dir, kept).writeBytes(byteArrayOf(1, 2, 3, 4))
+        saveNew(database, TestData.tShirt().copy(photoFile = kept))
+        val manager = BackupManager(context, database, appearance, storage, TestData.clock, photos = photos)
+        val backup = storage.files.getValue(manager.backUp().fileName)
+
+        // The photo is lost, and another one is added after the backup.
+        java.io.File(dir, kept).delete()
+        java.io.File(dir, later).writeBytes(byteArrayOf(9))
+
+        manager.restoreFrom(ByteArrayInputStream(backup))
+
+        assertEquals(listOf<Byte>(1, 2, 3, 4), java.io.File(dir, kept).readBytes().toList())
+        assertTrue(!java.io.File(dir, later).exists())
+        val reopened = open()
+        try {
+            val product = RoomInventoryRepository(reopened, TestData.clock).observeProducts().first().single()
+            assertEquals(kept, product.photoFile)
+        } finally {
+            reopened.close()
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun restore_intoAFreshPhone_recreatesTheData() = runBlocking {
         saveNew(database, TestData.tShirt())
         val saved = manager(database).backUp()

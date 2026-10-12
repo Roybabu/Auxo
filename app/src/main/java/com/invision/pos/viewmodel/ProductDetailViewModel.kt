@@ -219,6 +219,9 @@ class ProductDetailViewModel(
                     repository = container.inventoryRepository,
                     adjustStock = container.adjustStock,
                     clock = container.clock,
+                    deleteProduct = DeleteProductUseCase(container.inventoryRepository) { product ->
+                        product.photoFile?.let { container.productPhotos.delete(it) }
+                    },
                 )
             }
         }

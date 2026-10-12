@@ -1686,4 +1686,9 @@
         <item quantity="one">%d प्रोडक्ट जुड़ा</item>
         <item quantity="other">%d प्रोडक्ट जुड़े</item>
     </plurals>
+    <string name="editor_photo">फ़ोटो</string>
+    <string name="editor_photo_take">फ़ोटो खींचें</string>
+    <string name="editor_photo_choose">गैलरी से चुनें</string>
+    <string name="editor_photo_remove">फ़ोटो हटाएँ</string>
+    <string name="editor_photo_failed">यह तस्वीर इस्तेमाल नहीं हो सकी। दूसरी चुनें, या देखें कि कैमरा ऐप इंस्टॉल है।</string>
 </resources>

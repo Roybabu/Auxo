@@ -14,3 +14,6 @@ val LocalStoreLogo = staticCompositionLocalOf<android.graphics.Bitmap?> { null }
 
 /** Days before expiry that stock is flagged "expiring soon" (the Super Admin's setting in Billing settings). */
 val LocalExpiryWarningDays = staticCompositionLocalOf { com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS }
+
+/** Where product photos are loaded from. Null in previews and tests, where products show their category icon. */
+val LocalProductPhotos = staticCompositionLocalOf<com.invision.pos.core.photos.ProductPhotoStore?> { null }

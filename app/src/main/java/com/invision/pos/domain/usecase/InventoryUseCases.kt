@@ -59,12 +59,17 @@ sealed interface DeleteProductResult {
  * corrected), so the movement history explains where it went. Past invoices keep their own copy of the product's
  * name and price, so they are not changed.
  */
-class DeleteProductUseCase(private val repository: InventoryRepository) {
+class DeleteProductUseCase(
+    private val repository: InventoryRepository,
+    /** Called after the product is gone, e.g. to remove its photo file. A failure here does not undo the delete. */
+    private val onDeleted: suspend (Product) -> Unit = {},
+) {
     suspend operator fun invoke(productId: Long): DeleteProductResult {
         val product = repository.getProduct(productId) ?: return DeleteProductResult.NotFound
         val units = product.variants.sumOf { it.stockQuantity }
         if (units > 0) return DeleteProductResult.StockOnHand(units)
         repository.deleteProduct(productId)
+        runCatching { onDeleted(product) }
         return DeleteProductResult.Deleted
     }
 }

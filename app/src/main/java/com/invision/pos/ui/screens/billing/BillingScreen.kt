@@ -11,6 +11,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.invision.pos.ui.components.ProductPhoto
+import com.invision.pos.ui.screens.inventory.iconRes
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -709,6 +714,24 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (result.product.photoFile != null) {
+            ProductPhoto(
+                photoFile = result.product.photoFile,
+                contentDescription = result.product.name,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                maxSidePx = 120,
+            ) {
+                Icon(
+                    painter = painterResource(result.product.category.iconRes()),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(44.dp).padding(Spacing.sm),
+                )
+            }
+            Spacer(Modifier.width(Spacing.md))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = result.product.name,

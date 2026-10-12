@@ -37,6 +37,7 @@ class BackupManager(
     private val storage: BackupStorage,
     private val clock: Clock,
     private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
+    private val photos: com.invision.pos.core.photos.ProductPhotoStore? = null,
 ) : BackupService {
 
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -65,6 +66,7 @@ class BackupManager(
                     out = out,
                     manifest = manifest,
                     database = snapshot,
+                    photos = photos?.files().orEmpty(),
                     preferences = buildMap {
                         put(PREF_ACCENT, settings.accent.id)
                         put(PREF_DARK, settings.darkMode.toString())
@@ -118,6 +120,10 @@ class BackupManager(
             backup.preferences[PREF_DARK]?.let { appearance.setDarkMode(it.toBoolean()) }
             backup.preferences[PREF_RESTAURANT_MENU]?.let { shop?.setRestaurantMenu(it.toBoolean()) }
             backup.preferences[PREF_SUPPLIERS]?.let { shop?.setSuppliers(it.toBoolean()) }
+
+            // The photos go with the data they belong to. A backup without photos clears the old ones, because the
+            // restored products do not refer to them.
+            photos?.let { runCatching { it.replaceAll(backup.photos) } }
         } finally {
             work.deleteRecursively()
         }

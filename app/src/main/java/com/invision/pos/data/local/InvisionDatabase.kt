@@ -68,6 +68,8 @@ import com.invision.pos.data.local.entity.SupplierEntity
  * 13. The expiring-soon warning window (store_settings.expiry_warning_days, 30 for existing shops). Written by hand
  *     ([MIGRATION_12_13]).
  * 14. Stock counts: the stock_counts table. Written by hand ([MIGRATION_13_14]).
+ * 15. Product photos: products.photo_file, the name of the photo file (null for existing products). Written by
+ *     hand ([MIGRATION_14_15]).
  */
 @Database(
     entities = [
@@ -150,7 +152,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 14
+        const val VERSION = 15
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -247,10 +249,17 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 15: product photos. Existing products have none; the files live outside the database. */
+        val MIGRATION_14_15: Migration = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE products ADD COLUMN photo_file TEXT")
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

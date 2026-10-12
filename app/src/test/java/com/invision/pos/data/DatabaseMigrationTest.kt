@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To14_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersQuotationsThirtyDayExpiryAndStockCountsWork() = runTest {
+    fun migrate4To15_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersQuotationsThirtyDayExpiryStockCountsAndProductPhotosWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -429,5 +429,26 @@ class DatabaseMigrationTest {
         assertEquals(listOf(com.invision.pos.domain.inventory.CountLine(1, 5, 3)), stockCounts.observeOpen().first()!!.lines)
         stockCounts.cancel(openCount.id)
         assertNull(stockCounts.observeOpen().first())
+
+        // Product photos: the column exists, no existing product has a photo, and a photo name is saved and read back.
+        val productColumns = db.openHelper.readableDatabase.query("PRAGMA table_info(products)").use { c ->
+            generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+        }
+        assertTrue("products has photo_file", "photo_file" in productColumns)
+        db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM products WHERE photo_file IS NOT NULL").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        val photoName = "0123456789abcdef0123456789abcdef.jpg"
+        val inventory = com.invision.pos.data.repository.RoomInventoryRepository(db, TestData.clock)
+        val saved = inventory.saveProduct(
+            com.invision.pos.domain.model.Product(
+                name = "Photo migration test",
+                category = com.invision.pos.domain.model.ProductCategory.GARMENT,
+                variants = listOf(TestData.variant(barcode = "PHOTO-MIGRATION-1", size = "M", colour = "Red")),
+                photoFile = photoName,
+            ),
+        ) as com.invision.pos.data.repository.SaveProductResult.Saved
+        assertEquals(photoName, inventory.getProduct(saved.productId)!!.photoFile)
     }
 }

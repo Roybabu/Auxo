@@ -90,6 +90,8 @@ data class ProductForm(
     /** How stock is counted; only ingredients can use weight or volume. Fixed once saved. */
     val stockUnit: StockUnit = StockUnit.UNIT,
     val preferredSupplierId: Long? = null,
+    /** The product photo's file name (see [Product.photoFile]); null for none. */
+    val photoFile: String? = null,
 ) {
     val isNew: Boolean get() = productId == 0L
 
@@ -122,6 +124,7 @@ data class ProductForm(
             createdAtMillis = product.createdAtMillis,
             stockUnit = product.stockUnit,
             preferredSupplierId = product.preferredSupplierId,
+            photoFile = product.photoFile,
         )
     }
 }

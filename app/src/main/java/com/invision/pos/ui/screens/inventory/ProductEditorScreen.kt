@@ -1,5 +1,19 @@
 package com.invision.pos.ui.screens.inventory
 
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import com.invision.pos.ui.components.ProductPhoto
+import java.io.File
+import java.io.IOException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -102,6 +116,9 @@ interface ProductEditorActions {
     fun onScanBarcode(key: String)
     fun onPickExpiry(key: String)
     fun onSave()
+    fun onTakePhoto() = Unit
+    fun onChoosePhoto() = Unit
+    fun onRemovePhoto() = Unit
 }
 
 @Composable
@@ -125,8 +142,20 @@ fun ProductEditorScreen(
                     resources.getQuantityString(R.plurals.editor_fix_errors, event.errorCount, event.errorCount),
                 )
                 ProductEditorEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
+                ProductEditorEvent.PhotoFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.editor_photo_failed))
             }
         }
+    }
+
+    val context = LocalContext.current
+    var captureUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) viewModel.onPhotoPicked(uri)
+    }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+        val target = captureUri
+        captureUri = null
+        if (taken && target != null) viewModel.onPhotoPicked(Uri.parse(target))
     }
 
     val scan = rememberBarcodeScanner { outcome ->
@@ -170,6 +199,26 @@ fun ProductEditorScreen(
                 expiryTarget = key
             }
             override fun onSave() = viewModel.save()
+            override fun onChoosePhoto() = gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            override fun onRemovePhoto() = viewModel.onPhotoRemoved()
+            override fun onTakePhoto() {
+                try {
+                    // The camera app writes the picture into this file through a one-time permission to its address.
+                    val file = File(File(context.cacheDir, "capture").apply { mkdirs() }, "photo.jpg").apply { createNewFile() }
+                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                    captureUri = uri.toString()
+                    camera.launch(uri)
+                } catch (e: ActivityNotFoundException) {
+                    captureUri = null
+                    viewModel.onPhotoUnavailable()
+                } catch (e: IOException) {
+                    captureUri = null
+                    viewModel.onPhotoUnavailable()
+                } catch (e: IllegalArgumentException) {
+                    captureUri = null
+                    viewModel.onPhotoUnavailable()
+                }
+            }
         }
     }
 
@@ -251,6 +300,7 @@ fun ProductEditorContent(
             }
         }
 
+        item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
 
         if (form.category.isSold) {
@@ -317,6 +367,54 @@ fun ProductEditorContent(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
                     Text(stringResource(R.string.action_save))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoSection(form: ProductForm, busy: Boolean, actions: ProductEditorActions) {
+    InvisionCard(modifier = Modifier.fillMaxWidth().testTag("editor_photo")) {
+        Row(
+            modifier = Modifier.padding(Spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                ProductPhoto(
+                    photoFile = form.photoFile,
+                    contentDescription = form.name.ifBlank { null },
+                    modifier = Modifier.fillMaxSize(),
+                    maxSidePx = 400,
+                ) {
+                    Icon(
+                        painter = painterResource(form.category.iconRes()),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+                if (busy) CircularProgressIndicator(modifier = Modifier.size(28.dp).testTag("editor_photo_busy"))
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Text(stringResource(R.string.editor_photo), style = MaterialTheme.typography.titleSmall)
+                OutlinedButton(onClick = actions::onTakePhoto, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("editor_photo_take")) {
+                    Text(stringResource(R.string.editor_photo_take))
+                }
+                OutlinedButton(onClick = actions::onChoosePhoto, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("editor_photo_choose")) {
+                    Text(stringResource(R.string.editor_photo_choose))
+                }
+                if (form.photoFile != null) {
+                    TextButton(onClick = actions::onRemovePhoto, enabled = !busy, modifier = Modifier.testTag("editor_photo_remove")) {
+                        Text(stringResource(R.string.editor_photo_remove))
+                    }
                 }
             }
         }

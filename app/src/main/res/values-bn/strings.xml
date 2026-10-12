@@ -1686,4 +1686,9 @@
         <item quantity="one">%dটি প্রোডাক্ট যোগ হয়েছে</item>
         <item quantity="other">%dটি প্রোডাক্ট যোগ হয়েছে</item>
     </plurals>
+    <string name="editor_photo">ছবি</string>
+    <string name="editor_photo_take">ছবি তুলুন</string>
+    <string name="editor_photo_choose">গ্যালারি থেকে বেছে নিন</string>
+    <string name="editor_photo_remove">ছবি সরান</string>
+    <string name="editor_photo_failed">এই ছবিটি ব্যবহার করা গেল না। অন্য একটি বেছে নিন, অথবা দেখুন ক্যামেরা অ্যাপ ইনস্টল করা আছে কি না।</string>
 </resources>

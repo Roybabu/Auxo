@@ -6,6 +6,9 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import android.net.Uri
+import com.invision.pos.core.photos.PhotoSaveResult
+import com.invision.pos.core.photos.ProductPhotoStore
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.PurchasingRepository
 import com.invision.pos.data.repository.SaveProductResult
@@ -47,6 +50,8 @@ data class ProductEditorUiState(
     val isSaving: Boolean = false,
     /** Active suppliers to choose a preferred one from. */
     val suppliers: List<Supplier> = emptyList(),
+    /** A photo is being read and resized. */
+    val photoBusy: Boolean = false,
 ) {
     val visibleErrors: ProductFormErrors get() = if (showErrors) errors else ProductFormErrors()
 }
@@ -55,6 +60,9 @@ sealed interface ProductEditorEvent {
     data class Saved(val productId: Long) : ProductEditorEvent
     data class InvalidForm(val errorCount: Int) : ProductEditorEvent
     data object SaveFailed : ProductEditorEvent
+
+    /** The chosen picture could not be used, or there is no camera app. */
+    data object PhotoFailed : ProductEditorEvent
 }
 
 class ProductEditorViewModel(
@@ -64,6 +72,7 @@ class ProductEditorViewModel(
     private val saveProduct: SaveProductUseCase,
     private val barcodeGenerator: InternalBarcodeGenerator,
     private val purchasing: PurchasingRepository? = null,
+    private val photos: ProductPhotoStore? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductEditorUiState(isLoading = productId != 0L))
@@ -74,6 +83,13 @@ class ProductEditorViewModel(
 
     private var originalVariants: List<ProductVariant> = emptyList()
     private var keyCounter = 0
+
+    /** The photo the product had when it was opened. It is deleted only once a different photo is saved. */
+    private var originalPhotoFile: String? = null
+
+    /** A photo chosen in this editor that is not saved with the product yet; deleted if the editor is left unsaved. */
+    private var pendingPhotoFile: String? = null
+    private var savedProduct = false
 
     init {
         if (productId != 0L) {
@@ -101,6 +117,7 @@ class ProductEditorViewModel(
                 _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             } else {
                 originalVariants = product.variants
+                originalPhotoFile = product.photoFile
                 _uiState.update { it.copy(isLoading = false) }
                 setForm(ProductForm.fromProduct(product))
             }
@@ -170,6 +187,44 @@ class ProductEditorViewModel(
     }
 
     fun onPreferredSupplierChange(supplierId: Long?) = editForm { it.copy(preferredSupplierId = supplierId) }
+
+    // Photo
+
+    /** Reads, upright-turns, shrinks and stores the picture at [source], and makes it the product's photo. */
+    fun onPhotoPicked(source: Uri) {
+        val store = photos ?: return
+        if (_uiState.value.photoBusy) return
+        _uiState.update { it.copy(photoBusy = true) }
+        viewModelScope.launch {
+            when (val result = store.save(source)) {
+                is PhotoSaveResult.Saved -> {
+                    // A photo chosen earlier in this editor and never saved is replaced, so it must not pile up.
+                    pendingPhotoFile?.let(store::delete)
+                    pendingPhotoFile = result.fileName
+                    editForm { it.copy(photoFile = result.fileName) }
+                }
+                PhotoSaveResult.Unreadable -> eventChannel.send(ProductEditorEvent.PhotoFailed)
+            }
+            _uiState.update { it.copy(photoBusy = false) }
+        }
+    }
+
+    /** The camera could not be opened. */
+    fun onPhotoUnavailable() {
+        eventChannel.trySend(ProductEditorEvent.PhotoFailed)
+    }
+
+    /** Takes the photo off the product. The saved file is deleted only when the product is saved. */
+    fun onPhotoRemoved() {
+        pendingPhotoFile?.let { photos?.delete(it) }
+        pendingPhotoFile = null
+        editForm { it.copy(photoFile = null) }
+    }
+
+    override fun onCleared() {
+        if (!savedProduct) pendingPhotoFile?.let { photos?.delete(it) }
+        super.onCleared()
+    }
 
     // Garment sizes and colours
 
@@ -258,6 +313,11 @@ class ProductEditorViewModel(
             val result = runCatching { saveProduct(product) }.getOrNull()
             when (result) {
                 is SaveProductResult.Saved -> {
+                    savedProduct = true
+                    // The photo that was replaced or removed is no longer wanted.
+                    originalPhotoFile?.takeIf { it != product.photoFile }?.let { photos?.delete(it) }
+                    originalPhotoFile = product.photoFile
+                    pendingPhotoFile = null
                     _uiState.update { it.copy(isSaving = false) }
                     eventChannel.send(ProductEditorEvent.Saved(result.productId))
                 }
@@ -300,6 +360,7 @@ class ProductEditorViewModel(
                     saveProduct = container.saveProduct,
                     barcodeGenerator = container.barcodeGenerator,
                     purchasing = container.purchasingRepository,
+                    photos = container.productPhotos,
                 )
             }
         }

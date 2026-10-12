@@ -84,6 +84,11 @@ data class Product(
     val stockUnit: StockUnit = StockUnit.UNIT,
     /** Supplier that low-stock purchase orders go to by default. */
     val preferredSupplierId: Long? = null,
+    /**
+     * Name of the product's photo file in the app's private photo folder (see ProductPhotoStore), or null when it
+     * has no photo. Only the name is kept here; the picture itself is not in the database.
+     */
+    val photoFile: String? = null,
     val createdAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
 ) {

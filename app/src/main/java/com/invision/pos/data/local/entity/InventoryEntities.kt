@@ -34,6 +34,8 @@ data class ProductEntity(
     @ColumnInfo(name = "stock_unit") val stockUnit: String? = null,
     /** Supplier for reorders. Added in version 3. */
     @ColumnInfo(name = "preferred_supplier_id") val preferredSupplierId: Long? = null,
+    /** File name of the product photo in the app's private photo folder. Added in version 15. */
+    @ColumnInfo(name = "photo_file") val photoFile: String? = null,
 )
 
 @Entity(
