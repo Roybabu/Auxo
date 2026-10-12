@@ -48,10 +48,8 @@ class StringResourcesCompleteTest {
 
     private fun holders(text: String) = placeholder.findAll(text).map { it.value }.sorted().toList()
 
-    /** Languages whose full translation has not been added yet. Remove an entry when its file is complete. */
-    private val pending = setOf(Language.BENGALI)
-
-    private val translated get() = Language.entries.filter { it != Language.DEFAULT && it !in pending }
+    /** Every language except the English the strings are written in. A new Language must come with a full file. */
+    private val translated get() = Language.entries.filter { it != Language.DEFAULT }
 
     @Test
     fun noLanguageDefinesTheSameNameTwice() {
