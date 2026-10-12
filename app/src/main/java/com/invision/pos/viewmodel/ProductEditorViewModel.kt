@@ -223,7 +223,6 @@ class ProductEditorViewModel(
 
     override fun onCleared() {
         if (!savedProduct) pendingPhotoFile?.let { photos?.delete(it) }
-        super.onCleared()
     }
 
     // Garment sizes and colours
