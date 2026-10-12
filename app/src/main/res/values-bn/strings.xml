@@ -1014,7 +1014,6 @@
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_tagline">Built to grow.</string>
     <string name="auth_setup_title">আপনার অ্যাডমিন তৈরি করুন</string>
     <string name="auth_setup_body">এই ডিভাইসের জন্য একমাত্র অ্যাডমিন অ্যাকাউন্ট তৈরি করুন। অ্যাপ খুললেই প্রতিবার আপনি এটি দিয়ে সাইন ইন করবেন। এটি শুধু এই ডিভাইসেই থাকে।</string>
     <string name="auth_field_name">আপনার নাম</string>

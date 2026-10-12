@@ -1015,7 +1015,6 @@ in %2$s</string>
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_tagline">Built to grow.</string>
     <string name="auth_setup_title">Set up your administrator</string>
     <string name="auth_setup_body">Create the one administrator account for this device. You will use it to sign in each time the app opens. It is stored only on this device.</string>
     <string name="auth_field_name">Your name</string>

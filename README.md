@@ -1,4 +1,4 @@
-<p align="center"><img src="design/auxo/png/auxo-logo-horizontal-tagline.png" alt="Auxo: Built to grow." width="420"></p>
+<p align="center"><img src="docs/branding/auxo-icon-transparent.png" alt="Auxo: Built to grow." width="160"></p>
 
 **Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee. The name comes from the Greek *auxō*, "to increase or grow".
 
@@ -16,7 +16,9 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 
 ## Brand assets
 
-The Auxo symbol and logos (horizontal, vertical, dark background, one-colour for print) are in `design/auxo/`, as SVG and PNG. They and the launcher icon are drawn by `tools/make_auxo_brand.py`, so they always share the same symbol. Wordmark letters are outlines of Poppins Bold (SIL Open Font License).
+<img src="docs/branding/auxo-icon-transparent.png" alt="The Auxo app icon" width="72" align="left">
+The approved artwork is in `design/auxo/` (originals: `docs/branding/auxo-logo-reference.png`; the app icon is `docs/branding/auxo-icon-transparent.png`): the full logo, the symbol alone, a vertical logo, a version for dark backgrounds and a grey one. The launcher icon and the sign-in logo are cut from that same artwork by `tools/extract_auxo_logo.py`, nothing is redrawn.
+<br clear="left">
 
 ## One rule: the books must add up
 

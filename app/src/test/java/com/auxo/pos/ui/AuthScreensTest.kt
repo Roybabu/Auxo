@@ -110,7 +110,7 @@ class AuthScreensTest {
         setup()
         val left = composeRule.onNodeWithTag("setup_name").getUnclippedBoundsInRoot().left
         assertTrue("form starts at ${left.value}dp", left.value < 40f)
-        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
     }
 
     @Test
@@ -229,7 +229,7 @@ class AuthScreensTest {
             composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
         }
         composeRule.onNodeWithContentDescription("Auxo").assertExists()
-        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
     }
 
     @Test
@@ -270,7 +270,7 @@ class AuthScreensTabletTest {
         }
         composeRule.onNodeWithTag("auth_screen").assertIsDisplayed()
         // The wide layout shows the app name as text next to the form; the narrow one has only the logo.
-        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
         composeRule.onNodeWithText("Billing and inventory for your shop").assertIsDisplayed()
         composeRule.onNodeWithTag("setup_name").assertIsDisplayed()
         composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsDisplayed()
@@ -281,7 +281,7 @@ class AuthScreensTabletTest {
         composeRule.setContent {
             AuxoTheme { LoginContent(LoginUiState(identifier = "roy", password = "x"), {}, {}, {}) }
         }
-        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
         composeRule.onNodeWithTag("login_submit").assertIsDisplayed().assertIsEnabled()
     }
 
