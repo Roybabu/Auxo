@@ -212,9 +212,24 @@ class AuthScreensTest {
     }
 
     @Test
-    fun loginButton_needsBothFields() {
-        login(LoginUiState(identifier = "roy", password = ""))
-        composeRule.onNodeWithTag("login_submit").assertIsNotEnabled()
+    fun loginScreen_explainsMissingFields_insteadOfDisablingTheButton() {
+        var signIns = 0
+        login(LoginUiState(identifier = "", password = "", identifierMissing = true, passwordMissing = true), onSignIn = { signIns++ })
+        composeRule.onNodeWithTag("login_submit").assertIsEnabled()
+        composeRule.onNodeWithText("Enter your username or email.").assertIsDisplayed()
+        composeRule.onNodeWithText("Enter your password.").assertIsDisplayed()
+        composeRule.onNodeWithTag("login_submit").performClick()
+        assertEquals(1, signIns)
+    }
+
+    @Test
+    fun loginScreen_hasNoOfflineModeOrServerOptions() {
+        login()
+        for (text in listOf("Offline", "offline", "Online", "online", "Server", "server", "Cloud", "cloud", "Connect", "Business", "OTP", "Register", "Google")) {
+            composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+        composeRule.onNodeWithContentDescription("InVision").assertExists()
+        composeRule.onNodeWithText("InVision").assertIsDisplayed()
     }
 
     @Test

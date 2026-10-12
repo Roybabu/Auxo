@@ -189,12 +189,35 @@ class AuthViewModelsTest {
     }
 
     @Test
-    fun loginIgnoresBlankFields() {
+    fun signingInWithMissingFields_explainsWhichOnes_andDoesNotCheckCredentials() {
         createAdmin()
         val next = restart()
         val login = LoginViewModel(next)
         login.signIn()
+        assertTrue(login.uiState.value.identifierMissing)
+        assertTrue(login.uiState.value.passwordMissing)
         assertFalse(login.uiState.value.isSigningIn)
         assertNull(login.uiState.value.message)
+
+        login.onIdentifierChange("roy.babu")
+        assertFalse(login.uiState.value.identifierMissing)
+        assertTrue(login.uiState.value.passwordMissing)
+        login.signIn()
+        assertFalse(login.uiState.value.identifierMissing)
+        assertTrue(login.uiState.value.passwordMissing)
+        assertEquals(AuthState.SignedOut, next.state.value)
+
+        login.onPasswordChange("Green-Leaf-42")
+        assertFalse(login.uiState.value.passwordMissing)
+    }
+
+    @Test
+    fun whitespaceOnlyUsername_countsAsMissing() {
+        createAdmin()
+        val login = LoginViewModel(restart())
+        login.onIdentifierChange("   ")
+        login.onPasswordChange("Green-Leaf-42")
+        login.signIn()
+        assertTrue(login.uiState.value.identifierMissing)
     }
 }

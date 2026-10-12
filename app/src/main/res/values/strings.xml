@@ -1005,6 +1005,8 @@ in %2$s</string>
     <string name="auth_login_welcome">Welcome back</string>
     <string name="auth_login_action">Sign in</string>
     <string name="auth_login_working">Signing in…</string>
+    <string name="auth_error_login_identifier_required">Enter your username or email.</string>
+    <string name="auth_error_login_password_required">Enter your password.</string>
     <string name="auth_login_rejected">Incorrect username or password.</string>
     <string name="auth_login_unavailable">Sign-in is not available right now. Close the app and open it again.</string>
     <plurals name="auth_login_locked">

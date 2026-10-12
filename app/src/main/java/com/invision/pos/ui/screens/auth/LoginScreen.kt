@@ -53,6 +53,7 @@ fun LoginContent(
                 value = state.identifier,
                 onValueChange = onIdentifierChange,
                 label = stringResource(R.string.auth_field_identifier),
+                error = if (state.identifierMissing) stringResource(R.string.auth_error_login_identifier_required) else null,
                 keyboardType = KeyboardType.Email,
                 enabled = !state.isSigningIn,
                 modifier = Modifier.fillMaxWidth().testTag("login_identifier"),
@@ -61,6 +62,7 @@ fun LoginContent(
                 value = state.password,
                 onValueChange = onPasswordChange,
                 label = stringResource(R.string.auth_field_password),
+                error = if (state.passwordMissing) stringResource(R.string.auth_error_login_password_required) else null,
                 keyboardType = KeyboardType.Password,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = { PasswordToggle(showPassword) { showPassword = !showPassword } },
@@ -84,7 +86,7 @@ fun LoginContent(
             }
             Button(
                 onClick = onSignIn,
-                enabled = !state.isSigningIn && state.identifier.isNotBlank() && state.password.isNotEmpty(),
+                enabled = !state.isSigningIn,
                 modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_submit"),
             ) {
                 Text(stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action))

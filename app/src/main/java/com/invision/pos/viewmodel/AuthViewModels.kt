@@ -91,6 +91,9 @@ data class LoginUiState(
     val password: String = "",
     val isSigningIn: Boolean = false,
     val message: LoginMessage? = null,
+    /** Set when Sign in was tapped with the field empty; cleared as soon as the person types in it. */
+    val identifierMissing: Boolean = false,
+    val passwordMissing: Boolean = false,
 )
 
 class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
@@ -98,13 +101,21 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun onIdentifierChange(value: String) = _uiState.update { it.copy(identifier = value.take(AdminSetupValidator.MAX_IDENTIFIER_LENGTH), message = null) }
+    fun onIdentifierChange(value: String) =
+        _uiState.update { it.copy(identifier = value.take(AdminSetupValidator.MAX_IDENTIFIER_LENGTH), message = null, identifierMissing = false) }
 
-    fun onPasswordChange(value: String) = _uiState.update { it.copy(password = value.take(AdminSetupValidator.MAX_PASSWORD_LENGTH + 20), message = null) }
+    fun onPasswordChange(value: String) =
+        _uiState.update { it.copy(password = value.take(AdminSetupValidator.MAX_PASSWORD_LENGTH + 20), message = null, passwordMissing = false) }
 
     fun signIn() {
         val current = _uiState.value
-        if (current.isSigningIn || current.identifier.isBlank() || current.password.isEmpty()) return
+        if (current.isSigningIn) return
+        val identifierMissing = current.identifier.isBlank()
+        val passwordMissing = current.password.isEmpty()
+        if (identifierMissing || passwordMissing) {
+            _uiState.update { it.copy(identifierMissing = identifierMissing, passwordMissing = passwordMissing, message = null) }
+            return
+        }
         _uiState.update { it.copy(isSigningIn = true, message = null) }
         viewModelScope.launch {
             val result = auth.signIn(current.identifier, current.password)
