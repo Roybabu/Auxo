@@ -10,6 +10,7 @@ import com.invision.pos.data.repository.BillingRepository
 import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.PurchasingRepository
+import com.invision.pos.core.auth.Permission
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.Supplier
 import com.invision.pos.domain.reports.ExpiryWindow
@@ -40,6 +41,21 @@ import java.time.LocalDate
 /** The filters a report offers besides its period. */
 val ReportType.usesCategory: Boolean
     get() = this == ReportType.STOCK_VALUE || this == ReportType.STOCK_MOVEMENTS || this == ReportType.WASTAGE
+
+/**
+ * What a person needs to be allowed to read the data behind this report, or null when the basic billing
+ * permissions are enough. Reports are hidden from anyone without it, instead of opening and failing.
+ */
+val ReportType.requiredPermission: Permission?
+    get() = when (this) {
+        ReportType.PURCHASES -> Permission.MANAGE_PURCHASES
+        ReportType.STOCK_MOVEMENTS, ReportType.WASTAGE, ReportType.EXPIRY -> Permission.VIEW_STOCK_RECORDS
+        else -> null
+    }
+
+/** The reports offered to someone: the supplier report only when suppliers are on, and only those they may read. */
+fun availableReportTypes(suppliersOn: Boolean, can: (Permission) -> Boolean): List<ReportType> =
+    ReportType.entries.filter { (suppliersOn || !it.usesSupplier) && (it.requiredPermission?.let(can) ?: true) }
 
 val ReportType.usesSupplier: Boolean get() = this == ReportType.PURCHASES
 

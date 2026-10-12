@@ -55,6 +55,7 @@ import com.invision.pos.domain.reports.ReportPaging
 import com.invision.pos.domain.reports.ReportTable
 import com.invision.pos.domain.reports.ReportType
 import com.invision.pos.domain.reports.ReportValue
+import com.invision.pos.ui.LocalCapabilities
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.DateField
@@ -74,6 +75,7 @@ import com.invision.pos.viewmodel.usesCategory
 import com.invision.pos.viewmodel.usesExpiryWindow
 import com.invision.pos.viewmodel.usesItemKind
 import com.invision.pos.viewmodel.usesOutstanding
+import com.invision.pos.viewmodel.availableReportTypes
 import com.invision.pos.viewmodel.usesSupplier
 import java.time.LocalDate
 
@@ -209,10 +211,11 @@ fun ReportsContent(
     ) {
         val typeLabels = ReportType.entries.associateWith { stringResource(it.labelRes()) }
         val suppliersOn = LocalSuppliersEnabled.current
+        val capabilities = LocalCapabilities.current
         DropdownField(
             label = stringResource(R.string.report_type),
             value = typeLabels.getValue(type),
-            options = ReportType.entries.filter { suppliersOn || !it.usesSupplier },
+            options = availableReportTypes(suppliersOn, capabilities::can),
             optionText = { typeLabels.getValue(it) },
             onSelect = actions::onTypeChange,
             modifier = Modifier
