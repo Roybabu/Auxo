@@ -2,6 +2,7 @@ package com.invision.pos.security
 
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.core.auth.Role
+import com.invision.pos.core.auth.PermissionOptions
 import com.invision.pos.core.auth.RolePermissions
 import com.invision.pos.ui.navigation.BillingRoutes
 import com.invision.pos.ui.navigation.CustomerRoutes
@@ -68,5 +69,51 @@ class RouteAccessTest {
         val tabs = TopLevelDestination.entries.filter { it.permission == null || RolePermissions.allows(Role.EMPLOYEE, it.permission) }
         assertEquals(listOf(TopLevelDestination.HOME, TopLevelDestination.BILLING, TopLevelDestination.MORE), tabs)
         assertNull(TopLevelDestination.HOME.permission)
+    }
+
+    // Employees with extras
+
+    private fun openWith(vararg extras: Permission): Set<String> =
+        everyPage.filter { page -> RouteAccess.permissionFor(page)?.let { RolePermissions.allows(Role.EMPLOYEE, it, extras.toSet()) } ?: true }.toSet()
+
+    private val basics = setOf(BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, MoreRoutes.HOME, MoreRoutes.APPEARANCE, TopLevelDestination.HOME.route)
+
+    @Test
+    fun givingEveryOption_stillLeavesUserManagementAndBackupToTheSuperAdmin() {
+        val open = openWith(*PermissionOptions.all.toTypedArray())
+        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.BACKUP, open)
+    }
+
+    @Test
+    fun oneOption_opensOnlyItsOwnPages() {
+        assertEquals(basics + MoreRoutes.MENU + MoreRoutes.MENU_EDITOR, openWith(Permission.MANAGE_MENU))
+        assertEquals(basics + BillingRoutes.RETURN, openWith(Permission.PROCESS_RETURN))
+        assertEquals(basics + MoreRoutes.SHOP_SETTINGS + MoreRoutes.STORE_DETAILS, openWith(Permission.MANAGE_SETTINGS))
+        assertEquals(basics + MoreRoutes.ACTIVITY_LOG, openWith(Permission.VIEW_ACTIVITY_LOG))
+    }
+
+    @Test
+    fun everyPageAnOptionOpens_canBeReachedFromItsEntryPage() {
+        // Receiving goods starts from an order, which needs suppliers; account payments start from a customer.
+        val goods = openWith(Permission.RECEIVE_GOODS)
+        assertTrue(StockRoutes.RECEIVE in goods && StockRoutes.ORDER in goods && StockRoutes.SUPPLIERS in goods)
+        val payments = openWith(Permission.RECEIVE_ACCOUNT_PAYMENT)
+        assertTrue(CustomerRoutes.PAYMENT in payments && CustomerRoutes.LIST in payments && CustomerRoutes.DETAIL in payments)
+        val adjust = openWith(Permission.ADJUST_STOCK)
+        assertTrue(InventoryRoutes.PRODUCT in adjust)
+    }
+
+    @Test
+    fun theTabBar_followsWhatTheEmployeeWasGiven() {
+        fun tabs(vararg extras: Permission) =
+            TopLevelDestination.entries.filter { it.permission == null || RolePermissions.allows(Role.EMPLOYEE, it.permission, extras.toSet()) }
+        assertEquals(
+            listOf(TopLevelDestination.HOME, TopLevelDestination.BILLING, TopLevelDestination.INVENTORY, TopLevelDestination.MORE),
+            tabs(Permission.MANAGE_PRODUCTS),
+        )
+        assertEquals(
+            listOf(TopLevelDestination.HOME, TopLevelDestination.BILLING, TopLevelDestination.CUSTOMERS, TopLevelDestination.MORE),
+            tabs(Permission.MANAGE_CUSTOMERS),
+        )
     }
 }

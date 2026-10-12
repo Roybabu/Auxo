@@ -32,7 +32,7 @@ fun AuthGate(
     when (state) {
         AuthState.NeedsSetup -> setup()
         AuthState.SignedOut -> login()
-        is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name)) {
+        is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name, state.permissions)) {
             // A different person signing in gets a fresh app, never the previous person's screens.
             key(state.userId) { app() }
         }

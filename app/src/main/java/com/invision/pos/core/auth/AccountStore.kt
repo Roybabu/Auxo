@@ -125,7 +125,8 @@ class FileAccountStore(directory: File) : AccountStore {
                             .put("salt", Base64.encodeToString(a.salt, Base64.NO_WRAP))
                             .put("hash", Base64.encodeToString(a.hash, Base64.NO_WRAP))
                             .put("iterations", a.iterations)
-                            .put("createdAt", a.createdAtMillis),
+                            .put("createdAt", a.createdAtMillis)
+                            .put("granted", JSONArray().also { list -> if (a.role == Role.EMPLOYEE) a.granted.forEach { list.put(it.name) } }),
                     )
                 }
             },
@@ -148,6 +149,7 @@ class FileAccountStore(directory: File) : AccountStore {
                 hash = Base64.decode(a.getString("hash"), Base64.NO_WRAP),
                 iterations = a.getInt("iterations"),
                 createdAtMillis = a.getLong("createdAt"),
+                granted = decodeGranted(a),
             )
         }
         require(accounts.isNotEmpty())
@@ -157,6 +159,18 @@ class FileAccountStore(directory: File) : AccountStore {
         // Exactly one Super Admin. A registry that says otherwise has been damaged or edited.
         require(accounts.count { it.role == Role.SUPER_ADMIN } == 1) { "expected exactly one Super Admin" }
         return accounts
+    }
+
+    /**
+     * The extras saved for an Employee. A registry written before extras existed has none. Names this version
+     * does not know are ignored, and anything that can never be granted (such as User Management) is dropped,
+     * so editing the file cannot hand an Employee more than the app would ever offer.
+     */
+    private fun decodeGranted(account: JSONObject): Set<Permission> {
+        if (Role.valueOf(account.getString("role")) != Role.EMPLOYEE) return emptySet()
+        val names = account.optJSONArray("granted") ?: return emptySet()
+        val known = (0 until names.length()).mapNotNull { i -> Permission.entries.firstOrNull { it.name == names.optString(i) } }
+        return PermissionOptions.normalize(known.toSet())
     }
 
     private fun decodeLegacy(text: String): UserAccount {

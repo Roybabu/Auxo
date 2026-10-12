@@ -12,6 +12,12 @@ fun AccountEvent.toAuditDraft(): AuditDraft {
         AccountEventKind.EMPLOYEE_CREATED -> AuditDraft(AuditAction.EMPLOYEE_CREATED, AuditEntity.USER, targetId, "Created employee account for $who")
         AccountEventKind.EMPLOYEE_TURNED_ON -> AuditDraft(AuditAction.EMPLOYEE_TURNED_ON, AuditEntity.USER, targetId, "Turned on the account of $who")
         AccountEventKind.EMPLOYEE_TURNED_OFF -> AuditDraft(AuditAction.EMPLOYEE_TURNED_OFF, AuditEntity.USER, targetId, "Turned off the account of $who")
+        AccountEventKind.ACCESS_CHANGED -> AuditDraft(
+            AuditAction.EMPLOYEE_ACCESS_CHANGED,
+            AuditEntity.USER,
+            targetId,
+            "Changed what $who may do: " + (granted.orEmpty().takeIf { it.isNotEmpty() }?.joinToString { it.name.lowercase().replace('_', ' ') } ?: "billing only"),
+        )
         AccountEventKind.PASSWORD_RESET -> AuditDraft(AuditAction.PASSWORD_RESET, AuditEntity.USER, targetId, "Reset the password of $who")
     }
 }

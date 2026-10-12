@@ -45,6 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.core.auth.ManagedUser
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.core.auth.PermissionGroup
 import com.invision.pos.core.auth.Role
 import com.invision.pos.core.auth.SetupField
 import com.invision.pos.ui.components.ConfirmDialog
@@ -56,6 +58,7 @@ import com.invision.pos.ui.components.LoadingState
 import com.invision.pos.ui.screens.auth.PasswordToggle
 import com.invision.pos.ui.screens.auth.messageRes
 import com.invision.pos.ui.theme.Spacing
+import com.invision.pos.viewmodel.AccessForm
 import com.invision.pos.viewmodel.EmployeeForm
 import com.invision.pos.viewmodel.ResetForm
 import com.invision.pos.viewmodel.UserManagementEvent
@@ -77,6 +80,7 @@ fun UserManagementScreen(
                 is UserManagementEvent.Created -> resources.getString(R.string.users_created, event.name)
                 is UserManagementEvent.Activated -> resources.getString(R.string.users_activated, event.name)
                 is UserManagementEvent.Deactivated -> resources.getString(R.string.users_deactivated, event.name)
+                is UserManagementEvent.AccessChanged -> resources.getString(R.string.users_access_saved, event.name)
                 is UserManagementEvent.PasswordReset -> resources.getString(R.string.users_password_reset_done, event.name)
                 UserManagementEvent.Failed -> resources.getString(R.string.error_generic)
             }
@@ -95,6 +99,7 @@ fun UserManagementScreen(
             onAdd = viewModel::openCreate,
             onActiveChange = viewModel::onActiveChange,
             onReset = viewModel::openReset,
+            onEditAccess = viewModel::openAccess,
         )
     }
 
@@ -105,8 +110,17 @@ fun UserManagementScreen(
             onIdentifier = viewModel::onIdentifierChange,
             onPassword = viewModel::onPasswordChange,
             onConfirm = viewModel::onConfirmChange,
+            onPermission = viewModel::onCreatePermission,
             onSubmit = viewModel::submitCreate,
             onDismiss = viewModel::closeCreate,
+        )
+    }
+    state.accessForm?.let { form ->
+        AccessDialog(
+            form = form,
+            onPermission = viewModel::onAccessPermission,
+            onSubmit = viewModel::submitAccess,
+            onDismiss = viewModel::closeAccess,
         )
     }
     state.resetForm?.let { form ->
@@ -138,6 +152,7 @@ fun UserManagementContent(
     onActiveChange: (ManagedUser, Boolean) -> Unit,
     onReset: (ManagedUser) -> Unit,
     modifier: Modifier = Modifier,
+    onEditAccess: (ManagedUser) -> Unit = {},
 ) {
     when {
         state.isLoading -> LoadingState(modifier)
@@ -153,7 +168,7 @@ fun UserManagementContent(
                 }
             }
             items(state.users, key = { it.id }) { user ->
-                UserRow(user, onActiveChange = { onActiveChange(user, it) }, onReset = { onReset(user) })
+                UserRow(user, onActiveChange = { onActiveChange(user, it) }, onReset = { onReset(user) }, onEditAccess = { onEditAccess(user) })
             }
             if (state.users.none { it.role == Role.EMPLOYEE }) {
                 item(key = "empty") {
@@ -170,7 +185,7 @@ fun UserManagementContent(
 }
 
 @Composable
-private fun UserRow(user: ManagedUser, onActiveChange: (Boolean) -> Unit, onReset: () -> Unit) {
+private fun UserRow(user: ManagedUser, onActiveChange: (Boolean) -> Unit, onReset: () -> Unit, onEditAccess: () -> Unit) {
     InvisionCard(modifier = Modifier.fillMaxWidth().testTag("user_${user.identifier}")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,8 +207,18 @@ private fun UserRow(user: ManagedUser, onActiveChange: (Boolean) -> Unit, onRese
                 }
             }
             if (user.role == Role.EMPLOYEE) {
-                OutlinedButton(onClick = onReset, modifier = Modifier.testTag("user_reset_${user.identifier}")) {
-                    Text(stringResource(R.string.users_reset_password))
+                Text(
+                    if (user.granted.isEmpty()) stringResource(R.string.perm_summary_none) else stringResource(R.string.perm_summary_extra, user.granted.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag("user_access_${user.identifier}"),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    OutlinedButton(onClick = onEditAccess, modifier = Modifier.testTag("user_edit_access_${user.identifier}")) {
+                        Text(stringResource(R.string.users_edit_access))
+                    }
+                    OutlinedButton(onClick = onReset, modifier = Modifier.testTag("user_reset_${user.identifier}")) {
+                        Text(stringResource(R.string.users_reset_password))
+                    }
                 }
             } else {
                 Text(
@@ -213,6 +238,7 @@ private fun CreateEmployeeDialog(
     onIdentifier: (String) -> Unit,
     onPassword: (String) -> Unit,
     onConfirm: (String) -> Unit,
+    onPermission: (Permission, Boolean) -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -273,6 +299,7 @@ private fun CreateEmployeeDialog(
                     enabled = !form.isSaving,
                     modifier = Modifier.fillMaxWidth().testTag("employee_confirm"),
                 )
+                PermissionChecklist(granted = form.granted, enabled = !form.isSaving, onToggle = onPermission)
             }
         },
         confirmButton = {
@@ -373,5 +400,76 @@ private fun FormDialog(
             confirmButton = confirmButton,
             dismissButton = dismissButton,
         )
+    }
+}
+
+@Composable
+private fun AccessDialog(
+    form: AccessForm,
+    onPermission: (Permission, Boolean) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    FormDialog(
+        onDismissRequest = { if (!form.isSaving) onDismiss() },
+        title = { Text(stringResource(R.string.users_access_title, form.user.name)) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier.verticalScroll(rememberScrollState()).testTag("users_access_form"),
+            ) {
+                Text(
+                    stringResource(R.string.users_access_note, form.user.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                PermissionChecklist(granted = form.granted, enabled = !form.isSaving, onToggle = onPermission)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSubmit, enabled = !form.isSaving, modifier = Modifier.testTag("access_save")) {
+                Text(stringResource(R.string.users_access_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !form.isSaving) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+/** Every option the Super Admin can give one employee, in groups. The billing basics are not options. */
+@Composable
+private fun PermissionChecklist(granted: Set<Permission>, enabled: Boolean, onToggle: (Permission, Boolean) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.testTag("permission_checklist")) {
+        Text(
+            stringResource(R.string.perm_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        PermissionGroup.entries.forEach { group ->
+            Text(
+                stringResource(group.titleRes()),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(top = Spacing.sm),
+            )
+            group.permissions.forEach { permission ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(permission.labelRes()), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            stringResource(permission.hintRes()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = permission in granted,
+                        onCheckedChange = { onToggle(permission, it) },
+                        enabled = enabled,
+                        modifier = Modifier.testTag("perm_${permission.name}"),
+                    )
+                }
+            }
+        }
     }
 }

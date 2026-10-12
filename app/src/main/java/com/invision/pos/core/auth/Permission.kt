@@ -2,7 +2,9 @@ package com.invision.pos.core.auth
 
 /**
  * Everything a signed-in person can be allowed to do, drawn from the app's actual screens and data
- * operations. There are two roles and no per-person switches: [RolePermissions] is the whole policy.
+ * operations. There are two roles. The Super Admin holds everything. An Employee always holds the billing
+ * basics ([RolePermissions.BASE]) and holds whatever else the Super Admin switched on for that one person
+ * ([PermissionOptions]); nobody can hold [Permission.MANAGE_USERS] except the Super Admin.
  */
 enum class Permission {
     // Billing: the new-bill workflow and reading finished invoices.
@@ -52,13 +54,71 @@ enum class Permission {
 }
 
 object RolePermissions {
-    /** What an Employee may do. Anything not listed here is denied. */
-    private val EMPLOYEE = setOf(Permission.SELL, Permission.VIEW_INVOICES)
+    /** What every Employee may do, whatever else they were given. */
+    val BASE: Set<Permission> = setOf(Permission.SELL, Permission.VIEW_INVOICES)
 
-    fun allows(role: Role, permission: Permission): Boolean = when (role) {
-        Role.SUPER_ADMIN -> true
-        Role.EMPLOYEE -> permission in EMPLOYEE
+    /** The permissions held by [role], given the extras [granted] to one Employee (ignored for the Super Admin). */
+    fun of(role: Role, granted: Set<Permission> = emptySet()): Set<Permission> = when (role) {
+        Role.SUPER_ADMIN -> Permission.entries.toSet()
+        Role.EMPLOYEE -> BASE + PermissionOptions.normalize(granted)
     }
 
-    fun of(role: Role): Set<Permission> = Permission.entries.filter { allows(role, it) }.toSet()
+    fun allows(role: Role, permission: Permission, granted: Set<Permission> = emptySet()): Boolean =
+        permission in of(role, granted)
+}
+
+/** The sections the Super Admin sees when choosing what an Employee may do. */
+enum class PermissionGroup(val permissions: List<Permission>) {
+    SALES(listOf(Permission.PROCESS_RETURN)),
+    FIGURES(listOf(Permission.VIEW_DASHBOARD, Permission.VIEW_FINANCIALS, Permission.VIEW_REPORTS)),
+    INVENTORY(listOf(Permission.MANAGE_PRODUCTS, Permission.VIEW_STOCK_RECORDS, Permission.ADJUST_STOCK)),
+    CUSTOMERS(listOf(Permission.MANAGE_CUSTOMERS, Permission.RECEIVE_ACCOUNT_PAYMENT)),
+    PURCHASING(listOf(Permission.MANAGE_SUPPLIERS, Permission.MANAGE_PURCHASES, Permission.RECEIVE_GOODS)),
+    SHOP(listOf(Permission.MANAGE_MENU, Permission.MANAGE_SETTINGS, Permission.VIEW_ACTIVITY_LOG)),
+}
+
+/**
+ * The extras a Super Admin may switch on for one Employee. Billing basics are always on and are not
+ * options. User Management and backup/restore are never offered: only the Super Admin holds them.
+ */
+object PermissionOptions {
+    /** Everything that can be switched on, in the order it is shown. */
+    val all: List<Permission> = PermissionGroup.entries.flatMap { it.permissions }
+
+    private val grantable: Set<Permission> = all.toSet()
+
+    /** An option that only works together with others: switching it on switches those on too. */
+    private val needs: Map<Permission, Set<Permission>> = mapOf(
+        Permission.VIEW_DASHBOARD to setOf(Permission.VIEW_FINANCIALS),
+        Permission.VIEW_REPORTS to setOf(Permission.VIEW_FINANCIALS),
+        Permission.MANAGE_PRODUCTS to setOf(Permission.VIEW_STOCK_RECORDS),
+        Permission.ADJUST_STOCK to setOf(Permission.MANAGE_PRODUCTS, Permission.VIEW_STOCK_RECORDS),
+        Permission.RECEIVE_ACCOUNT_PAYMENT to setOf(Permission.MANAGE_CUSTOMERS),
+        Permission.MANAGE_PURCHASES to setOf(Permission.MANAGE_SUPPLIERS),
+        Permission.RECEIVE_GOODS to setOf(Permission.MANAGE_PURCHASES, Permission.MANAGE_SUPPLIERS),
+    )
+
+    fun isGrantable(permission: Permission): Boolean = permission in grantable
+
+    /** What [permission] needs switched on as well. */
+    fun requirementsOf(permission: Permission): Set<Permission> = needs[permission].orEmpty()
+
+    /** Drops anything that cannot be granted and adds whatever the rest needs, so a saved set always works. */
+    fun normalize(requested: Set<Permission>): Set<Permission> {
+        val result = requested.filterTo(mutableSetOf()) { it in grantable }
+        result += result.flatMap { requirementsOf(it) }
+        return result
+    }
+
+    fun switchOn(current: Set<Permission>, permission: Permission): Set<Permission> = normalize(current + permission)
+
+    /** Switches [permission] off, and anything that needs it. */
+    fun switchOff(current: Set<Permission>, permission: Permission): Set<Permission> {
+        var result = current - permission
+        do {
+            val dropped = result.filter { p -> requirementsOf(p).any { it !in result } }
+            result = result - dropped.toSet()
+        } while (dropped.isNotEmpty())
+        return result
+    }
 }

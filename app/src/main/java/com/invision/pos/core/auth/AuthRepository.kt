@@ -20,8 +20,14 @@ sealed interface AuthState {
     data object SignedOut : AuthState
 
     /** [userId] and [role] come from the saved account at the moment of sign-in; the first account is always id 1. */
-    data class SignedIn(val name: String, val role: Role = Role.SUPER_ADMIN, val userId: Long = UserAccountIds.FIRST) : AuthState {
-        val user: SessionUser get() = SessionUser(userId, name, role)
+    data class SignedIn(
+        val name: String,
+        val role: Role = Role.SUPER_ADMIN,
+        val userId: Long = UserAccountIds.FIRST,
+        /** Everything this person may do, read from the saved account at sign-in and again on every app start. */
+        val permissions: Set<Permission> = RolePermissions.of(role),
+    ) : AuthState {
+        val user: SessionUser get() = SessionUser(userId, name, role, permissions)
     }
 
     /** The saved accounts could not be read. Setup is never offered over them. */
@@ -84,9 +90,16 @@ interface AuthRepository {
 
     suspend fun listUsers(): List<ManagedUser>?
 
-    suspend fun createEmployee(name: String, identifier: String, password: String, confirm: String): UserChangeResult
+    suspend fun createEmployee(name: String, identifier: String, password: String, confirm: String, granted: Set<Permission> = emptySet()): UserChangeResult
 
     suspend fun setEmployeeActive(userId: Long, active: Boolean): UserChangeResult
+
+    /**
+     * Replaces the extras switched on for one Employee. Options that cannot be granted are dropped and the
+     * ones an option needs are added, so the saved set always works. It applies the next time that person
+     * signs in or the app starts.
+     */
+    suspend fun setEmployeeAccess(userId: Long, granted: Set<Permission>): UserChangeResult
 
     /** Sets a new password chosen by the Super Admin. The employee is not told anything by the app. */
     suspend fun resetEmployeePassword(userId: Long, password: String, confirm: String): UserChangeResult
@@ -135,7 +148,7 @@ class LocalAuthRepository(
         val account = newAccount(UserAccountIds.FIRST, Role.SUPER_ADMIN, name, identifier, password)
         when (store.createIfAbsent(account)) {
             CreateOutcome.CREATED -> {
-                _state.value = AuthState.SignedIn(account.name, account.role, account.id)
+                _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
                 SetupResult.Created
             }
             CreateOutcome.ALREADY_EXISTS -> alreadyInitialized()
@@ -143,7 +156,7 @@ class LocalAuthRepository(
         }
     }
 
-    private suspend fun newAccount(id: Long, role: Role, name: String, identifier: String, password: String): UserAccount =
+    private suspend fun newAccount(id: Long, role: Role, name: String, identifier: String, password: String, granted: Set<Permission> = emptySet()): UserAccount =
         withContext(worker) {
             val salt = hasher.newSalt()
             UserAccount(
@@ -156,6 +169,7 @@ class LocalAuthRepository(
                 hash = hasher.hash(password, salt),
                 iterations = hasher.iterations,
                 createdAtMillis = clock.millis(),
+                granted = granted,
             )
         }
 
@@ -186,7 +200,7 @@ class LocalAuthRepository(
         if (account != null && passwordMatches) {
             failures = 0
             if (!account.active) return@withLock SignInResult.Deactivated
-            _state.value = AuthState.SignedIn(account.name, account.role, account.id)
+            _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
             tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
             return@withLock SignInResult.Success
         }
@@ -214,7 +228,12 @@ class LocalAuthRepository(
         when (val stored = store.read()) {
             is StoredAccounts.Present -> {
                 val account = stored.accounts.firstOrNull { it.id == current.userId }
-                if (account == null || !account.active || account.role != current.role) _state.value = AuthState.SignedOut
+                if (account == null || !account.active || account.role != current.role) {
+                    _state.value = AuthState.SignedOut
+                } else if (account.permissions != current.permissions) {
+                    // What this person may do changed while they were signed in: apply it now, not at the next sign-in.
+                    _state.value = current.copy(permissions = account.permissions)
+                }
             }
             StoredAccounts.Missing, StoredAccounts.Unreadable -> _state.value = AuthState.SignedOut
         }
@@ -235,7 +254,7 @@ class LocalAuthRepository(
         (store.read() as? StoredAccounts.Present)?.accounts?.map { it.toManaged() }
     }
 
-    override suspend fun createEmployee(name: String, identifier: String, password: String, confirm: String): UserChangeResult =
+    override suspend fun createEmployee(name: String, identifier: String, password: String, confirm: String, granted: Set<Permission>): UserChangeResult =
         gate.withLock {
             val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
             val errors = AdminSetupValidator.validate(name, identifier, password, confirm).toMutableMap()
@@ -247,13 +266,16 @@ class LocalAuthRepository(
             if (errors.isNotEmpty()) return@withLock UserChangeResult.Invalid(errors)
 
             val id = (existing.maxOf { it.id }) + 1
-            val employee = newAccount(id, Role.EMPLOYEE, name, identifier, password)
+            val employee = newAccount(id, Role.EMPLOYEE, name, identifier, password, PermissionOptions.normalize(granted))
             val outcome = store.update { accounts ->
                 // Checked again inside the write, in case another change slipped in.
                 if (accounts.any { it.identifier == employee.identifier || it.id == employee.id }) null else accounts + employee
             }
             if (outcome == UpdateOutcome.UPDATED) {
                 tell(AccountEvent(AccountEventKind.EMPLOYEE_CREATED, admin.toSession(), employee.id, employee.name))
+                if (employee.granted.isNotEmpty()) {
+                    tell(AccountEvent(AccountEventKind.ACCESS_CHANGED, admin.toSession(), employee.id, employee.name, employee.granted))
+                }
                 UserChangeResult.Done
             } else {
                 UserChangeResult.Failed
@@ -266,6 +288,14 @@ class LocalAuthRepository(
         if (result is Changed) {
             tell(AccountEvent(if (active) AccountEventKind.EMPLOYEE_TURNED_ON else AccountEventKind.EMPLOYEE_TURNED_OFF, admin.toSession(), userId, result.name))
         }
+        result.outcome
+    }
+
+    override suspend fun setEmployeeAccess(userId: Long, granted: Set<Permission>): UserChangeResult = gate.withLock {
+        val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
+        val wanted = PermissionOptions.normalize(granted)
+        val result = changeEmployee(userId) { it.copy(granted = wanted) }
+        if (result is Changed) tell(AccountEvent(AccountEventKind.ACCESS_CHANGED, admin.toSession(), userId, result.name, wanted))
         result.outcome
     }
 

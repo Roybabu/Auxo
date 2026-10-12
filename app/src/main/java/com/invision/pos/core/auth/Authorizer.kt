@@ -27,14 +27,14 @@ class SessionAuthorizer(private val auth: AuthRepository) : Authorizer {
 
     override fun can(permission: Permission): Boolean {
         val signedIn = auth.state.value as? AuthState.SignedIn ?: return false
-        return RolePermissions.allows(signedIn.role, permission)
+        return permission in signedIn.permissions
     }
 }
 
 /** For tests and previews. */
-class FixedAuthorizer(private val role: Role?) : Authorizer {
+class FixedAuthorizer(private val role: Role?, private val granted: Set<Permission> = emptySet()) : Authorizer {
     override val user: SessionUser?
-        get() = role?.let { SessionUser(if (it == Role.SUPER_ADMIN) 1L else 2L, if (it == Role.SUPER_ADMIN) "Test Admin" else "Test Employee", it) }
+        get() = role?.let { SessionUser(if (it == Role.SUPER_ADMIN) 1L else 2L, if (it == Role.SUPER_ADMIN) "Test Admin" else "Test Employee", it, RolePermissions.of(it, granted)) }
 
-    override fun can(permission: Permission): Boolean = role != null && RolePermissions.allows(role, permission)
+    override fun can(permission: Permission): Boolean = role != null && RolePermissions.allows(role, permission, granted)
 }

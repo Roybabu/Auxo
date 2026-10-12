@@ -28,7 +28,6 @@ import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.more.LocalInlineForms
 import com.invision.pos.ui.screens.more.UserManagementScreen
-import androidx.compose.runtime.CompositionLocalProvider
 import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.ActivityLogUiState
 import com.invision.pos.viewmodel.ShopUiState

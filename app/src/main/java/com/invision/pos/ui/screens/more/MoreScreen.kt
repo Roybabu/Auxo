@@ -80,8 +80,10 @@ fun MoreScreen(
                 modifier = Modifier.testTag("more_signed_in"),
             )
 
-            if (can(Permission.MANAGE_SETTINGS)) {
+            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG)) {
                 SectionHeader(stringResource(R.string.more_section_business), modifier = Modifier.padding(top = Spacing.sm))
+            }
+            if (can(Permission.MANAGE_SETTINGS)) {
                 MoreItem(
                     R.drawable.ic_settings,
                     shop.shopName ?: stringResource(R.string.shop_name_fallback),
@@ -109,13 +111,17 @@ fun MoreScreen(
                 )
             }
 
-            if (can(Permission.VIEW_STOCK_RECORDS)) {
+            val showSuppliers = LocalSuppliersEnabled.current && can(Permission.MANAGE_SUPPLIERS)
+            val showStockRecords = can(Permission.VIEW_STOCK_RECORDS)
+            if (showSuppliers || showStockRecords) {
                 SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
-                if (LocalSuppliersEnabled.current) {
+                if (showSuppliers) {
                     MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
                 }
-                MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
-                MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
+                if (showStockRecords) {
+                    MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
+                    MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
+                }
             }
 
             if (shop.restaurantMenu && can(Permission.MANAGE_MENU)) {

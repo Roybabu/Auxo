@@ -20,17 +20,22 @@ class UserAccount(
     val hash: ByteArray,
     val iterations: Int,
     val createdAtMillis: Long,
+    /** Extras the Super Admin switched on for this Employee. Always empty for the Super Admin, who holds everything. */
+    val granted: Set<Permission> = emptySet(),
 ) {
+    val permissions: Set<Permission> get() = RolePermissions.of(role, granted)
+
     fun copy(
         active: Boolean = this.active,
         salt: ByteArray = this.salt,
         hash: ByteArray = this.hash,
         iterations: Int = this.iterations,
-    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis)
+        granted: Set<Permission> = this.granted,
+    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis, granted)
 
-    fun toManaged() = ManagedUser(id, name, identifier, role, active, createdAtMillis)
+    fun toManaged() = ManagedUser(id, name, identifier, role, active, createdAtMillis, if (role == Role.EMPLOYEE) granted else emptySet())
 
-    fun toSession() = SessionUser(id, name, role)
+    fun toSession() = SessionUser(id, name, role, permissions)
 }
 
 /** Salted PBKDF2-HMAC-SHA256, available on every supported Android version (API 26+). */

@@ -4,7 +4,7 @@ package com.invision.pos.core.auth
 enum class Role { SUPER_ADMIN, EMPLOYEE }
 
 /** What the rest of the app may know about a person who is signed in. */
-data class SessionUser(val id: Long, val name: String, val role: Role)
+data class SessionUser(val id: Long, val name: String, val role: Role, val permissions: Set<Permission> = RolePermissions.of(role))
 
 /** An account as shown in User Management. Never carries the password hash. */
 data class ManagedUser(
@@ -14,4 +14,6 @@ data class ManagedUser(
     val role: Role,
     val active: Boolean,
     val createdAtMillis: Long,
+    /** The extras switched on for this Employee, beyond the billing basics. Empty for the Super Admin. */
+    val granted: Set<Permission> = emptySet(),
 )

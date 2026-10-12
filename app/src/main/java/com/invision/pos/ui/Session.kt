@@ -16,8 +16,8 @@ import com.invision.pos.core.auth.RolePermissions
  * restricted operation whatever the screen did. Previews and tests that show a single screen get the
  * Super Admin view unless they say otherwise.
  */
-class Capabilities(val role: Role, val userName: String = "") {
-    fun can(permission: Permission): Boolean = RolePermissions.allows(role, permission)
+class Capabilities(val role: Role, val userName: String = "", val permissions: Set<Permission> = RolePermissions.of(role)) {
+    fun can(permission: Permission): Boolean = permission in permissions
 }
 
 val LocalCapabilities = compositionLocalOf { Capabilities(Role.SUPER_ADMIN) }

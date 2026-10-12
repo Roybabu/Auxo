@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.core.auth.AdminSetupValidator
 import com.invision.pos.core.auth.AuthRepository
 import com.invision.pos.core.auth.ManagedUser
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.core.auth.PermissionOptions
 import com.invision.pos.core.auth.SetupError
 import com.invision.pos.core.auth.SetupField
 import com.invision.pos.core.auth.UserChangeResult
@@ -19,13 +21,21 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** The fields for a new employee. Only the details the sign-in system needs: no role choice, no permission switches. */
+/** The fields for a new employee: the sign-in details, and which extras this person is given. There is no role choice. */
 data class EmployeeForm(
     val name: String = "",
     val identifier: String = "",
     val password: String = "",
     val confirm: String = "",
+    val granted: Set<Permission> = emptySet(),
     val errors: Map<SetupField, SetupError> = emptyMap(),
+    val isSaving: Boolean = false,
+)
+
+/** The extras being chosen for an existing employee. */
+data class AccessForm(
+    val user: ManagedUser,
+    val granted: Set<Permission>,
     val isSaving: Boolean = false,
 )
 
@@ -44,6 +54,7 @@ data class UserManagementUiState(
     val users: List<ManagedUser> = emptyList(),
     val createForm: EmployeeForm? = null,
     val resetForm: ResetForm? = null,
+    val accessForm: AccessForm? = null,
     /** An employee the Super Admin is about to switch off, waiting for confirmation. */
     val confirmDeactivate: ManagedUser? = null,
 )
@@ -53,6 +64,7 @@ sealed interface UserManagementEvent {
     data class Activated(val name: String) : UserManagementEvent
     data class Deactivated(val name: String) : UserManagementEvent
     data class PasswordReset(val name: String) : UserManagementEvent
+    data class AccessChanged(val name: String) : UserManagementEvent
     data object Failed : UserManagementEvent
 }
 
@@ -92,6 +104,9 @@ class UserManagementViewModel(private val auth: AuthRepository) : ViewModel() {
 
     fun onConfirmChange(value: String) = editCreate { it.copy(confirm = value.take(PASSWORD_LIMIT), errors = it.errors - SetupField.CONFIRM) }
 
+    fun onCreatePermission(permission: Permission, on: Boolean) =
+        editCreate { it.copy(granted = toggled(it.granted, permission, on)) }
+
     private fun editCreate(change: (EmployeeForm) -> EmployeeForm) = _uiState.update { state ->
         state.copy(createForm = state.createForm?.let(change))
     }
@@ -101,7 +116,7 @@ class UserManagementViewModel(private val auth: AuthRepository) : ViewModel() {
         if (form.isSaving) return
         _uiState.update { it.copy(createForm = form.copy(isSaving = true)) }
         viewModelScope.launch {
-            when (val result = auth.createEmployee(form.name, form.identifier, form.password, form.confirm)) {
+            when (val result = auth.createEmployee(form.name, form.identifier, form.password, form.confirm, form.granted)) {
                 UserChangeResult.Done -> {
                     _uiState.update { it.copy(createForm = null) }
                     reloadUsers()
@@ -141,6 +156,36 @@ class UserManagementViewModel(private val auth: AuthRepository) : ViewModel() {
             }
         }
     }
+
+    // Choosing what an employee may do
+
+    fun openAccess(user: ManagedUser) = _uiState.update { it.copy(accessForm = AccessForm(user, user.granted)) }
+
+    fun closeAccess() = _uiState.update { it.copy(accessForm = null) }
+
+    fun onAccessPermission(permission: Permission, on: Boolean) = _uiState.update { state ->
+        state.copy(accessForm = state.accessForm?.let { it.copy(granted = toggled(it.granted, permission, on)) })
+    }
+
+    fun submitAccess() {
+        val form = _uiState.value.accessForm ?: return
+        if (form.isSaving) return
+        _uiState.update { it.copy(accessForm = form.copy(isSaving = true)) }
+        viewModelScope.launch {
+            if (auth.setEmployeeAccess(form.user.id, form.granted) == UserChangeResult.Done) {
+                _uiState.update { it.copy(accessForm = null) }
+                reloadUsers()
+                eventChannel.send(UserManagementEvent.AccessChanged(form.user.name))
+            } else {
+                _uiState.update { it.copy(accessForm = form.copy(isSaving = false)) }
+                eventChannel.send(UserManagementEvent.Failed)
+            }
+        }
+    }
+
+    /** Switching an option on also switches on what it needs; switching one off also switches off what needs it. */
+    private fun toggled(current: Set<Permission>, permission: Permission, on: Boolean): Set<Permission> =
+        if (on) PermissionOptions.switchOn(current, permission) else PermissionOptions.switchOff(current, permission)
 
     // Resetting a password
 

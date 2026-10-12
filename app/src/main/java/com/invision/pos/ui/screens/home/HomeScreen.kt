@@ -58,6 +58,8 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.ui.can
 import com.invision.pos.domain.inventory.InventorySummary
 import com.invision.pos.domain.inventory.StockAlert
 import com.invision.pos.domain.inventory.StockAlertType
@@ -318,10 +320,13 @@ private fun HomeHeaderBlock(
         }
 
         Spacer(Modifier.height(24.dp))
+        val canManageProducts = can(Permission.MANAGE_PRODUCTS)
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill, "home_action_new_bill")
-            QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_add, onAddProduct, "home_action_add_product")
-            QuickAction(stringResource(R.string.nav_inventory), R.drawable.ic_nav_inventory, onInventory, "home_action_inventory")
+            if (canManageProducts) {
+                QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_add, onAddProduct, "home_action_add_product")
+                QuickAction(stringResource(R.string.nav_inventory), R.drawable.ic_nav_inventory, onInventory, "home_action_inventory")
+            }
             QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore, "home_action_more")
         }
     }

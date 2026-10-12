@@ -324,6 +324,141 @@ class UserAccountsTest {
         assertTrue(events.isEmpty())
     }
 
+
+    // Per-employee access
+
+    private val menuAndReturns = setOf(Permission.MANAGE_MENU, Permission.PROCESS_RETURN)
+
+    @Test
+    fun anEmployee_createdWithExtras_getsThem_andKeepsThemAfterARestart() = runBlocking {
+        val owner = launch()
+        owner.setUpOwner()
+        assertEquals(UserChangeResult.Done, owner.createEmployee("Asha K", "asha.k", EMPLOYEE_PW, EMPLOYEE_PW, menuAndReturns))
+
+        val restarted = launch()
+        assertEquals(SignInResult.Success, restarted.signIn("asha.k", EMPLOYEE_PW))
+        val signedIn = restarted.state.value as AuthState.SignedIn
+        assertEquals(RolePermissions.BASE + menuAndReturns, signedIn.permissions)
+        val listed = (launch().also { it.signIn("roy.babu", OWNER_PW) }.listUsers())!!.single { it.id == 2L }
+        assertEquals(menuAndReturns, listed.granted)
+    }
+
+    @Test
+    fun anEmployee_createdWithoutExtras_hasOnlyTheBasics() = runBlocking {
+        val owner = ownerWithEmployee()
+        assertEquals(emptySet<Permission>(), owner.listUsers()!!.single { it.id == 2L }.granted)
+        assertEquals(SignInResult.Success, launch().signIn("asha.k", EMPLOYEE_PW))
+    }
+
+    @Test
+    fun theSuperAdmin_canChangeAnEmployeesAccess_andItAppliesAtTheNextSignIn() = runBlocking {
+        val owner = ownerWithEmployee()
+        assertEquals(UserChangeResult.Done, owner.setEmployeeAccess(2L, setOf(Permission.MANAGE_PRODUCTS)))
+        val employee = launch()
+        employee.signIn("asha.k", EMPLOYEE_PW)
+        // Products come with the stock history they show.
+        assertEquals(
+            RolePermissions.BASE + setOf(Permission.MANAGE_PRODUCTS, Permission.VIEW_STOCK_RECORDS),
+            (employee.state.value as AuthState.SignedIn).permissions,
+        )
+
+        assertEquals(UserChangeResult.Done, owner.setEmployeeAccess(2L, emptySet()))
+        val again = launch()
+        again.signIn("asha.k", EMPLOYEE_PW)
+        assertEquals(RolePermissions.BASE, (again.state.value as AuthState.SignedIn).permissions)
+    }
+
+    @Test
+    fun changedAccess_reachesAnEmployeeWhoIsAlreadySignedIn_whenTheAppStartsAgain() = runBlocking {
+        val owner = ownerWithEmployee()
+        val employee = launch()
+        employee.signIn("asha.k", EMPLOYEE_PW)
+        owner.setEmployeeAccess(2L, setOf(Permission.MANAGE_MENU))
+        employee.revalidate()
+        assertTrue(Permission.MANAGE_MENU in (employee.state.value as AuthState.SignedIn).permissions)
+
+        owner.setEmployeeAccess(2L, emptySet())
+        employee.revalidate()
+        assertFalse(Permission.MANAGE_MENU in (employee.state.value as AuthState.SignedIn).permissions)
+        assertTrue(employee.state.value is AuthState.SignedIn)
+    }
+
+    @Test
+    fun nobodyCanBeGivenUserManagementOrBackup() = runBlocking {
+        val owner = ownerWithEmployee()
+        owner.setEmployeeAccess(2L, setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.VIEW_REPORTS))
+        val saved = owner.listUsers()!!.single { it.id == 2L }.granted
+        assertEquals(setOf(Permission.VIEW_REPORTS, Permission.VIEW_FINANCIALS), saved)
+        val employee = launch()
+        employee.signIn("asha.k", EMPLOYEE_PW)
+        assertEquals(UserChangeResult.Denied, employee.createEmployee("X", "x.y", EMPLOYEE_PW, EMPLOYEE_PW))
+        assertEquals(UserChangeResult.Denied, employee.setEmployeeAccess(2L, PermissionOptions.all.toSet()))
+    }
+
+    @Test
+    fun anEmployee_cannotChangeAnyonesAccess_notEvenTheirOwn() = runBlocking {
+        ownerWithEmployee()
+        val employee = launch()
+        employee.signIn("asha.k", EMPLOYEE_PW)
+        assertEquals(UserChangeResult.Denied, employee.setEmployeeAccess(2L, setOf(Permission.MANAGE_MENU)))
+        assertEquals(RolePermissions.BASE, (employee.state.value as AuthState.SignedIn).permissions)
+    }
+
+    @Test
+    fun theSuperAdminsAccess_cannotBeChanged() = runBlocking {
+        val owner = ownerWithEmployee()
+        assertEquals(UserChangeResult.NotAnEmployee, owner.setEmployeeAccess(1L, emptySet()))
+        assertEquals(Permission.entries.toSet(), (owner.state.value as AuthState.SignedIn).permissions)
+        assertEquals(UserChangeResult.NotAnEmployee, owner.setEmployeeAccess(99L, emptySet()))
+    }
+
+    @Test
+    fun aRegistryEditedToGrantMore_isCutBackToWhatTheAppOffers() = runBlocking {
+        ownerWithEmployee()
+        val file = File(dir, FileAccountStore.FILE_NAME)
+        val json = JSONObject(file.readText())
+        val employee = json.getJSONArray("accounts").getJSONObject(1)
+        employee.put("granted", org.json.JSONArray(listOf("MANAGE_USERS", "BACKUP_AND_RESTORE", "NOT_A_PERMISSION", "RECEIVE_GOODS")))
+        // Even the Super Admin's entry cannot widen anything: it already holds everything.
+        file.writeText(json.toString())
+
+        val saved = (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.single { it.id == 2L }
+        assertEquals(setOf(Permission.RECEIVE_GOODS, Permission.MANAGE_PURCHASES, Permission.MANAGE_SUPPLIERS), saved.granted)
+        assertFalse(Permission.MANAGE_USERS in saved.permissions)
+        assertFalse(Permission.BACKUP_AND_RESTORE in saved.permissions)
+    }
+
+    @Test
+    fun aRegistryWrittenBeforeExtrasExisted_givesEmployeesOnlyTheBasics() = runBlocking {
+        ownerWithEmployee()
+        val file = File(dir, FileAccountStore.FILE_NAME)
+        val json = JSONObject(file.readText())
+        val accounts = json.getJSONArray("accounts")
+        for (i in 0 until accounts.length()) accounts.getJSONObject(i).remove("granted")
+        file.writeText(json.toString())
+
+        val employee = launch()
+        assertEquals(SignInResult.Success, employee.signIn("asha.k", EMPLOYEE_PW))
+        assertEquals(RolePermissions.BASE, (employee.state.value as AuthState.SignedIn).permissions)
+        assertEquals(SignInResult.Success, launch().signIn("roy.babu", OWNER_PW))
+    }
+
+    @Test
+    fun accessChanges_areReported_withWhatWasGranted() = runBlocking {
+        val events = mutableListOf<AccountEvent>()
+        val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { events += it })
+        auth.setUpOwner()
+        auth.createEmployee("Asha K", "asha.k", EMPLOYEE_PW, EMPLOYEE_PW, setOf(Permission.MANAGE_MENU))
+        auth.setEmployeeAccess(2L, emptySet())
+        assertEquals(
+            listOf(AccountEventKind.EMPLOYEE_CREATED, AccountEventKind.ACCESS_CHANGED, AccountEventKind.ACCESS_CHANGED),
+            events.map { it.kind },
+        )
+        assertEquals(setOf(Permission.MANAGE_MENU), events[1].granted)
+        assertEquals(emptySet<Permission>(), events[2].granted)
+        assertEquals("Asha K", events[2].targetName)
+    }
+
     private companion object {
         const val OWNER_PW = "Green-Leaf-42"
         const val EMPLOYEE_PW = "Counter-Desk-17"

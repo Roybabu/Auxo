@@ -299,4 +299,53 @@ class PermissionEnforcementTest {
         denied(Permission.SELL) { signedOut.settings.getSettings() }
         assertEquals(0, count(database, "invoices"))
     }
+
+    // Employees with extras
+
+    private fun employeeWith(vararg extras: Permission) = reposFor(FixedAuthorizer(Role.EMPLOYEE, extras.toSet()))
+
+    @Test
+    fun anEmployee_givenProducts_canEditThem_butStillNothingElse() = runTest {
+        val shirt = savedShirt()
+        val staff = employeeWith(Permission.MANAGE_PRODUCTS)
+        staff.inventory.saveProduct(shirt.copy(name = "Renamed shirt"))
+        assertEquals("Renamed shirt", admin.inventory.getProduct(shirt.id)!!.name)
+        val movement = StockMovement(variantId = shirt.variants[0].id, quantityChange = 5, reason = StockChangeReason.RECEIVED, createdAtMillis = now)
+        denied(Permission.ADJUST_STOCK) { staff.inventory.recordStockChange(movement) }
+        denied(Permission.MANAGE_SUPPLIERS) { staff.purchasing.saveSupplier(Supplier(name = "Acme")) }
+        denied(Permission.MANAGE_MENU) { staff.menu.saveItem(MenuItem(name = "Dosa", section = "Mains", price = Money(9_000))) }
+        denied(Permission.VIEW_FINANCIALS) { staff.billing.observeSalesTotals(0, Long.MAX_VALUE).first() }
+    }
+
+    @Test
+    fun anEmployee_givenTheMenuAndSuppliers_canUseJustThose() = runTest {
+        val staff = employeeWith(Permission.MANAGE_MENU, Permission.MANAGE_SUPPLIERS)
+        staff.menu.saveItem(MenuItem(name = "Masala Dosa", section = "Mains", price = Money(9_000)))
+        staff.purchasing.saveSupplier(Supplier(name = "Acme"))
+        assertEquals(1, admin.menu.observeMenu().first().size)
+        assertEquals(1, staff.purchasing.observeSuppliers().first().size)
+        denied(Permission.MANAGE_PURCHASES) { staff.purchasing.observeOrders().first() }
+        denied(Permission.MANAGE_PRODUCTS) { staff.inventory.deleteProduct(savedShirt().id) }
+    }
+
+    @Test
+    fun anEmployee_givenFigures_canSeeSalesTotals_butNotChangeAnyRecord() = runTest {
+        val shirt = savedShirt()
+        val sold = admin.billing.recordSale(saleOf(shirt), "INV") as SaleResult.Recorded
+        val staff = employeeWith(Permission.VIEW_FINANCIALS)
+        assertEquals(1, staff.billing.observePayments(0, Long.MAX_VALUE).first().size)
+        staff.billing.observeSalesTotals(0, Long.MAX_VALUE).first()
+        val original = admin.billing.getInvoice(sold.invoiceId)!!
+        val note = (ReturnBuilder.build(original, mapOf(original.lines.single().id to 1), PaymentMethod.CASH, "x", now) as ReturnBuild.Ready).creditNote
+        denied(Permission.PROCESS_RETURN) { staff.billing.recordReturn(note, "CN") }
+    }
+
+    @Test
+    fun noExtraEverGivesAnEmployeeUserManagementOrBackup() {
+        val everything = FixedAuthorizer(Role.EMPLOYEE, Permission.entries.toSet())
+        assertFalse(everything.can(Permission.MANAGE_USERS))
+        assertFalse(everything.can(Permission.BACKUP_AND_RESTORE))
+        assertTrue(everything.can(Permission.RECEIVE_GOODS))
+        assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE), Permission.entries.filterNot { everything.can(it) }.toSet())
+    }
 }
