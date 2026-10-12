@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/branding/auxo-icon-transparent.png" alt="Auxo: Built to grow." width="160"></p>
+<p align="center"><img src="app/src/main/res/drawable-nodpi/auxo_logo_horizontal.png" alt="Auxo: Built to grow." width="420"></p>
 
 **Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee. The name comes from the Greek *auxō*, "to increase or grow".
 
