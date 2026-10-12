@@ -67,10 +67,14 @@ object KitchenTicketLayout {
             for (item in lines) {
                 val name = listOf(item.name, item.variant).filter { it.isNotBlank() }.joinToString(" ")
                 val text = fillIn(labels.line, item.quantity, name)
-                // Wrapped lines hang under the name, not under the quantity.
-                val indent = text.indexOf(name).coerceAtLeast(0).coerceAtMost(width / 3)
-                val wrapped = ReceiptText.wrap(text, width)
-                wrapped.forEachIndexed { i, row -> out += ThermalElement.Line((if (i == 0) "" else " ".repeat(indent)) + row, Align.LEFT, bold = true) }
+                val at = text.indexOf(name)
+                val indent = if (at in 1..(width / 3) && text.endsWith(name)) at else 0
+                // Wrapped lines hang under the name, not under the quantity, and never run past the roll.
+                val rows = if (indent > 0) ReceiptText.wrap(name, width - indent) else ReceiptText.wrap(text, width)
+                rows.forEachIndexed { i, row ->
+                    val shown = if (indent > 0) (if (i == 0) text.take(indent) else " ".repeat(indent)) + row else row
+                    out += ThermalElement.Line(shown, Align.LEFT, bold = true)
+                }
             }
         }
 
