@@ -14,6 +14,7 @@ object RouteAccess {
         TopLevelDestination.HOME.route,
         MoreRoutes.HOME,
         MoreRoutes.APPEARANCE,
+        MoreRoutes.QUICK_UNLOCK,
     )
 
     private val REQUIRED: Map<String, Permission> = mapOf(

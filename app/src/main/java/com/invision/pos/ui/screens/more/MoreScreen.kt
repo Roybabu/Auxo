@@ -49,6 +49,7 @@ interface MoreActions {
     fun onOpenShopSettings() = Unit
     fun onOpenUsers() = Unit
     fun onOpenRecoveryCode() = Unit
+    fun onOpenQuickUnlock() = Unit
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
     fun onOpenGstReport() = Unit
@@ -191,6 +192,13 @@ fun MoreScreen(
             )
 
             SectionHeader(stringResource(R.string.more_section_account), modifier = Modifier.padding(top = Spacing.md))
+            MoreItem(
+                R.drawable.ic_person,
+                stringResource(R.string.quick_title),
+                stringResource(R.string.more_quick_body),
+                actions::onOpenQuickUnlock,
+                modifier = Modifier.testTag("more_quick_unlock"),
+            )
             MoreItem(
                 R.drawable.ic_logout,
                 stringResource(R.string.sign_out_title),

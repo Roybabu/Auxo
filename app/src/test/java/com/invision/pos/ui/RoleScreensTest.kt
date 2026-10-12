@@ -94,6 +94,8 @@ class RoleScreensTest {
         }
         composeRule.onNodeWithTag("more_invoices").assertIsDisplayed()
         composeRule.onNodeWithTag("more_appearance").assertIsDisplayed()
+        composeRule.onNodeWithTag("more_list").performScrollToNode(hasText("Quick unlock"))
+        composeRule.onNodeWithTag("more_quick_unlock").assertIsDisplayed()
         composeRule.onNodeWithTag("more_list").performScrollToNode(hasText("Sign out"))
         composeRule.onNodeWithTag("more_sign_out").assertIsDisplayed()
         composeRule.onNodeWithText("Signed in as Asha K (Employee)").assertIsDisplayed()

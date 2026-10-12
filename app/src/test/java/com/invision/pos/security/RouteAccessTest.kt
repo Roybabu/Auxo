@@ -29,7 +29,7 @@ class RouteAccessTest {
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
-        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.RECOVERY_CODE, TopLevelDestination.HOME.route,
+        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.RECOVERY_CODE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route,
     )
 
     @Test
@@ -46,7 +46,7 @@ class RouteAccessTest {
     fun anEmployee_mayOpenOnlyBillingInvoicesHomeMoreAndAppearance() {
         val open = everyPage.filter { allowed(Role.EMPLOYEE, it) }.toSet()
         assertEquals(
-            setOf(BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, MoreRoutes.HOME, MoreRoutes.APPEARANCE, TopLevelDestination.HOME.route),
+            setOf(BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, MoreRoutes.HOME, MoreRoutes.APPEARANCE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route),
             open,
         )
     }
@@ -64,6 +64,12 @@ class RouteAccessTest {
         assertTrue(allowed(Role.SUPER_ADMIN, MoreRoutes.GST_REPORT))
         assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.GST_REPORT))
         assertFalse(openWith(*PermissionOptions.all.toTypedArray()).contains(MoreRoutes.GST_REPORT))
+    }
+
+    @Test
+    fun quickUnlock_isOpenToEveryoneSignedIn() {
+        assertNull(RouteAccess.permissionFor(MoreRoutes.QUICK_UNLOCK))
+        assertTrue(allowed(Role.EMPLOYEE, MoreRoutes.QUICK_UNLOCK))
     }
 
     @Test
@@ -92,7 +98,7 @@ class RouteAccessTest {
     private fun openWith(vararg extras: Permission): Set<String> =
         everyPage.filter { page -> RouteAccess.permissionFor(page)?.let { RolePermissions.allows(Role.EMPLOYEE, it, extras.toSet()) } ?: true }.toSet()
 
-    private val basics = setOf(BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, MoreRoutes.HOME, MoreRoutes.APPEARANCE, TopLevelDestination.HOME.route)
+    private val basics = setOf(BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, MoreRoutes.HOME, MoreRoutes.APPEARANCE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route)
 
     @Test
     fun givingEveryOption_stillLeavesUserManagementAndBackupToTheSuperAdmin() {

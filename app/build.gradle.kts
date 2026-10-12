@@ -92,6 +92,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
+    // Fingerprint check for the lock screen. BiometricPrompt needs a FragmentActivity, which this brings in.
+    implementation(libs.androidx.biometric)
 
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)

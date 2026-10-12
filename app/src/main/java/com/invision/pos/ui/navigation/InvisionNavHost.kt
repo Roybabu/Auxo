@@ -42,6 +42,7 @@ import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.AppearanceScreen
 import com.invision.pos.ui.screens.more.ShopSettingsScreen
 import com.invision.pos.ui.screens.more.StoreDetailsScreen
+import com.invision.pos.ui.screens.more.QuickUnlockScreen
 import com.invision.pos.ui.screens.more.UserManagementScreen
 import com.invision.pos.ui.screens.auth.RecoveryCodeScreen
 import com.invision.pos.viewmodel.ShopViewModel
@@ -304,6 +305,7 @@ fun InvisionNavHost(
                         override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
                         override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenRecoveryCode() = navController.navigate(MoreRoutes.RECOVERY_CODE)
+                        override fun onOpenQuickUnlock() = navController.navigate(MoreRoutes.QUICK_UNLOCK)
                         override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
                         override fun onOpenDayEnd() = navController.navigate(MoreRoutes.DAY_END)
                         override fun onOpenGstReport() = navController.navigate(MoreRoutes.GST_REPORT)
@@ -368,6 +370,9 @@ fun InvisionNavHost(
             }
             guarded(navController, MoreRoutes.APPEARANCE) {
                 AppearanceScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController, MoreRoutes.QUICK_UNLOCK) {
+                QuickUnlockScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController, MoreRoutes.BACKUP) {
                 BackupScreen(onBack = { navController.popBackStack() })

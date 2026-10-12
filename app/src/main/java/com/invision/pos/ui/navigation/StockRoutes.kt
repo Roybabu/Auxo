@@ -72,6 +72,7 @@ object MoreRoutes {
     const val USER_MANAGEMENT = "$PREFIX/users"
     const val ACTIVITY_LOG = "$PREFIX/activity"
     const val RECOVERY_CODE = "$PREFIX/recovery-code"
+    const val QUICK_UNLOCK = "$PREFIX/quick-unlock"
     const val ARG_CLOSING_ID = "closingId"
     const val DAY_END = "$PREFIX/day-end"
     const val GST_REPORT = "$PREFIX/gst-report"

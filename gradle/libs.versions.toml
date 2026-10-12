@@ -12,6 +12,7 @@ navigationCompose = "2.10.2"
 composeBom = "2026.09.00"
 room = "2.8.5"
 work = "2.10.0"
+biometric = "1.1.0"
 
 # Kotlin libraries
 coroutines = "1.11.0"
@@ -49,6 +50,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

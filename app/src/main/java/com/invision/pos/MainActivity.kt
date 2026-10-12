@@ -2,29 +2,43 @@ package com.invision.pos
 
 import android.graphics.Color
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.invision.pos.ui.AuthGate
 import com.invision.pos.ui.InvisionApp
 import com.invision.pos.ui.LocalStoreLogo
+import com.invision.pos.ui.lock.BiometricFingerprintCheck
+import com.invision.pos.ui.lock.LocalFingerprint
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.theme.InvisionTheme
+import kotlinx.coroutines.delay
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
         // Sign out anyone whose account was turned off or changed while the app was away.
         (application as InvisionApplication).container.authRepository.revalidate()
+        // Lock the app if it sat untouched for longer than the idle time while it was away.
+        (application as InvisionApplication).container.authRepository.checkIdle()
         // Make any automatic backup that came due while the app was closed.
         (application as InvisionApplication).container.checkAutoBackup()
     }
+
+    /** Any touch or key press counts as the app being in use, which restarts the idle time. */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        (application as InvisionApplication).container.authRepository.noteActivity()
+    }
+
+    private val fingerprint by lazy { BiometricFingerprintCheck(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
@@ -50,12 +64,24 @@ class MainActivity : ComponentActivity() {
             val logo by container.storeLogoRepository.logo.collectAsStateWithLifecycle()
             val suppliers by shop.suppliers.collectAsStateWithLifecycle()
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalStoreLogo provides logo) {
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
                     val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
-                    AuthGate(authState, recoveryPrompt = recoveryPrompt) { InvisionApp() }
+                    val lock by container.authRepository.lock.collectAsStateWithLifecycle()
+                    // Checks every few seconds whether the idle time has run out.
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            delay(IDLE_CHECK_MILLIS)
+                            container.authRepository.checkIdle()
+                        }
+                    }
+                    AuthGate(authState, recoveryPrompt = recoveryPrompt, lock = lock) { InvisionApp() }
                 }
             }
         }
+    }
+
+    private companion object {
+        const val IDLE_CHECK_MILLIS = 5_000L
     }
 }
