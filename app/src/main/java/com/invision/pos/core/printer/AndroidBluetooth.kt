@@ -9,12 +9,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.io.OutputStream
 import java.util.UUID
 
 /** True when the app may talk to Bluetooth devices. Before Android 12 the install-time permission is enough. */
@@ -63,51 +65,101 @@ class AndroidPrinterTransport(context: Context) : PrinterTransport {
                     ?: return@withContext PrintResult.NOT_PAIRED
                 // A running discovery slows a connection down and often makes it fail.
                 runCatching { adapter.cancelDiscovery() }
-                var socket: BluetoothSocket? = null
-                try {
-                    socket = try {
-                        device.createRfcommSocketToServiceRecord(SPP_UUID).also { it.connect() }
-                    } catch (_: IOException) {
-                        socket?.closeQuietly()
-                        return@withContext PrintResult.UNREACHABLE
-                    }
-                    try {
-                        val out = socket.outputStream
-                        var offset = 0
-                        while (offset < bytes.size) {
-                            val count = minOf(CHUNK, bytes.size - offset)
-                            out.write(bytes, offset, count)
-                            offset += count
-                            // Small printers have little memory; give them time to print what they have.
-                            delay(CHUNK_PAUSE_MILLIS)
-                        }
-                        out.flush()
-                        // Closing at once can drop the last lines.
-                        delay(CLOSE_DELAY_MILLIS)
-                        PrintResult.PRINTED
-                    } catch (_: IOException) {
-                        PrintResult.WRITE_FAILED
-                    }
-                } finally {
-                    socket?.closeQuietly()
-                }
+                transmit({ RfcommLink(device.createRfcommSocketToServiceRecord(SPP_UUID)) }, bytes)
             } catch (_: SecurityException) {
                 PrintResult.PERMISSION_NEEDED
             }
         }
     }
 
-    private fun BluetoothSocket.closeQuietly() {
-        try {
-            close()
-        } catch (_: IOException) {
-        }
-    }
-
     companion object {
+        /**
+         * Opens a connection with [open], sends [bytes] in small pieces and always closes it again. Every way this
+         * can go wrong comes back as a [PrintResult]: the connection could not be made (also if it fails in an
+         * unexpected way), or it broke while sending. Only a cancelled print is allowed to throw.
+         */
+        internal suspend fun transmit(
+            open: () -> PrinterLink,
+            bytes: ByteArray,
+            pauseMillis: Long = CHUNK_PAUSE_MILLIS,
+            closeDelayMillis: Long = CLOSE_DELAY_MILLIS,
+        ): PrintResult {
+            var link: PrinterLink? = null
+            try {
+                // The link is kept before it connects, so it is closed even when connecting fails.
+                try {
+                    link = open()
+                    link.connect()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: IOException) {
+                    return PrintResult.UNREACHABLE
+                } catch (e: SecurityException) {
+                    throw e
+                } catch (_: RuntimeException) {
+                    return PrintResult.UNREACHABLE
+                }
+                val connected = link ?: return PrintResult.UNREACHABLE
+                return try {
+                    val out = connected.output()
+                    var offset = 0
+                    while (offset < bytes.size) {
+                        val count = minOf(CHUNK, bytes.size - offset)
+                        out.write(bytes, offset, count)
+                        offset += count
+                        // Small printers have little memory; give them time to print what they have.
+                        delay(pauseMillis)
+                    }
+                    out.flush()
+                    // Closing at once can drop the last lines.
+                    delay(closeDelayMillis)
+                    PrintResult.PRINTED
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: IOException) {
+                    PrintResult.WRITE_FAILED
+                } catch (e: SecurityException) {
+                    throw e
+                } catch (_: RuntimeException) {
+                    PrintResult.WRITE_FAILED
+                }
+            } finally {
+                link?.closeQuietly()
+            }
+        }
+
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
         const val CHUNK = 1024
         const val CHUNK_PAUSE_MILLIS = 40L
         const val CLOSE_DELAY_MILLIS = 500L
     }
+}
+
+/** One connection to a printer, so the sending logic can be tested without Bluetooth. */
+internal interface PrinterLink {
+    @Throws(IOException::class)
+    fun connect()
+
+    @Throws(IOException::class)
+    fun output(): OutputStream
+
+    @Throws(IOException::class)
+    fun close()
+}
+
+private fun PrinterLink.closeQuietly() {
+    try {
+        close()
+    } catch (_: IOException) {
+    } catch (_: RuntimeException) {
+    }
+}
+
+private class RfcommLink(private val socket: BluetoothSocket) : PrinterLink {
+    @SuppressLint("MissingPermission")
+    override fun connect() = socket.connect()
+
+    override fun output(): OutputStream = socket.outputStream
+
+    override fun close() = socket.close()
 }
