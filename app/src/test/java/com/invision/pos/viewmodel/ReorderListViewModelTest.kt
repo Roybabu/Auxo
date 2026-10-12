@@ -1,5 +1,8 @@
 package com.invision.pos.viewmodel
 
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.core.auth.PermissionDeniedException
+import com.invision.pos.data.repository.PurchasingRepository
 import com.invision.pos.domain.model.Supplier
 import com.invision.pos.domain.usecase.CreateReorderDraftsUseCase
 import com.invision.pos.domain.usecase.RecordWastageUseCase
@@ -10,6 +13,8 @@ import com.invision.pos.testutil.TestData
 import com.invision.pos.testutil.keepActive
 import com.invision.pos.testutil.record
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -112,5 +117,36 @@ class ReorderListViewModelTest {
         vm.createDraftOrders()
         assertEquals(StockAlertsEvent.NothingToOrder, events.last())
         assertTrue(repo.orders.value.isEmpty())
+    }
+}
+
+/** A purchasing repository that refuses supplier reads, like an Employee who may see stock but not suppliers. */
+private class NoSupplierAccess(private val inner: PurchasingRepository) : PurchasingRepository by inner {
+    override fun observeSuppliers(): Flow<List<Supplier>> = flow { throw PermissionDeniedException(Permission.MANAGE_SUPPLIERS) }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class StockAlertsWithoutSupplierAccessTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun theLowStockList_stillLoads_whenSuppliersMayNotBeRead() = runTest {
+        val inventory = FakeInventoryRepository(listOf(TestData.juice(stock = 0)))
+        val purchasing = FakePurchasingRepository(inventory, emptyList())
+        val vm = StockAlertsViewModel(
+            initialTab = AlertsTab.LOW_STOCK,
+            inventory = inventory,
+            purchasing = NoSupplierAccess(purchasing),
+            createReorderDrafts = CreateReorderDraftsUseCase(purchasing),
+            recordWastage = RecordWastageUseCase(inventory),
+            clock = TestData.clock,
+        )
+        keepActive(vm.uiState)
+        val state = vm.uiState.value
+        assertFalse(state.loadFailed)
+        assertTrue(state.suppliers.isEmpty())
+        assertEquals(listOf("Mango Juice"), state.groups.flatMap { it.items }.map { it.product.name })
     }
 }

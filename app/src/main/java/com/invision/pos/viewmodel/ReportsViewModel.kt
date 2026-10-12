@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -157,7 +158,7 @@ class ReportsViewModel(
         ReportType.PURCHASES -> listOf(purchasing.observeReceipts(from, to))
         ReportType.STOCK_MOVEMENTS, ReportType.WASTAGE -> listOf(inventory.observeMovementHistory(from, to))
         ReportType.STOCK_VALUE -> listOf(inventory.observeProducts())
-        ReportType.LOW_STOCK -> listOf(inventory.observeProducts(), purchasing.observeSuppliers())
+        ReportType.LOW_STOCK -> listOf(inventory.observeProducts(), purchasing.observeSuppliers().catch { emit(emptyList()) })
         ReportType.EXPIRY -> listOf(inventory.observeBatches())
         ReportType.CUSTOMER_BALANCES -> listOf(customers.observeAccounts())
     }
@@ -175,7 +176,7 @@ class ReportsViewModel(
             ReportType.STOCK_MOVEMENTS -> Reports.stockMovements(inventory.observeMovementHistory(from, to).first(), category = filters.category)
             ReportType.WASTAGE -> Reports.wastage(inventory.observeMovementHistory(from, to).first(), filters.category)
             ReportType.STOCK_VALUE -> Reports.stockValue(inventory.observeProducts().first(), filters.category)
-            ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), purchasing.observeSuppliers().first(), withSupplier = shop?.suppliers?.value ?: true)
+            ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), runCatching { purchasing.observeSuppliers().first() }.getOrDefault(emptyList()), withSupplier = shop?.suppliers?.value ?: true)
             ReportType.EXPIRY -> Reports.expiry(inventory.observeBatches().first(), today, filters.expiryWindow)
             ReportType.CUSTOMER_BALANCES -> Reports.customerBalances(customers.observeAccounts().first(), filters.onlyOutstanding)
         }

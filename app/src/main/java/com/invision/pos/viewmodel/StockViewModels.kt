@@ -273,7 +273,7 @@ class StockAlertsViewModel(
 
     val uiState: StateFlow<StockAlertsUiState> = reload
         .flatMapLatest {
-            combine(inventory.observeProducts(), inventory.observeBatches(), purchasing.observeSuppliers(), combine(filters, creating, warningDays(settings), ::Triple)) { products, batches, suppliers, (f, isCreating, days) ->
+            combine(inventory.observeProducts(), inventory.observeBatches(), purchasing.observeSuppliers().catch { emit(emptyList()) }, combine(filters, creating, warningDays(settings), ::Triple)) { products, batches, suppliers, (f, isCreating, days) ->
                 val today = LocalDate.now(clock)
                 val active = suppliers.filter { it.active }
                 val activeIds = active.map { it.id }.toSet()

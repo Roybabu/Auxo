@@ -109,6 +109,19 @@ class ReportsViewModelTest {
     }
 
     @Test
+    fun lowStockReport_stillBuilds_whenSuppliersMayNotBeRead() = runTest {
+        val noSuppliers = object : com.invision.pos.data.repository.PurchasingRepository by purchasing {
+            override fun observeSuppliers() = kotlinx.coroutines.flow.flow<List<com.invision.pos.domain.model.Supplier>> {
+                throw com.invision.pos.core.auth.PermissionDeniedException(com.invision.pos.core.auth.Permission.MANAGE_SUPPLIERS)
+            }
+        }
+        val viewModel = ReportsViewModel(billing, inventory, noSuppliers, customers, TestData.clock)
+        viewModel.onTypeChange(ReportType.LOW_STOCK)
+        assertFalse(viewModel.uiState.value.loadFailed)
+        assertTrue(viewModel.uiState.value.table != null)
+    }
+
+    @Test
     fun currentPositionReports_ignoreThePeriod() = runTest {
         sell()
         customers.addEntry(LedgerEntry(customerId = 1, type = LedgerEntryType.SALE, amount = Money(5_000), createdAtMillis = 1))
