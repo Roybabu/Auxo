@@ -48,7 +48,7 @@ private const val STAFF_PW = "Counter-Desk-17"
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w392dp-h850dp-xhdpi")
+@Config(qualifiers = "w392dp-h3200dp-xhdpi")
 class RoleScreensTest {
 
     @get:Rule
