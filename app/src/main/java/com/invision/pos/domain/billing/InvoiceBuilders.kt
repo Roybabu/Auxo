@@ -130,6 +130,8 @@ object ReturnBuilder {
         val returnedBefore = original.lines.associate { it.id to it.returnedQuantity }
         val returnedAfter = original.lines.associate { it.id to it.returnedQuantity + (units[it.id] ?: 0) }
         val refund = refundDue(original, returnedAfter) - refundDue(original, returnedBefore)
+        val accountPart = (accountShare(original, returnedAfter) - accountShare(original, returnedBefore))
+            .coerceIn(Money.ZERO, refund.coerceAtLeast(Money.ZERO))
 
         val creditNote = Invoice(
             type = InvoiceType.RETURN,
@@ -150,18 +152,7 @@ object ReturnBuilder {
             roundOff = refund - linesTotal,
             grandTotal = refund,
             // Returning a few paise on a rounded bill can leave nothing to refund yet.
-            payments = if (refund > Money.ZERO) {
-                listOf(
-                    PaymentRecord(
-                        method = refundMethod,
-                        kind = PaymentKind.REFUND,
-                        amount = refund,
-                        createdAtMillis = nowMillis,
-                    ),
-                )
-            } else {
-                emptyList()
-            },
+            payments = refundPayments(original, refundMethod, refund, accountPart, nowMillis),
             originalInvoiceId = original.id,
             originalInvoiceNumber = original.number,
             note = reason.trim().ifEmpty { null },
@@ -181,6 +172,38 @@ object ReturnBuilder {
         // A bill rounded to the rupee always ends in 00 paise.
         val rounded = original.grandTotal.minorUnits % 100 == 0L
         return if (rounded) BillCalculator.roundToRupee(total) else total
+    }
+
+    /**
+     * The part of [original] that was put on the customer's account and is given back once [returned]
+     * units are back: the account share of the bill, in the same proportion as the refund due. The shares
+     * of all returns add up to exactly the amount that was on account, never more.
+     */
+    fun accountShare(original: Invoice, returned: Map<Long, Int>): Money {
+        val onAccount = original.payments
+            .filter { it.method == PaymentMethod.CREDIT && it.kind == PaymentKind.PAYMENT }
+            .fold(Money.ZERO) { acc, payment -> acc + payment.amount }
+        if (onAccount.isZero || original.grandTotal.minorUnits <= 0L) return Money.ZERO
+        val due = refundDue(original, returned)
+        if (due >= original.grandTotal) return onAccount
+        return Money(Rounding.halfUp(onAccount.minorUnits * due.minorUnits, original.grandTotal.minorUnits))
+    }
+
+    /**
+     * What a return pays back. A bill that was partly on account is first settled against that account
+     * (the customer owes less) and only the rest goes back by [method]; refunding the whole bill in cash
+     * when part of it was never paid would hand out money the shop did not receive.
+     */
+    private fun refundPayments(original: Invoice, method: PaymentMethod, refund: Money, accountPart: Money, nowMillis: Long): List<PaymentRecord> {
+        if (refund <= Money.ZERO) return emptyList()
+        fun record(m: PaymentMethod, amount: Money) =
+            PaymentRecord(method = m, kind = PaymentKind.REFUND, amount = amount, createdAtMillis = nowMillis)
+        if (method == PaymentMethod.CREDIT || original.customerId == null || accountPart.isZero) return listOf(record(method, refund))
+        val rest = refund - accountPart
+        return listOfNotNull(
+            record(method, rest).takeIf { rest > Money.ZERO },
+            record(PaymentMethod.CREDIT, accountPart),
+        )
     }
 
     /** Credit note line for [units] more units of [line]. */
