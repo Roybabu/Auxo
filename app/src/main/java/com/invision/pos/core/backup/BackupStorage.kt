@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import androidx.annotation.RequiresApi
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
@@ -31,6 +32,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
     override fun save(fileName: String, write: (OutputStream) -> Unit): SavedBackup =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) saveInDocuments(fileName, write) else saveInAppFolder(fileName, write)
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun saveInDocuments(fileName: String, write: (OutputStream) -> Unit): SavedBackup {
         val resolver = context.contentResolver
         val values = ContentValues().apply {
