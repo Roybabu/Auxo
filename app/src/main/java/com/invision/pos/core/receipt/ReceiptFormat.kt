@@ -62,9 +62,9 @@ internal object ReceiptText {
         return when {
             payment.method == PaymentMethod.CREDIT && refund -> labels.creditedToAccount
             payment.method == PaymentMethod.CREDIT -> labels.onAccount
-            refund && sheet -> fill(labels.refundedBy, method)
-            refund -> fill(labels.refundParen, method)
-            else -> fill(labels.paidBy, method)
+            refund && sheet -> fillIn(labels.refundedBy, method)
+            refund -> fillIn(labels.refundParen, method)
+            else -> fillIn(labels.paidBy, method)
         }
     }
 

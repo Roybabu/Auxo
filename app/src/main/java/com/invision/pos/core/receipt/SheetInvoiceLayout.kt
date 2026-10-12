@@ -68,8 +68,8 @@ object SheetInvoiceLayout {
 
         val sellerLines = buildList {
             if (seller.address.isNotBlank()) addAll(seller.address.lines().filter { it.isNotBlank() })
-            if (seller.phone.isNotBlank()) add(fill(labels.phone, seller.phone))
-            if (seller.gstin.isNotBlank()) add(fill(labels.gstin, seller.gstin))
+            if (seller.phone.isNotBlank()) add(fillIn(labels.phone, seller.phone))
+            if (seller.gstin.isNotBlank()) add(fillIn(labels.gstin, seller.gstin))
         }
         val details = buildList {
             add((if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
@@ -79,8 +79,8 @@ object SheetInvoiceLayout {
         val buyerLines = if (options.showCustomer) {
             buildList {
                 add(invoice.buyer.name ?: labels.walkInCustomer)
-                invoice.buyer.phone?.let { add(fill(labels.phone, ReceiptText.maskPhone(it))) }
-                invoice.buyer.gstin?.let { add(fill(labels.gstin, it)) }
+                invoice.buyer.phone?.let { add(fillIn(labels.phone, ReceiptText.maskPhone(it))) }
+                invoice.buyer.gstin?.let { add(fillIn(labels.gstin, it)) }
             }
         } else {
             emptyList()
@@ -104,8 +104,8 @@ object SheetInvoiceLayout {
         val rows = invoice.lines.mapIndexed { i, line -> columns.map { it.value(i, line) } }
         val rowNotes = invoice.lines.map { line ->
             listOfNotNull(
-                ReceiptText.mrpDiscount(line)?.let { fill(labels.mrpDiscountNote, IndianNumberFormat.amount(line.mrp!!), IndianNumberFormat.amount(it)) },
-                if (!wide && !line.discount.isZero) fill(labels.discountNote, IndianNumberFormat.amount(line.discount)) else null,
+                ReceiptText.mrpDiscount(line)?.let { fillIn(labels.mrpDiscountNote, IndianNumberFormat.amount(line.mrp!!), IndianNumberFormat.amount(it)) },
+                if (!wide && !line.discount.isZero) fillIn(labels.discountNote, IndianNumberFormat.amount(line.discount)) else null,
             ).joinToString(" · ").ifEmpty { null }
         }
 
@@ -157,19 +157,19 @@ object SheetInvoiceLayout {
             buildString {
                 append(ReceiptText.paymentLabel(p, labels, sheet = true) + ": ")
                 append(IndianNumberFormat.rupees(p.amount))
-                p.reference?.let { append(" " + fill(labels.refNote, it)) }
+                p.reference?.let { append(" " + fillIn(labels.refNote, it)) }
                 if (p.tendered != null && p.change != null) {
-                    append(" · " + fill(labels.receivedChange, IndianNumberFormat.rupees(p.tendered), IndianNumberFormat.rupees(p.change)))
+                    append(" · " + fillIn(labels.receivedChange, IndianNumberFormat.rupees(p.tendered), IndianNumberFormat.rupees(p.change)))
                 }
             }
         }
 
         val notes = buildList {
-            invoice.note?.let { add(fill(labels.returnReason, it)) }
+            invoice.note?.let { add(fillIn(labels.returnReason, it)) }
             if (gst && invoice.pricesIncludeTax) add(labels.pricesIncludeGst)
             if (!gst) add(labels.noTaxCharged)
             if (options.showSavings && !isReturn && invoice.savings > Money.ZERO) {
-                add(fill(labels.savedOnMrp, IndianNumberFormat.rupees(invoice.savings)))
+                add(fillIn(labels.savedOnMrp, IndianNumberFormat.rupees(invoice.savings)))
             }
         }
 
@@ -192,7 +192,7 @@ object SheetInvoiceLayout {
             notes = notes,
             footer = options.footer,
             feedbackNote = labels.feedbackNote,
-            signatureLabel = fill(labels.signatureFor, seller.name),
+            signatureLabel = fillIn(labels.signatureFor, seller.name),
             signatoryCaption = labels.authorisedSignatory,
             pageNumberTemplate = labels.pageOf,
             continuedLabel = labels.continued,

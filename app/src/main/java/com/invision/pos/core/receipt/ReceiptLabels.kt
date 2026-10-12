@@ -250,4 +250,4 @@ data class ReceiptLabels(
 }
 
 /** Fills a %1$s style [template] with [args], formatting numbers without any locale-specific digits. */
-internal fun fill(template: String, vararg args: Any): String = String.format(java.util.Locale.ENGLISH, template, *args)
+internal fun fillIn(template: String, vararg args: Any): String = String.format(java.util.Locale.ENGLISH, template, *args)

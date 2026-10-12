@@ -162,7 +162,7 @@ class ReceiptFontsTest {
         val doc = SheetInvoiceLayout.build(sale, ReceiptOptions(language = Language.HINDI), ReceiptPaper.A4, ZoneOffset.UTC, labels)
         assertEquals(1, doc.columns.count { it.isItem })
         assertEquals("सामान", doc.columns.first { it.isItem }.title)
-        assertEquals("पृष्ठ 1 / 2", fill(doc.pageNumberTemplate, 1, 2))
+        assertEquals("पृष्ठ 1 / 2", fillIn(doc.pageNumberTemplate, 1, 2))
     }
 
     @Test

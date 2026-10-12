@@ -76,19 +76,19 @@ object ThermalReceiptBuilder {
         val seller = invoice.seller
         center(seller.name, bold = true, large = true)
         if (seller.address.isNotBlank()) center(seller.address)
-        if (seller.phone.isNotBlank()) center(fill(labels.phone, seller.phone))
-        if (seller.gstin.isNotBlank()) center(fill(labels.gstin, seller.gstin))
+        if (seller.phone.isNotBlank()) center(fillIn(labels.phone, seller.phone))
+        if (seller.gstin.isNotBlank()) center(fillIn(labels.gstin, seller.gstin))
         out += ThermalElement.Divider()
 
         // Invoice details
         center(ReceiptText.title(invoice, labels), bold = true)
-        left(fill(if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
-        left(fill(labels.date, ReceiptText.dateTime(invoice.createdAtMillis, zone)))
-        invoice.originalInvoiceNumber?.let { left(fill(labels.against, it)) }
+        left(fillIn(if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
+        left(fillIn(labels.date, ReceiptText.dateTime(invoice.createdAtMillis, zone)))
+        invoice.originalInvoiceNumber?.let { left(fillIn(labels.against, it)) }
         if (options.showCustomer) {
-            left(fill(labels.customer, invoice.buyer.name ?: labels.walkInCustomer))
-            invoice.buyer.phone?.let { left(fill(labels.phone, ReceiptText.maskPhone(it))) }
-            invoice.buyer.gstin?.let { left(fill(labels.gstin, it)) }
+            left(fillIn(labels.customer, invoice.buyer.name ?: labels.walkInCustomer))
+            invoice.buyer.phone?.let { left(fillIn(labels.phone, ReceiptText.maskPhone(it))) }
+            invoice.buyer.gstin?.let { left(fillIn(labels.gstin, it)) }
         }
         out += ThermalElement.Divider()
 
@@ -99,13 +99,13 @@ object ThermalReceiptBuilder {
             val name = listOf(line.productName, line.variantLabel).filter { it.isNotBlank() }.joinToString(" ")
             left(name)
             val gross = line.unitPrice * line.quantity
-            pair("  " + fill(labels.qtyTimesPrice, line.quantity, IndianNumberFormat.amount(line.unitPrice)), IndianNumberFormat.amount(gross))
-            ReceiptText.mrpDiscount(line)?.let { pair("  " + fill(labels.mrpDiscountLine, IndianNumberFormat.amount(line.mrp!!)), "-" + IndianNumberFormat.amount(it)) }
+            pair("  " + fillIn(labels.qtyTimesPrice, line.quantity, IndianNumberFormat.amount(line.unitPrice)), IndianNumberFormat.amount(gross))
+            ReceiptText.mrpDiscount(line)?.let { pair("  " + fillIn(labels.mrpDiscountLine, IndianNumberFormat.amount(line.mrp!!)), "-" + IndianNumberFormat.amount(it)) }
             if (!line.discount.isZero) pair("  " + labels.discount, "-" + IndianNumberFormat.amount(line.discount))
             if (invoice.gstRegistered && options.showHsn) {
                 val parts = listOfNotNull(
-                    line.hsnCode?.let { fill(labels.hsn, it) },
-                    fill(labels.gstRate, ReceiptText.rate(line.gstRateBasisPoints)),
+                    line.hsnCode?.let { fillIn(labels.hsn, it) },
+                    fillIn(labels.gstRate, ReceiptText.rate(line.gstRateBasisPoints)),
                 )
                 left("  " + parts.joinToString("  "))
             }
@@ -113,7 +113,7 @@ object ThermalReceiptBuilder {
         out += ThermalElement.Divider()
 
         // Totals
-        pair(fill(labels.itemsCount, invoice.lines.size), fill(labels.qtyCount, invoice.itemCount))
+        pair(fillIn(labels.itemsCount, invoice.lines.size), fillIn(labels.qtyCount, invoice.itemCount))
         pair(labels.subtotal, IndianNumberFormat.amount(invoice.subtotal))
         if (!invoice.discountTotal.isZero) pair(labels.discount, "-" + IndianNumberFormat.amount(invoice.discountTotal))
         if (invoice.gstRegistered) {
@@ -132,26 +132,26 @@ object ThermalReceiptBuilder {
         if (totalLabel.length + 1 + totalValue.length <= width / 2) {
             out += ThermalElement.Line(twoColumns(totalLabel, totalValue, width / 2), bold = true, large = true, label = totalLabel, value = totalValue)
         } else {
-            pair(fill(labels.rupeeLabel, totalLabel), totalValue, bold = true)
+            pair(fillIn(labels.rupeeLabel, totalLabel), totalValue, bold = true)
         }
         out += ThermalElement.Divider('=')
 
         // Payments
         for (payment in invoice.payments) {
             pair(ReceiptText.paymentLabel(payment, labels), IndianNumberFormat.amount(payment.amount))
-            payment.reference?.let { left("  " + fill(labels.ref, it)) }
+            payment.reference?.let { left("  " + fillIn(labels.ref, it)) }
             payment.tendered?.let { pair("  " + labels.cashReceived, IndianNumberFormat.amount(it)) }
             payment.change?.let { pair("  " + labels.change, IndianNumberFormat.amount(it)) }
         }
 
         if (invoice.note != null) {
             out += ThermalElement.Divider()
-            left(fill(labels.reason, invoice.note))
+            left(fillIn(labels.reason, invoice.note))
         }
 
         out += ThermalElement.Divider()
         if (options.showSavings && invoice.type == InvoiceType.SALE && invoice.savings > Money.ZERO) {
-            center(fill(labels.youSavedRs, IndianNumberFormat.amount(invoice.savings)), bold = true)
+            center(fillIn(labels.youSavedRs, IndianNumberFormat.amount(invoice.savings)), bold = true)
         }
         if (options.footer.isNotBlank()) center(options.footer)
         if (labels.feedbackNote.isNotBlank()) center(labels.feedbackNote)

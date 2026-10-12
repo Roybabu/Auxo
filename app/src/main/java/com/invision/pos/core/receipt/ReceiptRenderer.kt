@@ -418,7 +418,7 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
     private fun drawPageNumber(canvas: Canvas, page: Int, count: Int) {
         if (count <= 1) return
         text.textSize = base * 0.8f
-        val label = fill(doc.pageNumberTemplate, page, count)
+        val label = fillIn(doc.pageNumberTemplate, page, count)
         text.draw(canvas, label, margin + contentWidth - text.measureText(label), pageHeight - margin / 2)
         text.textSize = base
     }
