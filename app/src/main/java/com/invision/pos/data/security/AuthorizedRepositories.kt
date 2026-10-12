@@ -153,10 +153,12 @@ class AuthorizedSettingsRepository(private val inner: SettingsRepository, privat
         // Whoever may edit settings, only the Super Admin sets what Employees may discount.
         val before = inner.getSettings().employeeDiscountLimitBp
         val limitChanged = before != settings.employeeDiscountLimitBp
+        val daysBefore = inner.getSettings().expiryWarningDays
         if (limitChanged) auth.require(Permission.UNLIMITED_DISCOUNT)
         audit.recording({ inner.saveSettings(settings) }) {
             val limit = if (limitChanged) ", employee discount limit ${before / 100.0}% to ${settings.employeeDiscountLimitBp / 100.0}%" else ""
-            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}$limit")
+            val expiry = if (daysBefore != settings.expiryWarningDays) ", expiry warning $daysBefore to ${settings.expiryWarningDays} days" else ""
+            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}$limit$expiry")
         }
     }
 }

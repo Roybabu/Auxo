@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.core.export.ExportFile
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.PurchasingRepository
+import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.inventory.ReorderPlanner
 import com.invision.pos.domain.inventory.ReorderSuggestion
 import com.invision.pos.domain.model.BatchWithProduct
@@ -23,6 +24,7 @@ import com.invision.pos.domain.reports.Reports
 import com.invision.pos.domain.usecase.CreateReorderDraftsUseCase
 import com.invision.pos.domain.usecase.RecordWastageUseCase
 import com.invision.pos.domain.usecase.WastageError
+import com.invision.pos.domain.usecase.warningDays
 import com.invision.pos.domain.usecase.WastageResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -228,7 +230,8 @@ private data class AlertFilters(
     val tab: AlertsTab,
     val deselected: Set<Long> = emptySet(),
     val fallbackSupplierId: Long? = null,
-    val expiryWindow: ExpiryWindow = ExpiryWindow.WITHIN_30_DAYS,
+    /** Null until the user picks one; then the shop's expiring-soon setting applies. */
+    val expiryWindow: ExpiryWindow? = null,
 )
 
 /**
@@ -243,6 +246,7 @@ class StockAlertsViewModel(
     private val createReorderDrafts: CreateReorderDraftsUseCase,
     private val recordWastage: RecordWastageUseCase,
     private val clock: Clock,
+    private val settings: SettingsRepository? = null,
 ) : ViewModel() {
 
     private val filters = MutableStateFlow(AlertFilters(initialTab))
@@ -257,7 +261,7 @@ class StockAlertsViewModel(
 
     val uiState: StateFlow<StockAlertsUiState> = reload
         .flatMapLatest {
-            combine(inventory.observeProducts(), inventory.observeBatches(), purchasing.observeSuppliers(), filters, creating) { products, batches, suppliers, f, isCreating ->
+            combine(inventory.observeProducts(), inventory.observeBatches(), purchasing.observeSuppliers(), combine(filters, creating, warningDays(settings), ::Triple)) { products, batches, suppliers, (f, isCreating, days) ->
                 val today = LocalDate.now(clock)
                 val active = suppliers.filter { it.active }
                 val activeIds = active.map { it.id }.toSet()
@@ -276,8 +280,9 @@ class StockAlertsViewModel(
                     suppliers = active,
                     fallbackSupplierId = f.fallbackSupplierId?.takeIf { it in activeIds },
                     isCreating = isCreating,
-                    expiryWindow = f.expiryWindow,
-                    batches = batches.filter { f.expiryWindow.includes(it.batch, today) },
+                    // Until the user picks a window, the list opens on the shop's expiring-soon setting.
+                    expiryWindow = f.expiryWindow ?: ExpiryWindow.forWarningDays(days),
+                    batches = batches.filter { (f.expiryWindow ?: ExpiryWindow.forWarningDays(days)).includes(it.batch, today) },
                     expiredValue = expired.fold(Money.ZERO) { acc, item -> acc + (item.valueAtCost ?: Money.ZERO) },
                     expiredBatchCount = expired.size,
                 )
@@ -385,6 +390,7 @@ class StockAlertsViewModel(
                     createReorderDrafts = container.createReorderDrafts,
                     recordWastage = container.recordWastage,
                     clock = container.clock,
+                    settings = container.settingsRepository,
                 )
             }
         }

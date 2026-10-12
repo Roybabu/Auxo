@@ -69,6 +69,7 @@ import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.ui.LocalStoreLogo
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
+import com.invision.pos.ui.components.ExpiredStockBanner
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.LoadingState
 import com.invision.pos.ui.components.SectionHeader
@@ -522,6 +523,13 @@ private fun HomePanelContent(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpenInventory(StockFilter.EXPIRING_SOON) },
                 )
+                if (inventory.expiredCount > 0) {
+                    ExpiredStockBanner(
+                        text = pluralStringResource(R.plurals.home_expired_banner, inventory.expiredCount, inventory.expiredCount),
+                        modifier = Modifier.testTag("home_expired_banner"),
+                        onClick = { onOpenInventory(StockFilter.EXPIRING_SOON) },
+                    )
+                }
                 AlertsCard(alerts = inventory.alerts, onOpenProduct = onOpenProduct, onOpenAlerts = onOpenAlerts)
             }
         }

@@ -9,16 +9,19 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.invision.pos.ui.AuthGate
 import com.invision.pos.ui.InvisionApp
+import com.invision.pos.ui.LocalExpiryWarningDays
 import com.invision.pos.ui.LocalStoreLogo
 import com.invision.pos.ui.lock.BiometricFingerprintCheck
 import com.invision.pos.ui.lock.LocalFingerprint
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.theme.InvisionTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 
 class MainActivity : FragmentActivity() {
 
@@ -68,8 +71,10 @@ class MainActivity : FragmentActivity() {
             }
             val logo by container.storeLogoRepository.logo.collectAsStateWithLifecycle()
             val suppliers by shop.suppliers.collectAsStateWithLifecycle()
+            val expiryDays by remember { container.settingsRepository.observeSettings().map { it.expiryWarningDays } }
+                .collectAsStateWithLifecycle(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint) {
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
                     val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
                     val lock by container.authRepository.lock.collectAsStateWithLifecycle()

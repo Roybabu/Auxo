@@ -18,16 +18,21 @@ data class InventoryQuery(
 
 object InventoryFilter {
 
-    /** Items expiring within this many days are flagged on Home and in the "Expiring" filter. */
+    /** Default for the shop's expiring-soon window (see StoreSettings.expiryWarningDays). */
     const val EXPIRY_WARNING_DAYS = 30L
 
-    fun apply(products: List<Product>, query: InventoryQuery, today: LocalDate): List<Product> {
+    fun apply(
+        products: List<Product>,
+        query: InventoryQuery,
+        today: LocalDate,
+        warningDays: Int = EXPIRY_WARNING_DAYS.toInt(),
+    ): List<Product> {
         val text = query.text.trim()
         return products
             .asSequence()
             .filter { query.category == null || it.category == query.category }
             .filter { text.isEmpty() || matchesText(it, text) }
-            .filter { matchesStockFilter(it, query.stockFilter, today) }
+            .filter { matchesStockFilter(it, query.stockFilter, today, warningDays.toLong()) }
             .sortedBy { it.name.lowercase() }
             .toList()
     }
@@ -44,13 +49,13 @@ object InventoryFilter {
         }
     }
 
-    private fun matchesStockFilter(product: Product, filter: StockFilter, today: LocalDate): Boolean =
+    private fun matchesStockFilter(product: Product, filter: StockFilter, today: LocalDate, warningDays: Long): Boolean =
         when (filter) {
             StockFilter.ALL -> true
             StockFilter.LOW_STOCK -> product.variants.any { it.stockStatus == StockStatus.LOW_STOCK }
             StockFilter.OUT_OF_STOCK -> product.variants.any { it.stockStatus == StockStatus.OUT_OF_STOCK }
             StockFilter.EXPIRING_SOON -> product.variants.any {
-                it.isExpired(today) || it.expiresWithin(today, EXPIRY_WARNING_DAYS)
+                it.isExpired(today) || it.expiresWithin(today, warningDays)
             }
         }
 }

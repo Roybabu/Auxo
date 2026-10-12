@@ -63,6 +63,8 @@ import com.invision.pos.data.local.entity.SupplierEntity
  * 11. Open restaurant orders: service type, table and kitchen-ticket columns on held_bills, and service type
  *     and table on invoices. Written by hand ([MIGRATION_10_11]).
  * 12. Quotations: the quotations table. Written by hand ([MIGRATION_11_12]).
+ * 13. The expiring-soon warning window (store_settings.expiry_warning_days, 30 for existing shops). Written by hand
+ *     ([MIGRATION_12_13]).
  */
 @Database(
     entities = [
@@ -142,7 +144,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 12
+        const val VERSION = 13
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -221,10 +223,17 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 13: the expiring-soon window. Existing shops keep the 30 days they always had. */
+        val MIGRATION_12_13: Migration = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN expiry_warning_days INTEGER NOT NULL DEFAULT 30")
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

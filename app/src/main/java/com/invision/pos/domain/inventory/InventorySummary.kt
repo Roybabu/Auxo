@@ -53,6 +53,7 @@ object InventorySummaryCalculator {
         products: List<Product>,
         today: LocalDate,
         maxAlerts: Int = DEFAULT_MAX_ALERTS,
+        warningDays: Int = InventoryFilter.EXPIRY_WARNING_DAYS.toInt(),
     ): InventorySummary {
         var units = 0
         var valueAtCost = Money.ZERO
@@ -75,7 +76,7 @@ object InventorySummaryCalculator {
                 val alertType = when {
                     variant.isExpired(today) -> StockAlertType.EXPIRED
                     variant.stockStatus == StockStatus.OUT_OF_STOCK -> StockAlertType.OUT_OF_STOCK
-                    variant.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) -> StockAlertType.EXPIRING_SOON
+                    variant.expiresWithin(today, warningDays.toLong()) -> StockAlertType.EXPIRING_SOON
                     variant.stockStatus == StockStatus.LOW_STOCK -> StockAlertType.LOW_STOCK
                     else -> null
                 }
@@ -86,7 +87,7 @@ object InventorySummaryCalculator {
                     StockStatus.IN_STOCK -> Unit
                 }
                 if (variant.isExpired(today)) expired++
-                if (variant.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS)) expiring++
+                if (variant.expiresWithin(today, warningDays.toLong())) expiring++
 
                 if (alertType != null) {
                     alerts += StockAlert(

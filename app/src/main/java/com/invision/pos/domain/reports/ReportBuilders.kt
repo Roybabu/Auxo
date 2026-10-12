@@ -32,6 +32,7 @@ enum class ItemKind { ALL, PRODUCTS, DISHES }
 enum class ExpiryWindow(val days: Long?) {
     EXPIRED(0),
     WITHIN_7_DAYS(7),
+    WITHIN_15_DAYS(15),
     WITHIN_30_DAYS(30),
     ALL(null),
     ;
@@ -44,6 +45,11 @@ enum class ExpiryWindow(val days: Long?) {
             EXPIRED -> batch.isExpired(today)
             else -> expiry != null && !expiry.isAfter(today.plusDays(days ?: 0))
         }
+    }
+
+    companion object {
+        /** The window that matches the shop's expiring-soon setting (7, 15 or 30 days). */
+        fun forWarningDays(days: Int): ExpiryWindow = entries.firstOrNull { it.days == days.toLong() } ?: WITHIN_30_DAYS
     }
 }
 

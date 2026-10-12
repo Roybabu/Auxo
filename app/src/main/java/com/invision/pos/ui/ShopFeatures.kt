@@ -11,3 +11,6 @@ val LocalSuppliersEnabled = staticCompositionLocalOf { true }
 
 /** The shop's logo picture, or null when none was added. Home and the receipts use it. */
 val LocalStoreLogo = staticCompositionLocalOf<android.graphics.Bitmap?> { null }
+
+/** Days before expiry that stock is flagged "expiring soon" (the Super Admin's setting in Billing settings). */
+val LocalExpiryWarningDays = staticCompositionLocalOf { com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS }

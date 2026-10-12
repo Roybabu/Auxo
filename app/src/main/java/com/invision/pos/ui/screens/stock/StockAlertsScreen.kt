@@ -79,6 +79,7 @@ import java.time.temporal.ChronoUnit
 fun ExpiryWindow.labelRes(): Int = when (this) {
     ExpiryWindow.EXPIRED -> R.string.expiry_window_expired
     ExpiryWindow.WITHIN_7_DAYS -> R.string.expiry_window_7
+    ExpiryWindow.WITHIN_15_DAYS -> R.string.expiry_window_15
     ExpiryWindow.WITHIN_30_DAYS -> R.string.expiry_window_30
     ExpiryWindow.ALL -> R.string.filter_all
 }

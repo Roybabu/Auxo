@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.domain.billing.InvoiceNumbers
 import com.invision.pos.domain.billing.SettingsField
+import com.invision.pos.domain.model.ExpiryWarning
 import com.invision.pos.domain.model.Language
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
@@ -234,6 +236,26 @@ fun BillingSettingsContent(
                                 modifier = Modifier.testTag("discount_limit_$choice"),
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        item(key = "expiry_warning") {
+            SettingsCard(stringResource(R.string.settings_expiry_warning)) {
+                Text(
+                    stringResource(R.string.settings_expiry_warning_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    ExpiryWarning.CHOICES.forEach { days ->
+                        FilterChip(
+                            selected = settings.expiryWarningDays == days,
+                            onClick = { onChange { it.copy(expiryWarningDays = days) } },
+                            label = { Text(pluralStringResource(R.plurals.settings_expiry_days, days, days)) },
+                            modifier = Modifier.testTag("expiry_days_$days"),
+                        )
                     }
                 }
             }

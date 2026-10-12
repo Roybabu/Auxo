@@ -1541,4 +1541,19 @@
         <item quantity="one">%d দিন ধরে বকেয়া</item>
         <item quantity="other">%d দিন ধরে বকেয়া</item>
     </plurals>
+    <string name="expiry_window_15">15 দিনের মধ্যে</string>
+    <string name="settings_expiry_warning">শীঘ্রই মেয়াদ শেষের সতর্কতা</string>
+    <string name="settings_expiry_warning_help">হোম, পণ্যের তালিকা এবং শীঘ্রই মেয়াদ শেষ হওয়া তালিকায় স্টকের মেয়াদ শেষ হওয়ার কত আগে থেকে সতর্ক করা হবে।</string>
+    <plurals name="settings_expiry_days">
+        <item quantity="one">%d দিন</item>
+        <item quantity="other">%d দিন</item>
+    </plurals>
+    <plurals name="home_expired_banner">
+        <item quantity="one">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। এটি বিক্রি করা যাবে না। এটি বাদ দিন।</item>
+        <item quantity="other">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। এটি বিক্রি করা যাবে না। এটি বাদ দিন।</item>
+    </plurals>
+    <plurals name="billing_expired_banner">
+        <item quantity="one">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। মেয়াদ শেষ স্টক কখনও বিল হয় না।</item>
+        <item quantity="other">%d টি পণ্যের স্টকের মেয়াদ শেষ হয়েছে। মেয়াদ শেষ স্টক কখনও বিল হয় না।</item>
+    </plurals>
 </resources>

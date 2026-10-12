@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
-import com.invision.pos.domain.inventory.InventoryFilter
 import com.invision.pos.domain.inventory.StockAdjustmentError
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
@@ -68,6 +67,7 @@ import com.invision.pos.ui.components.LoadingState
 import com.invision.pos.ui.components.SectionHeader
 import com.invision.pos.ui.components.StatusChip
 import com.invision.pos.ui.format.DateFormats
+import com.invision.pos.ui.LocalExpiryWarningDays
 import com.invision.pos.ui.format.LocalMoneyFormatter
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
@@ -282,7 +282,7 @@ private fun VariantCard(
                     variant.isExpired(today) -> StatusChip(stringResource(R.string.status_expired), status.danger)
                     variant.stockStatus == StockStatus.OUT_OF_STOCK ->
                         StatusChip(stringResource(R.string.stock_status_out), status.danger)
-                    variant.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) ->
+                    variant.expiresWithin(today, LocalExpiryWarningDays.current.toLong()) ->
                         StatusChip(stringResource(R.string.status_expiring), status.warning)
                     else -> StatusChip(stringResource(variant.stockStatus.labelRes()), variant.stockStatus.tone())
                 }
@@ -369,7 +369,7 @@ private fun BatchList(variant: ProductVariant, unit: StockUnit, today: LocalDate
                 )
                 when {
                     batch.isExpired(today) -> StatusChip(stringResource(R.string.status_expired), status.danger)
-                    batch.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) ->
+                    batch.expiresWithin(today, LocalExpiryWarningDays.current.toLong()) ->
                         StatusChip(stringResource(R.string.status_expiring), status.warning)
                     else -> Unit
                 }

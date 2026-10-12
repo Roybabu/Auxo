@@ -49,12 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
-import com.invision.pos.domain.inventory.InventoryFilter
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.model.StockStatus
 import com.invision.pos.ui.components.ActionIcon
+import com.invision.pos.ui.LocalExpiryWarningDays
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
@@ -320,7 +320,8 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
     val formatter = LocalMoneyFormatter.current
     val status = InvisionThemeExtras.statusColors
     val hasExpired = product.variants.any { it.isExpired(today) }
-    val expiringSoon = product.variants.any { it.expiresWithin(today, InventoryFilter.EXPIRY_WARNING_DAYS) }
+    val warningDays = LocalExpiryWarningDays.current.toLong()
+    val expiringSoon = product.variants.any { it.expiresWithin(today, warningDays) }
     // Same priority as Home alerts: expired, out of stock, expiring soon, then stock level.
     val (chipText, chipTone) = when {
         hasExpired -> stringResource(R.string.status_expired) to status.danger

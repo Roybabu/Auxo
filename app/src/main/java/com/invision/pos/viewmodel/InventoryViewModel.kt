@@ -8,14 +8,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
 import com.invision.pos.domain.inventory.InventoryFilter
 import com.invision.pos.domain.inventory.InventoryQuery
 import com.invision.pos.domain.inventory.StockFilter
+import com.invision.pos.domain.model.ExpiryWarning
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductCategory
 import com.invision.pos.domain.usecase.FindByBarcodeUseCase
+import com.invision.pos.domain.usecase.warningDays
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +45,8 @@ data class InventoryUiState(
     val totalProductCount: Int = 0,
     val query: InventoryQuery = InventoryQuery(),
     val today: LocalDate = LocalDate.MIN,
+    /** Days before expiry that count as "expiring soon". */
+    val warningDays: Int = ExpiryWarning.DEFAULT_DAYS,
 )
 
 sealed interface InventoryEvent {
@@ -56,7 +61,10 @@ class InventoryViewModel(
     private val findByBarcode: FindByBarcodeUseCase,
     private val clock: Clock,
     initialStockFilter: StockFilter = StockFilter.ALL,
+    settings: SettingsRepository? = null,
 ) : ViewModel() {
+
+    private val expiryDays = warningDays(settings)
 
     private val query = MutableStateFlow(InventoryQuery(stockFilter = initialStockFilter))
     private val reload = MutableStateFlow(0)
@@ -75,17 +83,19 @@ class InventoryViewModel(
                 .map<List<Product>, Load> { Load.Loaded(it) }
                 .catch { emit(Load.Failed) }
         }
-        .combine(query) { load, currentQuery ->
+        .combine(query) { load, currentQuery -> load to currentQuery }
+        .combine(expiryDays) { (load, currentQuery), days ->
             val today = LocalDate.now(clock)
             when (load) {
                 is Load.Loaded -> InventoryUiState(
                     isLoading = false,
-                    products = InventoryFilter.apply(load.products, currentQuery, today),
+                    products = InventoryFilter.apply(load.products, currentQuery, today, days),
                     totalProductCount = load.products.size,
                     query = currentQuery,
                     today = today,
+                    warningDays = days,
                 )
-                Load.Failed -> InventoryUiState(isLoading = false, loadFailed = true, query = currentQuery, today = today)
+                Load.Failed -> InventoryUiState(isLoading = false, loadFailed = true, query = currentQuery, today = today, warningDays = days)
             }
         }
         .stateIn(
@@ -146,6 +156,7 @@ class InventoryViewModel(
                     findByBarcode = container.findByBarcode,
                     clock = container.clock,
                     initialStockFilter = filter,
+                    settings = container.settingsRepository,
                 )
             }
         }

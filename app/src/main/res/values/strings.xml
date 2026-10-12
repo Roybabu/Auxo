@@ -1541,4 +1541,19 @@ in %2$s</string>
         <item quantity="one">Owing %d day</item>
         <item quantity="other">Owing %d days</item>
     </plurals>
+    <string name="expiry_window_15">Within 15 days</string>
+    <string name="settings_expiry_warning">Expiring soon warning</string>
+    <string name="settings_expiry_warning_help">How early stock is flagged as expiring soon on Home, in the product list and in the Expiring soon list.</string>
+    <plurals name="settings_expiry_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="home_expired_banner">
+        <item quantity="one">%d item has expired stock. It can\'t be sold. Write it off.</item>
+        <item quantity="other">%d items have expired stock. It can\'t be sold. Write it off.</item>
+    </plurals>
+    <plurals name="billing_expired_banner">
+        <item quantity="one">%d item has expired stock. Expired stock is never billed.</item>
+        <item quantity="other">%d items have expired stock. Expired stock is never billed.</item>
+    </plurals>
 </resources>

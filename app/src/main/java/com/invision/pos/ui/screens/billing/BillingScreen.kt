@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -90,6 +91,7 @@ import com.invision.pos.ui.components.ActionIcon
 import com.invision.pos.ui.components.ConfirmDialog
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
+import com.invision.pos.ui.components.ExpiredStockBanner
 import com.invision.pos.ui.components.InvisionCard
 import com.invision.pos.ui.components.InvisionTextField
 import com.invision.pos.ui.components.InvisionTopAppBar
@@ -509,6 +511,14 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
     ) {
         if (state.needsSetup) {
             item(key = "setup") { SetupBanner(if (can(Permission.MANAGE_SETTINGS)) actions::onOpenSettings else null) }
+        }
+        if (state.expiredItemCount > 0) {
+            item(key = "expired_stock") {
+                ExpiredStockBanner(
+                    text = pluralStringResource(R.plurals.billing_expired_banner, state.expiredItemCount, state.expiredItemCount),
+                    modifier = Modifier.testTag("billing_expired_banner"),
+                )
+            }
         }
         item(key = "search") {
             InvisionTextField(

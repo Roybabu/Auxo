@@ -8,6 +8,7 @@ import com.invision.pos.data.local.entity.PaymentEntity
 import com.invision.pos.data.local.entity.PaymentWithInvoice
 import com.invision.pos.data.local.entity.StoreSettingsEntity
 import com.invision.pos.domain.model.BuyerDetails
+import com.invision.pos.domain.model.ExpiryWarning
 import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceLine
 import com.invision.pos.domain.model.InvoiceSummary
@@ -193,6 +194,7 @@ fun StoreSettingsEntity.toDomain(): StoreSettings = StoreSettings(
     upiId = upiId,
     upiPayeeName = upiPayeeName,
     employeeDiscountLimitBp = employeeDiscountLimitBp,
+    expiryWarningDays = ExpiryWarning.coerce(expiryWarningDays),
     receipt = ReceiptOptions(
         paper = enumValueOrNull<ReceiptPaper>(receiptPaper) ?: ReceiptPaper.THERMAL_80,
         footer = receiptFooter,
@@ -232,4 +234,5 @@ fun StoreSettings.toEntity(): StoreSettingsEntity = StoreSettingsEntity(
     receiptShowUpiQr = receipt.showUpiQr,
     receiptLanguage = receipt.language.tag,
     employeeDiscountLimitBp = employeeDiscountLimitBp,
+    expiryWarningDays = ExpiryWarning.coerce(expiryWarningDays),
 )

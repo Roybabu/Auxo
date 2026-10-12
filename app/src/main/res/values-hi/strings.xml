@@ -1541,4 +1541,19 @@
         <item quantity="one">%d दिन से बकाया</item>
         <item quantity="other">%d दिन से बकाया</item>
     </plurals>
+    <string name="expiry_window_15">15 दिनों में</string>
+    <string name="settings_expiry_warning">जल्द एक्सपायर होने की चेतावनी</string>
+    <string name="settings_expiry_warning_help">होम, सामान की सूची और जल्द एक्सपायर होने वाली सूची में स्टॉक को कितने पहले से जल्द एक्सपायर होने वाला दिखाया जाए।</string>
+    <plurals name="settings_expiry_days">
+        <item quantity="one">%d दिन</item>
+        <item quantity="other">%d दिन</item>
+    </plurals>
+    <plurals name="home_expired_banner">
+        <item quantity="one">%d सामान का स्टॉक एक्सपायर हो चुका है। इसे बेचा नहीं जा सकता। इसे राइट-ऑफ़ करें।</item>
+        <item quantity="other">%d सामान का स्टॉक एक्सपायर हो चुका है। इसे बेचा नहीं जा सकता। इसे राइट-ऑफ़ करें।</item>
+    </plurals>
+    <plurals name="billing_expired_banner">
+        <item quantity="one">%d सामान का स्टॉक एक्सपायर हो चुका है। एक्सपायर स्टॉक कभी बिल नहीं होता।</item>
+        <item quantity="other">%d सामान का स्टॉक एक्सपायर हो चुका है। एक्सपायर स्टॉक कभी बिल नहीं होता।</item>
+    </plurals>
 </resources>

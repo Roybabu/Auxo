@@ -193,7 +193,7 @@ class AppContainer(context: Context) {
     }
 
     val observeInventorySummary: ObserveInventorySummaryUseCase by lazy {
-        ObserveInventorySummaryUseCase(inventoryRepository, clock)
+        ObserveInventorySummaryUseCase(inventoryRepository, clock, settingsRepository)
     }
 
     val saveProduct: SaveProductUseCase by lazy { SaveProductUseCase(inventoryRepository, barcodeGenerator) }

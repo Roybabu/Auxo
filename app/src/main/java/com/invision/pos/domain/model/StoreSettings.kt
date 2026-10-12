@@ -57,6 +57,11 @@ data class StoreSettings(
      * default, means Employees cannot give discounts. Only the Super Admin can change it or go above it.
      */
     val employeeDiscountLimitBp: Int = 0,
+    /**
+     * How many days before its expiry date stock counts as "expiring soon" (Home tile, product badges, the
+     * Expiring soon list). One of [ExpiryWarning.CHOICES]; 30 by default.
+     */
+    val expiryWarningDays: Int = ExpiryWarning.DEFAULT_DAYS,
     val receipt: ReceiptOptions = ReceiptOptions(),
 ) {
     /** Tax invoices must show the seller's GSTIN. */

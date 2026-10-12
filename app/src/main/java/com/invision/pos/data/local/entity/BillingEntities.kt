@@ -158,6 +158,8 @@ data class StoreSettingsEntity(
     @ColumnInfo(name = "receipt_show_upi_qr") val receiptShowUpiQr: Boolean = true,
     /** Most an Employee may discount, in basis points. Added in version 9; 0 means none. */
     @ColumnInfo(name = "employee_discount_limit_bp") val employeeDiscountLimitBp: Int = 0,
+    /** Days before expiry that stock counts as expiring soon. Added in version 13; existing shops get 30. */
+    @ColumnInfo(name = "expiry_warning_days") val expiryWarningDays: Int = 30,
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1

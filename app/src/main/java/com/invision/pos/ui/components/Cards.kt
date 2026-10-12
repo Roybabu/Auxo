@@ -17,8 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.invision.pos.R
+import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
 import com.invision.pos.ui.theme.ToneColors
 
@@ -118,4 +121,25 @@ fun InvisionCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         content = content,
     )
+}
+
+/** A red notice for expired stock; [text] says how many items and what to do. */
+@Composable
+fun ExpiredStockBanner(text: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+    val tone = InvisionThemeExtras.statusColors.danger
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = tone.container,
+        contentColor = tone.content,
+        modifier = modifier.semantics(mergeDescendants = true) {}.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it },
+    ) {
+        Row(
+            modifier = Modifier.padding(Spacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            Icon(painterResource(R.drawable.ic_warning), contentDescription = null)
+            Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        }
+    }
 }

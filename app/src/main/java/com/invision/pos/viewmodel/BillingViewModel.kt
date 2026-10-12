@@ -116,6 +116,8 @@ data class BillingUiState(
     val billDiscount: DiscountInput = DiscountInput(),
     /** The most the signed-in person may discount, in basis points of the value; null when there is no limit. */
     val discountLimitBp: Int? = null,
+    /** Items for sale that still have expired stock on the shelf. Expired units are never billed. */
+    val expiredItemCount: Int = 0,
     /** The shop's loyalty rules (off unless the Super Admin switched them on). */
     val loyaltyRules: LoyaltyRules = LoyaltyRules.OFF,
     /** Points being used on this bill, already kept within the balance and the bill. */
@@ -303,6 +305,7 @@ class BillingViewModel(
                         state.copy(
                             productsLoaded = true,
                             productCount = list.count { it.category.isSold },
+                            expiredItemCount = list.count { p -> p.category.isSold && p.variants.any { it.expiredQuantity(today) > 0 } },
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
                         )

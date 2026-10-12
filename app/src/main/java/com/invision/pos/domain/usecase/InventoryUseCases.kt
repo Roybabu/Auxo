@@ -3,6 +3,7 @@ package com.invision.pos.domain.usecase
 import com.invision.pos.data.repository.BarcodeMatch
 import com.invision.pos.data.repository.InventoryRepository
 import com.invision.pos.data.repository.SaveProductResult
+import com.invision.pos.data.repository.SettingsRepository
 import com.invision.pos.data.repository.StockChangeResult
 import com.invision.pos.domain.barcode.InternalBarcodeGenerator
 import com.invision.pos.domain.inventory.InventorySummary
@@ -11,12 +12,16 @@ import com.invision.pos.domain.inventory.StockAdjustment
 import com.invision.pos.domain.inventory.StockAdjustmentCalculator
 import com.invision.pos.domain.inventory.StockAdjustmentError
 import com.invision.pos.domain.model.BatchDetails
+import com.invision.pos.domain.model.ExpiryWarning
 import com.invision.pos.domain.model.Product
 import com.invision.pos.domain.model.ProductVariant
 import com.invision.pos.domain.model.StockChangeReason
 import com.invision.pos.domain.model.StockMovement
 import com.invision.pos.domain.model.StockUnit
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.LocalDate
@@ -110,10 +115,11 @@ class AdjustStockUseCase(
 class ObserveInventorySummaryUseCase(
     private val repository: InventoryRepository,
     private val clock: Clock,
+    private val settings: SettingsRepository? = null,
 ) {
     operator fun invoke(): Flow<InventorySummary> =
-        repository.observeProducts().map { products ->
-            InventorySummaryCalculator.calculate(products, LocalDate.now(clock))
+        combine(repository.observeProducts(), warningDays(settings)) { products, days ->
+            InventorySummaryCalculator.calculate(products, LocalDate.now(clock), warningDays = days)
         }
 }
 
@@ -123,3 +129,7 @@ class FindByBarcodeUseCase(private val repository: InventoryRepository) {
         return if (code.isEmpty()) null else repository.findByBarcode(code)
     }
 }
+
+/** The shop's expiring-soon window in days; 30 when no settings are available. */
+fun warningDays(settings: SettingsRepository?): Flow<Int> =
+    settings?.observeSettings()?.map { it.expiryWarningDays }?.distinctUntilChanged() ?: flowOf(ExpiryWarning.DEFAULT_DAYS)

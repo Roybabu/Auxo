@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To12_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersAndQuotationsWork() = runTest {
+    fun migrate4To13_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsOpenOrdersQuotationsAndThirtyDayExpiryWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -365,6 +365,12 @@ class DatabaseMigrationTest {
         assertEquals(0, settings.getSettings().employeeDiscountLimitBp)
         settings.saveSettings(TestData.settings.copy(employeeDiscountLimitBp = 1_000))
         assertEquals(1_000, settings.getSettings().employeeDiscountLimitBp)
+
+        // Expiry warning: shops that existed before keep the 30 days they always had; the choice is saved.
+        assertEquals(30, settings.getSettings().expiryWarningDays)
+        settings.saveSettings(TestData.settings.copy(expiryWarningDays = 7))
+        assertEquals(7, settings.getSettings().expiryWarningDays)
+        settings.saveSettings(TestData.settings.copy(employeeDiscountLimitBp = 1_000))
 
         // The reason columns exist on bills and their lines.
         for (table in listOf("invoices", "invoice_lines")) {
