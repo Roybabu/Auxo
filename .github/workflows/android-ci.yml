@@ -69,6 +69,12 @@ jobs:
             ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
           fi
 
+      - name: Show which fragment library version the app uses
+        shell: bash
+        run: |
+          v=$(./gradlew -q :app:dependencyInsight --dependency androidx.fragment:fragment --configuration debugRuntimeClasspath 2>&1 | grep -m1 -E "androidx.fragment:fragment:[0-9]" || true)
+          echo "::notice title=Fragment library::$v"
+
       - name: Run Android lint
         if: ${{ !inputs.quick }}
         shell: bash
