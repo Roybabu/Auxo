@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.receipt.spec
+import com.invision.pos.ui.screens.more.messageRes
 import com.invision.pos.domain.billing.SampleSales
 import com.invision.pos.domain.model.Language
 import com.invision.pos.domain.model.ReceiptOptions
@@ -71,6 +72,23 @@ class ThermalReceiptPrinterTest {
         for (result in PrintResult.entries) {
             transport.result = result
             assertEquals(result, service(printer58).printInvoice(sale, ReceiptOptions()))
+        }
+    }
+
+    @Test
+    fun aReceiptThatCannotBeDrawn_isRenderFailed_nothingIsSent_andDoesNotCrash() = runTest {
+        val broken = ThermalReceiptPrinter(context, FakePrinterPreferences(printer58), transport, makeJob = { _, _ -> throw IllegalStateException("bitmap") })
+        assertEquals(PrintResult.RENDER_FAILED, broken.printInvoice(sale, ReceiptOptions()))
+        assertEquals(PrintResult.RENDER_FAILED, broken.printTest("Shop", Language.DEFAULT))
+        val noMemory = ThermalReceiptPrinter(context, FakePrinterPreferences(printer58), transport, makeJob = { _, _ -> throw OutOfMemoryError() })
+        assertEquals(PrintResult.RENDER_FAILED, noMemory.printInvoice(sale, ReceiptOptions()))
+        assertTrue(transport.sent.isEmpty())
+    }
+
+    @Test
+    fun everyPrintResult_hasAMessageThePersonCanRead() {
+        for (result in PrintResult.entries) {
+            assertTrue("$result", context.getString(result.messageRes()).isNotBlank())
         }
     }
 

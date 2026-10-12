@@ -1725,4 +1725,5 @@
     <string name="printer_result_unreachable">প্রিন্টারের সঙ্গে যুক্ত হওয়া গেল না। দেখুন সেটি চালু আছে, ফোনের কাছে আছে এবং অন্য ফোনের সঙ্গে যুক্ত নেই।</string>
     <string name="printer_result_write_failed">প্রিন্ট চলার সময় প্রিন্টারের সংযোগ কেটে গেছে। কাগজ দেখে আবার চেষ্টা করুন।</string>
     <string name="printer_result_unsupported">এই কাগজের মাপে রসিদ প্রিন্টারে প্রিন্ট হয় না। প্রিন্টার সেটিংসে রোল বেছে নিন।</string>
+    <string name="printer_result_render_failed">রসিদটি প্রিন্টারের জন্য তৈরি করা গেল না। অন্য অ্যাপ বন্ধ করে আবার চেষ্টা করুন।</string>
 </resources>

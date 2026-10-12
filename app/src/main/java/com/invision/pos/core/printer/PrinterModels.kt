@@ -34,6 +34,9 @@ enum class PrintResult {
 
     /** The paper chosen for the printer is not a roll (should not happen from the settings screen). */
     UNSUPPORTED_PAPER,
+
+    /** The receipt could not be turned into a picture for the printer (for example the phone ran out of memory). */
+    RENDER_FAILED,
 }
 
 /** The printer the shop chose. [address] is its Bluetooth address; [paper] decides how wide the receipt prints. */

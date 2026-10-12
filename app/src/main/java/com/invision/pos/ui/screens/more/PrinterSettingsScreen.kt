@@ -60,6 +60,7 @@ fun PrintResult.messageRes(): Int = when (this) {
     PrintResult.UNREACHABLE -> R.string.printer_result_unreachable
     PrintResult.WRITE_FAILED -> R.string.printer_result_write_failed
     PrintResult.UNSUPPORTED_PAPER -> R.string.printer_result_unsupported
+    PrintResult.RENDER_FAILED -> R.string.printer_result_render_failed
 }
 
 @StringRes

@@ -1725,4 +1725,5 @@
     <string name="printer_result_unreachable">प्रिंटर से जुड़ नहीं सके। देखें कि वह चालू है, फ़ोन के पास है और किसी दूसरे फ़ोन से जुड़ा नहीं है।</string>
     <string name="printer_result_write_failed">प्रिंट करते समय प्रिंटर से कनेक्शन टूट गया। कागज़ देखें और फिर कोशिश करें।</string>
     <string name="printer_result_unsupported">इस कागज़ के आकार पर रसीद प्रिंटर से प्रिंट नहीं हो सकता। प्रिंटर सेटिंग में रोल चुनें।</string>
+    <string name="printer_result_render_failed">रसीद को प्रिंटर के लिए तैयार नहीं किया जा सका। दूसरे ऐप बंद करके फिर कोशिश करें।</string>
 </resources>
