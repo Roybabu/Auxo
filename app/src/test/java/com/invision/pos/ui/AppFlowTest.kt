@@ -154,7 +154,7 @@ class AppFlowTest {
         waitForText("Add your first product")
         assertFalse(tabBarShown())
 
-        homeAction("Receive stock")
+        composeRule.onAllNodes(hasText("Inventory") and hasClickAction()).onFirst().performClick()
         composeRule.waitForIdle()
         assertTrue(tabBarShown())
         clickTab("Home")
@@ -168,7 +168,7 @@ class AppFlowTest {
 
         homeAction("More")
         waitForTag("more_list")
-        composeRule.onNodeWithText("Businesses you buy from").performClick()
+        composeRule.onNodeWithText("Suppliers, purchase orders and receiving stock").performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag("more_list").fetchSemanticsNodes().isEmpty()
         }
@@ -179,7 +179,7 @@ class AppFlowTest {
         waitForTag("more_list")
 
         // Tapping More while already inside one of its pages also goes back to the menu.
-        composeRule.onNodeWithText("Businesses you buy from").performClick()
+        composeRule.onNodeWithText("Suppliers, purchase orders and receiving stock").performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag("more_list").fetchSemanticsNodes().isEmpty()
         }

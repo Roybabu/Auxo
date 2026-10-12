@@ -30,8 +30,6 @@ import com.invision.pos.viewmodel.ShopUiState
 /** Where the More tab leads. */
 interface MoreActions {
     fun onOpenSuppliers() = Unit
-    fun onOpenPurchases() = Unit
-    fun onReceiveStock() = Unit
     fun onOpenAlerts() = Unit
     fun onOpenMovements() = Unit
     fun onOpenMenu() = Unit
@@ -71,8 +69,6 @@ fun MoreScreen(
 
             SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
             if (LocalSuppliersEnabled.current) {
-                MoreItem(R.drawable.ic_receive, stringResource(R.string.purchases_receive), stringResource(R.string.more_receive_body), actions::onReceiveStock)
-                MoreItem(R.drawable.ic_purchase_order, stringResource(R.string.purchases_title), stringResource(R.string.more_purchases_body), actions::onOpenPurchases)
                 MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
             }
             MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)

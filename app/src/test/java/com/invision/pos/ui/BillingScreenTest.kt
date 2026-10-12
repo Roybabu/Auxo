@@ -197,20 +197,13 @@ class BillingScreenTest {
     }
 
     @Test
-    fun cart_empty_showsBestSellers_andTappingOneAddsIt() {
-        val shirt = TestData.tShirt()
-        val result = ProductSearchResult(shirt, shirt.variants[0])
-        var added: ProductSearchResult? = null
-        val actions = object : BillingActions {
-            override fun onAddResult(result: ProductSearchResult) {
-                added = result
-            }
-        }
-        show { CartContent(state = cartState(Cart()).copy(bestSellers = listOf(result)), actions = actions) }
-        composeRule.onNodeWithText("Best sellers").assertIsDisplayed()
-        composeRule.onNodeWithText("Most sold in the last 30 days. Tap to add.").assertIsDisplayed()
-        composeRule.onNodeWithText(shirt.name).performClick()
-        assertEquals(result, added)
+    fun cart_empty_hasNoBestSellersSection() {
+        show { CartContent(state = cartState(Cart()), actions = object : BillingActions {}) }
+        composeRule.onNodeWithText("Best sellers").assertDoesNotExist()
+        composeRule.onNodeWithText("Most sold in the last 30 days. Tap to add.").assertDoesNotExist()
+        composeRule.onNodeWithTag("best_sellers").assertDoesNotExist()
+        // The empty billing page still explains how to start, with no gap where the section was.
+        composeRule.onNodeWithTag("billing_search").assertIsDisplayed()
     }
 
     @Test

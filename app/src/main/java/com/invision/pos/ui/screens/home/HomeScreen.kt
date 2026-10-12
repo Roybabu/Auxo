@@ -65,7 +65,6 @@ import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.ui.LocalStoreLogo
-import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.components.EmptyState
 import com.invision.pos.ui.components.ErrorState
 import com.invision.pos.ui.components.InvisionCard
@@ -96,7 +95,6 @@ fun HomeScreen(
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
-    onReceiveStock: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
     insightsViewModel: HomeInsightsViewModel = viewModel(factory = HomeInsightsViewModel.Factory),
 ) {
@@ -111,7 +109,6 @@ fun HomeScreen(
         onRetry = viewModel::retry,
         modifier = modifier,
         onOpenAlerts = onOpenAlerts,
-        onReceiveStock = onReceiveStock,
         insights = insights,
         onInsightsPeriodChange = insightsViewModel::onPeriodChange,
         onInsightsRetry = insightsViewModel::retry,
@@ -132,7 +129,6 @@ fun HomeContent(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
-    onReceiveStock: () -> Unit = {},
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
@@ -152,8 +148,7 @@ fun HomeContent(
             onOpenInventory = onOpenInventory,
             modifier = modifier,
             onOpenAlerts = onOpenAlerts,
-            onReceiveStock = onReceiveStock,
-            insights = insights,
+                insights = insights,
             onInsightsPeriodChange = onInsightsPeriodChange,
             onInsightsRetry = onInsightsRetry,
         )
@@ -169,7 +164,6 @@ private fun HomeDashboard(
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
-    onReceiveStock: () -> Unit = {},
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
@@ -186,8 +180,8 @@ private fun HomeDashboard(
             onOpenAlerts = onOpenAlerts,
             onOpenBalances = { onNavigate(TopLevelDestination.MORE) },
             onNewBill = { onNavigate(TopLevelDestination.BILLING) },
-            onReceiveStock = onReceiveStock,
-            onAddProduct = onAddProduct,
+                onAddProduct = onAddProduct,
+            onInventory = { onNavigate(TopLevelDestination.INVENTORY) },
             onMore = { onNavigate(TopLevelDestination.MORE) },
         )
         ExpandablePanel(extents = extents) {
@@ -217,8 +211,8 @@ private fun HomeHeaderBlock(
     onOpenAlerts: () -> Unit,
     onOpenBalances: () -> Unit,
     onNewBill: () -> Unit,
-    onReceiveStock: () -> Unit,
     onAddProduct: () -> Unit,
+    onInventory: () -> Unit,
     onMore: () -> Unit,
 ) {
     Column(
@@ -230,20 +224,20 @@ private fun HomeHeaderBlock(
         Row(verticalAlignment = Alignment.CenterVertically) {
             val logo = LocalStoreLogo.current
             if (logo != null) {
-                // The shop's own logo, on a light tile so any picture stays readable on the dark header.
+                // The shop's own logo in a plain circle: no border, ring or frame. Crop fills the circle
+                // without stretching; the white behind it keeps transparent logos readable.
                 Box(
                     modifier = Modifier
                         .size(52.dp)
                         .testTag("home_logo")
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
-                        .padding(4.dp),
+                        .clip(CircleShape)
+                        .background(Color.White),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
                         bitmap = logo.asImageBitmap(),
                         contentDescription = stringResource(R.string.store_logo_description),
-                        contentScale = ContentScale.Fit,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -325,12 +319,10 @@ private fun HomeHeaderBlock(
 
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill)
-            if (LocalSuppliersEnabled.current) {
-                QuickAction(stringResource(R.string.purchases_receive), R.drawable.ic_receive, onReceiveStock)
-            }
-            QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_nav_inventory, onAddProduct)
-            QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore)
+            QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill, "home_action_new_bill")
+            QuickAction(stringResource(R.string.home_action_add_product), R.drawable.ic_add, onAddProduct, "home_action_add_product")
+            QuickAction(stringResource(R.string.nav_inventory), R.drawable.ic_nav_inventory, onInventory, "home_action_inventory")
+            QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore, "home_action_more")
         }
     }
 }
@@ -372,10 +364,11 @@ private fun BalanceCard(label: String, value: String, onClick: () -> Unit, modif
 }
 
 @Composable
-private fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Unit) {
+private fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Unit, tag: String) {
     Column(
         modifier = Modifier
             .weight(1f)
+            .testTag(tag)
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,

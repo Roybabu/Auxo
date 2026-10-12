@@ -63,6 +63,8 @@ fun SupplierListScreen(
     onBack: () -> Unit,
     onOpenSupplier: (Long) -> Unit,
     onAddSupplier: () -> Unit,
+    onOpenPurchases: () -> Unit,
+    onReceiveStock: () -> Unit,
     viewModel: SupplierListViewModel = viewModel(factory = SupplierListViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -86,6 +88,8 @@ fun SupplierListScreen(
             onRetry = viewModel::retry,
             onOpenSupplier = onOpenSupplier,
             onAddSupplier = onAddSupplier,
+            onOpenPurchases = onOpenPurchases,
+            onReceiveStock = onReceiveStock,
             modifier = Modifier.padding(padding),
         )
     }
@@ -100,6 +104,8 @@ fun SupplierListContent(
     onOpenSupplier: (Long) -> Unit,
     onAddSupplier: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenPurchases: () -> Unit = {},
+    onReceiveStock: () -> Unit = {},
 ) {
     when {
         state.isLoading -> LoadingState(modifier)
@@ -119,6 +125,27 @@ fun SupplierListContent(
             contentPadding = PaddingValues(start = Spacing.screen, end = Spacing.screen, top = Spacing.sm, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
+            // Orders and receiving need a supplier to work with, so they only appear once one exists.
+            if (state.activeCount > 0) {
+                item(key = "operations") {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        SupplierOperation(
+                            iconRes = R.drawable.ic_purchase_order,
+                            title = stringResource(R.string.purchases_title),
+                            body = stringResource(R.string.more_purchases_body),
+                            onClick = onOpenPurchases,
+                            tag = "supplier_purchase_orders",
+                        )
+                        SupplierOperation(
+                            iconRes = R.drawable.ic_receive,
+                            title = stringResource(R.string.purchases_receive),
+                            body = stringResource(R.string.more_receive_body),
+                            onClick = onReceiveStock,
+                            tag = "supplier_receive_stock",
+                        )
+                    }
+                }
+            }
             item(key = "filters") {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     InvisionTextField(
@@ -149,6 +176,23 @@ fun SupplierListContent(
             }
             items(state.suppliers, key = { it.id }) { supplier ->
                 SupplierRow(supplier, onClick = { onOpenSupplier(supplier.id) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SupplierOperation(iconRes: Int, title: String, body: String, onClick: () -> Unit, tag: String) {
+    InvisionCard(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag(tag)) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            Icon(painterResource(iconRes), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

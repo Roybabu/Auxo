@@ -5,6 +5,9 @@ import android.graphics.Color
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -20,6 +23,7 @@ import com.invision.pos.domain.inventory.InventorySummary
 import com.invision.pos.domain.model.ReceiptOptions
 import com.invision.pos.domain.model.ReceiptPaper
 import com.invision.pos.testutil.TestData
+import com.invision.pos.ui.navigation.TopLevelDestination
 import com.invision.pos.ui.screens.billing.BillingSettingsContent
 import com.invision.pos.ui.screens.home.HomeContent
 import com.invision.pos.ui.screens.more.ShopSettingsContent
@@ -245,5 +249,56 @@ class StoreDetailsAndLogoTest {
             }
             assertEquals(withoutLogo.widthPt, withLogo.widthPt, 0.01f)
         }
+    }
+
+    // Home layout: quick actions and the circular logo
+
+    @Test
+    fun home_quickActions_haveInventoryWhereAddProductWas_andAddProductWhereReceiveStockWas() {
+        var added = 0
+        var destination: TopLevelDestination? = null
+        composeRule.setContent {
+            InvisionTheme {
+                HomeContent(
+                    uiState = HomeUiState.Ready("Roy Mart", "₹0.00", 0, InventorySummary.EMPTY, "₹0.00", "₹0.00"),
+                    onNavigate = { destination = it },
+                    onAddProduct = { added++ },
+                    onOpenProduct = {},
+                    onOpenInventory = {},
+                    onRetry = {},
+                )
+            }
+        }
+        val order = listOf("home_action_new_bill", "home_action_add_product", "home_action_inventory", "home_action_more")
+        val lefts = order.map { composeRule.onNodeWithTag(it).getUnclippedBoundsInRoot().left.value }
+        assertEquals("quick actions run left to right in this order", lefts.sorted(), lefts)
+        assertEquals(4, lefts.toSet().size)
+        composeRule.onNodeWithText("Receive stock").assertDoesNotExist()
+
+        composeRule.onNodeWithTag("home_action_add_product").performClick()
+        assertEquals(1, added)
+        composeRule.onNodeWithTag("home_action_inventory").performClick()
+        assertEquals(TopLevelDestination.INVENTORY, destination)
+    }
+
+    @Test
+    fun home_logo_isACircle_withNoBorder() {
+        home(logo = logo)
+        val bounds = composeRule.onNodeWithTag("home_logo").getUnclippedBoundsInRoot()
+        assertEquals(bounds.width.value, bounds.height.value, 0.5f)
+        // Pixels at the four corners of the tile are outside the circle, so they show the header behind it.
+        val image = composeRule.onNodeWithTag("home_logo").captureToImage().asAndroidBitmap()
+        val inset = 2
+        listOf(inset to inset, image.width - 1 - inset to inset, inset to image.height - 1 - inset, image.width - 1 - inset to image.height - 1 - inset)
+            .forEach { (x, y) ->
+                val pixel = image.getPixel(x, y)
+                assertTrue("corner ($x,$y) is outside the circle, so it must not show the logo", !(Color.red(pixel) > 200 && Color.green(pixel) < 60))
+            }
+        // The centre is the logo itself (red), with no ring drawn over it.
+        val centre = image.getPixel(image.width / 2, image.height / 2)
+        assertTrue(Color.red(centre) > 200 && Color.green(centre) < 60)
+        // Just inside the edge is still the logo, not a stroke of another colour.
+        val nearEdge = image.getPixel(image.width / 2, 3)
+        assertTrue("no ring or outline at the edge", Color.red(nearEdge) > 200 && Color.green(nearEdge) < 60)
     }
 }

@@ -3,7 +3,11 @@ package com.invision.pos.ui
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -195,6 +199,87 @@ class OperationsScreenTest {
         composeRule.onNodeWithText("Balance after this payment: ${rupees(30_000)}").assertIsDisplayed()
         composeRule.onNodeWithText("UPI reference (optional)").assertIsDisplayed()
         screenshot("42_account_payment")
+    }
+
+    @Test
+    fun morePage_hasOneSuppliersEntry_andNoSeparateOrdersOrReceiving() {
+        show { MoreScreen(actions = object : MoreActions {}) }
+        composeRule.onAllNodesWithText("Suppliers").assertCountEquals(1)
+        composeRule.onNodeWithText("Purchase orders").assertDoesNotExist()
+        composeRule.onNodeWithText("Receive stock").assertDoesNotExist()
+        composeRule.onNodeWithText("Suppliers, purchase orders and receiving stock").assertIsDisplayed()
+    }
+
+    private fun supplierState(active: Int, hidden: Int = 0) = SupplierListUiState(
+        isLoading = false,
+        showHidden = hidden > 0,
+        suppliers = List(active) { Supplier(id = it + 1L, name = "Supplier ${it + 1}") } +
+            List(hidden) { Supplier(id = 100L + it, name = "Closed ${it + 1}", active = false) },
+        activeCount = active,
+        hiddenCount = hidden,
+    )
+
+    @Test
+    fun suppliers_offerOrdersAndReceiving_onlyOnceASupplierExists() {
+        var orders = 0
+        var received = 0
+        show {
+            SupplierListContent(
+                state = supplierState(active = 1),
+                onQueryChange = {}, onShowHiddenChange = {}, onRetry = {}, onOpenSupplier = {}, onAddSupplier = {},
+                onOpenPurchases = { orders++ },
+                onReceiveStock = { received++ },
+            )
+        }
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertIsDisplayed()
+        composeRule.onNodeWithTag("supplier_receive_stock").assertIsDisplayed()
+        composeRule.onNodeWithTag("supplier_purchase_orders").performClick()
+        composeRule.onNodeWithTag("supplier_receive_stock").performClick()
+        assertEquals(1, orders)
+        assertEquals(1, received)
+    }
+
+    @Test
+    fun suppliers_withNoSupplier_showOnlyTheWayToAddOne() {
+        show {
+            SupplierListContent(
+                state = supplierState(active = 0),
+                onQueryChange = {}, onShowHiddenChange = {}, onRetry = {}, onOpenSupplier = {}, onAddSupplier = {},
+            )
+        }
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertDoesNotExist()
+        composeRule.onNodeWithTag("supplier_receive_stock").assertDoesNotExist()
+        composeRule.onNodeWithText("Add supplier").assertExists()
+    }
+
+    @Test
+    fun suppliers_withOnlyHiddenSuppliers_leaveOrdersAndReceivingOut() {
+        show {
+            SupplierListContent(
+                state = supplierState(active = 0, hidden = 1),
+                onQueryChange = {}, onShowHiddenChange = {}, onRetry = {}, onOpenSupplier = {}, onAddSupplier = {},
+            )
+        }
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertDoesNotExist()
+        composeRule.onNodeWithTag("supplier_receive_stock").assertDoesNotExist()
+    }
+
+    @Test
+    fun suppliers_orderAndReceiveEntries_followTheSupplierCount() {
+        var count by androidx.compose.runtime.mutableIntStateOf(0)
+        show {
+            SupplierListContent(
+                state = supplierState(active = count),
+                onQueryChange = {}, onShowHiddenChange = {}, onRetry = {}, onOpenSupplier = {}, onAddSupplier = {},
+            )
+        }
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertDoesNotExist()
+        count = 2
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertIsDisplayed()
+        count = 0
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("supplier_purchase_orders").assertDoesNotExist()
     }
 
     @Test

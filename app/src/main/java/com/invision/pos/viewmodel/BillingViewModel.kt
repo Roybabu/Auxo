@@ -16,7 +16,6 @@ import com.invision.pos.domain.barcode.BarcodeCheck
 import com.invision.pos.domain.barcode.BarcodeRules
 import com.invision.pos.domain.billing.AmountInput
 import com.invision.pos.domain.billing.BillCalculator
-import com.invision.pos.domain.billing.BestSellers
 import com.invision.pos.domain.billing.BillTotals
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartCheck
@@ -87,7 +86,6 @@ data class BillingUiState(
     val searchText: String = "",
     val searchResults: List<ProductSearchResult> = emptyList(),
     /** Items that sold the most over the last 30 days, for quick adding when nothing is typed. */
-    val bestSellers: List<ProductSearchResult> = emptyList(),
     /** Dishes matching the search. */
     val menuResults: List<MenuItem> = emptyList(),
     /** Available dishes, for quick adding when the store has a menu. */
@@ -167,8 +165,6 @@ class BillingViewModel(
 
     private var products: List<Product> = emptyList()
 
-    /** Variant ids by units sold over the last 30 days, best first. */
-    private var salesRank: List<Long> = emptyList()
     private var allMenu: List<MenuItem> = emptyList()
     private var menuLoaded = false
     private var nextCustomKey = 0L
@@ -212,7 +208,6 @@ class BillingViewModel(
                             productCount = list.count { it.category.isSold },
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
-                            bestSellers = bestSellers(),
                         )
                     }
                 }
@@ -248,26 +243,6 @@ class BillingViewModel(
                     }
             }
         }
-        val bestSellersJob = billing?.let { repository ->
-            viewModelScope.launch {
-                val zone = clock.zone
-                val day = today
-                val from = day.minusDays(BestSellers.DAYS - 1L).atStartOfDay(zone).toInstant().toEpochMilli()
-                val to = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-                // The list is only a shortcut: if it can't load, billing carries on without it.
-                try {
-                    repository.observeInvoices(from, to).collect {
-                        salesRank = BestSellers.rank(repository.invoicesBetween(from, to))
-                        _uiState.update { state -> state.copy(bestSellers = bestSellers()) }
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    salesRank = emptyList()
-                    _uiState.update { state -> state.copy(bestSellers = emptyList()) }
-                }
-            }
-        }
         val shopJob = shop?.let { prefs ->
             viewModelScope.launch {
                 prefs.restaurantMenu.collect { enabled ->
@@ -281,7 +256,7 @@ class BillingViewModel(
                 }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, bestSellersJob)
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob)
     }
 
     // Search and adding items
@@ -510,7 +485,6 @@ class BillingViewModel(
                 settings = it.settings,
                 productsLoaded = it.productsLoaded,
                 productCount = it.productCount,
-                bestSellers = it.bestSellers,
                 menu = it.menu,
                 menuSection = it.menuSection,
             )
@@ -674,16 +648,6 @@ class BillingViewModel(
         return products.filter { it.category.isSold }.firstNotNullOfOrNull { product ->
             product.variants.firstOrNull { it.barcode in codes }?.let { product to it }
         }
-    }
-
-    /** The best-selling items that still exist and are sold, up to [BestSellers.LIMIT]. */
-    private fun bestSellers(): List<ProductSearchResult> {
-        if (salesRank.isEmpty()) return emptyList()
-        val byVariant = products
-            .filter { it.category.isSold }
-            .flatMap { product -> product.variants.map { it.id to ProductSearchResult(product, it) } }
-            .toMap()
-        return salesRank.mapNotNull { byVariant[it] }.take(BestSellers.LIMIT)
     }
 
     private fun search(text: String): List<ProductSearchResult> {

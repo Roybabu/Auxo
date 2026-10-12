@@ -68,7 +68,6 @@ fun InvisionNavHost(
                 onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
                 onOpenInventory = { filter -> navController.navigateToInventory(filter) },
                 onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
-                onReceiveStock = { navController.navigate(StockRoutes.receive()) },
             )
         }
         navigation(
@@ -274,8 +273,6 @@ fun InvisionNavHost(
                     shop = shop,
                     actions = object : MoreActions {
                         override fun onOpenSuppliers() = navController.navigate(StockRoutes.suppliers())
-                        override fun onOpenPurchases() = navController.navigate(StockRoutes.purchases())
-                        override fun onReceiveStock() = navController.navigate(StockRoutes.receive())
                         override fun onOpenAlerts() = navController.navigate(StockRoutes.alerts())
                         override fun onOpenMovements() = navController.navigate(StockRoutes.movements())
                         override fun onOpenMenu() = navController.navigate(MoreRoutes.MENU)
@@ -337,6 +334,8 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onOpenSupplier = { navController.navigate(StockRoutes.editSupplier(it)) },
             onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
+            onOpenPurchases = { navController.navigate(StockRoutes.purchases()) },
+            onReceiveStock = { navController.navigate(StockRoutes.receive()) },
         )
     }
     composable(
