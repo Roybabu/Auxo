@@ -1425,4 +1425,13 @@ in %2$s</string>
     <string name="receipt_authorised_signatory">Authorised signatory</string>
     <string name="receipt_page_of">Page %1$d of %2$d</string>
     <string name="receipt_continued">(continued)</string>
+    <string name="issue_discount_reason_missing">Say why this discount is given.</string>
+    <string name="issue_discount_above_limit">This discount is above your limit. Ask the Super Admin.</string>
+    <string name="billing_discount_reason">Reason for discount</string>
+    <string name="billing_discount_limit_none">Only the Super Admin can give discounts.</string>
+    <string name="billing_discount_limit">You can discount up to %1$s.</string>
+    <string name="settings_employee_discount_limit">Employee discount limit</string>
+    <string name="settings_employee_discount_limit_help">The most an Employee may take off an item or a bill. Only the Super Admin can give more.</string>
+    <string name="settings_discount_limit_none">None</string>
+    <string name="receipt_discount_reason">Discount reason: %1$s</string>
 </resources>

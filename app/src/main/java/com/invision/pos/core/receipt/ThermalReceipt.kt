@@ -105,7 +105,9 @@ object ThermalReceiptBuilder {
             val gross = line.unitPrice * line.quantity
             pair("  " + fillIn(labels.qtyTimesPrice, line.quantity, IndianNumberFormat.amount(line.unitPrice)), IndianNumberFormat.amount(gross))
             ReceiptText.mrpDiscount(line)?.let { pair("  " + fillIn(labels.mrpDiscountLine, IndianNumberFormat.amount(line.mrp!!)), "-" + IndianNumberFormat.amount(it)) }
-            if (!line.discount.isZero) pair("  " + labels.discount, "-" + IndianNumberFormat.amount(line.discount))
+            if (!line.discount.isZero) {
+                pair("  " + labels.discount + (line.discountReason?.let { " ($it)" } ?: ""), "-" + IndianNumberFormat.amount(line.discount))
+            }
             if (invoice.gstRegistered && options.showHsn) {
                 val parts = listOfNotNull(
                     line.hsnCode?.let { fillIn(labels.hsn, it) },
@@ -120,6 +122,7 @@ object ThermalReceiptBuilder {
         pair(fillIn(labels.itemsCount, invoice.lines.size), fillIn(labels.qtyCount, invoice.itemCount))
         pair(labels.subtotal, IndianNumberFormat.amount(invoice.subtotal))
         if (!invoice.discountTotal.isZero) pair(labels.discount, "-" + IndianNumberFormat.amount(invoice.discountTotal))
+        invoice.discountReason?.let { left(fillIn(labels.discountReason, it)) }
         if (invoice.gstRegistered) {
             pair(labels.taxableValue, IndianNumberFormat.amount(invoice.taxableTotal))
             if (invoice.interState) {

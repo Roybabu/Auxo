@@ -42,6 +42,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +73,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.domain.billing.CustomerDetails
+import com.invision.pos.domain.billing.DiscountLimits
 import com.invision.pos.ui.can
 import com.invision.pos.domain.billing.CustomerIssue
 import com.invision.pos.domain.billing.PaymentError
@@ -120,6 +122,8 @@ interface BillingActions {
     fun onToggleLineDiscount(lineKey: Long) = Unit
     fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) = Unit
     fun onBillDiscountChange(text: String, isPercent: Boolean) = Unit
+    fun onLineDiscountReasonChange(lineKey: Long, reason: String) = Unit
+    fun onBillDiscountReasonChange(reason: String) = Unit
     fun onToggleCustomer() = Unit
     fun onCustomerChange(customer: CustomerDetails) = Unit
     fun onCustomerQueryChange(query: String) = Unit
@@ -228,6 +232,8 @@ fun BillingScreen(
             override fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) =
                 viewModel.onLineDiscountChange(lineKey, text, isPercent)
             override fun onBillDiscountChange(text: String, isPercent: Boolean) = viewModel.onBillDiscountChange(text, isPercent)
+            override fun onLineDiscountReasonChange(lineKey: Long, reason: String) = viewModel.onLineDiscountReasonChange(lineKey, reason)
+            override fun onBillDiscountReasonChange(reason: String) = viewModel.onBillDiscountReasonChange(reason)
             override fun onToggleCustomer() = viewModel.toggleCustomer()
             override fun onCustomerChange(customer: CustomerDetails) = viewModel.onCustomerChange(customer)
             override fun onCustomerQueryChange(query: String) = viewModel.onCustomerQueryChange(query)
@@ -486,6 +492,9 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                     issue = state.check.lineIssues[line.variantId]?.let { lineIssueText(it) },
                     discountOpen = state.editingDiscountFor == line.variantId,
                     discountInput = state.lineDiscounts[line.variantId] ?: DiscountInput(),
+                    discountReason = line.discountReason,
+                    discountHint = discountLimitText(state.discountLimitBp),
+                    onDiscountReasonChange = { actions.onLineDiscountReasonChange(line.variantId, it) },
                     canIncrease = line.canIncrease,
                     onIncrement = { actions.onIncrement(line.variantId) },
                     onDecrement = { actions.onDecrement(line.variantId) },
@@ -505,6 +514,14 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                     },
                     onChange = actions::onBillDiscountChange,
                     testTag = "bill_discount",
+                    reason = state.cart.billDiscountReason,
+                    onReasonChange = actions::onBillDiscountReasonChange,
+                    reasonError = when {
+                        state.check.billDiscountReasonMissing -> stringResource(R.string.issue_discount_reason_missing)
+                        state.check.billDiscountAboveLimit -> stringResource(R.string.issue_discount_above_limit)
+                        else -> null
+                    },
+                    hint = discountLimitText(state.discountLimitBp),
                 )
             }
             item(key = "customer") { CustomerCard(state, actions) }
@@ -647,6 +664,9 @@ private fun CartLineCard(
     issue: String?,
     discountOpen: Boolean,
     discountInput: DiscountInput,
+    discountReason: String,
+    discountHint: String?,
+    onDiscountReasonChange: (String) -> Unit,
     canIncrease: Boolean,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
@@ -697,6 +717,9 @@ private fun CartLineCard(
                     error = if (discountInput.invalid) stringResource(R.string.billing_discount_invalid) else null,
                     onChange = onDiscountChange,
                     modifier = Modifier.padding(end = Spacing.sm),
+                    reason = discountReason,
+                    onReasonChange = onDiscountReasonChange,
+                    hint = discountHint,
                 )
             }
             if (issue != null) {
@@ -776,29 +799,59 @@ private fun DiscountEditor(
     onChange: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     testTag: String = "",
+    /** When not null, a "Reason" box is shown under the amount; a discount must be given a reason. */
+    reason: String? = null,
+    onReasonChange: (String) -> Unit = {},
+    reasonError: String? = null,
+    hint: String? = null,
 ) {
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        InvisionTextField(
-            value = input.text,
-            onValueChange = { onChange(it.filter { c -> c.isDigit() || c == '.' }.take(10), input.isPercent) },
-            label = label,
-            error = error,
-            keyboardType = KeyboardType.Decimal,
-            modifier = Modifier
-                .weight(1f)
-                .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier),
-        )
-        FilterChip(
-            selected = !input.isPercent,
-            onClick = { onChange(input.text, false) },
-            label = { Text(stringResource(R.string.billing_discount_amount)) },
-        )
-        FilterChip(
-            selected = input.isPercent,
-            onClick = { onChange(input.text, true) },
-            label = { Text(stringResource(R.string.billing_discount_percent)) },
-        )
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            InvisionTextField(
+                value = input.text,
+                onValueChange = { onChange(it.filter { c -> c.isDigit() || c == '.' }.take(10), input.isPercent) },
+                label = label,
+                error = error,
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier
+                    .weight(1f)
+                    .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier),
+            )
+            FilterChip(
+                selected = !input.isPercent,
+                onClick = { onChange(input.text, false) },
+                label = { Text(stringResource(R.string.billing_discount_amount)) },
+            )
+            FilterChip(
+                selected = input.isPercent,
+                onClick = { onChange(input.text, true) },
+                label = { Text(stringResource(R.string.billing_discount_percent)) },
+            )
+        }
+        if (reason != null && input.text.isNotBlank()) {
+            InvisionTextField(
+                value = reason,
+                onValueChange = onReasonChange,
+                label = stringResource(R.string.billing_discount_reason),
+                error = reasonError,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag + "_reason") else Modifier.testTag("line_discount_reason")),
+            )
+        }
+        if (hint != null) {
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
+}
+
+/** What the signed-in person may discount, or null when there is no limit for them. */
+@Composable
+@ReadOnlyComposable
+private fun discountLimitText(limitBp: Int?): String? = when {
+    limitBp == null -> null
+    limitBp <= 0 -> stringResource(R.string.billing_discount_limit_none)
+    else -> stringResource(R.string.billing_discount_limit, DiscountLimits.label(limitBp))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

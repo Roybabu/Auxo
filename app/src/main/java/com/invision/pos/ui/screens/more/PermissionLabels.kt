@@ -34,7 +34,7 @@ fun Permission.labelRes(): Int = when (this) {
     Permission.MANAGE_MENU -> R.string.perm_menu
     Permission.MANAGE_SETTINGS -> R.string.perm_settings
     Permission.VIEW_ACTIVITY_LOG -> R.string.perm_activity
-    Permission.SELL, Permission.VIEW_INVOICES, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_USERS, Permission.GST_REPORT, Permission.MANAGE_LOYALTY -> R.string.perm_always
+    Permission.SELL, Permission.VIEW_INVOICES, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_USERS, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT -> R.string.perm_always
 }
 
 @StringRes
@@ -55,5 +55,5 @@ fun Permission.hintRes(): Int = when (this) {
     Permission.MANAGE_MENU -> R.string.perm_menu_hint
     Permission.MANAGE_SETTINGS -> R.string.perm_settings_hint
     Permission.VIEW_ACTIVITY_LOG -> R.string.perm_activity_hint
-    Permission.SELL, Permission.VIEW_INVOICES, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_USERS, Permission.GST_REPORT, Permission.MANAGE_LOYALTY -> R.string.perm_always
+    Permission.SELL, Permission.VIEW_INVOICES, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_USERS, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT -> R.string.perm_always
 }

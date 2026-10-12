@@ -54,6 +54,7 @@ fun InvoiceWithDetails.toDomain(): Invoice = Invoice(
     originalInvoiceNumber = invoice.originalInvoiceNumber,
     note = invoice.note,
     customerId = invoice.customerId,
+    discountReason = invoice.discountReason,
 )
 
 fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
@@ -76,6 +77,7 @@ fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
     returnedQuantity = returnedQuantity,
     originalLineId = originalLineId,
     menuItemId = menuItemId,
+    discountReason = discountReason,
 )
 
 fun PaymentEntity.toDomain(invoiceNumber: String? = null): PaymentRecord = PaymentRecord(
@@ -134,6 +136,7 @@ fun Invoice.toEntity(): InvoiceEntity = InvoiceEntity(
     originalInvoiceNumber = originalInvoiceNumber,
     note = note,
     customerId = customerId,
+    discountReason = discountReason,
 )
 
 fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity(
@@ -157,6 +160,7 @@ fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity
     returnedQuantity = returnedQuantity,
     originalLineId = originalLineId,
     menuItemId = menuItemId,
+    discountReason = discountReason,
 )
 
 fun PaymentRecord.toEntity(invoiceId: Long): PaymentEntity = PaymentEntity(
@@ -184,6 +188,7 @@ fun StoreSettingsEntity.toDomain(): StoreSettings = StoreSettings(
     creditNotePrefix = creditNotePrefix,
     upiId = upiId,
     upiPayeeName = upiPayeeName,
+    employeeDiscountLimitBp = employeeDiscountLimitBp,
     receipt = ReceiptOptions(
         paper = enumValueOrNull<ReceiptPaper>(receiptPaper) ?: ReceiptPaper.THERMAL_80,
         footer = receiptFooter,
@@ -222,4 +227,5 @@ fun StoreSettings.toEntity(): StoreSettingsEntity = StoreSettingsEntity(
     receiptShowBarcode = receipt.showInvoiceBarcode,
     receiptShowUpiQr = receipt.showUpiQr,
     receiptLanguage = receipt.language.tag,
+    employeeDiscountLimitBp = employeeDiscountLimitBp,
 )

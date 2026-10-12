@@ -109,7 +109,11 @@ object SheetInvoiceLayout {
         val rowNotes = invoice.lines.map { line ->
             listOfNotNull(
                 ReceiptText.mrpDiscount(line)?.let { fillIn(labels.mrpDiscountNote, IndianNumberFormat.amount(line.mrp!!), IndianNumberFormat.amount(it)) },
-                if (!wide && !line.discount.isZero) fillIn(labels.discountNote, IndianNumberFormat.amount(line.discount)) else null,
+                if (!wide && !line.discount.isZero) {
+                    fillIn(labels.discountNote, IndianNumberFormat.amount(line.discount)) + (line.discountReason?.let { " ($it)" } ?: "")
+                } else {
+                    null
+                },
             ).joinToString(" · ").ifEmpty { null }
         }
 
@@ -170,6 +174,10 @@ object SheetInvoiceLayout {
 
         val notes = buildList {
             invoice.note?.let { add(fillIn(labels.returnReason, it)) }
+            invoice.discountReason?.let { add(fillIn(labels.discountReason, it)) }
+            if (wide) {
+                invoice.lines.mapNotNull { it.discountReason }.distinct().forEach { add(fillIn(labels.discountReason, it)) }
+            }
             if (gst && invoice.pricesIncludeTax) add(labels.pricesIncludeGst)
             if (!gst) add(labels.noTaxCharged)
             if (options.showSavings && !isReturn && invoice.savings > Money.ZERO) {

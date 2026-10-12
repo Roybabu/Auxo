@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import com.invision.pos.ui.can
+import com.invision.pos.domain.billing.DiscountPolicy
+import com.invision.pos.domain.billing.DiscountLimits
+import com.invision.pos.core.auth.Permission
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -121,6 +125,7 @@ fun BillingSettingsContent(
     val errors = state.visibleErrors
     @Composable
     fun errorOf(field: SettingsField): String? = errors[field]?.let { stringResource(it.messageRes()) }
+    val canSetDiscountLimit = can(Permission.UNLIMITED_DISCOUNT)
     fun receipt(transform: (ReceiptOptions) -> ReceiptOptions) = onChange { it.copy(receipt = transform(it.receipt)) }
 
     LazyColumn(
@@ -208,6 +213,29 @@ fun BillingSettingsContent(
                     checked = settings.roundOffTotal,
                     onCheckedChange = { v -> onChange { it.copy(roundOffTotal = v) } },
                 )
+            }
+        }
+
+        // Only the Super Admin sees (and may change) what Employees are allowed to discount.
+        if (canSetDiscountLimit) {
+            item(key = "discount_limit") {
+                SettingsCard(stringResource(R.string.settings_employee_discount_limit)) {
+                    Text(
+                        stringResource(R.string.settings_employee_discount_limit_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        DiscountPolicy.LIMIT_CHOICES.forEach { choice ->
+                            FilterChip(
+                                selected = settings.employeeDiscountLimitBp == choice,
+                                onClick = { onChange { it.copy(employeeDiscountLimitBp = choice) } },
+                                label = { Text(if (choice == 0) stringResource(R.string.settings_discount_limit_none) else DiscountLimits.label(choice)) },
+                                modifier = Modifier.testTag("discount_limit_$choice"),
+                            )
+                        }
+                    }
+                }
             }
         }
 

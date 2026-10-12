@@ -28,6 +28,8 @@ data class CartLine(
     val gstRate: GstRate?,
     val quantity: Int,
     val discount: Discount? = null,
+    /** Why the line is discounted; needed whenever [discount] is set. */
+    val discountReason: String = "",
     /**
      * Units that can be sold right now, or null if the item no longer exists or
      * can't be sold. Dishes have no stock limit of their own.
@@ -124,6 +126,8 @@ data class CustomerDetails(
 data class Cart(
     val lines: List<CartLine> = emptyList(),
     val billDiscount: Discount? = null,
+    /** Why the bill is discounted; needed whenever [billDiscount] is set. */
+    val billDiscountReason: String = "",
     /** Loyalty points being used on this bill. Taken off after [billDiscount]; needs a saved customer. */
     val loyalty: LoyaltyRedemption? = null,
     val customer: CustomerDetails = CustomerDetails(),
@@ -154,6 +158,8 @@ data class Cart(
         if (quantity <= 0) remove(variantId) else updateLine(variantId) { it.copy(quantity = it.withinStock(quantity)) }
 
     fun setLineDiscount(variantId: Long, discount: Discount?): Cart = updateLine(variantId) { it.copy(discount = discount) }
+
+    fun setLineDiscountReason(variantId: Long, reason: String): Cart = updateLine(variantId) { it.copy(discountReason = reason) }
 
     fun remove(variantId: Long): Cart = copy(lines = lines.filterNot { it.variantId == variantId })
 

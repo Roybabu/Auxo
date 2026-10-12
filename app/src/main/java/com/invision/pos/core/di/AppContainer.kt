@@ -106,7 +106,7 @@ class AppContainer(context: Context) {
     // Every repository the screens use is wrapped, so the checks sit below the screens and view models.
     val inventoryRepository: InventoryRepository by lazy { AuthorizedInventoryRepository(RoomInventoryRepository(database, clock), authorizer, auditTrail) }
 
-    val billingRepository: BillingRepository by lazy { AuthorizedBillingRepository(RoomBillingRepository(database), authorizer, auditTrail, onSaleRecorded = { onSaleRecorded() }) }
+    val billingRepository: BillingRepository by lazy { AuthorizedBillingRepository(RoomBillingRepository(database), authorizer, auditTrail, onSaleRecorded = { onSaleRecorded() }, employeeDiscountLimit = { RoomSettingsRepository(database).getSettings().employeeDiscountLimitBp }) }
 
     /** A finished sale counts towards "back up every N invoices", and may make that backup due. */
     private fun onSaleRecorded() {

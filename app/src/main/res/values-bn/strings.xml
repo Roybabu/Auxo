@@ -1425,4 +1425,13 @@
     <string name="receipt_authorised_signatory">অনুমোদিত স্বাক্ষরকারী</string>
     <string name="receipt_page_of">পৃষ্ঠা %1$d / %2$d</string>
     <string name="receipt_continued">(চলমান)</string>
+    <string name="issue_discount_reason_missing">এই ছাড় কেন দেওয়া হচ্ছে তা লিখুন।</string>
+    <string name="issue_discount_above_limit">এই ছাড় আপনার সীমার বেশি। সুপার অ্যাডমিনকে জিজ্ঞাসা করুন।</string>
+    <string name="billing_discount_reason">ছাড়ের কারণ</string>
+    <string name="billing_discount_limit_none">ছাড় শুধু সুপার অ্যাডমিন দিতে পারেন।</string>
+    <string name="billing_discount_limit">আপনি %1$s পর্যন্ত ছাড় দিতে পারেন।</string>
+    <string name="settings_employee_discount_limit">কর্মচারীর ছাড়ের সীমা</string>
+    <string name="settings_employee_discount_limit_help">কর্মচারী কোনো পণ্য বা বিলে সর্বাধিক কতটা ছাড় দিতে পারেন। এর বেশি শুধু সুপার অ্যাডমিন দিতে পারেন।</string>
+    <string name="settings_discount_limit_none">নেই</string>
+    <string name="receipt_discount_reason">ছাড়ের কারণ: %1$s</string>
 </resources>

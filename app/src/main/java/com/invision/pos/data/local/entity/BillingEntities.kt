@@ -50,6 +50,8 @@ data class InvoiceEntity(
     val note: String?,
     /** Customer account the invoice belongs to. Added in version 3. */
     @ColumnInfo(name = "customer_id") val customerId: Long? = null,
+    /** Why the bill was discounted. Added in version 9. */
+    @ColumnInfo(name = "discount_reason") val discountReason: String? = null,
 )
 
 @Entity(
@@ -94,6 +96,8 @@ data class InvoiceLineEntity(
     @ColumnInfo(name = "original_line_id") val originalLineId: Long?,
     /** Restaurant dish sold on this line. Added in version 3. */
     @ColumnInfo(name = "menu_item_id") val menuItemId: Long? = null,
+    /** Why this line was discounted. Added in version 9. */
+    @ColumnInfo(name = "discount_reason") val discountReason: String? = null,
 )
 
 @Entity(
@@ -149,6 +153,8 @@ data class StoreSettingsEntity(
     @ColumnInfo(name = "receipt_language") val receiptLanguage: String? = null,
     /** Print the UPI payment QR on receipts. Added in version 8; existing shops get it on. */
     @ColumnInfo(name = "receipt_show_upi_qr") val receiptShowUpiQr: Boolean = true,
+    /** Most an Employee may discount, in basis points. Added in version 9; 0 means none. */
+    @ColumnInfo(name = "employee_discount_limit_bp") val employeeDiscountLimitBp: Int = 0,
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1

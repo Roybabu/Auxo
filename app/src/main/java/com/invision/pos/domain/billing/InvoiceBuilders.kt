@@ -51,6 +51,7 @@ object SaleBuilder {
                 sgst = amounts.sgst,
                 igst = amounts.igst,
                 total = amounts.total,
+                discountReason = if (line.discount != null) DiscountPolicy.cleanReason(line.discountReason) else null,
             )
         }
         val customer = cart.customer
@@ -80,6 +81,8 @@ object SaleBuilder {
             payments = payments.map { it.copy(kind = PaymentKind.PAYMENT, createdAtMillis = nowMillis) },
             customerId = customer.customerId,
             loyaltyPointsRedeemed = cart.loyalty?.points ?: 0,
+            discountReason = if (cart.billDiscount != null) DiscountPolicy.cleanReason(cart.billDiscountReason) else null,
+            loyaltyDiscount = totals.loyaltyDiscount,
         )
     }
 }

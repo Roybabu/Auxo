@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To8_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_andReceiptsKeepTheUpiQr() = runTest {
+    fun migrate4To9_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_andNoEmployeeDiscounts() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -360,5 +360,18 @@ class DatabaseMigrationTest {
         settings.saveSettings(TestData.settings.let { it.copy(receipt = it.receipt.copy(showUpiQr = false)) })
         assertFalse(settings.getSettings().receipt.showUpiQr)
         assertEquals(TestData.settings.upiId, settings.getSettings().receipt.upiId)
+
+        // Employees cannot discount until the Super Admin allows it, and the limit is saved.
+        assertEquals(0, settings.getSettings().employeeDiscountLimitBp)
+        settings.saveSettings(TestData.settings.copy(employeeDiscountLimitBp = 1_000))
+        assertEquals(1_000, settings.getSettings().employeeDiscountLimitBp)
+
+        // The reason columns exist on bills and their lines.
+        for (table in listOf("invoices", "invoice_lines")) {
+            val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
+                generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+            }
+            assertTrue("$table has discount_reason", "discount_reason" in columns)
+        }
     }
 }

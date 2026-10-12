@@ -30,6 +30,7 @@ import com.invision.pos.domain.billing.CartValidator
 import com.invision.pos.domain.billing.CreditAccount
 import com.invision.pos.domain.billing.CustomerDetails
 import com.invision.pos.domain.billing.Discount
+import com.invision.pos.domain.billing.DiscountPolicy
 import com.invision.pos.domain.billing.DiscountParse
 import com.invision.pos.domain.billing.PaymentCheck
 import com.invision.pos.domain.billing.PaymentDraft
@@ -100,6 +101,8 @@ data class BillingUiState(
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
     val billDiscount: DiscountInput = DiscountInput(),
+    /** The most the signed-in person may discount, in basis points of the value; null when there is no limit. */
+    val discountLimitBp: Int? = null,
     /** The shop's loyalty rules (off unless the Super Admin switched them on). */
     val loyaltyRules: LoyaltyRules = LoyaltyRules.OFF,
     /** Points being used on this bill, already kept within the balance and the bill. */
@@ -188,6 +191,8 @@ class BillingViewModel(
     private val billing: BillingRepository? = null,
     private val shop: com.invision.pos.core.shop.ShopPreferences? = null,
     private val loyalty: LoyaltyRepository? = null,
+    /** True for someone who may discount without the Employee limit (the Super Admin). */
+    private val canExceedDiscountLimit: () -> Boolean = { true },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -429,6 +434,12 @@ class BillingViewModel(
             )
         }
     }
+
+    fun onLineDiscountReasonChange(lineKey: Long, reason: String) =
+        recalculate { it.copy(cart = it.cart.setLineDiscountReason(lineKey, reason.take(DiscountPolicy.REASON_MAX))) }
+
+    fun onBillDiscountReasonChange(reason: String) =
+        recalculate { it.copy(cart = it.cart.copy(billDiscountReason = reason.take(DiscountPolicy.REASON_MAX))) }
 
     fun onBillDiscountChange(text: String, isPercent: Boolean) {
         val parsed = Discount.parse(text, isPercent)
@@ -726,7 +737,8 @@ class BillingViewModel(
                 loyaltyMax = max,
             )
             val totals = BillCalculator.calculate(next.cart, mode)
-            next.copy(totals = totals, check = CartValidator.check(next.cart, totals, settings.gstRegistered))
+            val limit = if (canExceedDiscountLimit()) null else settings.employeeDiscountLimitBp
+            next.copy(totals = totals, discountLimitBp = limit, check = CartValidator.check(next.cart, totals, settings.gstRegistered, limit))
         }
     }
 
@@ -812,6 +824,7 @@ class BillingViewModel(
                     billing = container.billingRepository,
                     shop = container.shopPreferences,
                     loyalty = container.loyaltyRepository,
+                    canExceedDiscountLimit = { container.authorizer.can(com.invision.pos.core.auth.Permission.UNLIMITED_DISCOUNT) },
                 )
             }
         }

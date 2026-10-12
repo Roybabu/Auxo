@@ -52,6 +52,11 @@ data class StoreSettings(
     val creditNotePrefix: String = "CN",
     val upiId: String = "",
     val upiPayeeName: String = "",
+    /**
+     * The most an Employee may take off a bill or a line, in basis points of its value (1000 = 10%). Zero, the
+     * default, means Employees cannot give discounts. Only the Super Admin can change it or go above it.
+     */
+    val employeeDiscountLimitBp: Int = 0,
     val receipt: ReceiptOptions = ReceiptOptions(),
 ) {
     /** Tax invoices must show the seller's GSTIN. */

@@ -31,6 +31,12 @@ enum class Permission {
     /** Switch loyalty points on or off and set what a point earns and is worth. Super Admin only: it cannot be given to an employee. */
     MANAGE_LOYALTY,
 
+    /**
+     * Give discounts above the limit the Super Admin sets for Employees, and change that limit. Super Admin only:
+     * it cannot be given to an employee.
+     */
+    UNLIMITED_DISCOUNT,
+
     /** Sales today, stock value and insights on Home. */
     VIEW_DASHBOARD,
 

@@ -94,4 +94,6 @@ fun lineIssueText(issue: LineIssue): String = when (issue) {
     is LineIssue.NotEnoughStock -> stringResource(R.string.issue_not_enough_stock, issue.available)
     LineIssue.MissingGstRate -> stringResource(R.string.issue_missing_gst)
     LineIssue.DiscountTooLarge -> stringResource(R.string.issue_discount_too_large)
+    LineIssue.DiscountReasonMissing -> stringResource(R.string.issue_discount_reason_missing)
+    LineIssue.DiscountAboveLimit -> stringResource(R.string.issue_discount_above_limit)
 }

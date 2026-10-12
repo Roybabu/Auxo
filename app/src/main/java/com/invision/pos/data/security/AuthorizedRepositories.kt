@@ -6,6 +6,8 @@ import com.invision.pos.core.audit.AuditEntity
 import com.invision.pos.core.audit.AuditTrail
 import com.invision.pos.core.auth.Authorizer
 import com.invision.pos.core.auth.Permission
+import com.invision.pos.core.auth.PermissionDeniedException
+import com.invision.pos.domain.billing.DiscountPolicy
 import com.invision.pos.data.repository.AccountPaymentResult
 import com.invision.pos.data.repository.BarcodeMatch
 import com.invision.pos.data.repository.BillingRepository
@@ -61,6 +63,11 @@ class AuthorizedBillingRepository(
     private val audit: AuditTrail,
     /** Told after a sale has been saved, for "back up every N invoices". It must not throw. */
     private val onSaleRecorded: () -> Unit = {},
+    /**
+     * The most an Employee may discount, in basis points (read from the store settings when a sale is saved).
+     * Defaults to none, so a repository built without it refuses an Employee's discount rather than allowing it.
+     */
+    private val employeeDiscountLimit: suspend () -> Int = { 0 },
 ) : BillingRepository {
     override fun observeInvoice(invoiceId: Long): Flow<Invoice?> = auth.guarded(Permission.VIEW_INVOICES) { inner.observeInvoice(invoiceId) }
 
@@ -83,13 +90,28 @@ class AuthorizedBillingRepository(
 
     override suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String?): SaleResult {
         auth.require(Permission.SELL)
+        // The screen already stops an Employee, but this is the check that cannot be walked around.
+        if (!auth.can(Permission.UNLIMITED_DISCOUNT)) {
+            val counter = invoice.discountTotal - invoice.loyaltyDiscount
+            if (DiscountPolicy.exceeds(counter, invoice.subtotal, employeeDiscountLimit(), roundingSlack = invoice.lines.size + 1L)) {
+                throw PermissionDeniedException(Permission.UNLIMITED_DISCOUNT)
+            }
+        }
         val result = audit.recording({ inner.recordSale(invoice, invoicePrefix, requestId) }) { saleResult ->
             (saleResult as? SaleResult.Recorded)?.let {
-                AuditDraft(AuditAction.SALE_RECORDED, AuditEntity.INVOICE, it.invoiceId, "Sale ${it.number}, total ${invoice.grandTotal.toDecimalString()}")
+                AuditDraft(AuditAction.SALE_RECORDED, AuditEntity.INVOICE, it.invoiceId, saleDetail(it.number, invoice))
             }
         }
         if (result is SaleResult.Recorded) runCatching { onSaleRecorded() }
         return result
+    }
+
+    private fun saleDetail(number: String, invoice: Invoice): String {
+        val base = "Sale $number, total ${invoice.grandTotal.toDecimalString()}"
+        val given = invoice.discountTotal - invoice.loyaltyDiscount
+        if (given <= Money.ZERO) return base
+        val reasons = DiscountPolicy.reasonsOn(invoice.lines.map { it.discountReason }, invoice.discountReason)
+        return base + ", discount ${given.toDecimalString()}" + if (reasons.isEmpty()) "" else " (${reasons.joinToString("; ")})"
     }
 
     override suspend fun previewInvoiceNumber(invoicePrefix: String, day: java.time.LocalDate): String {
@@ -128,8 +150,13 @@ class AuthorizedSettingsRepository(private val inner: SettingsRepository, privat
 
     override suspend fun saveSettings(settings: StoreSettings) {
         auth.require(Permission.MANAGE_SETTINGS)
+        // Whoever may edit settings, only the Super Admin sets what Employees may discount.
+        val before = inner.getSettings().employeeDiscountLimitBp
+        val limitChanged = before != settings.employeeDiscountLimitBp
+        if (limitChanged) auth.require(Permission.UNLIMITED_DISCOUNT)
         audit.recording({ inner.saveSettings(settings) }) {
-            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}")
+            val limit = if (limitChanged) ", employee discount limit ${before / 100.0}% to ${settings.employeeDiscountLimitBp / 100.0}%" else ""
+            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}$limit")
         }
     }
 }

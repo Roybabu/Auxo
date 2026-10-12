@@ -91,6 +91,8 @@ data class InvoiceLine(
     val originalLineId: Long? = null,
     /** Set for restaurant dishes instead of [variantId]. */
     val menuItemId: Long? = null,
+    /** Why this line was discounted at the counter; null when it was not (a bill discount has its own reason). */
+    val discountReason: String? = null,
 ) {
     val tax: Money get() = cgst + sgst + igst
     val returnableQuantity: Int get() = quantity - returnedQuantity
@@ -131,6 +133,13 @@ data class Invoice(
      * invoice itself: the points are recorded on the customer's ledger when the sale is saved.
      */
     val loyaltyPointsRedeemed: Int = 0,
+    /** Why the bill as a whole was discounted; null when it was not. Per-line reasons are on the lines. */
+    val discountReason: String? = null,
+    /**
+     * The part of [discountTotal] that is loyalty points. Not stored: the sale is checked against the
+     * employee discount limit with it left out, because points are not a discount given at the counter.
+     */
+    val loyaltyDiscount: Money = Money.ZERO,
 ) {
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
     val itemCount: Int get() = lines.sumOf { it.quantity }
