@@ -30,6 +30,7 @@ object RouteAccess {
 
         CustomerRoutes.LIST to Permission.MANAGE_CUSTOMERS,
         CustomerRoutes.DETAIL to Permission.MANAGE_CUSTOMERS,
+        CustomerRoutes.HISTORY to Permission.MANAGE_CUSTOMERS,
         CustomerRoutes.EDITOR to Permission.MANAGE_CUSTOMERS,
         CustomerRoutes.PAYMENT to Permission.RECEIVE_ACCOUNT_PAYMENT,
 

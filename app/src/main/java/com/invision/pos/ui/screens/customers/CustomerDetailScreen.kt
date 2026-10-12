@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -66,6 +67,7 @@ fun CustomerDetailScreen(
     onEdit: (Long) -> Unit,
     onReceivePayment: (Long) -> Unit,
     onOpenInvoice: (Long) -> Unit,
+    onOpenHistory: (Long) -> Unit = {},
     viewModel: CustomerDetailViewModel = viewModel(factory = CustomerDetailViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -117,6 +119,7 @@ fun CustomerDetailScreen(
                 state = state,
                 onReceivePayment = { onReceivePayment(state.account.customer.id) },
                 onOpenInvoice = onOpenInvoice,
+                onOpenHistory = { onOpenHistory(state.account.customer.id) },
                 modifier = modifier,
             )
         }
@@ -129,6 +132,7 @@ fun CustomerDetailContent(
     onReceivePayment: () -> Unit,
     onOpenInvoice: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenHistory: () -> Unit = {},
 ) {
     val formatter = LocalMoneyFormatter.current
     val customer = state.account.customer
@@ -185,6 +189,10 @@ fun CustomerDetailContent(
                     ) {
                         Icon(painterResource(R.drawable.ic_wallet), contentDescription = null)
                         Text(stringResource(R.string.customer_receive_payment), modifier = Modifier.padding(start = Spacing.sm))
+                    }
+                    OutlinedButton(onClick = onOpenHistory, modifier = Modifier.testTag("customer_history")) {
+                        Icon(painterResource(R.drawable.ic_history), contentDescription = null)
+                        Text(stringResource(R.string.customer_history_open), modifier = Modifier.padding(start = Spacing.sm))
                     }
                 }
             }

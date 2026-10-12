@@ -214,7 +214,9 @@ class FakeCustomerRepository(customers: List<Customer> = emptyList()) : Customer
 
     override fun observeLedger(customerId: Long): Flow<List<LedgerEntry>> = ledger.map { list -> list.filter { it.customerId == customerId } }
 
-    override fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>> = MutableStateFlow(emptyList())
+    val invoices = MutableStateFlow<List<InvoiceSummary>>(emptyList())
+
+    override fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>> = invoices
 
     override suspend fun receivePayment(
         customerId: Long,

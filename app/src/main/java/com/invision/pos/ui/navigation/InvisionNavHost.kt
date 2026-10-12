@@ -29,6 +29,7 @@ import com.invision.pos.ui.screens.inventory.ProductEditorScreen
 import com.invision.pos.ui.screens.inventory.StockPage
 import com.invision.pos.ui.screens.customers.AccountPaymentScreen
 import com.invision.pos.ui.screens.customers.CustomerDetailScreen
+import com.invision.pos.ui.screens.customers.CustomerHistoryScreen
 import com.invision.pos.ui.screens.customers.CustomerEditorScreen
 import com.invision.pos.ui.screens.customers.CustomerListScreen
 import com.invision.pos.ui.screens.menu.MenuEditorScreen
@@ -248,6 +249,16 @@ fun InvisionNavHost(
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate(CustomerRoutes.editCustomer(it)) },
                     onReceivePayment = { navController.navigate(CustomerRoutes.payment(it)) },
+                    onOpenHistory = { navController.navigate(CustomerRoutes.history(it)) },
+                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                )
+            }
+            guarded(navController,
+                route = CustomerRoutes.HISTORY,
+                arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
+            ) {
+                CustomerHistoryScreen(
+                    onBack = { navController.popBackStack() },
                     onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
                 )
             }

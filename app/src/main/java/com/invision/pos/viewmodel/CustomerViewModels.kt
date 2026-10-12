@@ -18,6 +18,7 @@ import com.invision.pos.domain.contacts.CustomerValidator
 import com.invision.pos.domain.customers.AccountPaymentCheck
 import com.invision.pos.domain.customers.AccountPaymentError
 import com.invision.pos.domain.customers.AccountPaymentValidator
+import com.invision.pos.domain.customers.CustomerHistory
 import com.invision.pos.domain.customers.Ledger
 import com.invision.pos.domain.customers.LedgerLine
 import com.invision.pos.domain.model.Customer
@@ -46,6 +47,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
 // Customer list
@@ -428,6 +430,56 @@ class AccountPaymentViewModel(
                     customerId = createSavedStateHandle().get<Long>(CustomerDetailViewModel.ARG_CUSTOMER_ID) ?: 0L,
                     customers = container.customerRepository,
                     receivePayment = container.receiveAccountPayment,
+                )
+            }
+        }
+    }
+}
+
+// Customer history
+
+sealed interface CustomerHistoryUiState {
+    data object Loading : CustomerHistoryUiState
+    data object NotFound : CustomerHistoryUiState
+    data object Failed : CustomerHistoryUiState
+
+    data class Ready(
+        val customer: Customer,
+        val history: CustomerHistory,
+    ) : CustomerHistoryUiState
+}
+
+class CustomerHistoryViewModel(
+    private val customerId: Long,
+    private val customers: CustomerRepository,
+    private val zone: ZoneId,
+) : ViewModel() {
+
+    private val reload = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<CustomerHistoryUiState> = reload
+        .flatMapLatest {
+            combine(customers.observeAccount(customerId), customers.observeInvoices(customerId)) { account, invoices ->
+                if (account == null) {
+                    CustomerHistoryUiState.NotFound
+                } else {
+                    CustomerHistoryUiState.Ready(account.customer, CustomerHistory.from(invoices, zone))
+                }
+            }.catch<CustomerHistoryUiState> { emit(CustomerHistoryUiState.Failed) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CustomerHistoryUiState.Loading)
+
+    fun retry() = reload.update { it + 1 }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val container = appContainer()
+                CustomerHistoryViewModel(
+                    customerId = createSavedStateHandle().get<Long>(CustomerDetailViewModel.ARG_CUSTOMER_ID) ?: 0L,
+                    customers = container.customerRepository,
+                    zone = container.clock.zone,
                 )
             }
         }

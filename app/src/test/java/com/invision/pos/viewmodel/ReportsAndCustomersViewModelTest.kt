@@ -309,3 +309,40 @@ class BillingAccountsAndMenuTest {
         assertEquals(CustomerSaveError.PHONE_IN_USE, viewModel.uiState.value.customerSaveError)
     }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class CustomerHistoryViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val asha = Customer(id = 1, name = "Asha Rao", phone = "9830011111")
+    private val customers = FakeCustomerRepository(listOf(asha))
+
+    private fun bill(id: Long, type: com.invision.pos.domain.model.InvoiceType, minor: Long, millis: Long) =
+        com.invision.pos.domain.model.InvoiceSummary(id, "N-$id", type, millis, "Asha Rao", null, Money(minor), 1)
+
+    @Test
+    fun history_followsTheCustomersInvoices() = runTest {
+        val viewModel = CustomerHistoryViewModel(1, customers, java.time.ZoneOffset.UTC)
+        keepActive(viewModel.uiState)
+        assertEquals(com.invision.pos.domain.customers.CustomerHistory.EMPTY, (viewModel.uiState.value as CustomerHistoryUiState.Ready).history)
+
+        customers.invoices.value = listOf(
+            bill(1, com.invision.pos.domain.model.InvoiceType.SALE, 100_000, 1_000),
+            bill(2, com.invision.pos.domain.model.InvoiceType.RETURN, 25_000, 2_000),
+        )
+        val ready = viewModel.uiState.value as CustomerHistoryUiState.Ready
+        assertEquals("Asha Rao", ready.customer.name)
+        assertEquals(Money(75_000), ready.history.totalSpend)
+        assertEquals(1, ready.history.visitCount)
+    }
+
+    @Test
+    fun anUnknownCustomer_isNotFound() = runTest {
+        val viewModel = CustomerHistoryViewModel(99, customers, java.time.ZoneOffset.UTC)
+        keepActive(viewModel.uiState)
+        assertEquals(CustomerHistoryUiState.NotFound, viewModel.uiState.value)
+    }
+
+}

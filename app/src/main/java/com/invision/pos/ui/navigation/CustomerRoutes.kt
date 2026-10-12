@@ -12,6 +12,7 @@ object CustomerRoutes {
     const val DETAIL = "$PREFIX/detail/{$ARG_CUSTOMER_ID}"
     const val EDITOR = "$PREFIX/editor?$ARG_CUSTOMER_ID={$ARG_CUSTOMER_ID}"
     const val PAYMENT = "$PREFIX/payment/{$ARG_CUSTOMER_ID}"
+    const val HISTORY = "$PREFIX/history/{$ARG_CUSTOMER_ID}"
 
     fun detail(customerId: Long): String = "$PREFIX/detail/$customerId"
 
@@ -20,4 +21,6 @@ object CustomerRoutes {
     fun editCustomer(customerId: Long): String = "$PREFIX/editor?$ARG_CUSTOMER_ID=$customerId"
 
     fun payment(customerId: Long): String = "$PREFIX/payment/$customerId"
+
+    fun history(customerId: Long): String = "$PREFIX/history/$customerId"
 }

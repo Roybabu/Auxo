@@ -24,7 +24,7 @@ class RouteAccessTest {
     private val everyPage = listOf(
         BillingRoutes.POS, BillingRoutes.INVOICE, BillingRoutes.HISTORY, BillingRoutes.RETURN,
         InventoryRoutes.LIST, InventoryRoutes.PRODUCT, InventoryRoutes.EDITOR, InventoryRoutes.LABELS,
-        CustomerRoutes.LIST, CustomerRoutes.DETAIL, CustomerRoutes.EDITOR, CustomerRoutes.PAYMENT,
+        CustomerRoutes.LIST, CustomerRoutes.DETAIL, CustomerRoutes.EDITOR, CustomerRoutes.PAYMENT, CustomerRoutes.HISTORY,
         StockRoutes.SUPPLIERS, StockRoutes.SUPPLIER_EDITOR, StockRoutes.PURCHASES, StockRoutes.ORDER, StockRoutes.ORDER_EDITOR,
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
@@ -122,6 +122,7 @@ class RouteAccessTest {
         assertTrue(StockRoutes.RECEIVE in goods && StockRoutes.ORDER in goods && StockRoutes.SUPPLIERS in goods)
         val payments = openWith(Permission.RECEIVE_ACCOUNT_PAYMENT)
         assertTrue(CustomerRoutes.PAYMENT in payments && CustomerRoutes.LIST in payments && CustomerRoutes.DETAIL in payments)
+        assertEquals(Permission.MANAGE_CUSTOMERS, RouteAccess.permissionFor(CustomerRoutes.HISTORY))
         val adjust = openWith(Permission.ADJUST_STOCK)
         assertTrue(InventoryRoutes.PRODUCT in adjust)
     }
