@@ -269,9 +269,8 @@ class AuthScreensTabletTest {
             }
         }
         composeRule.onNodeWithTag("auth_screen").assertIsDisplayed()
-        // The wide layout shows the app name as text next to the form; the narrow one has only the logo.
+        // Both layouts show the approved logo (symbol, wordmark and tagline in one image), described as "Auxo".
         composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
-        composeRule.onNodeWithText("Billing and inventory for your shop").assertIsDisplayed()
         composeRule.onNodeWithTag("setup_name").assertIsDisplayed()
         composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsDisplayed()
     }
