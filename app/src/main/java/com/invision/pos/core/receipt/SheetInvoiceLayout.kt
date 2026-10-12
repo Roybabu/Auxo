@@ -60,19 +60,19 @@ object SheetInvoiceLayout {
 
         val sellerLines = buildList {
             if (seller.address.isNotBlank()) addAll(seller.address.lines().filter { it.isNotBlank() })
-            if (seller.phone.isNotBlank()) add("Phone: ${seller.phone}")
-            if (seller.gstin.isNotBlank()) add("GSTIN: ${seller.gstin}")
+            if (seller.phone.isNotBlank()) add(fill(labels.phone, seller.phone))
+            if (seller.gstin.isNotBlank()) add(fill(labels.gstin, seller.gstin))
         }
         val details = buildList {
-            add((if (isReturn) "Credit note no." else "Invoice no.") to invoice.number)
-            add("Date" to ReceiptText.dateTime(invoice.createdAtMillis, zone))
-            invoice.originalInvoiceNumber?.let { add("Against invoice" to it) }
+            add((if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
+            add(labels.dateHeading to ReceiptText.dateTime(invoice.createdAtMillis, zone))
+            invoice.originalInvoiceNumber?.let { add(labels.againstInvoice to it) }
         }
         val buyerLines = if (options.showCustomer) {
             buildList {
                 add(invoice.buyer.name ?: labels.walkInCustomer)
-                invoice.buyer.phone?.let { add("Phone: ${ReceiptText.maskPhone(it)}") }
-                invoice.buyer.gstin?.let { add("GSTIN: $it") }
+                invoice.buyer.phone?.let { add(fill(labels.phone, ReceiptText.maskPhone(it))) }
+                invoice.buyer.gstin?.let { add(fill(labels.gstin, it)) }
             }
         } else {
             emptyList()
@@ -82,49 +82,49 @@ object SheetInvoiceLayout {
         val wide = paper == ReceiptPaper.A4
         val columns = buildList {
             add(SheetColumn("#", 0.05f, alignRight = false) { i, _ -> (i + 1).toString() })
-            add(SheetColumn("Item", if (wide) 0.30f else 0.34f, alignRight = false) { _, l ->
+            add(SheetColumn(labels.item, if (wide) 0.30f else 0.34f, alignRight = false) { _, l ->
                 listOf(l.productName, l.variantLabel).filter { it.isNotBlank() }.joinToString(" · ")
             })
-            if (showHsn) add(SheetColumn("HSN", 0.10f, alignRight = false) { _, l -> l.hsnCode.orEmpty() })
-            add(SheetColumn("Qty", 0.07f, alignRight = true) { _, l -> l.quantity.toString() })
-            add(SheetColumn("Rate", 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.unitPrice) })
-            if (wide) add(SheetColumn("Disc.", 0.10f, alignRight = true) { _, l -> if (l.discount.isZero) "" else IndianNumberFormat.amount(l.discount) })
-            if (gst && wide) add(SheetColumn("Taxable", 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.taxable) })
-            if (gst) add(SheetColumn("GST", 0.07f, alignRight = true) { _, l -> ReceiptText.rate(l.gstRateBasisPoints) })
-            add(SheetColumn("Amount", 0.14f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.total) })
+            if (showHsn) add(SheetColumn(labels.hsnHeading, 0.10f, alignRight = false) { _, l -> l.hsnCode.orEmpty() })
+            add(SheetColumn(labels.qtyHeading, 0.07f, alignRight = true) { _, l -> l.quantity.toString() })
+            add(SheetColumn(labels.rateHeading, 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.unitPrice) })
+            if (wide) add(SheetColumn(labels.discHeading, 0.10f, alignRight = true) { _, l -> if (l.discount.isZero) "" else IndianNumberFormat.amount(l.discount) })
+            if (gst && wide) add(SheetColumn(labels.taxableHeading, 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.taxable) })
+            if (gst) add(SheetColumn(labels.gstHeading, 0.07f, alignRight = true) { _, l -> ReceiptText.rate(l.gstRateBasisPoints) })
+            add(SheetColumn(labels.amount, 0.14f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.total) })
         }
         val rows = invoice.lines.mapIndexed { i, line -> columns.map { it.value(i, line) } }
         val rowNotes = invoice.lines.map { line ->
             listOfNotNull(
-                ReceiptText.mrpDiscount(line)?.let { "MRP ${IndianNumberFormat.amount(line.mrp!!)} · Discount ${IndianNumberFormat.amount(it)}" },
-                if (!wide && !line.discount.isZero) "Discount ${IndianNumberFormat.amount(line.discount)}" else null,
+                ReceiptText.mrpDiscount(line)?.let { fill(labels.mrpDiscountNote, IndianNumberFormat.amount(line.mrp!!), IndianNumberFormat.amount(it)) },
+                if (!wide && !line.discount.isZero) fill(labels.discountNote, IndianNumberFormat.amount(line.discount)) else null,
             ).joinToString(" · ").ifEmpty { null }
         }
 
         val totals = buildList {
-            add("Subtotal" to IndianNumberFormat.amount(invoice.subtotal))
-            if (!invoice.discountTotal.isZero) add("Discount" to "-" + IndianNumberFormat.amount(invoice.discountTotal))
+            add(labels.subtotal to IndianNumberFormat.amount(invoice.subtotal))
+            if (!invoice.discountTotal.isZero) add(labels.discount to "-" + IndianNumberFormat.amount(invoice.discountTotal))
             if (gst) {
-                add("Taxable value" to IndianNumberFormat.amount(invoice.taxableTotal))
+                add(labels.taxableValue to IndianNumberFormat.amount(invoice.taxableTotal))
                 if (invoice.interState) {
-                    add("IGST" to IndianNumberFormat.amount(invoice.igstTotal))
+                    add(labels.igst to IndianNumberFormat.amount(invoice.igstTotal))
                 } else {
-                    add("CGST" to IndianNumberFormat.amount(invoice.cgstTotal))
-                    add("SGST" to IndianNumberFormat.amount(invoice.sgstTotal))
+                    add(labels.cgst to IndianNumberFormat.amount(invoice.cgstTotal))
+                    add(labels.sgst to IndianNumberFormat.amount(invoice.sgstTotal))
                 }
             }
             if (!invoice.roundOff.isZero) {
                 val sign = if (invoice.roundOff > Money.ZERO) "+" else ""
-                add("Round off" to sign + IndianNumberFormat.amount(invoice.roundOff))
+                add(labels.roundOff to sign + IndianNumberFormat.amount(invoice.roundOff))
             }
         }
-        val grandLabel = if (isReturn) "Total refund" else "Grand total"
+        val grandLabel = if (isReturn) labels.totalRefund else labels.grandTotal
 
         val (summaryHeader, summaryRows) = if (gst && options.showTaxBreakup) {
             val header = if (invoice.interState) {
-                listOf("GST rate", "Taxable value", "IGST", "Total tax")
+                listOf(labels.gstRateHeading, labels.taxableValue, labels.igst, labels.totalTaxHeading)
             } else {
-                listOf("GST rate", "Taxable value", "CGST", "SGST", "Total tax")
+                listOf(labels.gstRateHeading, labels.taxableValue, labels.cgst, labels.sgst, labels.totalTaxHeading)
             }
             val rowsByRate = invoice.lines.groupBy { it.gstRateBasisPoints }.toSortedMap().map { (rate, lines) ->
                 val taxable = lines.fold(Money.ZERO) { a, l -> a + l.taxable }
@@ -147,21 +147,21 @@ object SheetInvoiceLayout {
 
         val payments = invoice.payments.map { p ->
             buildString {
-                append(ReceiptText.paymentLabel(p, sheet = true) + ": ")
+                append(ReceiptText.paymentLabel(p, labels, sheet = true) + ": ")
                 append(IndianNumberFormat.rupees(p.amount))
-                p.reference?.let { append(" (Ref $it)") }
+                p.reference?.let { append(" " + fill(labels.refNote, it)) }
                 if (p.tendered != null && p.change != null) {
-                    append(" · Received ${IndianNumberFormat.rupees(p.tendered)}, change ${IndianNumberFormat.rupees(p.change)}")
+                    append(" · " + fill(labels.receivedChange, IndianNumberFormat.rupees(p.tendered), IndianNumberFormat.rupees(p.change)))
                 }
             }
         }
 
         val notes = buildList {
-            invoice.note?.let { add("Reason for return: $it") }
-            if (gst && invoice.pricesIncludeTax) add("Prices include GST.")
-            if (!gst) add("Composition or unregistered dealer: tax not charged.")
+            invoice.note?.let { add(fill(labels.returnReason, it)) }
+            if (gst && invoice.pricesIncludeTax) add(labels.pricesIncludeGst)
+            if (!gst) add(labels.noTaxCharged)
             if (options.showSavings && !isReturn && invoice.savings > Money.ZERO) {
-                add("You saved ${IndianNumberFormat.rupees(invoice.savings)} on MRP.")
+                add(fill(labels.savedOnMrp, IndianNumberFormat.rupees(invoice.savings)))
             }
         }
 
@@ -170,21 +170,21 @@ object SheetInvoiceLayout {
             sellerName = seller.name,
             sellerLines = sellerLines,
             detailLines = details,
-            buyerHeading = if (isReturn) "Customer" else "Bill to",
+            buyerHeading = if (isReturn) labels.customerHeading else labels.billTo,
             buyerLines = buyerLines,
             columns = columns,
             rows = rows,
             rowNotes = rowNotes,
             totals = totals,
             grandTotal = grandLabel to IndianNumberFormat.rupees(invoice.grandTotal),
-            amountInWords = AmountInWords.rupees(invoice.grandTotal),
+            amountInWords = AmountInWords.rupees(invoice.grandTotal, labels.language),
             taxSummaryHeader = summaryHeader,
             taxSummaryRows = summaryRows,
             paymentLines = payments,
             notes = notes,
             footer = options.footer,
             feedbackNote = labels.feedbackNote,
-            signatureLabel = "For ${seller.name}",
+            signatureLabel = fill(labels.signatureFor, seller.name),
             barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() },
         )
     }

@@ -28,11 +28,11 @@ class ReceiptPage(val widthPt: Float, val heightPt: Float, val draw: (Canvas) ->
 object ReceiptRenderer {
 
     /** [logo] is the shop's logo; when it is null no room is left for one. */
-    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap? = null): List<ReceiptPage> =
+    fun pages(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap? = null, labels: ReceiptLabels = ReceiptLabels(language = options.language)): List<ReceiptPage> =
         if (options.paper.isThermal) {
-            listOf(thermalPage(invoice, options, zone, logo))
+            listOf(thermalPage(invoice, options, zone, logo, labels))
         } else {
-            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone), options.paper, logo).pages()
+            SheetRenderer(SheetInvoiceLayout.build(invoice, options, options.paper, zone, labels), options.paper, logo).pages()
         }
 
     /** Where a logo goes on a thermal roll: centred above the shop name, at most this big. */
@@ -41,9 +41,9 @@ object ReceiptRenderer {
 
     // Thermal rolls
 
-    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?): ReceiptPage {
+    private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels): ReceiptPage {
         val spec = options.paper.spec
-        val receipt = ThermalReceiptBuilder.build(invoice, options, spec.charsPerLine, zone)
+        val receipt = ThermalReceiptBuilder.build(invoice, options, spec.charsPerLine, zone, labels)
         val widthPt = LabelSheetLayout.mmToPoints(spec.paperWidthMm)
         val margin = LabelSheetLayout.mmToPoints(spec.marginMm)
         val printable = widthPt - margin * 2

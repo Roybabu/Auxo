@@ -1,5 +1,6 @@
 package com.invision.pos.domain.billing
 
+import com.invision.pos.domain.model.Language
 import com.invision.pos.domain.model.Money
 import kotlin.math.abs
 
@@ -45,10 +46,18 @@ object AmountInWords {
     )
     private val tens = listOf("", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety")
 
-    fun rupees(money: Money): String {
+    fun rupees(money: Money): String = rupees(money, Language.ENGLISH)
+
+    /** The amount in words in [language]: English, Hindi or Bengali. */
+    fun rupees(money: Money, language: Language): String {
         val absolute = abs(money.minorUnits)
         val rupees = absolute / 100
         val paise = (absolute % 100).toInt()
+        when (language) {
+            Language.HINDI -> return NumberWords.HINDI.rupees(rupees, paise)
+            Language.BENGALI -> return NumberWords.BENGALI.rupees(rupees, paise)
+            Language.ENGLISH -> Unit
+        }
         val rupeeWords = if (rupees == 0L) "Zero" else words(rupees)
         val paiseWords = if (paise > 0) " and ${belowHundred(paise)} Paise" else ""
         return "Rupees $rupeeWords$paiseWords Only"

@@ -36,17 +36,6 @@ val ReceiptPaper.spec: PaperSpec
 
 val ReceiptPaper.isThermal: Boolean get() = spec.paperHeightMm == null
 
-/** Fixed wording printed on receipts. */
-data class ReceiptLabels(
-    val taxInvoice: String = "TAX INVOICE",
-    val billOfSupply: String = "BILL OF SUPPLY",
-    val creditNote: String = "CREDIT NOTE",
-    val walkInCustomer: String = "Walk-in Customer",
-    val thankYou: String = "",
-    /** Printed as the very last line of every invoice copy. */
-    val feedbackNote: String = "Please share your feedback with us.",
-)
-
 internal object ReceiptText {
     private val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH)
 
@@ -59,23 +48,23 @@ internal object ReceiptText {
         else -> labels.billOfSupply
     }
 
-    fun method(method: PaymentMethod): String = when (method) {
-        PaymentMethod.CASH -> "Cash"
-        PaymentMethod.UPI -> "UPI"
-        PaymentMethod.CARD -> "Card"
-        PaymentMethod.CREDIT -> "Account"
+    fun method(method: PaymentMethod, labels: ReceiptLabels): String = when (method) {
+        PaymentMethod.CASH -> labels.methodCash
+        PaymentMethod.UPI -> labels.methodUpi
+        PaymentMethod.CARD -> labels.methodCard
+        PaymentMethod.CREDIT -> labels.methodAccount
     }
 
     /** "Paid by Cash", "On account", "Refund (UPI)" or "Credited to account". */
-    fun paymentLabel(payment: PaymentRecord, sheet: Boolean = false): String {
-        val method = method(payment.method)
+    fun paymentLabel(payment: PaymentRecord, labels: ReceiptLabels, sheet: Boolean = false): String {
+        val method = method(payment.method, labels)
         val refund = payment.kind == PaymentKind.REFUND
         return when {
-            payment.method == PaymentMethod.CREDIT && refund -> "Credited to account"
-            payment.method == PaymentMethod.CREDIT -> "On account"
-            refund && sheet -> "Refunded by $method"
-            refund -> "Refund ($method)"
-            else -> "Paid by $method"
+            payment.method == PaymentMethod.CREDIT && refund -> labels.creditedToAccount
+            payment.method == PaymentMethod.CREDIT -> labels.onAccount
+            refund && sheet -> fill(labels.refundedBy, method)
+            refund -> fill(labels.refundParen, method)
+            else -> fill(labels.paidBy, method)
         }
     }
 
