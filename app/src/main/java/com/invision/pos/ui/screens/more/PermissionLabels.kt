@@ -19,6 +19,7 @@ fun PermissionGroup.titleRes(): Int = when (this) {
 @StringRes
 fun Permission.labelRes(): Int = when (this) {
     Permission.PROCESS_RETURN -> R.string.perm_return
+    Permission.CLOSE_DAY -> R.string.perm_close_day
     Permission.VIEW_DASHBOARD -> R.string.perm_dashboard
     Permission.VIEW_FINANCIALS -> R.string.perm_financials
     Permission.VIEW_REPORTS -> R.string.perm_reports
@@ -39,6 +40,7 @@ fun Permission.labelRes(): Int = when (this) {
 @StringRes
 fun Permission.hintRes(): Int = when (this) {
     Permission.PROCESS_RETURN -> R.string.perm_return_hint
+    Permission.CLOSE_DAY -> R.string.perm_close_day_hint
     Permission.VIEW_DASHBOARD -> R.string.perm_dashboard_hint
     Permission.VIEW_FINANCIALS -> R.string.perm_financials_hint
     Permission.VIEW_REPORTS -> R.string.perm_reports_hint

@@ -17,6 +17,9 @@ enum class Permission {
     /** Issue a credit note (return or refund) against a finished sale. */
     PROCESS_RETURN,
 
+    /** Count the cash at the end of the day, close the day, and read closed days. */
+    CLOSE_DAY,
+
     // Business-wide figures.
     /** Sales totals, payment records and method totals. */
     VIEW_FINANCIALS,
@@ -69,7 +72,7 @@ object RolePermissions {
 
 /** The sections the Super Admin sees when choosing what an Employee may do. */
 enum class PermissionGroup(val permissions: List<Permission>) {
-    SALES(listOf(Permission.PROCESS_RETURN)),
+    SALES(listOf(Permission.PROCESS_RETURN, Permission.CLOSE_DAY)),
     FIGURES(listOf(Permission.VIEW_DASHBOARD, Permission.VIEW_FINANCIALS, Permission.VIEW_REPORTS)),
     INVENTORY(listOf(Permission.MANAGE_PRODUCTS, Permission.VIEW_STOCK_RECORDS, Permission.ADJUST_STOCK)),
     CUSTOMERS(listOf(Permission.MANAGE_CUSTOMERS, Permission.RECEIVE_ACCOUNT_PAYMENT)),

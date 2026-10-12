@@ -42,6 +42,7 @@ enum class AuditAction {
     AUTO_BACKUP_SAVED,
     AUTO_BACKUP_FAILED,
     AUTO_BACKUP_SETTINGS_CHANGED,
+    DAY_CLOSED,
 }
 
 /** The record an action touched, as a short type name and an id. */
@@ -58,6 +59,7 @@ object AuditEntity {
     const val MENU_ITEM = "menu_item"
     const val SETTINGS = "settings"
     const val BACKUP = "backup"
+    const val DAY_CLOSING = "day_closing"
 }
 
 /** What to write down; the time and the person are added when it is saved. */

@@ -356,3 +356,52 @@ class AuthorizedMenuRepository(private val inner: MenuRepository, private val au
         }
     }
 }
+
+/**
+ * Day-end closing for whoever holds [Permission.CLOSE_DAY] (the Super Admin always does). Closing a day writes
+ * its activity-log line in the same transaction, naming who closed it and how the cash compared.
+ */
+class AuthorizedDayEndRepository(
+    private val inner: com.invision.pos.data.repository.DayEndRepository,
+    private val auth: Authorizer,
+    private val audit: AuditTrail,
+) : com.invision.pos.data.repository.DayEndRepository {
+
+    override fun today() = inner.today()
+
+    override suspend fun figuresFor(date: java.time.LocalDate): com.invision.pos.domain.dayend.DayFigures {
+        auth.require(Permission.CLOSE_DAY)
+        return inner.figuresFor(date)
+    }
+
+    override suspend fun closingFor(date: java.time.LocalDate): com.invision.pos.domain.dayend.DayClosing? {
+        auth.require(Permission.CLOSE_DAY)
+        return inner.closingFor(date)
+    }
+
+    override suspend fun getClosing(id: Long): com.invision.pos.domain.dayend.DayClosing? {
+        auth.require(Permission.CLOSE_DAY)
+        return inner.getClosing(id)
+    }
+
+    override fun observeClosings(): Flow<List<com.invision.pos.domain.dayend.DayClosing>> =
+        auth.guarded(Permission.CLOSE_DAY) { inner.observeClosings() }
+
+    override suspend fun closeDay(date: java.time.LocalDate, counted: Money, note: String?, closedBy: String): com.invision.pos.data.repository.CloseDayResult {
+        auth.require(Permission.CLOSE_DAY)
+        // The person recorded is the one signed in, whatever name the caller passed.
+        val who = auth.user?.name ?: closedBy
+        return audit.recording({ inner.closeDay(date, counted, note, who) }) { result ->
+            (result as? com.invision.pos.data.repository.CloseDayResult.Closed)?.let {
+                val c = it.closing
+                AuditDraft(
+                    AuditAction.DAY_CLOSED,
+                    AuditEntity.DAY_CLOSING,
+                    c.id,
+                    "Closed ${c.date}: expected cash ${c.figures.expectedCash.toDecimalString()}, counted ${c.counted.toDecimalString()}, " +
+                        "difference ${c.difference.toDecimalString()}",
+                )
+            }
+        }
+    }
+}

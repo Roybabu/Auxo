@@ -42,7 +42,7 @@ import java.io.File
 /**
  * Builds a version 1 database from the committed schema (app/schemas/.../1.json),
  * fills it with Step 2 data, then opens it with the current app so Room runs the
- * 1 -> 2, 2 -> 3 and 3 -> 4 migrations and checks the result against the current schema.
+ * 1 -> 2, 2 -> 3, 3 -> 4 and 4 -> 5 migrations and checks the result against the current schema.
  */
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
@@ -283,5 +283,25 @@ class DatabaseMigrationTest {
         assertEquals("CN/26-27/00002", (billing.recordReturn(one.creditNote, "CN") as ReturnResult.Recorded).number)
         assertEquals(7, inventory.getProduct(1)!!.variants.single().stockQuantity)
         assertEquals(7, db.inventoryDao().movementTotal(11))
+    }
+
+    @Test
+    fun migrate4To5_addsDayClosings_andKeepsTheRest() = runTest {
+        createFromSchema(4).also {
+            it.execSQL(
+                "INSERT INTO audit_log (id, created_at, actor_id, actor_name, actor_role, action, entity_type, entity_id, summary) " +
+                    "VALUES (1, 100, 1, 'Admin', 'SUPER_ADMIN', 'SIGNED_IN', 'user', 1, 'Signed in')",
+            )
+            it.close()
+        }
+        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        database = db
+
+        assertEquals(5, db.openHelper.readableDatabase.version)
+        assertEquals("Signed in", db.auditDao().observeRecent(10).first().single().summary)
+        val dayEnd = com.invision.pos.data.repository.RoomDayEndRepository(db, TestData.clock)
+        assertTrue(dayEnd.observeClosings().first().isEmpty())
+        val result = dayEnd.closeDay(java.time.LocalDate.now(TestData.clock), Money(1_000), null, "Test Admin")
+        assertTrue(result is com.invision.pos.data.repository.CloseDayResult.Closed)
     }
 }

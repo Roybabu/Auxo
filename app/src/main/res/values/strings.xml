@@ -1074,6 +1074,8 @@ in %2$s</string>
     <string name="perm_group_shop">Menu and shop</string>
     <string name="perm_return">Process returns and refunds</string>
     <string name="perm_return_hint">Issue credit notes against finished sales.</string>
+    <string name="perm_close_day">Close the day and count the cash</string>
+    <string name="perm_close_day_hint">Enter the cash in the drawer at day end, close the day, and read closed days.</string>
     <string name="perm_dashboard">See sales figures on Home</string>
     <string name="perm_dashboard_hint">Today\'s sales, stock value and insights. Includes sales totals.</string>
     <string name="perm_financials">See sales totals and payment records</string>

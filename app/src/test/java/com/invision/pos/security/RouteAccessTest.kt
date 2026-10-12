@@ -29,7 +29,7 @@ class RouteAccessTest {
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
-        TopLevelDestination.HOME.route,
+        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, TopLevelDestination.HOME.route,
     )
 
     @Test
@@ -88,6 +88,7 @@ class RouteAccessTest {
     fun oneOption_opensOnlyItsOwnPages() {
         assertEquals(basics + MoreRoutes.MENU + MoreRoutes.MENU_EDITOR, openWith(Permission.MANAGE_MENU))
         assertEquals(basics + BillingRoutes.RETURN, openWith(Permission.PROCESS_RETURN))
+        assertEquals(basics + MoreRoutes.DAY_END + MoreRoutes.DAY_CLOSING, openWith(Permission.CLOSE_DAY))
         assertEquals(basics + MoreRoutes.SHOP_SETTINGS + MoreRoutes.STORE_DETAILS, openWith(Permission.MANAGE_SETTINGS))
         assertEquals(basics + MoreRoutes.ACTIVITY_LOG, openWith(Permission.VIEW_ACTIVITY_LOG))
     }
