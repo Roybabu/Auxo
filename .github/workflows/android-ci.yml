@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      quick:
+        description: 'Quick run: build and unit tests only (no lint, release build, emulator or coverage)'
+        type: boolean
+        default: false
+      tests:
+        description: 'Quick run: only tests matching this pattern, e.g. *ThermalReceiptPrinterTest (empty = all unit tests)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -51,9 +60,17 @@ jobs:
 
       - name: Run unit tests
         shell: bash
-        run: ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
+        env:
+          TEST_FILTER: ${{ inputs.tests }}
+        run: |
+          if [ -n "$TEST_FILTER" ]; then
+            ./gradlew testDebugUnitTest --tests "$TEST_FILTER" 2>&1 | tee build-logs/test.log
+          else
+            ./gradlew testDebugUnitTest 2>&1 | tee build-logs/test.log
+          fi
 
       - name: Run Android lint
+        if: ${{ !inputs.quick }}
         shell: bash
         run: ./gradlew lintDebug 2>&1 | tee build-logs/lint.log
 
@@ -86,6 +103,7 @@ jobs:
   # Looks for committed secrets, unsafe manifest or workflow settings, and the prohibited
   # integration name, then checks that the release variant still compiles (unsigned).
   security:
+    if: ${{ !inputs.quick }}
     name: Security checks and release build
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -123,6 +141,7 @@ jobs:
           retention-days: 14
 
   device-tests:
+    if: ${{ !inputs.quick }}
     name: Device tests (Android emulator)
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -190,6 +209,7 @@ jobs:
 
   # Measures how much of the app the unit tests run. Reported only; it does not block the build.
   coverage:
+    if: ${{ !inputs.quick }}
     name: Unit test coverage
     runs-on: ubuntu-latest
     timeout-minutes: 40
