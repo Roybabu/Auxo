@@ -91,6 +91,12 @@ class SignedInRule : org.junit.rules.ExternalResource() {
                 com.invision.pos.core.auth.AuthState.SignedOut -> auth.signIn(USERNAME, DEVICE_PW)
                 else -> Unit
             }
+            // Setup asks for a recovery code before the app opens; make one so the test reaches the app.
+            if (auth.recoveryPrompt.value == com.invision.pos.core.auth.RecoveryPrompt.Required) {
+                val shown = auth.startRecoveryCode(null) as com.invision.pos.core.auth.RecoveryStartResult.Ready
+                auth.confirmRecoveryCode(shown.code)
+            }
+            auth.dismissRecoveryOffer()
         }
         check(auth.state.value is com.invision.pos.core.auth.AuthState.SignedIn) { "Could not sign in for the device test" }
     }

@@ -48,6 +48,7 @@ interface MoreActions {
     fun onOpenBackup() = Unit
     fun onOpenShopSettings() = Unit
     fun onOpenUsers() = Unit
+    fun onOpenRecoveryCode() = Unit
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
     fun onOpenGstReport() = Unit
@@ -119,6 +120,15 @@ fun MoreScreen(
                     stringResource(R.string.more_users_body),
                     actions::onOpenUsers,
                     modifier = Modifier.testTag("more_user_management"),
+                )
+            }
+            if (can(Permission.MANAGE_USERS)) {
+                MoreItem(
+                    R.drawable.ic_person,
+                    stringResource(R.string.recovery_screen_title),
+                    stringResource(R.string.more_recovery_body),
+                    actions::onOpenRecoveryCode,
+                    modifier = Modifier.testTag("more_recovery_code"),
                 )
             }
             if (can(Permission.VIEW_ACTIVITY_LOG)) {

@@ -71,6 +71,7 @@ class RoleScreensTest {
         more(Role.SUPER_ADMIN)
         composeRule.onNodeWithText("Business settings").assertIsDisplayed()
         composeRule.onNodeWithTag("more_user_management").assertIsDisplayed()
+        composeRule.onNodeWithTag("more_recovery_code").assertIsDisplayed()
         composeRule.onNodeWithTag("more_activity_log").assertIsDisplayed()
         composeRule.onNodeWithTag("more_shop_settings").assertIsDisplayed()
         composeRule.onNodeWithTag("more_signed_in").assertIsDisplayed()
@@ -84,6 +85,7 @@ class RoleScreensTest {
     fun more_forAnEmployee_hidesEverythingButInvoicesAppearanceAndSignOut() {
         more(Role.EMPLOYEE)
         composeRule.onAllNodesWithTag("more_user_management").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("more_recovery_code").assertCountEquals(0)
         composeRule.onAllNodesWithTag("more_activity_log").assertCountEquals(0)
         composeRule.onAllNodesWithTag("more_shop_settings").assertCountEquals(0)
         composeRule.onAllNodesWithText("Business settings").assertCountEquals(0)

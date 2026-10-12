@@ -29,7 +29,7 @@ class RouteAccessTest {
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
-        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, TopLevelDestination.HOME.route,
+        MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.RECOVERY_CODE, TopLevelDestination.HOME.route,
     )
 
     @Test
@@ -67,6 +67,14 @@ class RouteAccessTest {
     }
 
     @Test
+    fun theRecoveryCodePage_isSuperAdminOnly() {
+        assertEquals(Permission.MANAGE_USERS, RouteAccess.permissionFor(MoreRoutes.RECOVERY_CODE))
+        assertTrue(allowed(Role.SUPER_ADMIN, MoreRoutes.RECOVERY_CODE))
+        assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.RECOVERY_CODE))
+        assertFalse(openWith(*PermissionOptions.all.toTypedArray()).contains(MoreRoutes.RECOVERY_CODE))
+    }
+
+    @Test
     fun aPageNobodyListed_isSuperAdminOnly() {
         assertEquals(Permission.MANAGE_USERS, RouteAccess.permissionFor("some/new/page"))
         assertFalse(allowed(Role.EMPLOYEE, "some/new/page"))
@@ -89,7 +97,7 @@ class RouteAccessTest {
     @Test
     fun givingEveryOption_stillLeavesUserManagementAndBackupToTheSuperAdmin() {
         val open = openWith(*PermissionOptions.all.toTypedArray())
-        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.BACKUP - MoreRoutes.GST_REPORT, open)
+        assertEquals(everyPage.toSet() - MoreRoutes.USER_MANAGEMENT - MoreRoutes.RECOVERY_CODE - MoreRoutes.BACKUP - MoreRoutes.GST_REPORT, open)
     }
 
     @Test

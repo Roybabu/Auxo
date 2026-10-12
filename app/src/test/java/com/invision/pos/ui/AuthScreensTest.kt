@@ -183,9 +183,9 @@ class AuthScreensTest {
     }
 
     @Test
-    fun setupAndLogin_offerNoForgotPassword_orOnlineSignIn() {
+    fun setup_offersNoOnlineSignIn() {
         setup()
-        for (text in listOf("Forgot", "forgot", "Reset password", "Sign in with", "Google", "server", "Server", "Cloud")) {
+        for (text in listOf("Sign in with", "Google", "server", "Server", "Cloud")) {
             composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
         }
     }
@@ -199,14 +199,14 @@ class AuthScreensTest {
     }
 
     @Test
-    fun loginScreen_hasNoSetupOrForgotPasswordOptions() {
+    fun loginScreen_hasNoSetupOptions_andOnlyOffersForgotPasswordWhenAskedTo() {
         login()
         composeRule.onNodeWithTag("login").assertIsDisplayed()
         composeRule.onNodeWithTag("login_identifier").assertExists()
         composeRule.onNodeWithTag("login_password").assertExists()
         composeRule.onNodeWithTag("setup_name").assertDoesNotExist()
         composeRule.onNodeWithTag("setup_submit").assertDoesNotExist()
-        for (text in listOf("Forgot", "Create administrator", "Register", "Sign up", "Reset", "Cloud", "server")) {
+        for (text in listOf("Forgot", "Create administrator", "Register", "Sign up", "Cloud", "server")) {
             composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
         }
     }

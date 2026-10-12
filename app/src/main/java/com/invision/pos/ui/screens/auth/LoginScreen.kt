@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +36,12 @@ import com.invision.pos.viewmodel.LoginViewModel
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LoginContent(state, viewModel::onIdentifierChange, viewModel::onPasswordChange, viewModel::signIn)
+    var resetting by rememberSaveable { mutableStateOf(false) }
+    if (resetting) {
+        PasswordResetScreen(onBack = { resetting = false })
+    } else {
+        LoginContent(state, viewModel::onIdentifierChange, viewModel::onPasswordChange, viewModel::signIn, onForgotPassword = { resetting = true })
+    }
 }
 
 @Composable
@@ -44,6 +50,7 @@ fun LoginContent(
     onIdentifierChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onSignIn: () -> Unit,
+    onForgotPassword: (() -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
@@ -91,6 +98,11 @@ fun LoginContent(
                 modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_submit"),
             ) {
                 Text(stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action))
+            }
+            if (onForgotPassword != null) {
+                TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.fillMaxWidth().testTag("login_forgot")) {
+                    Text(stringResource(R.string.auth_login_forgot))
+                }
             }
         }
     }

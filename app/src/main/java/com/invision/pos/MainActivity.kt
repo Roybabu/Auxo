@@ -52,7 +52,8 @@ class MainActivity : ComponentActivity() {
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
                 CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalStoreLogo provides logo) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
-                    AuthGate(authState) { InvisionApp() }
+                    val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
+                    AuthGate(authState, recoveryPrompt = recoveryPrompt) { InvisionApp() }
                 }
             }
         }
