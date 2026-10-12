@@ -1523,4 +1523,22 @@ in %2$s</string>
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
     </plurals>
+    <string name="whatsapp_share">WhatsApp</string>
+    <string name="whatsapp_caption">Invoice %1$s from %2$s. Total: %3$s. Thank you!</string>
+    <string name="whatsapp_share_title">Send invoice</string>
+    <string name="invoice_whatsapp_failed">Could not open WhatsApp.</string>
+    <string name="reminder_body">Hello %1$s, this is a friendly reminder from %2$s. Your pending balance is %3$s. Please pay when convenient. Thank you!</string>
+    <string name="reminder_upi">You can pay by UPI to %1$s.</string>
+    <string name="reminder_button">Remind on WhatsApp</string>
+    <string name="reminder_share_title">Send reminder</string>
+    <string name="reminder_failed">Could not open WhatsApp.</string>
+    <string name="reminder_no_phone">No phone number is saved for this customer. Pick a chat in WhatsApp.</string>
+    <string name="reminder_note">Nothing is sent automatically. WhatsApp opens with the message ready and you press send.</string>
+    <string name="owing_sort_amount">Most owed</string>
+    <string name="owing_sort_age">Oldest first</string>
+    <string name="owing_age_today">Owing since today</string>
+    <plurals name="owing_age_days">
+        <item quantity="one">Owing %d day</item>
+        <item quantity="other">Owing %d days</item>
+    </plurals>
 </resources>

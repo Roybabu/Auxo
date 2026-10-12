@@ -13,6 +13,16 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
+import com.invision.pos.domain.customers.OwingSort
+import kotlinx.coroutines.launch
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +61,13 @@ fun CustomerListScreen(
     viewModel: CustomerListViewModel = viewModel(factory = CustomerListViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val formatter = LocalMoneyFormatter.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = { InvisionTopAppBar(title = stringResource(R.string.customers_title)) },
         floatingActionButton = {
             if (uiState.customerCount > 0) {
@@ -71,6 +87,13 @@ fun CustomerListScreen(
             onRetry = viewModel::retry,
             onOpenCustomer = onOpenCustomer,
             onAddCustomer = onAddCustomer,
+            onSortChange = viewModel::onSortChange,
+            onRemind = { account ->
+                val shop = uiState.reminderShop
+                if (shop != null && !openReminder(context, account, shop, formatter)) {
+                    scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.reminder_failed)) }
+                }
+            },
             modifier = Modifier.padding(padding),
         )
     }
@@ -85,6 +108,8 @@ fun CustomerListContent(
     onOpenCustomer: (Long) -> Unit,
     onAddCustomer: () -> Unit,
     modifier: Modifier = Modifier,
+    onSortChange: (OwingSort) -> Unit = {},
+    onRemind: (CustomerAccount) -> Unit = {},
 ) {
     val formatter = LocalMoneyFormatter.current
     when {
@@ -146,6 +171,22 @@ fun CustomerListContent(
                             label = { Text(stringResource(R.string.customers_filter_owing, state.owingCount)) },
                         )
                     }
+                    if (state.filter == CustomerFilter.OWING && state.owingCount > 0) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                            FilterChip(
+                                selected = state.sort == OwingSort.AMOUNT,
+                                onClick = { onSortChange(OwingSort.AMOUNT) },
+                                label = { Text(stringResource(R.string.owing_sort_amount)) },
+                                modifier = Modifier.testTag("owing_sort_amount"),
+                            )
+                            FilterChip(
+                                selected = state.sort == OwingSort.AGE,
+                                onClick = { onSortChange(OwingSort.AGE) },
+                                label = { Text(stringResource(R.string.owing_sort_age)) },
+                                modifier = Modifier.testTag("owing_sort_age"),
+                            )
+                        }
+                    }
                 }
             }
             if (state.accounts.isEmpty()) {
@@ -161,14 +202,23 @@ fun CustomerListContent(
                 }
             }
             items(state.accounts, key = { it.customer.id }) { account ->
-                CustomerRow(account, onClick = { onOpenCustomer(account.customer.id) })
+                CustomerRow(
+                    account,
+                    onClick = { onOpenCustomer(account.customer.id) },
+                    ageDays = state.ageDays[account.customer.id].takeIf { state.filter == CustomerFilter.OWING },
+                    onRemind = if (state.filter == CustomerFilter.OWING && state.reminderShop != null) {
+                        { onRemind(account) }
+                    } else {
+                        null
+                    },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit) {
+private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit, ageDays: Int? = null, onRemind: (() -> Unit)? = null) {
     val customer = account.customer
     InvisionCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -191,8 +241,21 @@ private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                if (ageDays != null) {
+                    Text(
+                        if (ageDays == 0) stringResource(R.string.owing_age_today) else pluralStringResource(R.plurals.owing_age_days, ageDays, ageDays),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (ageDays >= 30) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("owing_age_${account.customer.id}"),
+                    )
+                }
             }
             StatusChip(text = balanceText(account.balance), tone = balanceTone(account.balance))
+            if (onRemind != null) {
+                IconButton(onClick = onRemind, modifier = Modifier.testTag("remind_${account.customer.id}")) {
+                    Icon(painterResource(R.drawable.ic_chat), contentDescription = stringResource(R.string.reminder_button))
+                }
+            }
         }
     }
 }

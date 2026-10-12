@@ -189,7 +189,11 @@ class FakeCustomerRepository(customers: List<Customer> = emptyList()) : Customer
 
     private fun account(customer: Customer, entries: List<LedgerEntry>): CustomerAccount {
         val own = entries.filter { it.customerId == customer.id }
-        return CustomerAccount(customer, own.fold(Money.ZERO) { acc, e -> acc + e.amount }, own.maxOfOrNull { it.createdAtMillis }, own.sumOf { it.points })
+        val balance = own.fold(Money.ZERO) { acc, e -> acc + e.amount }
+        return CustomerAccount(
+            customer, balance, own.maxOfOrNull { it.createdAtMillis }, own.sumOf { it.points },
+            owingSinceMillis = if (balance > Money.ZERO) com.invision.pos.domain.customers.Ledger.owingSince(own) else null,
+        )
     }
 
     override fun observeAccount(customerId: Long): Flow<CustomerAccount?> = combine(customers, ledger) { list, entries ->

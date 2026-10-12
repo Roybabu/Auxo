@@ -18,7 +18,9 @@ import com.invision.pos.domain.model.LedgerEntryType
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentMethod
 import com.invision.pos.domain.model.PaymentRecord
+import com.invision.pos.domain.customers.Ledger
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 
@@ -34,7 +36,13 @@ class RoomCustomerRepository(
     private val billing = database.billingDao()
     private val operations = database.operationDao()
 
-    override fun observeAccounts(): Flow<List<CustomerAccount>> = dao.observeAccounts().map { rows -> rows.map { it.toDomain() } }
+    override fun observeAccounts(): Flow<List<CustomerAccount>> = combine(dao.observeAccounts(), dao.observeMoneyEntries()) { rows, entries ->
+        val byCustomer = entries.map { it.toDomain() }.groupBy { it.customerId }
+        rows.map { row ->
+            val account = row.toDomain()
+            if (account.balance > Money.ZERO) account.copy(owingSinceMillis = Ledger.owingSince(byCustomer[account.customer.id].orEmpty())) else account
+        }
+    }
 
     override fun observeAccount(customerId: Long): Flow<CustomerAccount?> = dao.observeAccount(customerId).map { it?.toDomain() }
 

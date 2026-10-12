@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +60,7 @@ import com.invision.pos.ui.screens.billing.labelRes
 import com.invision.pos.ui.theme.InvisionThemeExtras
 import com.invision.pos.ui.theme.Spacing
 import com.invision.pos.viewmodel.CustomerDetailEvent
+import kotlinx.coroutines.launch
 import com.invision.pos.viewmodel.CustomerDetailUiState
 import com.invision.pos.viewmodel.CustomerDetailViewModel
 
@@ -75,6 +77,8 @@ fun CustomerDetailScreen(
     val context = LocalContext.current
     val resources = LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val formatter = LocalMoneyFormatter.current
     val ready = uiState as? CustomerDetailUiState.Ready
 
     LaunchedEffect(viewModel) {
@@ -121,6 +125,12 @@ fun CustomerDetailScreen(
                 onReceivePayment = { onReceivePayment(state.account.customer.id) },
                 onOpenInvoice = onOpenInvoice,
                 onOpenHistory = { onOpenHistory(state.account.customer.id) },
+                onRemind = {
+                    val shop = state.reminderShop
+                    if (shop != null && !openReminder(context, state.account, shop, formatter)) {
+                        scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.reminder_failed)) }
+                    }
+                },
                 modifier = modifier,
             )
         }
@@ -134,6 +144,7 @@ fun CustomerDetailContent(
     onOpenInvoice: (Long) -> Unit,
     modifier: Modifier = Modifier,
     onOpenHistory: () -> Unit = {},
+    onRemind: (() -> Unit)? = null,
 ) {
     val formatter = LocalMoneyFormatter.current
     val customer = state.account.customer
@@ -190,6 +201,17 @@ fun CustomerDetailContent(
                     ) {
                         Icon(painterResource(R.drawable.ic_wallet), contentDescription = null)
                         Text(stringResource(R.string.customer_receive_payment), modifier = Modifier.padding(start = Spacing.sm))
+                    }
+                    if (onRemind != null && balance > Money.ZERO && state.reminderShop != null) {
+                        OutlinedButton(onClick = onRemind, modifier = Modifier.testTag("customer_remind")) {
+                            Icon(painterResource(R.drawable.ic_chat), contentDescription = null)
+                            Text(stringResource(R.string.reminder_button), modifier = Modifier.padding(start = Spacing.sm))
+                        }
+                        Text(
+                            stringResource(R.string.reminder_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     OutlinedButton(onClick = onOpenHistory, modifier = Modifier.testTag("customer_history")) {
                         Icon(painterResource(R.drawable.ic_history), contentDescription = null)

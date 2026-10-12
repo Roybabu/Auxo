@@ -62,6 +62,11 @@ data class LedgerEntry(
     val createdAtMillis: Long,
     /** Loyalty points added (positive) or taken off (negative). Zero for ordinary money entries. */
     val points: Int = 0,
+    /**
+     * When the oldest part of the money still owed was charged (see Ledger.owingSince), or null when nothing
+     * is owed. Payments are counted against the oldest charges first.
+     */
+    val owingSinceMillis: Long? = null,
 )
 
 /** A customer with what they owe now. */

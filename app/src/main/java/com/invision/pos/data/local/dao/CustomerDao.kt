@@ -19,6 +19,13 @@ class OverpaymentException(val balanceMinor: Long) : RuntimeException("Payment i
 @Dao
 abstract class CustomerDao {
 
+    /** Every money entry (no loyalty points), grouped by customer and oldest first, to work out how long money has been owed. */
+    @Query(
+        "SELECT * FROM customer_ledger WHERE type IN ('OPENING_BALANCE', 'SALE', 'RETURN', 'PAYMENT') " +
+            "ORDER BY customer_id, created_at, id",
+    )
+    abstract fun observeMoneyEntries(): Flow<List<LedgerEntryEntity>>
+
     @Query(
         "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity, " +
             "COALESCE(SUM(l.points), 0) AS points_balance " +

@@ -1523,4 +1523,22 @@
         <item quantity="one">%d দিন</item>
         <item quantity="other">%d দিন</item>
     </plurals>
+    <string name="whatsapp_share">WhatsApp</string>
+    <string name="whatsapp_caption">%2$s-এর ইনভয়েস %1$s। মোট: %3$s। ধন্যবাদ!</string>
+    <string name="whatsapp_share_title">ইনভয়েস পাঠান</string>
+    <string name="invoice_whatsapp_failed">WhatsApp খোলা যায়নি।</string>
+    <string name="reminder_body">নমস্কার %1$s, %2$s-এর পক্ষ থেকে একটি বিনীত মনে করিয়ে দেওয়া: আপনার বকেয়া %3$s। সুবিধামতো পরিশোধ করুন। ধন্যবাদ!</string>
+    <string name="reminder_upi">আপনি UPI-তে %1$s-এ টাকা দিতে পারেন।</string>
+    <string name="reminder_button">WhatsApp-এ মনে করান</string>
+    <string name="reminder_share_title">মনে করানোর বার্তা পাঠান</string>
+    <string name="reminder_failed">WhatsApp খোলা যায়নি।</string>
+    <string name="reminder_no_phone">এই গ্রাহকের ফোন নম্বর সেভ করা নেই। WhatsApp-এ চ্যাট বেছে নিন।</string>
+    <string name="reminder_note">কিছুই নিজে থেকে পাঠানো হয় না। WhatsApp বার্তা সহ খোলে এবং আপনি পাঠান চাপেন।</string>
+    <string name="owing_sort_amount">সবচেয়ে বেশি বকেয়া</string>
+    <string name="owing_sort_age">সবচেয়ে পুরনো আগে</string>
+    <string name="owing_age_today">আজ থেকে বকেয়া</string>
+    <plurals name="owing_age_days">
+        <item quantity="one">%d দিন ধরে বকেয়া</item>
+        <item quantity="other">%d দিন ধরে বকেয়া</item>
+    </plurals>
 </resources>

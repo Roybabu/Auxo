@@ -19,6 +19,13 @@ import com.invision.pos.domain.customers.AccountPaymentCheck
 import com.invision.pos.domain.customers.AccountPaymentError
 import com.invision.pos.domain.customers.AccountPaymentValidator
 import com.invision.pos.domain.customers.CustomerHistory
+import com.invision.pos.domain.customers.DuesReminder
+import com.invision.pos.domain.customers.OwingSort
+import com.invision.pos.domain.customers.ReminderShop
+import com.invision.pos.data.repository.SettingsRepository
+import com.invision.pos.domain.billing.BusinessTime
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import com.invision.pos.domain.customers.Ledger
 import com.invision.pos.domain.customers.LedgerLine
 import com.invision.pos.domain.model.Customer
@@ -65,40 +72,64 @@ data class CustomerListUiState(
     /** Total owed to the store across all accounts. */
     val totalDue: Money = Money.ZERO,
     val owingCount: Int = 0,
+    /** How the Owing list is ordered. */
+    val sort: OwingSort = OwingSort.AMOUNT,
+    /** Whole days each owing customer has owed money, by customer id. */
+    val ageDays: Map<Long, Int> = emptyMap(),
+    /** What reminders say about the shop; null until the settings are read. */
+    val reminderShop: ReminderShop? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CustomerListViewModel(private val customers: CustomerRepository) : ViewModel() {
+class CustomerListViewModel(
+    private val customers: CustomerRepository,
+    private val settings: SettingsRepository? = null,
+    private val clock: Clock = BusinessTime.clock(),
+) : ViewModel() {
 
-    private val filters = MutableStateFlow(CustomerFilter.ALL to "")
+    private data class Query(val filter: CustomerFilter = CustomerFilter.ALL, val text: String = "", val sort: OwingSort = OwingSort.AMOUNT)
+
+    private val filters = MutableStateFlow(Query())
     private val reload = MutableStateFlow(0)
 
     val uiState: StateFlow<CustomerListUiState> = reload
         .flatMapLatest {
-            combine(customers.observeAccounts(), filters) { accounts, (filter, query) ->
+            val shop = (settings?.observeSettings() ?: flowOf(null)).map { s ->
+                s?.let { ReminderShop.of(it.storeName, it.upiId, it.receipt.language) }
+            }.catch { emit(null) }
+            combine(customers.observeAccounts(), filters, shop) { accounts, query, reminderShop ->
                 val owing = accounts.filter { it.balance > Money.ZERO }
+                val today = LocalDate.now(clock)
                 CustomerListUiState(
                     isLoading = false,
-                    query = query,
-                    filter = filter,
-                    accounts = filterAccounts(accounts, filter, query),
+                    query = query.text,
+                    filter = query.filter,
+                    accounts = filterAccounts(accounts, query.filter, query.text, query.sort),
                     customerCount = accounts.size,
                     totalDue = owing.fold(Money.ZERO) { acc, a -> acc + a.balance },
                     owingCount = owing.size,
+                    sort = query.sort,
+                    ageDays = owing.mapNotNull { a -> DuesReminder.ageInDays(a.owingSinceMillis, today, clock.zone)?.let { a.customer.id to it } }.toMap(),
+                    reminderShop = reminderShop,
                 )
             }.catch { emit(CustomerListUiState(isLoading = false, loadFailed = true)) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CustomerListUiState())
 
-    fun onQueryChange(query: String) = filters.update { it.copy(second = query.take(40)) }
+    fun onQueryChange(query: String) = filters.update { it.copy(text = query.take(40)) }
 
-    fun onFilterChange(filter: CustomerFilter) = filters.update { it.copy(first = filter) }
+    fun onFilterChange(filter: CustomerFilter) = filters.update { it.copy(filter = filter) }
+
+    fun onSortChange(sort: OwingSort) = filters.update { it.copy(sort = sort) }
 
     fun retry() = reload.update { it + 1 }
 
     companion object {
-        /** Name, phone or GSTIN matches; with [CustomerFilter.OWING] only accounts with money due, largest first. */
-        fun filterAccounts(accounts: List<CustomerAccount>, filter: CustomerFilter, query: String): List<CustomerAccount> {
+        /**
+         * Name, phone or GSTIN matches; with [CustomerFilter.OWING] only accounts with money due, largest first or
+         * (with [OwingSort.AGE]) the longest overdue first.
+         */
+        fun filterAccounts(accounts: List<CustomerAccount>, filter: CustomerFilter, query: String, sort: OwingSort = OwingSort.AMOUNT): List<CustomerAccount> {
             val text = query.trim()
             val digits = text.filter { it.isDigit() }
             val matching = accounts.filter { account ->
@@ -110,12 +141,15 @@ class CustomerListViewModel(private val customers: CustomerRepository) : ViewMod
             }
             return when (filter) {
                 CustomerFilter.ALL -> matching
-                CustomerFilter.OWING -> matching.filter { it.balance > Money.ZERO }.sortedByDescending { it.balance }
+                CustomerFilter.OWING -> DuesReminder.sortOwing(matching, sort)
             }
         }
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { CustomerListViewModel(appContainer().customerRepository) }
+            initializer {
+                val container = appContainer()
+                CustomerListViewModel(container.customerRepository, container.settingsRepository, container.clock)
+            }
         }
     }
 }
@@ -137,6 +171,8 @@ sealed interface CustomerDetailUiState {
         val paid: Money,
         /** Loyalty point entries, newest first. Empty if the customer never had any. */
         val pointsHistory: List<LedgerEntry> = emptyList(),
+        /** What a dues reminder says about the shop; null until the settings are read. */
+        val reminderShop: ReminderShop? = null,
     ) : CustomerDetailUiState {
         val hasPoints: Boolean get() = pointsHistory.isNotEmpty()
     }
@@ -151,6 +187,7 @@ class CustomerDetailViewModel(
     private val customerId: Long,
     private val customers: CustomerRepository,
     private val clock: Clock,
+    private val settings: SettingsRepository? = null,
 ) : ViewModel() {
 
     private val reload = MutableStateFlow(0)
@@ -159,11 +196,15 @@ class CustomerDetailViewModel(
 
     val uiState: StateFlow<CustomerDetailUiState> = reload
         .flatMapLatest {
+            val shop = (settings?.observeSettings() ?: flowOf(null)).map { s ->
+                s?.let { ReminderShop.of(it.storeName, it.upiId, it.receipt.language) }
+            }.catch { emit(null) }
             combine(
                 customers.observeAccount(customerId),
                 customers.observeLedger(customerId),
                 customers.observeInvoices(customerId),
-            ) { account, ledger, invoices ->
+                shop,
+            ) { account, ledger, invoices, reminderShop ->
                 if (account == null) {
                     CustomerDetailUiState.NotFound
                 } else {
@@ -175,6 +216,7 @@ class CustomerDetailViewModel(
                         charged = charged,
                         paid = paid,
                         pointsHistory = Ledger.pointsHistory(ledger),
+                        reminderShop = reminderShop,
                     )
                 }
             }.catch<CustomerDetailUiState> { emit(CustomerDetailUiState.Failed) }
@@ -201,6 +243,7 @@ class CustomerDetailViewModel(
                     customerId = createSavedStateHandle().get<Long>(ARG_CUSTOMER_ID) ?: 0L,
                     customers = container.customerRepository,
                     clock = container.clock,
+                    settings = container.settingsRepository,
                 )
             }
         }

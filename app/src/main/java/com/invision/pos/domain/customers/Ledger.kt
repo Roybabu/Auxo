@@ -27,6 +27,40 @@ object Ledger {
         }
     }
 
+    /**
+     * When the oldest money still owed was charged, or null if nothing is owed. Payments and returns settle the
+     * oldest charges first, so a customer who has paid the old bills but not the new one is "owing since" the new
+     * one. Money paid in advance is used up by the next charges. Loyalty point entries are ignored.
+     */
+    fun owingSince(entries: List<LedgerEntry>): Long? {
+        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        if (balance(money) <= Money.ZERO) return null
+        val open = ArrayDeque<Pair<Long, Long>>()
+        var credit = 0L
+        for (entry in money) {
+            val amount = entry.amount.minorUnits
+            if (amount > 0) {
+                val used = minOf(credit, amount)
+                credit -= used
+                if (amount - used > 0) open.addLast(entry.createdAtMillis to amount - used)
+            } else if (amount < 0) {
+                var pay = -amount
+                while (pay > 0 && open.isNotEmpty()) {
+                    val (time, remaining) = open.first()
+                    if (remaining <= pay) {
+                        pay -= remaining
+                        open.removeFirst()
+                    } else {
+                        open[0] = time to remaining - pay
+                        pay = 0
+                    }
+                }
+                credit += pay
+            }
+        }
+        return open.firstOrNull()?.first
+    }
+
     /** Loyalty point entries, newest first. */
     fun pointsHistory(entries: List<LedgerEntry>): List<LedgerEntry> =
         entries.filter { it.type.isPoints }.sortedWith(compareByDescending<LedgerEntry> { it.createdAtMillis }.thenByDescending { it.id })

@@ -49,6 +49,7 @@ import com.invision.pos.R
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.ui.can
 import com.invision.pos.core.receipt.ReceiptOutput
+import com.invision.pos.core.receipt.WhatsAppShare
 import com.invision.pos.core.receipt.ReceiptFonts
 import com.invision.pos.core.receipt.ReceiptLabels
 import com.invision.pos.core.receipt.ReceiptRenderer
@@ -143,6 +144,19 @@ fun InvoiceDetailScreen(
                         }
                     }
                 },
+                onWhatsApp = {
+                    scope.launch {
+                        val caption = resources.getString(
+                            R.string.whatsapp_caption,
+                            state.invoice.number,
+                            state.invoice.seller.name,
+                            formatter.format(state.invoice.grandTotal),
+                        )
+                        if (!WhatsAppShare.shareInvoice(context, state.invoice, state.receiptOptions, caption, resources.getString(R.string.whatsapp_share_title), logo)) {
+                            snackbarHostState.showSnackbar(resources.getString(R.string.invoice_whatsapp_failed))
+                        }
+                    }
+                },
                 onReturn = { onReturn(state.invoice.id) },
                 onOpenInvoice = onOpenInvoice,
                 onNewBill = onNewBill,
@@ -164,6 +178,7 @@ fun InvoiceDetailContent(
     onNewBill: () -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = BusinessTime.ZONE,
+    onWhatsApp: (() -> Unit)? = null,
 ) {
     val invoice = state.invoice
     val logo = LocalStoreLogo.current
@@ -185,6 +200,12 @@ fun InvoiceDetailContent(
                     OutlinedButton(onClick = onShare, modifier = Modifier.weight(1f)) {
                         Icon(painterResource(R.drawable.ic_share), contentDescription = null, modifier = Modifier.size(18.dp))
                         Text(stringResource(R.string.invoice_share), modifier = Modifier.padding(start = Spacing.sm))
+                    }
+                }
+                if (onWhatsApp != null) {
+                    OutlinedButton(onClick = onWhatsApp, modifier = Modifier.fillMaxWidth().testTag("invoice_whatsapp")) {
+                        Icon(painterResource(R.drawable.ic_chat), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(R.string.whatsapp_share), modifier = Modifier.padding(start = Spacing.sm))
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
