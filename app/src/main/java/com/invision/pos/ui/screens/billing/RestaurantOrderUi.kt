@@ -86,7 +86,7 @@ fun OrderPlacedDialog(kotNumber: String, onPrint: () -> Unit, onShare: () -> Uni
                 Text(stringResource(R.string.order_placed_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Button(onClick = onPrint, modifier = Modifier.testTag("order_print")) { Text(stringResource(R.string.order_print)) }
-                    OutlinedButton(onClick = onShare, modifier = Modifier.testTag("order_share")) { Text(stringResource(R.string.order_share)) }
+                    OutlinedButton(onClick = onShare, modifier = Modifier.testTag("order_share")) { Text(stringResource(R.string.order_ticket_share)) }
                 }
             }
         },

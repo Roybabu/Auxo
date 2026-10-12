@@ -1488,7 +1488,7 @@ in %2$s</string>
     <string name="order_placed_body">Kitchen ticket %1$s is ready. Print it or share it with the kitchen.</string>
     <string name="order_placed_note">The bill stays open. Settle it from Held bills when the guest is ready to pay.</string>
     <string name="order_print">Print ticket</string>
-    <string name="order_share">Share ticket</string>
+    <string name="order_ticket_share">Share ticket</string>
     <string name="order_print_failed">Could not start printing.</string>
     <string name="order_share_failed">Could not share the ticket.</string>
     <string name="order_dine_in_table">Dine-in · Table %1$s</string>

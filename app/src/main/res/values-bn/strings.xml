@@ -1488,7 +1488,7 @@
     <string name="order_placed_body">কিচেন টিকিট %1$s তৈরি। এটি প্রিন্ট করুন বা রান্নাঘরে শেয়ার করুন।</string>
     <string name="order_placed_note">বিলটি খোলা থাকবে। অতিথি টাকা দিতে চাইলে হোল্ড করা বিল থেকে এটি শেষ করুন।</string>
     <string name="order_print">টিকিট প্রিন্ট করুন</string>
-    <string name="order_share">টিকিট শেয়ার করুন</string>
+    <string name="order_ticket_share">টিকিট শেয়ার করুন</string>
     <string name="order_print_failed">প্রিন্ট শুরু করা যায়নি।</string>
     <string name="order_share_failed">টিকিট শেয়ার করা যায়নি।</string>
     <string name="order_dine_in_table">এখানে খাওয়া · টেবিল %1$s</string>

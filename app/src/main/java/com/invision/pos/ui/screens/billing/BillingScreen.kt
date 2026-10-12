@@ -388,7 +388,7 @@ fun BillingScreen(
                 scope.launch {
                     val shared = KitchenTicketOutput.share(
                         context, ticket, paper, KotLabels.from(context, language),
-                        resources.getString(R.string.order_share),
+                        resources.getString(R.string.order_ticket_share),
                     )
                     if (!shared) snackbarHostState.showSnackbar(resources.getString(R.string.order_share_failed))
                 }
