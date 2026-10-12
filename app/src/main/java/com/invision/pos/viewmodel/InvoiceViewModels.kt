@@ -6,6 +6,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.invision.pos.core.auth.Permission
 import com.invision.pos.data.repository.BillingRepository
 import com.invision.pos.data.repository.CustomerRepository
 import com.invision.pos.data.repository.SettingsRepository
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -194,6 +196,8 @@ class InvoiceHistoryViewModel(
     private val billing: BillingRepository,
     private val clock: Clock,
     private val customers: CustomerRepository? = null,
+    /** False for a person who may open invoices but not see payment records or business totals (an Employee). */
+    private val showFinancials: Boolean = true,
 ) : ViewModel() {
 
     private val filters = MutableStateFlow(Triple(HistoryTab.INVOICES, HistoryRange.TODAY, ""))
@@ -202,6 +206,12 @@ class InvoiceHistoryViewModel(
     val uiState: StateFlow<InvoiceHistoryUiState> = combine(filters, reload) { f, _ -> f }
         .flatMapLatest { (tab, range, query) ->
             val (from, to) = bounds(range)
+            if (!showFinancials) {
+                // Only the list of invoices is read: no payment records, no totals.
+                return@flatMapLatest billing.observeInvoices(from, to).map { invoices ->
+                    InvoiceHistoryUiState(isLoading = false, tab = HistoryTab.INVOICES, range = range, query = query, invoices = filterInvoices(invoices, query))
+                }.catch { emit(InvoiceHistoryUiState(isLoading = false, loadFailed = true, tab = HistoryTab.INVOICES, range = range, query = query)) }
+            }
             val accountPayments = customers?.observeAccountPayments(from, to) ?: flowOf(emptyList())
             combine(billing.observeInvoices(from, to), billing.observePayments(from, to), accountPayments) { invoices, invoicePayments, fromAccounts ->
                 val filtered = filterInvoices(invoices, query)
@@ -264,7 +274,12 @@ class InvoiceHistoryViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                InvoiceHistoryViewModel(container.billingRepository, container.clock, container.customerRepository)
+                InvoiceHistoryViewModel(
+                    container.billingRepository,
+                    container.clock,
+                    container.customerRepository,
+                    showFinancials = container.authorizer.can(Permission.VIEW_FINANCIALS),
+                )
             }
         }
     }

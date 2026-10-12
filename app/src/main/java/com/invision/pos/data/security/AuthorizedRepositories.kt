@@ -1,0 +1,350 @@
+package com.invision.pos.data.security
+
+import com.invision.pos.core.audit.AuditAction
+import com.invision.pos.core.audit.AuditDraft
+import com.invision.pos.core.audit.AuditEntity
+import com.invision.pos.core.audit.AuditTrail
+import com.invision.pos.core.auth.Authorizer
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.data.repository.AccountPaymentResult
+import com.invision.pos.data.repository.BarcodeMatch
+import com.invision.pos.data.repository.BillingRepository
+import com.invision.pos.data.repository.CustomerRepository
+import com.invision.pos.data.repository.InventoryRepository
+import com.invision.pos.data.repository.MenuRepository
+import com.invision.pos.data.repository.OrderUpdateResult
+import com.invision.pos.data.repository.PurchasingRepository
+import com.invision.pos.data.repository.ReceiveResult
+import com.invision.pos.data.repository.ReturnResult
+import com.invision.pos.data.repository.SalesTotals
+import com.invision.pos.data.repository.SaleResult
+import com.invision.pos.data.repository.SaveCustomerResult
+import com.invision.pos.data.repository.SaveProductResult
+import com.invision.pos.data.repository.SettingsRepository
+import com.invision.pos.data.repository.StockChangeResult
+import com.invision.pos.domain.model.BatchDetails
+import com.invision.pos.domain.model.BatchWithProduct
+import com.invision.pos.domain.model.Customer
+import com.invision.pos.domain.model.LedgerEntry
+import com.invision.pos.domain.model.CustomerAccount
+import com.invision.pos.domain.model.Invoice
+import com.invision.pos.domain.model.InvoiceSummary
+import com.invision.pos.domain.model.MenuItem
+import com.invision.pos.domain.model.Money
+import com.invision.pos.domain.model.PaymentMethod
+import com.invision.pos.domain.model.PaymentRecord
+import com.invision.pos.domain.model.Product
+import com.invision.pos.domain.model.PurchaseOrder
+import com.invision.pos.domain.model.PurchaseOrderStatus
+import com.invision.pos.domain.model.PurchaseReceipt
+import com.invision.pos.domain.model.StockChangeReason
+import com.invision.pos.domain.model.StockMovement
+import com.invision.pos.domain.model.StockMovementRecord
+import com.invision.pos.domain.model.StoreSettings
+import com.invision.pos.domain.model.Supplier
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+
+/**
+ * Repositories wrapped so that every sensitive read and write checks [Authorizer] first. A refused call throws
+ * PermissionDeniedException before any data is read or changed. Reads are checked when the flow starts being
+ * collected, not when it is created, so a flow that is built early is still checked at the moment it is used.
+ */
+private fun <T> Authorizer.guarded(permission: Permission, source: () -> Flow<T>): Flow<T> = flow {
+    require(permission)
+    source().collect { emit(it) }
+}
+
+class AuthorizedBillingRepository(private val inner: BillingRepository, private val auth: Authorizer, private val audit: AuditTrail) : BillingRepository {
+    override fun observeInvoice(invoiceId: Long): Flow<Invoice?> = auth.guarded(Permission.VIEW_INVOICES) { inner.observeInvoice(invoiceId) }
+
+    override suspend fun getInvoice(invoiceId: Long): Invoice? {
+        auth.require(Permission.VIEW_INVOICES)
+        return inner.getInvoice(invoiceId)
+    }
+
+    override fun observeInvoices(fromMillis: Long, toMillis: Long): Flow<List<InvoiceSummary>> =
+        auth.guarded(Permission.VIEW_INVOICES) { inner.observeInvoices(fromMillis, toMillis) }
+
+    override fun observeCreditNotesFor(invoiceId: Long): Flow<List<InvoiceSummary>> =
+        auth.guarded(Permission.VIEW_INVOICES) { inner.observeCreditNotesFor(invoiceId) }
+
+    override fun observePayments(fromMillis: Long, toMillis: Long): Flow<List<PaymentRecord>> =
+        auth.guarded(Permission.VIEW_FINANCIALS) { inner.observePayments(fromMillis, toMillis) }
+
+    override fun observeSalesTotals(fromMillis: Long, toMillis: Long): Flow<SalesTotals> =
+        auth.guarded(Permission.VIEW_FINANCIALS) { inner.observeSalesTotals(fromMillis, toMillis) }
+
+    override suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String?): SaleResult {
+        auth.require(Permission.SELL)
+        return audit.recording({ inner.recordSale(invoice, invoicePrefix, requestId) }) { result ->
+            (result as? SaleResult.Recorded)?.let {
+                AuditDraft(AuditAction.SALE_RECORDED, AuditEntity.INVOICE, it.invoiceId, "Sale ${it.number}, total ${invoice.grandTotal.toDecimalString()}")
+            }
+        }
+    }
+
+    override suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice> {
+        auth.require(Permission.VIEW_REPORTS)
+        return inner.invoicesBetween(fromMillis, toMillis)
+    }
+
+    override suspend fun recordReturn(creditNote: Invoice, creditNotePrefix: String, requestId: String?): ReturnResult {
+        auth.require(Permission.PROCESS_RETURN)
+        return audit.recording({ inner.recordReturn(creditNote, creditNotePrefix, requestId) }) { result ->
+            (result as? ReturnResult.Recorded)?.let {
+                AuditDraft(
+                    AuditAction.RETURN_RECORDED,
+                    AuditEntity.INVOICE,
+                    it.creditNoteId,
+                    "Credit note ${it.number} against ${creditNote.originalInvoiceNumber.orEmpty()}, ${creditNote.grandTotal.toDecimalString()}",
+                )
+            }
+        }
+    }
+}
+
+/** Billing needs to read the store's settings (tax, invoice prefix, shop name); only the Super Admin may change them. */
+class AuthorizedSettingsRepository(private val inner: SettingsRepository, private val auth: Authorizer, private val audit: AuditTrail) : SettingsRepository {
+    override fun observeSettings(): Flow<StoreSettings> = auth.guarded(Permission.SELL) { inner.observeSettings() }
+
+    override suspend fun getSettings(): StoreSettings {
+        auth.require(Permission.SELL)
+        return inner.getSettings()
+    }
+
+    override suspend fun saveSettings(settings: StoreSettings) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        audit.recording({ inner.saveSettings(settings) }) {
+            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}")
+        }
+    }
+}
+
+class AuthorizedInventoryRepository(private val inner: InventoryRepository, private val auth: Authorizer, private val audit: AuditTrail) : InventoryRepository {
+    // Looking products up is part of billing.
+    override fun observeProducts(): Flow<List<Product>> = auth.guarded(Permission.SELL) { inner.observeProducts() }
+
+    override suspend fun getProduct(productId: Long): Product? {
+        auth.require(Permission.SELL)
+        return inner.getProduct(productId)
+    }
+
+    override suspend fun findByBarcode(barcode: String): BarcodeMatch? {
+        auth.require(Permission.SELL)
+        return inner.findByBarcode(barcode)
+    }
+
+    override fun observeProduct(productId: Long): Flow<Product?> = auth.guarded(Permission.MANAGE_PRODUCTS) { inner.observeProduct(productId) }
+
+    override fun observeStockMovements(productId: Long, limit: Int): Flow<List<StockMovement>> =
+        auth.guarded(Permission.VIEW_STOCK_RECORDS) { inner.observeStockMovements(productId, limit) }
+
+    override suspend fun isBarcodeInUse(barcode: String): Boolean {
+        auth.require(Permission.MANAGE_PRODUCTS)
+        return inner.isBarcodeInUse(barcode)
+    }
+
+    override suspend fun saveProduct(product: Product): SaveProductResult {
+        auth.require(Permission.MANAGE_PRODUCTS)
+        return audit.recording({ inner.saveProduct(product) }) { result ->
+            (result as? SaveProductResult.Saved)?.let {
+                val verb = if (product.id == 0L) "Added" else "Changed"
+                AuditDraft(AuditAction.PRODUCT_SAVED, AuditEntity.PRODUCT, it.productId, "$verb product ${product.name}")
+            }
+        }
+    }
+
+    override suspend fun deleteProduct(productId: Long) {
+        auth.require(Permission.MANAGE_PRODUCTS)
+        val name = inner.getProduct(productId)?.name
+        audit.recording({ inner.deleteProduct(productId) }) {
+            AuditDraft(AuditAction.PRODUCT_DELETED, AuditEntity.PRODUCT, productId, "Deleted product ${name ?: "#$productId"}")
+        }
+    }
+
+    override suspend fun recordStockChange(movement: StockMovement, batch: BatchDetails, requestId: String?): StockChangeResult {
+        auth.require(Permission.ADJUST_STOCK)
+        return audit.recording({ inner.recordStockChange(movement, batch, requestId) }) { result ->
+            (result as? StockChangeResult.Applied)?.let {
+                AuditDraft(
+                    AuditAction.STOCK_CHANGED,
+                    AuditEntity.VARIANT,
+                    movement.variantId,
+                    "Stock ${if (movement.quantityChange >= 0) "+" else ""}${movement.quantityChange} (${movement.reason.name.lowercase()})",
+                )
+            }
+        }
+    }
+
+    override fun observeBatches(): Flow<List<BatchWithProduct>> = auth.guarded(Permission.VIEW_STOCK_RECORDS) { inner.observeBatches() }
+
+    override suspend fun writeOff(batchId: Long, quantity: Int, reason: StockChangeReason, note: String?, requestId: String): StockChangeResult {
+        auth.require(Permission.ADJUST_STOCK)
+        return audit.recording({ inner.writeOff(batchId, quantity, reason, note, requestId) }) { result ->
+            (result as? StockChangeResult.Applied)?.let {
+                AuditDraft(AuditAction.STOCK_WRITTEN_OFF, AuditEntity.BATCH, batchId, "Wrote off $quantity (${reason.name.lowercase()})")
+            }
+        }
+    }
+
+    override fun observeMovementHistory(fromMillis: Long, toMillis: Long): Flow<List<StockMovementRecord>> =
+        auth.guarded(Permission.VIEW_STOCK_RECORDS) { inner.observeMovementHistory(fromMillis, toMillis) }
+}
+
+class AuthorizedCustomerRepository(private val inner: CustomerRepository, private val auth: Authorizer, private val audit: AuditTrail) : CustomerRepository {
+    // The bill's customer box searches and links saved customers, and can save a new one.
+    override fun observeAccounts(): Flow<List<CustomerAccount>> = auth.guarded(Permission.SELL) { inner.observeAccounts() }
+
+    override fun observeAccount(customerId: Long): Flow<CustomerAccount?> = auth.guarded(Permission.SELL) { inner.observeAccount(customerId) }
+
+    override suspend fun getCustomer(customerId: Long): Customer? {
+        auth.require(Permission.SELL)
+        return inner.getCustomer(customerId)
+    }
+
+    override suspend fun findByPhone(phone: String): Customer? {
+        auth.require(Permission.SELL)
+        return inner.findByPhone(phone)
+    }
+
+    override suspend fun saveCustomer(customer: Customer, openingBalance: Money): SaveCustomerResult {
+        // Adding a brand-new customer from the bill is billing data entry. Editing one, or starting a balance, is management.
+        val addingFromBill = customer.id == 0L && openingBalance.isZero
+        auth.require(if (addingFromBill) Permission.SELL else Permission.MANAGE_CUSTOMERS)
+        return audit.recording({ inner.saveCustomer(customer, openingBalance) }) { result ->
+            (result as? SaveCustomerResult.Saved)?.let {
+                val verb = if (customer.id == 0L) "Added" else "Changed"
+                AuditDraft(AuditAction.CUSTOMER_SAVED, AuditEntity.CUSTOMER, it.customerId, "$verb customer ${customer.name}")
+            }
+        }
+    }
+
+    override fun observeLedger(customerId: Long): Flow<List<LedgerEntry>> = auth.guarded(Permission.MANAGE_CUSTOMERS) { inner.observeLedger(customerId) }
+
+    override fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>> =
+        auth.guarded(Permission.MANAGE_CUSTOMERS) { inner.observeInvoices(customerId) }
+
+    override suspend fun receivePayment(
+        customerId: Long,
+        amount: Money,
+        method: PaymentMethod,
+        reference: String?,
+        note: String?,
+        requestId: String,
+    ): AccountPaymentResult {
+        auth.require(Permission.RECEIVE_ACCOUNT_PAYMENT)
+        return audit.recording({ inner.receivePayment(customerId, amount, method, reference, note, requestId) }) { result ->
+            (result as? AccountPaymentResult.Recorded)?.let {
+                AuditDraft(
+                    AuditAction.ACCOUNT_PAYMENT_RECEIVED,
+                    AuditEntity.CUSTOMER,
+                    customerId,
+                    "Received ${amount.toDecimalString()} by ${method.name.lowercase()} on account",
+                )
+            }
+        }
+    }
+
+    override fun observeAccountPayments(fromMillis: Long, toMillis: Long): Flow<List<PaymentRecord>> =
+        auth.guarded(Permission.VIEW_FINANCIALS) { inner.observeAccountPayments(fromMillis, toMillis) }
+}
+
+class AuthorizedPurchasingRepository(private val inner: PurchasingRepository, private val auth: Authorizer, private val audit: AuditTrail) : PurchasingRepository {
+    override fun observeSuppliers(): Flow<List<Supplier>> = auth.guarded(Permission.MANAGE_SUPPLIERS) { inner.observeSuppliers() }
+
+    override fun observeSupplier(supplierId: Long): Flow<Supplier?> = auth.guarded(Permission.MANAGE_SUPPLIERS) { inner.observeSupplier(supplierId) }
+
+    override suspend fun getSupplier(supplierId: Long): Supplier? {
+        auth.require(Permission.MANAGE_SUPPLIERS)
+        return inner.getSupplier(supplierId)
+    }
+
+    override suspend fun saveSupplier(supplier: Supplier): Long {
+        auth.require(Permission.MANAGE_SUPPLIERS)
+        return audit.recording({ inner.saveSupplier(supplier) }) {
+            AuditDraft(AuditAction.SUPPLIER_SAVED, AuditEntity.SUPPLIER, it, "${if (supplier.id == 0L) "Added" else "Changed"} supplier ${supplier.name}")
+        }
+    }
+
+    override fun observeOrders(): Flow<List<PurchaseOrder>> = auth.guarded(Permission.MANAGE_PURCHASES) { inner.observeOrders() }
+
+    override fun observeOrder(orderId: Long): Flow<PurchaseOrder?> = auth.guarded(Permission.MANAGE_PURCHASES) { inner.observeOrder(orderId) }
+
+    override suspend fun getOrder(orderId: Long): PurchaseOrder? {
+        auth.require(Permission.MANAGE_PURCHASES)
+        return inner.getOrder(orderId)
+    }
+
+    override suspend fun saveDraftOrder(order: PurchaseOrder): OrderUpdateResult {
+        auth.require(Permission.MANAGE_PURCHASES)
+        return audit.recording({ inner.saveDraftOrder(order) }) { result ->
+            (result as? OrderUpdateResult.Saved)?.let {
+                AuditDraft(AuditAction.ORDER_SAVED, AuditEntity.PURCHASE_ORDER, it.orderId, "Saved draft purchase order for ${order.supplierName}")
+            }
+        }
+    }
+
+    override suspend fun createDraftOrders(orders: List<PurchaseOrder>): List<Long> {
+        auth.require(Permission.MANAGE_PURCHASES)
+        return audit.recording({ inner.createDraftOrders(orders) }) { ids ->
+            ids.firstOrNull()?.let { AuditDraft(AuditAction.ORDER_SAVED, AuditEntity.PURCHASE_ORDER, it, "Created ${ids.size} draft purchase order(s)") }
+        }
+    }
+
+    override suspend fun setOrderStatus(orderId: Long, status: PurchaseOrderStatus): Boolean {
+        auth.require(Permission.MANAGE_PURCHASES)
+        return audit.recording({ inner.setOrderStatus(orderId, status) }) { changed ->
+            if (changed) AuditDraft(AuditAction.ORDER_STATUS_CHANGED, AuditEntity.PURCHASE_ORDER, orderId, "Purchase order marked ${status.name.lowercase()}") else null
+        }
+    }
+
+    override fun observeReceipts(fromMillis: Long, toMillis: Long): Flow<List<PurchaseReceipt>> =
+        auth.guarded(Permission.MANAGE_PURCHASES) { inner.observeReceipts(fromMillis, toMillis) }
+
+    override fun observeReceipt(receiptId: Long): Flow<PurchaseReceipt?> = auth.guarded(Permission.MANAGE_PURCHASES) { inner.observeReceipt(receiptId) }
+
+    override fun observeReceiptsForOrder(orderId: Long): Flow<List<PurchaseReceipt>> =
+        auth.guarded(Permission.MANAGE_PURCHASES) { inner.observeReceiptsForOrder(orderId) }
+
+    override suspend fun receive(receipt: PurchaseReceipt, requestId: String, updateCostPrices: Boolean): ReceiveResult {
+        auth.require(Permission.RECEIVE_GOODS)
+        return audit.recording({ inner.receive(receipt, requestId, updateCostPrices) }) { result ->
+            (result as? ReceiveResult.Recorded)?.let {
+                AuditDraft(AuditAction.GOODS_RECEIVED, AuditEntity.PURCHASE_RECEIPT, it.receiptId, "Received goods ${it.number}")
+            }
+        }
+    }
+}
+
+class AuthorizedMenuRepository(private val inner: MenuRepository, private val auth: Authorizer, private val audit: AuditTrail) : MenuRepository {
+    // Dishes are sold from the bill, so reading the menu is part of billing.
+    override fun observeMenu(): Flow<List<MenuItem>> = auth.guarded(Permission.SELL) { inner.observeMenu() }
+
+    override suspend fun getItem(menuItemId: Long): MenuItem? {
+        auth.require(Permission.SELL)
+        return inner.getItem(menuItemId)
+    }
+
+    override suspend fun saveItem(item: MenuItem): Long {
+        auth.require(Permission.MANAGE_MENU)
+        return audit.recording({ inner.saveItem(item) }) {
+            AuditDraft(AuditAction.MENU_ITEM_SAVED, AuditEntity.MENU_ITEM, it, "${if (item.id == 0L) "Added" else "Changed"} dish ${item.name}")
+        }
+    }
+
+    override suspend fun setAvailable(menuItemId: Long, available: Boolean) {
+        auth.require(Permission.MANAGE_MENU)
+        audit.recording({ inner.setAvailable(menuItemId, available) }) {
+            AuditDraft(AuditAction.MENU_ITEM_AVAILABILITY_CHANGED, AuditEntity.MENU_ITEM, menuItemId, "Dish marked ${if (available) "available" else "unavailable"}")
+        }
+    }
+
+    override suspend fun deleteItem(menuItemId: Long) {
+        auth.require(Permission.MANAGE_MENU)
+        val name = inner.getItem(menuItemId)?.name
+        audit.recording({ inner.deleteItem(menuItemId) }) {
+            AuditDraft(AuditAction.MENU_ITEM_DELETED, AuditEntity.MENU_ITEM, menuItemId, "Deleted dish ${name ?: "#$menuItemId"}")
+        }
+    }
+}

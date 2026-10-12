@@ -69,6 +69,8 @@ object MoreRoutes {
     const val SHOP_SETTINGS = "$PREFIX/shop-settings"
     const val STORE_DETAILS = "$PREFIX/store-details"
     const val APPEARANCE = "$PREFIX/appearance"
+    const val USER_MANAGEMENT = "$PREFIX/users"
+    const val ACTIVITY_LOG = "$PREFIX/activity"
 
     fun newMenuItem(): String = "$PREFIX/menu-item"
 

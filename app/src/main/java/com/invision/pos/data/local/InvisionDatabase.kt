@@ -7,6 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.invision.pos.data.local.dao.AuditDao
 import com.invision.pos.data.local.dao.BillingDao
 import com.invision.pos.data.local.dao.CustomerDao
 import com.invision.pos.data.local.dao.InventoryDao
@@ -14,6 +15,7 @@ import com.invision.pos.data.local.dao.MenuDao
 import com.invision.pos.data.local.dao.OperationDao
 import com.invision.pos.data.local.dao.PurchasingDao
 import com.invision.pos.data.local.entity.AppliedRequestEntity
+import com.invision.pos.data.local.entity.AuditLogEntity
 import com.invision.pos.data.local.entity.CustomerEntity
 import com.invision.pos.data.local.entity.InvoiceEntity
 import com.invision.pos.data.local.entity.InvoiceLineEntity
@@ -40,6 +42,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
  *    number sequences; stock movements link to invoices (Step 3).
  * 3. Stock batches, suppliers, purchase orders and goods receipts, customers and
  *    their ledger, restaurant menu and recipes, one-time request ids (Step 4).
+ * 4. Activity log of who changed, returned or deleted what (roles and User Management).
  */
 @Database(
     entities = [
@@ -62,12 +65,14 @@ import com.invision.pos.data.local.entity.SupplierEntity
         LedgerEntryEntity::class,
         MenuItemEntity::class,
         RecipeLineEntity::class,
+        AuditLogEntity::class,
     ],
     version = InvisionDatabase.VERSION,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = InvisionDatabase.BatchBackfill::class),
+        AutoMigration(from = 3, to = 4),
     ],
 )
 abstract class InvisionDatabase : RoomDatabase() {
@@ -83,6 +88,8 @@ abstract class InvisionDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
 
     abstract fun operationDao(): OperationDao
+
+    abstract fun auditDao(): AuditDao
 
     /**
      * Version 3 keeps food and beverage stock in batches. Existing stock becomes
@@ -104,7 +111,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 3
+        const val VERSION = 4
 
         fun create(context: Context): InvisionDatabase =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, NAME).build()

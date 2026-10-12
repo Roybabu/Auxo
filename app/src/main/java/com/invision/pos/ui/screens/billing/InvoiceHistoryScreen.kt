@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.ui.can
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.PaymentKind
 import com.invision.pos.domain.model.PaymentRecord
@@ -85,8 +87,10 @@ fun InvoiceHistoryContent(
 ) {
     val formatter = LocalMoneyFormatter.current
     val status = InvisionThemeExtras.statusColors
+    // Payment records and sales totals are business-wide figures; an Employee sees the invoice list only.
+    val showFinancials = can(Permission.VIEW_FINANCIALS)
     Column(modifier = modifier.fillMaxSize()) {
-        PrimaryTabRow(selectedTabIndex = state.tab.ordinal, containerColor = MaterialTheme.colorScheme.background) {
+        if (showFinancials) PrimaryTabRow(selectedTabIndex = state.tab.ordinal, containerColor = MaterialTheme.colorScheme.background) {
             Tab(
                 selected = state.tab == HistoryTab.INVOICES,
                 onClick = { onTabChange(HistoryTab.INVOICES) },
@@ -135,7 +139,8 @@ fun InvoiceHistoryContent(
                         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                         modifier = Modifier.testTag("history_list"),
                     ) {
-                        item(key = "totals") {
+                        // Sales and returns totals are business-wide figures.
+                        if (showFinancials) item(key = "totals") {
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                                 StatTile(stringResource(R.string.history_sales), formatter.format(state.salesTotal), Modifier.weight(1f))
                                 StatTile(

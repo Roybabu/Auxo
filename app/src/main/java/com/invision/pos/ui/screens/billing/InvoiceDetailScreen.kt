@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.ui.can
 import com.invision.pos.core.receipt.ReceiptOutput
 import com.invision.pos.core.receipt.ReceiptRenderer
 import com.invision.pos.core.receipt.isThermal
@@ -182,7 +184,8 @@ fun InvoiceDetailContent(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    if (state.canReturn) {
+                    // A return issues a credit note and refunds money, so it is a Super Admin action.
+                    if (state.canReturn && can(Permission.PROCESS_RETURN)) {
                         OutlinedButton(onClick = onReturn, modifier = Modifier.weight(1f)) {
                             Icon(painterResource(R.drawable.ic_undo), contentDescription = null, modifier = Modifier.size(18.dp))
                             Text(stringResource(R.string.invoice_return), modifier = Modifier.padding(start = Spacing.sm))

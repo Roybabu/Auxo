@@ -364,7 +364,7 @@ private fun BalanceCard(label: String, value: String, onClick: () -> Unit, modif
 }
 
 @Composable
-private fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Unit, tag: String) {
+internal fun RowScope.QuickAction(label: String, iconRes: Int, onClick: () -> Unit, tag: String) {
     Column(
         modifier = Modifier
             .weight(1f)

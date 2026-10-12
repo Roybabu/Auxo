@@ -91,13 +91,26 @@ class ProductDetailViewModelTest {
     }
 
     @Test
-    fun deleting_removesProductAndNotifies() = runTest {
-        val viewModel = createViewModel()
+    fun deleting_removesProductAndNotifies_whenNoStockIsLeft() = runTest {
+        val empty = TestData.tShirt().let { shirt -> shirt.copy(variants = shirt.variants.map { it.copy(stockQuantity = 0) }) }
+        val emptyRepository = FakeInventoryRepository(listOf(empty))
+        val viewModel = ProductDetailViewModel(1, emptyRepository, AdjustStockUseCase(emptyRepository, TestData.clock), TestData.clock)
         viewModel.requestDelete()
         assertTrue(viewModel.confirmDelete.value)
         viewModel.confirmDeleteProduct()
 
         assertEquals(ProductDetailEvent.Deleted, viewModel.events.first())
-        assertTrue(repository.products.value.isEmpty())
+        assertTrue(emptyRepository.products.value.isEmpty())
+    }
+
+    @Test
+    fun deleting_isRefused_whileStockIsOnHand_andNothingChanges() = runTest {
+        val viewModel = createViewModel()
+        viewModel.requestDelete()
+        viewModel.confirmDeleteProduct()
+
+        val units = TestData.tShirt().variants.sumOf { it.stockQuantity }
+        assertEquals(ProductDetailEvent.StockOnHand(units), viewModel.events.first())
+        assertEquals(1, repository.products.value.size)
     }
 }

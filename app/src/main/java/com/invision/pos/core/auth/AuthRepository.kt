@@ -97,6 +97,7 @@ class LocalAuthRepository(
     private val hasher: PasswordHasher = PasswordHasher(),
     private val clock: Clock = Clock.systemUTC(),
     private val worker: CoroutineDispatcher = Dispatchers.Default,
+    private val listener: AccountEventListener? = null,
 ) : AuthRepository {
 
     private val gate = Mutex()
@@ -186,6 +187,7 @@ class LocalAuthRepository(
             failures = 0
             if (!account.active) return@withLock SignInResult.Deactivated
             _state.value = AuthState.SignedIn(account.name, account.role, account.id)
+            tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
             return@withLock SignInResult.Success
         }
         failures++
@@ -198,7 +200,13 @@ class LocalAuthRepository(
     }
 
     override fun signOut() {
-        if (_state.value is AuthState.SignedIn) _state.value = AuthState.SignedOut
+        val current = _state.value as? AuthState.SignedIn ?: return
+        _state.value = AuthState.SignedOut
+        tell(AccountEvent(AccountEventKind.SIGNED_OUT, current.user))
+    }
+
+    private fun tell(event: AccountEvent) {
+        runCatching { listener?.onEvent(event) }
     }
 
     override fun revalidate() {
@@ -229,7 +237,7 @@ class LocalAuthRepository(
 
     override suspend fun createEmployee(name: String, identifier: String, password: String, confirm: String): UserChangeResult =
         gate.withLock {
-            activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
+            val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
             val errors = AdminSetupValidator.validate(name, identifier, password, confirm).toMutableMap()
             val wanted = AdminSetupValidator.normalizeIdentifier(identifier)
             val existing = (store.read() as? StoredAccounts.Present)?.accounts ?: return@withLock UserChangeResult.Failed
@@ -244,16 +252,25 @@ class LocalAuthRepository(
                 // Checked again inside the write, in case another change slipped in.
                 if (accounts.any { it.identifier == employee.identifier || it.id == employee.id }) null else accounts + employee
             }
-            if (outcome == UpdateOutcome.UPDATED) UserChangeResult.Done else UserChangeResult.Failed
+            if (outcome == UpdateOutcome.UPDATED) {
+                tell(AccountEvent(AccountEventKind.EMPLOYEE_CREATED, admin.toSession(), employee.id, employee.name))
+                UserChangeResult.Done
+            } else {
+                UserChangeResult.Failed
+            }
         }
 
     override suspend fun setEmployeeActive(userId: Long, active: Boolean): UserChangeResult = gate.withLock {
-        activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
-        changeEmployee(userId) { it.copy(active = active) }
+        val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
+        val result = changeEmployee(userId) { it.copy(active = active) }
+        if (result is Changed) {
+            tell(AccountEvent(if (active) AccountEventKind.EMPLOYEE_TURNED_ON else AccountEventKind.EMPLOYEE_TURNED_OFF, admin.toSession(), userId, result.name))
+        }
+        result.outcome
     }
 
     override suspend fun resetEmployeePassword(userId: Long, password: String, confirm: String): UserChangeResult = gate.withLock {
-        activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
+        val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
         val target = (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == userId && it.role == Role.EMPLOYEE }
             ?: return@withLock UserChangeResult.NotAnEmployee
         val errors = AdminSetupValidator.validate(target.name, target.identifier, password, confirm)
@@ -263,26 +280,33 @@ class LocalAuthRepository(
             val salt = hasher.newSalt()
             salt to hasher.hash(password, salt)
         }
-        changeEmployee(userId) { it.copy(salt = salt, hash = hash, iterations = hasher.iterations) }
+        val result = changeEmployee(userId) { it.copy(salt = salt, hash = hash, iterations = hasher.iterations) }
+        if (result is Changed) tell(AccountEvent(AccountEventKind.PASSWORD_RESET, admin.toSession(), userId, result.name))
+        result.outcome
     }
 
+    /** The result of changing one account: what to report, and (when it worked) whose account it was. */
+    private open class Change(val outcome: UserChangeResult)
+
+    private class Changed(val name: String) : Change(UserChangeResult.Done)
+
     /** Only ever touches an Employee account; the Super Admin cannot be changed through here. */
-    private fun changeEmployee(userId: Long, change: (UserAccount) -> UserAccount): UserChangeResult {
-        var found = false
+    private fun changeEmployee(userId: Long, change: (UserAccount) -> UserAccount): Change {
+        var found: UserAccount? = null
         val outcome = store.update { accounts ->
             accounts.map { account ->
                 if (account.id == userId && account.role == Role.EMPLOYEE) {
-                    found = true
+                    found = account
                     change(account)
                 } else {
                     account
                 }
-            }.takeIf { found }
+            }.takeIf { found != null }
         }
         return when {
-            outcome == UpdateOutcome.UPDATED -> UserChangeResult.Done
-            outcome == UpdateOutcome.REJECTED && !found -> UserChangeResult.NotAnEmployee
-            else -> UserChangeResult.Failed
+            outcome == UpdateOutcome.UPDATED -> Changed(found?.name.orEmpty())
+            outcome == UpdateOutcome.REJECTED && found == null -> Change(UserChangeResult.NotAnEmployee)
+            else -> Change(UserChangeResult.Failed)
         }
     }
 

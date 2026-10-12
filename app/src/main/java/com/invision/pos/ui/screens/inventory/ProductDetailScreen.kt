@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -96,6 +97,10 @@ fun ProductDetailScreen(
                 ProductDetailEvent.StockUpdated -> snackbarHostState.showSnackbar(resources.getString(R.string.stock_updated))
                 ProductDetailEvent.Deleted -> currentOnBack()
                 ProductDetailEvent.ActionFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
+                is ProductDetailEvent.StockOnHand -> snackbarHostState.showSnackbar(
+                    resources.getString(R.string.delete_product_has_stock, event.units),
+                    duration = SnackbarDuration.Long,
+                )
             }
         }
     }

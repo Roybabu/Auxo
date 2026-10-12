@@ -70,7 +70,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.invision.pos.R
+import com.invision.pos.core.auth.Permission
 import com.invision.pos.domain.billing.CustomerDetails
+import com.invision.pos.ui.can
 import com.invision.pos.domain.billing.CustomerIssue
 import com.invision.pos.domain.billing.PaymentError
 import com.invision.pos.domain.billing.IndianStates
@@ -153,6 +155,9 @@ fun BillingScreen(
     val currentOnSettings by rememberUpdatedState(onOpenSettings)
     val currentOnAddProduct by rememberUpdatedState(onAddProduct)
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    // Adding a product or opening store settings are management jobs; an Employee only sees the message.
+    val canManageSettings = can(Permission.MANAGE_SETTINGS)
+    val canAddProduct = can(Permission.MANAGE_PRODUCTS)
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -162,10 +167,10 @@ fun BillingScreen(
                 is BillingEvent.BarcodeNotFound -> {
                     val result = snackbarHostState.showSnackbar(
                         message = resources.getString(R.string.billing_barcode_not_found, event.barcode),
-                        actionLabel = resources.getString(R.string.inventory_add_product),
+                        actionLabel = if (canAddProduct) resources.getString(R.string.inventory_add_product) else null,
                         duration = SnackbarDuration.Long,
                     )
-                    if (result == SnackbarResult.ActionPerformed) currentOnAddProduct(event.barcode)
+                    if (result == SnackbarResult.ActionPerformed && canAddProduct) currentOnAddProduct(event.barcode)
                 }
                 BillingEvent.ScannerUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.scan_unavailable))
                 BillingEvent.StockChanged -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_stock_changed))
@@ -179,10 +184,10 @@ fun BillingScreen(
                 BillingEvent.SetupRequired -> {
                     val result = snackbarHostState.showSnackbar(
                         message = resources.getString(R.string.billing_setup_body),
-                        actionLabel = resources.getString(R.string.billing_setup_action),
+                        actionLabel = if (canManageSettings) resources.getString(R.string.billing_setup_action) else null,
                         duration = SnackbarDuration.Long,
                     )
-                    if (result == SnackbarResult.ActionPerformed) currentOnSettings()
+                    if (result == SnackbarResult.ActionPerformed && canManageSettings) currentOnSettings()
                 }
                 BillingEvent.FixCart -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_fix_cart))
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
@@ -250,7 +255,9 @@ fun BillingScreen(
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
                         ActionIcon(R.drawable.ic_history, stringResource(R.string.billing_history), onOpenHistory)
-                        ActionIcon(R.drawable.ic_settings, stringResource(R.string.billing_settings), onOpenSettings)
+                        if (canManageSettings) {
+                            ActionIcon(R.drawable.ic_settings, stringResource(R.string.billing_settings), onOpenSettings)
+                        }
                     }
                 },
             )
@@ -357,7 +364,7 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         if (state.needsSetup) {
-            item(key = "setup") { SetupBanner(actions::onOpenSettings) }
+            item(key = "setup") { SetupBanner(if (can(Permission.MANAGE_SETTINGS)) actions::onOpenSettings else null) }
         }
         item(key = "search") {
             InvisionTextField(
@@ -504,13 +511,17 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
 }
 
 @Composable
-private fun SetupBanner(onOpenSettings: () -> Unit) {
+private fun SetupBanner(onOpenSettings: (() -> Unit)?) {
     val tone = InvisionThemeExtras.statusColors.warning
     Surface(shape = MaterialTheme.shapes.large, color = tone.container, contentColor = tone.content, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(stringResource(R.string.billing_setup_title), style = MaterialTheme.typography.titleSmall)
             Text(stringResource(R.string.billing_setup_body), style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.billing_setup_action)) }
+            if (onOpenSettings != null) {
+                TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.billing_setup_action)) }
+            } else {
+                Text(stringResource(R.string.billing_setup_ask_admin), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

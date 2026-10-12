@@ -18,6 +18,12 @@ import com.invision.pos.ui.theme.InvisionTheme
 
 class MainActivity : ComponentActivity() {
 
+    override fun onStart() {
+        super.onStart()
+        // Sign out anyone whose account was turned off or changed while the app was away.
+        (application as InvisionApplication).container.authRepository.revalidate()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),

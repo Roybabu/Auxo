@@ -42,7 +42,7 @@ import java.io.File
 /**
  * Builds a version 1 database from the committed schema (app/schemas/.../1.json),
  * fills it with Step 2 data, then opens it with the current app so Room runs the
- * 1 -> 2 and 2 -> 3 migrations and checks the result against the current schema.
+ * 1 -> 2, 2 -> 3 and 3 -> 4 migrations and checks the result against the current schema.
  */
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
@@ -112,7 +112,7 @@ class DatabaseMigrationTest {
 
         // Opening runs the migrations and Room validates every table against the current version.
         val product = inventory.getProduct(1)!!
-        assertEquals(3, db.openHelper.readableDatabase.version)
+        assertEquals(InvisionDatabase.VERSION, db.openHelper.readableDatabase.version)
         assertEquals("Cotton T-Shirt", product.name)
         assertEquals(8, product.variants.single().stockQuantity)
         assertEquals(Money(49_900), product.variants.single().sellingPrice)
@@ -161,7 +161,7 @@ class DatabaseMigrationTest {
         database = db
         val inventory = RoomInventoryRepository(db, TestData.clock)
         val biscuits = inventory.getProduct(2)!!.variants.single()
-        assertEquals(3, db.openHelper.readableDatabase.version)
+        assertEquals(InvisionDatabase.VERSION, db.openHelper.readableDatabase.version)
 
         // Existing food stock became one batch with the variant's batch number and expiry.
         val batch = biscuits.batches.single()

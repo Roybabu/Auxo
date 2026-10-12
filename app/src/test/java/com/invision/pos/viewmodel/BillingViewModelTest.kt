@@ -375,6 +375,27 @@ class ReturnAndHistoryViewModelTest {
     }
 
     @Test
+    fun history_forAnEmployee_listsInvoices_withoutReadingPaymentsOrTotals() = runTest {
+        sellThreeShirts()
+        // A repository that fails the moment anything reads business-wide payment records or totals.
+        val strict = object : com.invision.pos.data.repository.BillingRepository by billing {
+            override fun observePayments(fromMillis: Long, toMillis: Long) = kotlinx.coroutines.flow.flow<List<com.invision.pos.domain.model.PaymentRecord>> {
+                error("an employee must not read payment records")
+            }
+        }
+        val viewModel = InvoiceHistoryViewModel(strict, TestData.clock, showFinancials = false)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
+        val state = viewModel.uiState.value
+        assertFalse(state.loadFailed)
+        assertEquals(1, state.invoices.size)
+        assertEquals(Money.ZERO, state.salesTotal)
+        assertTrue(state.payments.isEmpty())
+        assertEquals(com.invision.pos.viewmodel.HistoryTab.INVOICES, state.tab)
+        viewModel.onTabChange(com.invision.pos.viewmodel.HistoryTab.PAYMENTS)
+        assertEquals(com.invision.pos.viewmodel.HistoryTab.INVOICES, viewModel.uiState.value.tab)
+    }
+
+    @Test
     fun history_listsSearchesAndTotalsPayments() = runTest {
         val invoiceId = sellThreeShirts()
         val ret = returnViewModel(invoiceId)

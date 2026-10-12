@@ -24,8 +24,10 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.ui.theme.InvisionTheme
+import com.invision.pos.testutil.SignIn
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +46,10 @@ class AppFlowTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    // The app opens to Login; these tests drive the app itself, so the Super Admin is already signed in.
+    @Before
+    fun signIn() = SignIn.asSuperAdmin()
 
     private fun waitForText(text: String) {
         composeRule.waitUntil(timeoutMillis = 10_000) {

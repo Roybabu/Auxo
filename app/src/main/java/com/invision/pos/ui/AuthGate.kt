@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -30,7 +32,10 @@ fun AuthGate(
     when (state) {
         AuthState.NeedsSetup -> setup()
         AuthState.SignedOut -> login()
-        is AuthState.SignedIn -> app()
+        is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name)) {
+            // A different person signing in gets a fresh app, never the previous person's screens.
+            key(state.userId) { app() }
+        }
         AuthState.Unreadable -> AuthLayout {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("auth_unreadable")) {
                 Text(stringResource(R.string.auth_unreadable_title), style = MaterialTheme.typography.headlineSmall)

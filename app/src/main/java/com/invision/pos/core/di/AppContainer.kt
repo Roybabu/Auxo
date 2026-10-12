@@ -3,7 +3,22 @@ package com.invision.pos.core.di
 import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
 import com.invision.pos.core.appearance.AppearanceRepository
+import com.invision.pos.core.audit.AuditTrail
+import com.invision.pos.core.audit.RoomAuditTrail
+import com.invision.pos.core.audit.toAuditDraft
+import com.invision.pos.core.auth.AccountEventListener
 import com.invision.pos.core.auth.AuthRepository
+import com.invision.pos.core.auth.Authorizer
+import com.invision.pos.core.auth.SessionAuthorizer
+import com.invision.pos.data.security.AuthorizedBackupService
+import com.invision.pos.data.security.AuthorizedBillingRepository
+import com.invision.pos.data.security.AuthorizedCustomerRepository
+import com.invision.pos.data.security.AuthorizedInventoryRepository
+import com.invision.pos.data.security.AuthorizedMenuRepository
+import com.invision.pos.data.security.AuthorizedPurchasingRepository
+import com.invision.pos.data.security.AuthorizedSettingsRepository
+import com.invision.pos.data.security.AuthorizedShopPreferences
+import com.invision.pos.data.security.AuthorizedStoreLogoRepository
 import com.invision.pos.core.auth.FileAccountStore
 import com.invision.pos.core.auth.LocalAuthRepository
 import com.invision.pos.core.shop.FileStoreLogoRepository
@@ -41,6 +56,10 @@ import com.invision.pos.domain.usecase.ReceiveGoodsUseCase
 import com.invision.pos.domain.usecase.RecordWastageUseCase
 import com.invision.pos.domain.usecase.SaveProductUseCase
 import java.time.Clock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Manual dependency container, created once per process by InvisionApplication.
@@ -53,17 +72,36 @@ class AppContainer(context: Context) {
 
     private val database: InvisionDatabase by lazy { InvisionDatabase.create(appContext) }
 
-    val inventoryRepository: InventoryRepository by lazy { RoomInventoryRepository(database, clock) }
+    private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    val billingRepository: BillingRepository by lazy { RoomBillingRepository(database) }
+    val authRepository: AuthRepository by lazy {
+        LocalAuthRepository(
+            FileAccountStore(appContext.filesDir),
+            clock = clock,
+            listener = AccountEventListener { event ->
+                // Best effort and off the caller's thread: the account change has already been saved.
+                background.launch { runCatching { auditTrail.record(event.toAuditDraft(), event.actor) } }
+            },
+        )
+    }
 
-    val settingsRepository: SettingsRepository by lazy { RoomSettingsRepository(database) }
+    /** Answers "may the signed-in person do this?" for the data layer below. */
+    val authorizer: Authorizer by lazy { SessionAuthorizer(authRepository) }
 
-    val purchasingRepository: PurchasingRepository by lazy { RoomPurchasingRepository(database, clock) }
+    val auditTrail: AuditTrail by lazy { RoomAuditTrail(database, clock, authorizer) }
 
-    val customerRepository: CustomerRepository by lazy { RoomCustomerRepository(database, clock) }
+    // Every repository the screens use is wrapped, so the checks sit below the screens and view models.
+    val inventoryRepository: InventoryRepository by lazy { AuthorizedInventoryRepository(RoomInventoryRepository(database, clock), authorizer, auditTrail) }
 
-    val menuRepository: MenuRepository by lazy { RoomMenuRepository(database, clock) }
+    val billingRepository: BillingRepository by lazy { AuthorizedBillingRepository(RoomBillingRepository(database), authorizer, auditTrail) }
+
+    val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
+
+    val purchasingRepository: PurchasingRepository by lazy { AuthorizedPurchasingRepository(RoomPurchasingRepository(database, clock), authorizer, auditTrail) }
+
+    val customerRepository: CustomerRepository by lazy { AuthorizedCustomerRepository(RoomCustomerRepository(database, clock), authorizer, auditTrail) }
+
+    val menuRepository: MenuRepository by lazy { AuthorizedMenuRepository(RoomMenuRepository(database, clock), authorizer, auditTrail) }
 
     val barcodeGenerator: InternalBarcodeGenerator by lazy { InternalBarcodeGenerator() }
 
@@ -71,14 +109,18 @@ class AppContainer(context: Context) {
 
     val appearanceRepository: AppearanceRepository by lazy { SharedPrefsAppearanceRepository(appContext) }
 
-    val shopPreferences: ShopPreferences by lazy { SharedPrefsShopPreferences(appContext) }
+    private val rawShopPreferences: ShopPreferences by lazy { SharedPrefsShopPreferences(appContext) }
 
-    val storeLogoRepository: StoreLogoRepository by lazy { FileStoreLogoRepository(appContext) }
+    val shopPreferences: ShopPreferences by lazy { AuthorizedShopPreferences(rawShopPreferences, authorizer) }
 
-    val authRepository: AuthRepository by lazy { LocalAuthRepository(FileAccountStore(appContext.filesDir), clock = clock) }
+    val storeLogoRepository: StoreLogoRepository by lazy { AuthorizedStoreLogoRepository(FileStoreLogoRepository(appContext), authorizer) }
 
     val backupService: BackupService by lazy {
-        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, shopPreferences)
+        AuthorizedBackupService(
+            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences),
+            authorizer,
+            auditTrail,
+        )
     }
 
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {

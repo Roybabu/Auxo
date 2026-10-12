@@ -270,6 +270,60 @@ class UserAccountsTest {
         assertEquals(AuthState.SignedOut, auth.state.value)
     }
 
+    // Account events (they feed the activity log)
+
+    @Test
+    fun accountChanges_areReported_withTheActor_andNeverCarryPasswords() = runBlocking {
+        val events = mutableListOf<AccountEvent>()
+        val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { events += it })
+        auth.setUpOwner()
+        auth.addEmployee()
+        auth.setEmployeeActive(2L, false)
+        auth.setEmployeeActive(2L, true)
+        auth.resetEmployeePassword(2L, "Fresh-Start-77", "Fresh-Start-77")
+        auth.signOut()
+        auth.signIn("asha.k", EMPLOYEE_PW)
+
+        assertEquals(
+            listOf(
+                AccountEventKind.EMPLOYEE_CREATED,
+                AccountEventKind.EMPLOYEE_TURNED_OFF,
+                AccountEventKind.EMPLOYEE_TURNED_ON,
+                AccountEventKind.PASSWORD_RESET,
+                AccountEventKind.SIGNED_OUT,
+                AccountEventKind.SIGNED_IN,
+            ),
+            events.map { it.kind },
+        )
+        assertTrue(events.take(5).all { it.actor.id == 1L && it.actor.role == Role.SUPER_ADMIN })
+        assertEquals(2L, events.last().actor.id)
+        assertEquals(listOf(2L, 2L, 2L, 2L), events.take(4).map { it.targetId })
+        val text = events.joinToString { it.toString() }
+        assertFalse(text.contains(EMPLOYEE_PW) || text.contains("Fresh-Start-77") || text.contains(OWNER_PW))
+    }
+
+    @Test
+    fun aFailingListener_doesNotBreakSigningIn() = runBlocking {
+        ownerWithEmployee()
+        val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { error("log is broken") })
+        assertEquals(SignInResult.Success, auth.signIn("roy.babu", OWNER_PW))
+        auth.signOut()
+        assertEquals(AuthState.SignedOut, auth.state.value)
+    }
+
+    @Test
+    fun deniedAndInvalidChanges_reportNothing() = runBlocking {
+        ownerWithEmployee()
+        val events = mutableListOf<AccountEvent>()
+        val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { events += it })
+        auth.setEmployeeActive(2L, false) // nobody signed in
+        auth.signIn("asha.k", EMPLOYEE_PW)
+        events.clear()
+        auth.setEmployeeActive(2L, false) // an employee
+        auth.addEmployee("another.one")
+        assertTrue(events.isEmpty())
+    }
+
     private companion object {
         const val OWNER_PW = "Green-Leaf-42"
         const val EMPLOYEE_PW = "Counter-Desk-17"

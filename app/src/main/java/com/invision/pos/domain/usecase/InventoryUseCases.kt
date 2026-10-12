@@ -41,6 +41,29 @@ class SaveProductUseCase(
     }
 }
 
+sealed interface DeleteProductResult {
+    data object Deleted : DeleteProductResult
+    data object NotFound : DeleteProductResult
+
+    /** Nothing was deleted: removing the product would make this much stock vanish without a stock record. */
+    data class StockOnHand(val units: Int) : DeleteProductResult
+}
+
+/**
+ * Deletes a product only when no stock is left. Stock on hand has to be taken out first (sold, written off or
+ * corrected), so the movement history explains where it went. Past invoices keep their own copy of the product's
+ * name and price, so they are not changed.
+ */
+class DeleteProductUseCase(private val repository: InventoryRepository) {
+    suspend operator fun invoke(productId: Long): DeleteProductResult {
+        val product = repository.getProduct(productId) ?: return DeleteProductResult.NotFound
+        val units = product.variants.sumOf { it.stockQuantity }
+        if (units > 0) return DeleteProductResult.StockOnHand(units)
+        repository.deleteProduct(productId)
+        return DeleteProductResult.Deleted
+    }
+}
+
 sealed interface AdjustStockResult {
     data object Done : AdjustStockResult
     data class Rejected(val error: StockAdjustmentError) : AdjustStockResult

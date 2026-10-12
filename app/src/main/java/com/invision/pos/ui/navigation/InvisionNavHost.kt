@@ -3,6 +3,8 @@ package com.invision.pos.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.invision.pos.InvisionApplication
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -31,11 +33,13 @@ import com.invision.pos.ui.screens.customers.CustomerEditorScreen
 import com.invision.pos.ui.screens.customers.CustomerListScreen
 import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
+import com.invision.pos.ui.screens.more.ActivityLogScreen
 import com.invision.pos.ui.screens.more.BackupScreen
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.AppearanceScreen
 import com.invision.pos.ui.screens.more.ShopSettingsScreen
 import com.invision.pos.ui.screens.more.StoreDetailsScreen
+import com.invision.pos.ui.screens.more.UserManagementScreen
 import com.invision.pos.viewmodel.ShopViewModel
 import com.invision.pos.ui.screens.more.MoreScreen
 import com.invision.pos.ui.screens.purchasing.PurchaseListScreen
@@ -48,6 +52,10 @@ import com.invision.pos.ui.screens.purchasing.SupplierListScreen
 import com.invision.pos.ui.screens.reports.ReportsScreen
 import com.invision.pos.ui.screens.stock.StockAlertsScreen
 import com.invision.pos.ui.screens.stock.StockMovementsScreen
+import com.invision.pos.core.auth.Permission
+import com.invision.pos.ui.RequirePermission
+import com.invision.pos.ui.can
+import com.invision.pos.ui.screens.home.EmployeeHomeScreen
 import com.invision.pos.viewmodel.InvoiceNotice
 import com.invision.pos.viewmodel.PurchaseTab
 
@@ -56,25 +64,33 @@ fun InvisionNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
+    val authRepository = (LocalContext.current.applicationContext as? InvisionApplication)?.container?.authRepository
     NavHost(
         navController = navController,
         startDestination = TopLevelDestination.START.route,
         modifier = modifier,
     ) {
-        composable(TopLevelDestination.HOME.route) {
-            HomeScreen(
-                onNavigate = navController::navigateToTopLevel,
-                onAddProduct = { navController.navigate(InventoryRoutes.newProduct()) },
-                onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
-                onOpenInventory = { filter -> navController.navigateToInventory(filter) },
-                onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
-            )
+        guarded(navController, TopLevelDestination.HOME.route) {
+            if (can(Permission.VIEW_DASHBOARD)) {
+                HomeScreen(
+                    onNavigate = navController::navigateToTopLevel,
+                    onAddProduct = { navController.navigate(InventoryRoutes.newProduct()) },
+                    onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
+                    onOpenInventory = { filter -> navController.navigateToInventory(filter) },
+                    onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
+                )
+            } else {
+                EmployeeHomeScreen(
+                    onNavigate = navController::navigateToTopLevel,
+                    onOpenInvoices = { navController.navigate(BillingRoutes.HISTORY) },
+                )
+            }
         }
         navigation(
             startDestination = BillingRoutes.POS,
             route = TopLevelDestination.BILLING.route,
         ) {
-            composable(BillingRoutes.POS) {
+            guarded(navController, BillingRoutes.POS) {
                 BillingScreen(
                     onSaleCompleted = { invoiceId, changeMinor ->
                         navController.navigate(BillingRoutes.savedInvoice(invoiceId, InvoiceNotice.SALE_SAVED, changeMinor))
@@ -84,7 +100,7 @@ fun InvisionNavHost(
                     onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
                 )
             }
-            composable(
+            guarded(navController,
                 route = BillingRoutes.INVOICE,
                 arguments = listOf(
                     navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType },
@@ -111,13 +127,13 @@ fun InvisionNavHost(
                     },
                 )
             }
-            composable(BillingRoutes.HISTORY) {
+            guarded(navController, BillingRoutes.HISTORY) {
                 InvoiceHistoryScreen(
                     onBack = { navController.popBackStack() },
                     onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
                 )
             }
-            composable(
+            guarded(navController,
                 route = BillingRoutes.RETURN,
                 arguments = listOf(navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType }),
             ) {
@@ -135,7 +151,7 @@ fun InvisionNavHost(
             startDestination = InventoryRoutes.LIST,
             route = TopLevelDestination.INVENTORY.route,
         ) {
-            composable(
+            guarded(navController,
                 route = InventoryRoutes.LIST,
                 arguments = listOf(
                     navArgument(InventoryRoutes.ARG_STOCK_FILTER) {
@@ -161,7 +177,7 @@ fun InvisionNavHost(
                     },
                 )
             }
-            composable(
+            guarded(navController,
                 route = InventoryRoutes.PRODUCT,
                 arguments = listOf(navArgument(InventoryRoutes.ARG_PRODUCT_ID) { type = NavType.LongType }),
             ) {
@@ -171,7 +187,7 @@ fun InvisionNavHost(
                     onPrintLabels = { navController.navigate(InventoryRoutes.labels(it)) },
                 )
             }
-            composable(
+            guarded(navController,
                 route = InventoryRoutes.EDITOR,
                 arguments = listOf(
                     navArgument(InventoryRoutes.ARG_PRODUCT_ID) {
@@ -200,7 +216,7 @@ fun InvisionNavHost(
                     },
                 )
             }
-            composable(
+            guarded(navController,
                 route = InventoryRoutes.LABELS,
                 arguments = listOf(navArgument(InventoryRoutes.ARG_PRODUCT_ID) { type = NavType.LongType }),
             ) {
@@ -212,13 +228,13 @@ fun InvisionNavHost(
             startDestination = CustomerRoutes.LIST,
             route = TopLevelDestination.CUSTOMERS.route,
         ) {
-            composable(CustomerRoutes.LIST) {
+            guarded(navController, CustomerRoutes.LIST) {
                 CustomerListScreen(
                     onOpenCustomer = { navController.navigate(CustomerRoutes.detail(it)) },
                     onAddCustomer = { navController.navigate(CustomerRoutes.newCustomer()) },
                 )
             }
-            composable(
+            guarded(navController,
                 route = CustomerRoutes.DETAIL,
                 arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
             ) {
@@ -229,7 +245,7 @@ fun InvisionNavHost(
                     onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
                 )
             }
-            composable(
+            guarded(navController,
                 route = CustomerRoutes.EDITOR,
                 arguments = listOf(
                     navArgument(CustomerRoutes.ARG_CUSTOMER_ID) {
@@ -252,7 +268,7 @@ fun InvisionNavHost(
                     },
                 )
             }
-            composable(
+            guarded(navController,
                 route = CustomerRoutes.PAYMENT,
                 arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
             ) {
@@ -266,7 +282,7 @@ fun InvisionNavHost(
             startDestination = MoreRoutes.HOME,
             route = TopLevelDestination.MORE.route,
         ) {
-            composable(MoreRoutes.HOME) {
+            guarded(navController, MoreRoutes.HOME) {
                 val shopViewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory)
                 val shop by shopViewModel.uiState.collectAsStateWithLifecycle()
                 MoreScreen(
@@ -281,17 +297,26 @@ fun InvisionNavHost(
                         override fun onOpenAppearance() = navController.navigate(MoreRoutes.APPEARANCE)
                         override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
                         override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
+                        override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
+                        override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
+                        override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
                 )
             }
-            composable(MoreRoutes.MENU) {
+            guarded(navController, MoreRoutes.MENU) {
                 MenuListScreen(
                     onBack = { navController.popBackStack() },
                     onOpenDish = { navController.navigate(MoreRoutes.editMenuItem(it)) },
                     onAddDish = { navController.navigate(MoreRoutes.newMenuItem()) },
                 )
             }
-            composable(
+            guarded(navController, MoreRoutes.USER_MANAGEMENT) {
+                UserManagementScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController, MoreRoutes.ACTIVITY_LOG) {
+                ActivityLogScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController,
                 route = MoreRoutes.MENU_EDITOR,
                 arguments = listOf(
                     navArgument(MoreRoutes.ARG_MENU_ITEM_ID) {
@@ -305,31 +330,51 @@ fun InvisionNavHost(
                     onDone = { navController.popBackStack() },
                 )
             }
-            composable(MoreRoutes.SHOP_SETTINGS) {
+            guarded(navController, MoreRoutes.SHOP_SETTINGS) {
                 ShopSettingsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
                 )
             }
-            composable(MoreRoutes.STORE_DETAILS) {
+            guarded(navController, MoreRoutes.STORE_DETAILS) {
                 StoreDetailsScreen(onBack = { navController.popBackStack() })
             }
-            composable(MoreRoutes.APPEARANCE) {
+            guarded(navController, MoreRoutes.APPEARANCE) {
                 AppearanceScreen(onBack = { navController.popBackStack() })
             }
-            composable(MoreRoutes.BACKUP) {
+            guarded(navController, MoreRoutes.BACKUP) {
                 BackupScreen(onBack = { navController.popBackStack() })
             }
-            composable(MoreRoutes.REPORTS) {
+            guarded(navController, MoreRoutes.REPORTS) {
                 ReportsScreen(onBack = { navController.popBackStack() })
             }
         }
     }
 }
 
+/**
+ * A page that is only built for people allowed to see it (see [RouteAccess]). Someone who reaches it any other way
+ * is sent Home, and the page's screen and view model are never created.
+ */
+private fun NavGraphBuilder.guarded(
+    navController: NavHostController,
+    route: String,
+    arguments: List<androidx.navigation.NamedNavArgument> = emptyList(),
+    content: @Composable (androidx.navigation.NavBackStackEntry) -> Unit,
+) {
+    composable(route = route, arguments = arguments) { entry ->
+        val needed = RouteAccess.permissionFor(route)
+        if (needed == null) {
+            content(entry)
+        } else {
+            RequirePermission(needed, onDenied = { navController.navigateToTopLevel(TopLevelDestination.HOME) }) { content(entry) }
+        }
+    }
+}
+
 /** Suppliers, purchase orders, goods receipts, stock alerts and movement history, inside the Inventory graph. */
 private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
-    composable(StockRoutes.SUPPLIERS) {
+    guarded(navController, StockRoutes.SUPPLIERS) {
         SupplierListScreen(
             onBack = { navController.popBackStack() },
             onOpenSupplier = { navController.navigate(StockRoutes.editSupplier(it)) },
@@ -338,7 +383,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onReceiveStock = { navController.navigate(StockRoutes.receive()) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.SUPPLIER_EDITOR,
         arguments = listOf(
             navArgument(StockRoutes.ARG_SUPPLIER_ID) {
@@ -352,7 +397,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onSaved = { navController.popBackStack() },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.PURCHASES,
         arguments = listOf(
             navArgument(StockRoutes.ARG_PURCHASE_TAB) {
@@ -371,7 +416,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onOpenSuppliers = { navController.navigate(StockRoutes.suppliers()) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.ORDER,
         arguments = listOf(navArgument(StockRoutes.ARG_ORDER_ID) { type = NavType.LongType }),
     ) {
@@ -382,7 +427,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onOpenReceipt = { navController.navigate(StockRoutes.receipt(it)) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.ORDER_EDITOR,
         arguments = listOf(
             navArgument(StockRoutes.ARG_ORDER_ID) {
@@ -406,7 +451,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.RECEIVE,
         arguments = listOf(
             navArgument(StockRoutes.ARG_ORDER_ID) {
@@ -425,7 +470,7 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.RECEIPT,
         arguments = listOf(navArgument(StockRoutes.ARG_RECEIPT_ID) { type = NavType.LongType }),
     ) {
@@ -434,13 +479,13 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
             onOpenOrder = { navController.navigate(StockRoutes.order(it)) },
         )
     }
-    composable(StockRoutes.MOVEMENTS) {
+    guarded(navController, StockRoutes.MOVEMENTS) {
         StockMovementsScreen(
             onBack = { navController.popBackStack() },
             onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
         )
     }
-    composable(
+    guarded(navController,
         route = StockRoutes.ALERTS,
         arguments = listOf(
             navArgument(StockRoutes.ARG_ALERTS_TAB) {

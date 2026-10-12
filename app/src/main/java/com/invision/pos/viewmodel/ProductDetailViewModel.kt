@@ -18,6 +18,8 @@ import com.invision.pos.domain.model.StockMovement
 import com.invision.pos.domain.model.StockUnit
 import com.invision.pos.domain.usecase.AdjustStockResult
 import com.invision.pos.domain.usecase.AdjustStockUseCase
+import com.invision.pos.domain.usecase.DeleteProductResult
+import com.invision.pos.domain.usecase.DeleteProductUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -81,6 +83,9 @@ sealed interface ProductDetailEvent {
     data object StockUpdated : ProductDetailEvent
     data object Deleted : ProductDetailEvent
     data object ActionFailed : ProductDetailEvent
+
+    /** The product was not deleted because this many units are still in stock. */
+    data class StockOnHand(val units: Int) : ProductDetailEvent
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -89,6 +94,7 @@ class ProductDetailViewModel(
     private val repository: InventoryRepository,
     private val adjustStock: AdjustStockUseCase,
     private val clock: Clock,
+    private val deleteProduct: DeleteProductUseCase = DeleteProductUseCase(repository),
 ) : ViewModel() {
 
     private val reload = MutableStateFlow(0)
@@ -189,8 +195,14 @@ class ProductDetailViewModel(
     fun confirmDeleteProduct() {
         _confirmDelete.value = false
         viewModelScope.launch {
-            val deleted = runCatching { repository.deleteProduct(productId) }.isSuccess
-            eventChannel.send(if (deleted) ProductDetailEvent.Deleted else ProductDetailEvent.ActionFailed)
+            val result = runCatching { deleteProduct(productId) }.getOrNull()
+            eventChannel.send(
+                when (result) {
+                    DeleteProductResult.Deleted -> ProductDetailEvent.Deleted
+                    is DeleteProductResult.StockOnHand -> ProductDetailEvent.StockOnHand(result.units)
+                    DeleteProductResult.NotFound, null -> ProductDetailEvent.ActionFailed
+                },
+            )
         }
     }
 

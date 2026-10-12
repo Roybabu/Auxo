@@ -29,11 +29,13 @@ fun InvisionApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val onHome = currentDestination?.route == TopLevelDestination.HOME.route
+    val capabilities = LocalCapabilities.current
     val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            TopLevelDestination.entries.forEach { destination ->
+            // Tabs a person may not use are not offered; their pages also refuse them (RouteAccess).
+            TopLevelDestination.entries.filter { it.permission == null || capabilities.can(it.permission) }.forEach { destination ->
                 item(
                     selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                     onClick = { navController.navigateToTopLevel(destination) },
