@@ -45,6 +45,10 @@ enum class AuditAction {
     DAY_CLOSED,
     RECOVERY_CODE_SET,
     PASSWORD_RESET_WITH_CODE,
+    PIN_CHANGED,
+    FINGERPRINT_CHANGED,
+    AUTO_LOCK_CHANGED,
+    PIN_LOCKED_OUT,
 }
 
 /** The record an action touched, as a short type name and an id. */

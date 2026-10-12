@@ -121,6 +121,12 @@ interface AuthRepository {
 
     val recoveryPrompt: StateFlow<RecoveryPrompt>
 
+    /** Whether the app is locked behind the signed-in person's PIN, fingerprint or password. */
+    val lock: StateFlow<LockInfo>
+
+    /** How long the app may sit untouched before it locks. */
+    val idleTimeout: StateFlow<IdleTimeout>
+
     /** Creates the one Super Admin and signs them in. Does nothing if one already exists. */
     suspend fun createAdministrator(name: String, identifier: String, password: String, confirm: String): SetupResult
 
@@ -176,6 +182,42 @@ interface AuthRepository {
      * down the same way wrong passwords are.
      */
     suspend fun resetPasswordWithRecoveryCode(code: String, password: String, confirm: String): RecoveryResetResult
+
+    // Lock and quick unlock. Unlocking only ever resumes the person who was signed in; anyone else signs in with a password.
+
+    /** Records that the person is using the app, which restarts the idle time. Does nothing while locked. */
+    fun noteActivity()
+
+    /** Locks the app if it has been untouched for the idle time. Called on a timer and when the app returns to the screen. */
+    fun checkIdle()
+
+    /** Locks the app now. Returns false if nobody is signed in. */
+    fun lockNow(): Boolean
+
+    suspend fun unlockWithPin(pin: String): UnlockResult
+
+    /** The password of the person who was signed in. Shares the wait that wrong sign-in passwords cause. */
+    suspend fun unlockWithPassword(password: String): UnlockResult
+
+    /**
+     * Call when the device's fingerprint check has just succeeded. Unlocks only if the signed-in person turned
+     * fingerprint unlock on and it has not been switched off by wrong PINs. Returns whether it unlocked.
+     */
+    fun unlockWithFingerprint(): Boolean
+
+    /** The signed-in person's own choices, or null when nobody is signed in. */
+    suspend fun quickUnlockStatus(): QuickUnlockStatus?
+
+    /** Sets or replaces the signed-in person's PIN. The password is asked again. */
+    suspend fun setPin(password: String, pin: String): QuickUnlockChange
+
+    suspend fun removePin(): QuickUnlockChange
+
+    /** Turning it on asks for the password again; turning it off does not. */
+    suspend fun setFingerprint(enabled: Boolean, password: String?): QuickUnlockChange
+
+    /** Super Admin only. */
+    suspend fun setIdleTimeout(value: IdleTimeout): UserChangeResult
 }
 
 class LocalAuthRepository(
@@ -184,6 +226,7 @@ class LocalAuthRepository(
     private val clock: Clock = Clock.systemUTC(),
     private val worker: CoroutineDispatcher = Dispatchers.Default,
     private val listener: AccountEventListener? = null,
+    private val lockSettings: LockSettingsStore = InMemoryLockSettings(),
 ) : AuthRepository {
 
     private val gate = Mutex()
@@ -192,6 +235,13 @@ class LocalAuthRepository(
 
     private val _recoveryPrompt = MutableStateFlow<RecoveryPrompt>(RecoveryPrompt.None)
     override val recoveryPrompt: StateFlow<RecoveryPrompt> = _recoveryPrompt.asStateFlow()
+
+    private val _lock = MutableStateFlow(LockInfo())
+    override val lock: StateFlow<LockInfo> = _lock.asStateFlow()
+    override val idleTimeout: StateFlow<IdleTimeout> get() = lockSettings.idleTimeout
+
+    @Volatile private var lastActivityMillis = 0L
+    private var pinFailures = 0
 
     // A code that has been shown but not yet confirmed. Kept in memory only, so closing the app discards it.
     private var pendingCode: String? = null
@@ -233,6 +283,7 @@ class LocalAuthRepository(
             CreateOutcome.CREATED -> {
                 _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
                 pendingCode = null
+                startSession()
                 _recoveryPrompt.value = RecoveryPrompt.Required
                 SetupResult.Created
             }
@@ -287,6 +338,7 @@ class LocalAuthRepository(
             if (!account.active) return@withLock SignInResult.Deactivated
             _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
             pendingCode = null
+            startSession()
             _recoveryPrompt.value = if (account.role == Role.SUPER_ADMIN && account.recovery == null) RecoveryPrompt.Offered else RecoveryPrompt.None
             tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
             return@withLock SignInResult.Success
@@ -313,6 +365,15 @@ class LocalAuthRepository(
     private fun forgetRecoveryPrompt() {
         pendingCode = null
         _recoveryPrompt.value = RecoveryPrompt.None
+        _lock.value = LockInfo()
+        pinFailures = 0
+    }
+
+    /** A person has just signed in: the app is open and the idle time starts now. */
+    private fun startSession() {
+        _lock.value = LockInfo()
+        pinFailures = 0
+        lastActivityMillis = clock.millis()
     }
 
     private fun tell(event: AccountEvent) {
@@ -344,7 +405,7 @@ class LocalAuthRepository(
     /** The signed-in person, but only if the saved accounts still say they are an active Super Admin. */
     private fun activeSuperAdmin(): UserAccount? {
         val current = _state.value as? AuthState.SignedIn ?: return null
-        if (current.role != Role.SUPER_ADMIN) return null
+        if (current.role != Role.SUPER_ADMIN || _lock.value.locked) return null
         val stored = store.read() as? StoredAccounts.Present ?: return null
         return stored.accounts.firstOrNull { it.id == current.userId && it.role == Role.SUPER_ADMIN && it.active }
     }
@@ -410,7 +471,8 @@ class LocalAuthRepository(
             val salt = hasher.newSalt()
             salt to hasher.hash(password, salt)
         }
-        val result = changeEmployee(userId) { it.copy(salt = salt, hash = hash, iterations = hasher.iterations) }
+        // A new password also ends the old PIN and fingerprint, so a reset after a theft closes the shortcut too.
+        val result = changeEmployee(userId) { it.copy(salt = salt, hash = hash, iterations = hasher.iterations, pin = null, fingerprint = false) }
         if (result is Changed) tell(AccountEvent(AccountEventKind.PASSWORD_RESET, admin.toSession(), userId, result.name))
         result.outcome
     }
@@ -489,7 +551,7 @@ class LocalAuthRepository(
         // The new password and the new code are saved together, so the old code can never outlive the reset.
         val outcome = store.update { accounts ->
             accounts.map {
-                if (it.id == admin.id && it.role == Role.SUPER_ADMIN) it.copy(salt = salt, hash = hash, iterations = hasher.iterations, recovery = record) else it
+                if (it.id == admin.id && it.role == Role.SUPER_ADMIN) it.copy(salt = salt, hash = hash, iterations = hasher.iterations, recovery = record, pin = null, fingerprint = false) else it
             }
         }
         if (outcome != UpdateOutcome.UPDATED) return@withLock RecoveryResetResult.Unavailable
@@ -498,6 +560,143 @@ class LocalAuthRepository(
         lockedUntilMillis = 0L
         tell(AccountEvent(AccountEventKind.PASSWORD_RESET_WITH_CODE, admin.toSession()))
         RecoveryResetResult.Reset(RecoveryCodes.format(newCode))
+    }
+
+
+    // Lock and quick unlock
+
+    override fun noteActivity() {
+        if (_state.value is AuthState.SignedIn && !_lock.value.locked) lastActivityMillis = clock.millis()
+    }
+
+    override fun checkIdle() {
+        if (_state.value !is AuthState.SignedIn || _lock.value.locked) return
+        val timeout = lockSettings.idleTimeout.value
+        if (timeout == IdleTimeout.OFF) return
+        if (clock.millis() - lastActivityMillis >= timeout.millis) lockNow()
+    }
+
+    override fun lockNow(): Boolean {
+        val current = _state.value as? AuthState.SignedIn ?: return false
+        if (_lock.value.locked) return true
+        val account = (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == current.userId }
+        pinFailures = 0
+        _lock.value = LockInfo(locked = true, userName = current.name, hasPin = account?.pin != null, fingerprint = account?.fingerprint == true)
+        return true
+    }
+
+    private fun unlock() {
+        _lock.value = LockInfo()
+        pinFailures = 0
+        lastActivityMillis = clock.millis()
+    }
+
+    /** The saved account of the person behind the lock screen, if they are still active. */
+    private fun lockedAccount(): UserAccount? {
+        val current = _state.value as? AuthState.SignedIn ?: return null
+        if (!_lock.value.locked) return null
+        return (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == current.userId && it.active }
+    }
+
+    override suspend fun unlockWithPin(pin: String): UnlockResult = gate.withLock {
+        val account = lockedAccount() ?: return@withLock UnlockResult.Unavailable
+        val record = account.pin
+        if (record == null || _lock.value.quickUnlockOff) return@withLock UnlockResult.Unavailable
+        if (withContext(worker) { record.matches(pin, hasher) }) {
+            unlock()
+            return@withLock UnlockResult.Unlocked
+        }
+        pinFailures++
+        if (pinFailures >= MAX_PIN_TRIES) {
+            _lock.value = _lock.value.copy(quickUnlockOff = true)
+            tell(AccountEvent(AccountEventKind.PIN_LOCKED_OUT, account.toSession()))
+            return@withLock UnlockResult.PinLockedOut
+        }
+        UnlockResult.WrongPin(MAX_PIN_TRIES - pinFailures)
+    }
+
+    override suspend fun unlockWithPassword(password: String): UnlockResult = gate.withLock {
+        val account = lockedAccount() ?: return@withLock UnlockResult.Unavailable
+        val now = clock.millis()
+        if (now < lockedUntilMillis) return@withLock UnlockResult.LockedOut(secondsLeft(now))
+        if (withContext(worker) { hasher.matches(password, account) }) {
+            failures = 0
+            unlock()
+            return@withLock UnlockResult.Unlocked
+        }
+        failures++
+        lockedUntilMillis = lockAfter(failures, lockedUntilMillis)
+        UnlockResult.WrongPassword
+    }
+
+    override fun unlockWithFingerprint(): Boolean {
+        val account = lockedAccount() ?: return false
+        if (!account.fingerprint || _lock.value.quickUnlockOff) return false
+        unlock()
+        return true
+    }
+
+    /** The signed-in person's saved account, whoever they are. */
+    private fun ownAccount(): UserAccount? {
+        val current = _state.value as? AuthState.SignedIn ?: return null
+        if (_lock.value.locked) return null
+        return (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == current.userId && it.active }
+    }
+
+    override suspend fun quickUnlockStatus(): QuickUnlockStatus? = gate.withLock {
+        ownAccount()?.let { QuickUnlockStatus(it.pin != null, it.fingerprint) }
+    }
+
+    /** Checks the password of [account], with the shared wait after wrong ones. Null means it was right. */
+    private suspend fun checkPassword(account: UserAccount, password: String?): QuickUnlockChange? {
+        val now = clock.millis()
+        if (now < lockedUntilMillis) return QuickUnlockChange.LockedOut(secondsLeft(now))
+        if (password != null && withContext(worker) { hasher.matches(password, account) }) {
+            failures = 0
+            return null
+        }
+        failures++
+        lockedUntilMillis = lockAfter(failures, lockedUntilMillis)
+        return QuickUnlockChange.WrongPassword
+    }
+
+    private fun changeOwn(account: UserAccount, change: (UserAccount) -> UserAccount): Boolean =
+        store.update { accounts -> accounts.map { if (it.id == account.id) change(it) else it } } == UpdateOutcome.UPDATED
+
+    override suspend fun setPin(password: String, pin: String): QuickUnlockChange = gate.withLock {
+        val account = ownAccount() ?: return@withLock QuickUnlockChange.Denied
+        PinPolicy.validate(pin)?.let { return@withLock QuickUnlockChange.InvalidPin(it) }
+        checkPassword(account, password)?.let { return@withLock it }
+        val record = withContext(worker) { PinRecord.create(pin, hasher) }
+        if (!changeOwn(account) { it.copy(pin = record) }) return@withLock QuickUnlockChange.Failed
+        tell(AccountEvent(AccountEventKind.PIN_SET, account.toSession()))
+        QuickUnlockChange.Done
+    }
+
+    override suspend fun removePin(): QuickUnlockChange = gate.withLock {
+        val account = ownAccount() ?: return@withLock QuickUnlockChange.Denied
+        if (account.pin == null) return@withLock QuickUnlockChange.Done
+        if (!changeOwn(account) { it.copy(pin = null) }) return@withLock QuickUnlockChange.Failed
+        tell(AccountEvent(AccountEventKind.PIN_REMOVED, account.toSession()))
+        QuickUnlockChange.Done
+    }
+
+    override suspend fun setFingerprint(enabled: Boolean, password: String?): QuickUnlockChange = gate.withLock {
+        val account = ownAccount() ?: return@withLock QuickUnlockChange.Denied
+        if (account.fingerprint == enabled) return@withLock QuickUnlockChange.Done
+        if (enabled) checkPassword(account, password)?.let { return@withLock it }
+        if (!changeOwn(account) { it.copy(fingerprint = enabled) }) return@withLock QuickUnlockChange.Failed
+        tell(AccountEvent(if (enabled) AccountEventKind.FINGERPRINT_TURNED_ON else AccountEventKind.FINGERPRINT_TURNED_OFF, account.toSession()))
+        QuickUnlockChange.Done
+    }
+
+    override suspend fun setIdleTimeout(value: IdleTimeout): UserChangeResult = gate.withLock {
+        val admin = activeSuperAdmin() ?: return@withLock UserChangeResult.Denied
+        if (lockSettings.idleTimeout.value != value) {
+            lockSettings.setIdleTimeout(value)
+            tell(AccountEvent(AccountEventKind.AUTO_LOCK_CHANGED, admin.toSession(), idleTimeout = value))
+        }
+        UserChangeResult.Done
     }
 
     /** The result of changing one account: what to report, and (when it worked) whose account it was. */
@@ -531,5 +730,6 @@ class LocalAuthRepository(
         const val FREE_ATTEMPTS = 5
         const val BASE_LOCK_MILLIS = 30_000L
         const val MAX_LOCK_MILLIS = 300_000L
+        const val MAX_PIN_TRIES = 5
     }
 }

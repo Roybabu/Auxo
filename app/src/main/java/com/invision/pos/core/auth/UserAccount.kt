@@ -24,6 +24,10 @@ class UserAccount(
     val granted: Set<Permission> = emptySet(),
     /** Proof of the Super Admin's recovery code, if one was set up. Always null for an Employee. */
     val recovery: RecoveryRecord? = null,
+    /** This person's quick-unlock PIN, if they set one. */
+    val pin: PinRecord? = null,
+    /** This person chose to unlock with the device's fingerprint. */
+    val fingerprint: Boolean = false,
 ) {
     val permissions: Set<Permission> get() = RolePermissions.of(role, granted)
 
@@ -34,7 +38,9 @@ class UserAccount(
         iterations: Int = this.iterations,
         granted: Set<Permission> = this.granted,
         recovery: RecoveryRecord? = this.recovery,
-    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis, granted, recovery)
+        pin: PinRecord? = this.pin,
+        fingerprint: Boolean = this.fingerprint,
+    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis, granted, recovery, pin, fingerprint)
 
     fun toManaged() = ManagedUser(id, name, identifier, role, active, createdAtMillis, if (role == Role.EMPLOYEE) granted else emptySet())
 

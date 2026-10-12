@@ -127,7 +127,9 @@ class FileAccountStore(directory: File) : AccountStore {
                             .put("iterations", a.iterations)
                             .put("createdAt", a.createdAtMillis)
                             .put("granted", JSONArray().also { list -> if (a.role == Role.EMPLOYEE) a.granted.forEach { list.put(it.name) } })
-                            .also { json -> a.recovery?.takeIf { a.role == Role.SUPER_ADMIN }?.let { json.put("recovery", encodeRecovery(it)) } },
+                            .also { json -> a.recovery?.takeIf { a.role == Role.SUPER_ADMIN }?.let { json.put("recovery", encodeRecovery(it)) } }
+                            .also { json -> a.pin?.let { json.put("pin", encodePin(it)) } }
+                            .also { json -> if (a.fingerprint) json.put("fingerprint", true) },
                     )
                 }
             },
@@ -152,6 +154,8 @@ class FileAccountStore(directory: File) : AccountStore {
                 createdAtMillis = a.getLong("createdAt"),
                 granted = decodeGranted(a),
                 recovery = decodeRecovery(a),
+                pin = decodePin(a),
+                fingerprint = a.optBoolean("fingerprint", false),
             )
         }
         require(accounts.isNotEmpty())
@@ -173,6 +177,23 @@ class FileAccountStore(directory: File) : AccountStore {
         val names = account.optJSONArray("granted") ?: return emptySet()
         val known = (0 until names.length()).mapNotNull { i -> Permission.entries.firstOrNull { it.name == names.optString(i) } }
         return PermissionOptions.normalize(known.toSet())
+    }
+
+    private fun encodePin(p: PinRecord): JSONObject = JSONObject()
+        .put("salt", Base64.encodeToString(p.salt, Base64.NO_WRAP))
+        .put("hash", Base64.encodeToString(p.hash, Base64.NO_WRAP))
+        .put("iterations", p.iterations)
+
+    /** The quick-unlock PIN proof, if there is one. An empty or malformed one means the file was edited. */
+    private fun decodePin(account: JSONObject): PinRecord? {
+        val json = account.optJSONObject("pin") ?: return null
+        val record = PinRecord(
+            salt = Base64.decode(json.getString("salt"), Base64.NO_WRAP),
+            hash = Base64.decode(json.getString("hash"), Base64.NO_WRAP),
+            iterations = json.getInt("iterations"),
+        )
+        require(record.salt.isNotEmpty() && record.hash.isNotEmpty() && record.iterations > 0) { "empty PIN proof" }
+        return record
     }
 
     private fun encodeRecovery(r: RecoveryRecord): JSONObject = JSONObject()
