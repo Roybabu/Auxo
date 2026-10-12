@@ -1626,4 +1626,64 @@ in %2$s</string>
     <string name="count_failed">Could not save. Please try again.</string>
     <string name="count_barcode_missing">No item with barcode %1$s.</string>
     <string name="count_scanner_unavailable">The scanner could not be opened. Type the barcode instead.</string>
+    <string name="import_title">Import products</string>
+    <string name="more_import_body">Add many products from a CSV file</string>
+    <string name="import_intro_title">Add products from a spreadsheet</string>
+    <string name="import_intro_body">1. Download the template and fill it in. Excel and Google Sheets can save it as CSV.\n2. Choose the file here.\n3. Check the preview, then import.\n\nThe template has example rows; delete them first. Nothing is saved until you confirm.</string>
+    <string name="import_template">Download template</string>
+    <string name="import_template_failed">Could not share the template</string>
+    <string name="import_choose">Choose CSV file</string>
+    <string name="import_reading">Reading the file…</string>
+    <string name="import_error_unreadable">This file could not be read. Pick a CSV file.</string>
+    <string name="import_error_too_large">This file is too large. Keep it under 1 MB.</string>
+    <string name="import_error_empty">The file has no product rows. It needs a heading row and at least one product.</string>
+    <string name="import_error_too_many_rows">The file has too many rows. Import at most 1000 rows at a time.</string>
+    <string name="import_error_malformed">The file looks damaged: a quoted cell is never closed.</string>
+    <string name="import_file_unnamed">Chosen file</string>
+    <string name="import_other_file">Choose another</string>
+    <string name="import_columns_title">Match the columns</string>
+    <string name="import_columns_hint">Each field on the left is read from the file column you pick. We matched what we could. name is needed; selling_price is needed for items you sell.</string>
+    <string name="import_column_none">Not used</string>
+    <string name="import_column_unnamed">Column %1$d</string>
+    <string name="import_default_category">Category for rows that have none</string>
+    <string name="import_default_none">None</string>
+    <string name="import_need_name">Pick the column that holds the product name to see the preview.</string>
+    <string name="import_preview_title">Preview</string>
+    <string name="import_summary">%1$d ready · %2$d need fixing · %3$d already exist</string>
+    <string name="import_status_ready">Ready</string>
+    <string name="import_status_invalid">Needs fixing</string>
+    <string name="import_status_exists">Already exists</string>
+    <string name="import_row_unnamed">Row %1$d</string>
+    <string name="import_issue_row">Row %1$d · %2$s: %3$s</string>
+    <string name="import_parse_unknown_category">Category not recognised. Use Garment, Packaged food, Beverage or Ingredient.</string>
+    <string name="import_parse_unknown_diet">Use Veg or Non-veg.</string>
+    <string name="import_parse_unknown_unit">Unit not recognised. Use g, kg, ml, L or pcs.</string>
+    <string name="import_parse_unknown_stock_unit">Use pcs, kg or L.</string>
+    <string name="import_parse_invalid_date">Date not recognised. Use 31/12/2026 or 2026-12-31.</string>
+    <string name="import_confirm_title">Import products?</string>
+    <string name="import_confirm">Import</string>
+    <string name="import_done_title">Import finished</string>
+    <string name="import_done_not_added">%1$d not added: %2$s</string>
+    <string name="import_done_close">Done</string>
+    <string name="import_done_another">Import another file</string>
+    <plurals name="import_item_variants">
+        <item quantity="one">%d variant</item>
+        <item quantity="other">%d variants</item>
+    </plurals>
+    <plurals name="import_issue_more">
+        <item quantity="one">…and %d more problem</item>
+        <item quantity="other">…and %d more problems</item>
+    </plurals>
+    <plurals name="import_action">
+        <item quantity="one">Import %d product</item>
+        <item quantity="other">Import %d products</item>
+    </plurals>
+    <plurals name="import_confirm_message">
+        <item quantity="one">%d product will be added to your inventory. Products with problems and ones that already exist are left out.</item>
+        <item quantity="other">%d products will be added to your inventory. Products with problems and ones that already exist are left out.</item>
+    </plurals>
+    <plurals name="import_done_added">
+        <item quantity="one">%d product added</item>
+        <item quantity="other">%d products added</item>
+    </plurals>
 </resources>

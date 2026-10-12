@@ -1626,4 +1626,64 @@
     <string name="count_failed">सेव नहीं हो सका। कृपया दोबारा कोशिश करें।</string>
     <string name="count_barcode_missing">बारकोड %1$s वाला कोई सामान नहीं।</string>
     <string name="count_scanner_unavailable">स्कैनर नहीं खुल सका। बारकोड खुद लिखें।</string>
+    <string name="import_title">प्रोडक्ट इम्पोर्ट करें</string>
+    <string name="more_import_body">CSV फ़ाइल से कई प्रोडक्ट जोड़ें</string>
+    <string name="import_intro_title">स्प्रेडशीट से प्रोडक्ट जोड़ें</string>
+    <string name="import_intro_body">1. टेम्पलेट डाउनलोड करके भरें। Excel और Google Sheets इसे CSV के रूप में सेव कर सकते हैं।\n2. यहाँ फ़ाइल चुनें।\n3. प्रीव्यू देखें, फिर इम्पोर्ट करें।\n\nटेम्पलेट में उदाहरण वाली पंक्तियाँ हैं; पहले उन्हें हटा दें। पुष्टि करने तक कुछ भी सेव नहीं होता।</string>
+    <string name="import_template">टेम्पलेट डाउनलोड करें</string>
+    <string name="import_template_failed">टेम्पलेट शेयर नहीं हो सका</string>
+    <string name="import_choose">CSV फ़ाइल चुनें</string>
+    <string name="import_reading">फ़ाइल पढ़ी जा रही है…</string>
+    <string name="import_error_unreadable">यह फ़ाइल नहीं पढ़ी जा सकी। CSV फ़ाइल चुनें।</string>
+    <string name="import_error_too_large">यह फ़ाइल बहुत बड़ी है। इसे 1 MB से कम रखें।</string>
+    <string name="import_error_empty">फ़ाइल में कोई प्रोडक्ट पंक्ति नहीं है। इसमें शीर्षक पंक्ति और कम से कम एक प्रोडक्ट चाहिए।</string>
+    <string name="import_error_too_many_rows">फ़ाइल में बहुत ज़्यादा पंक्तियाँ हैं। एक बार में अधिकतम 1000 पंक्तियाँ इम्पोर्ट करें।</string>
+    <string name="import_error_malformed">फ़ाइल खराब लगती है: उद्धरण चिह्न में बंद किया गया एक सेल कभी बंद नहीं होता।</string>
+    <string name="import_file_unnamed">चुनी गई फ़ाइल</string>
+    <string name="import_other_file">दूसरी चुनें</string>
+    <string name="import_columns_title">कॉलम मिलाएँ</string>
+    <string name="import_columns_hint">बाईं ओर के हर फ़ील्ड को आपके चुने फ़ाइल कॉलम से पढ़ा जाता है। जो मिल सका हमने मिला दिया। name ज़रूरी है; बिकने वाले सामान के लिए selling_price ज़रूरी है।</string>
+    <string name="import_column_none">इस्तेमाल नहीं</string>
+    <string name="import_column_unnamed">कॉलम %1$d</string>
+    <string name="import_default_category">जिन पंक्तियों में श्रेणी नहीं है उनकी श्रेणी</string>
+    <string name="import_default_none">कोई नहीं</string>
+    <string name="import_need_name">प्रीव्यू देखने के लिए वह कॉलम चुनें जिसमें प्रोडक्ट का नाम है।</string>
+    <string name="import_preview_title">प्रीव्यू</string>
+    <string name="import_summary">%1$d तैयार · %2$d में सुधार चाहिए · %3$d पहले से मौजूद</string>
+    <string name="import_status_ready">तैयार</string>
+    <string name="import_status_invalid">सुधार चाहिए</string>
+    <string name="import_status_exists">पहले से मौजूद</string>
+    <string name="import_row_unnamed">पंक्ति %1$d</string>
+    <string name="import_issue_row">पंक्ति %1$d · %2$s: %3$s</string>
+    <string name="import_parse_unknown_category">श्रेणी पहचानी नहीं गई। Garment, Packaged food, Beverage या Ingredient लिखें।</string>
+    <string name="import_parse_unknown_diet">Veg या Non-veg लिखें।</string>
+    <string name="import_parse_unknown_unit">इकाई पहचानी नहीं गई। g, kg, ml, L या pcs लिखें।</string>
+    <string name="import_parse_unknown_stock_unit">pcs, kg या L लिखें।</string>
+    <string name="import_parse_invalid_date">तारीख पहचानी नहीं गई। 31/12/2026 या 2026-12-31 लिखें।</string>
+    <string name="import_confirm_title">प्रोडक्ट इम्पोर्ट करें?</string>
+    <string name="import_confirm">इम्पोर्ट करें</string>
+    <string name="import_done_title">इम्पोर्ट पूरा हुआ</string>
+    <string name="import_done_not_added">%1$d नहीं जुड़े: %2$s</string>
+    <string name="import_done_close">हो गया</string>
+    <string name="import_done_another">दूसरी फ़ाइल इम्पोर्ट करें</string>
+    <plurals name="import_item_variants">
+        <item quantity="one">%d वेरिएंट</item>
+        <item quantity="other">%d वेरिएंट</item>
+    </plurals>
+    <plurals name="import_issue_more">
+        <item quantity="one">…और %d समस्या</item>
+        <item quantity="other">…और %d समस्याएँ</item>
+    </plurals>
+    <plurals name="import_action">
+        <item quantity="one">%d प्रोडक्ट इम्पोर्ट करें</item>
+        <item quantity="other">%d प्रोडक्ट इम्पोर्ट करें</item>
+    </plurals>
+    <plurals name="import_confirm_message">
+        <item quantity="one">%d प्रोडक्ट आपके इन्वेंटरी में जुड़ेगा। जिनमें समस्या है और जो पहले से मौजूद हैं, वे छोड़ दिए जाएँगे।</item>
+        <item quantity="other">%d प्रोडक्ट आपके इन्वेंटरी में जुड़ेंगे। जिनमें समस्या है और जो पहले से मौजूद हैं, वे छोड़ दिए जाएँगे।</item>
+    </plurals>
+    <plurals name="import_done_added">
+        <item quantity="one">%d प्रोडक्ट जुड़ा</item>
+        <item quantity="other">%d प्रोडक्ट जुड़े</item>
+    </plurals>
 </resources>

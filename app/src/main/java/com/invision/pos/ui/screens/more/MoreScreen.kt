@@ -42,6 +42,7 @@ interface MoreActions {
     fun onOpenAlerts() = Unit
     fun onOpenMovements() = Unit
     fun onOpenCount() = Unit
+    fun onOpenImport() = Unit
     fun onOpenMenu() = Unit
     fun onOpenReports() = Unit
     fun onOpenHistory() = Unit
@@ -156,7 +157,8 @@ fun MoreScreen(
             val showSuppliers = LocalSuppliersEnabled.current && can(Permission.MANAGE_SUPPLIERS)
             val showStockRecords = can(Permission.VIEW_STOCK_RECORDS)
             val showCount = can(Permission.ADJUST_STOCK)
-            if (showSuppliers || showStockRecords || showCount) {
+            val showImport = can(Permission.MANAGE_PRODUCTS)
+            if (showSuppliers || showStockRecords || showCount || showImport) {
                 SectionHeader(stringResource(R.string.more_section_stock), modifier = Modifier.padding(top = Spacing.md))
                 if (showSuppliers) {
                     MoreItem(R.drawable.ic_supplier, stringResource(R.string.suppliers_title), stringResource(R.string.more_suppliers_body), actions::onOpenSuppliers)
@@ -167,6 +169,9 @@ fun MoreScreen(
                 }
                 if (showCount) {
                     MoreItem(R.drawable.ic_nav_inventory, stringResource(R.string.count_title), stringResource(R.string.more_count_body), actions::onOpenCount, modifier = Modifier.testTag("more_stock_count"))
+                }
+                if (showImport) {
+                    MoreItem(R.drawable.ic_download, stringResource(R.string.import_title), stringResource(R.string.more_import_body), actions::onOpenImport, modifier = Modifier.testTag("more_import_products"))
                 }
             }
 

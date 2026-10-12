@@ -44,6 +44,7 @@ object RouteAccess {
         StockRoutes.MOVEMENTS to Permission.VIEW_STOCK_RECORDS,
         StockRoutes.ALERTS to Permission.VIEW_STOCK_RECORDS,
         StockRoutes.COUNT to Permission.ADJUST_STOCK,
+        StockRoutes.IMPORT to Permission.MANAGE_PRODUCTS,
 
         MoreRoutes.MENU to Permission.MANAGE_MENU,
         MoreRoutes.MENU_EDITOR to Permission.MANAGE_MENU,

@@ -1626,4 +1626,64 @@
     <string name="count_failed">সেভ করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="count_barcode_missing">বারকোড %1$s-এর কোনো পণ্য নেই।</string>
     <string name="count_scanner_unavailable">স্ক্যানার খোলা যায়নি। বারকোড নিজে লিখুন।</string>
+    <string name="import_title">প্রোডাক্ট ইমপোর্ট করুন</string>
+    <string name="more_import_body">CSV ফাইল থেকে অনেক প্রোডাক্ট যোগ করুন</string>
+    <string name="import_intro_title">স্প্রেডশিট থেকে প্রোডাক্ট যোগ করুন</string>
+    <string name="import_intro_body">১. টেমপ্লেট ডাউনলোড করে পূরণ করুন। Excel ও Google Sheets এটিকে CSV হিসেবে সেভ করতে পারে।\n২. এখানে ফাইলটি বেছে নিন।\n৩. প্রিভিউ দেখে ইমপোর্ট করুন।\n\nটেমপ্লেটে উদাহরণের সারি আছে; আগে সেগুলো মুছে দিন। নিশ্চিত না করা পর্যন্ত কিছুই সেভ হয় না।</string>
+    <string name="import_template">টেমপ্লেট ডাউনলোড করুন</string>
+    <string name="import_template_failed">টেমপ্লেট শেয়ার করা গেল না</string>
+    <string name="import_choose">CSV ফাইল বেছে নিন</string>
+    <string name="import_reading">ফাইল পড়া হচ্ছে…</string>
+    <string name="import_error_unreadable">এই ফাইলটি পড়া গেল না। একটি CSV ফাইল বেছে নিন।</string>
+    <string name="import_error_too_large">এই ফাইলটি অনেক বড়। এটি ১ MB-এর কম রাখুন।</string>
+    <string name="import_error_empty">ফাইলে কোনো প্রোডাক্টের সারি নেই। একটি শিরোনামের সারি ও অন্তত একটি প্রোডাক্ট দরকার।</string>
+    <string name="import_error_too_many_rows">ফাইলে অনেক বেশি সারি আছে। একবারে সর্বোচ্চ ১০০০ সারি ইমপোর্ট করুন।</string>
+    <string name="import_error_malformed">ফাইলটি নষ্ট মনে হচ্ছে: উদ্ধৃতি চিহ্নে খোলা একটি ঘর কখনও বন্ধ হয়নি।</string>
+    <string name="import_file_unnamed">বেছে নেওয়া ফাইল</string>
+    <string name="import_other_file">অন্যটি বেছে নিন</string>
+    <string name="import_columns_title">কলাম মেলান</string>
+    <string name="import_columns_hint">বাঁ দিকের প্রতিটি ফিল্ড আপনার বেছে নেওয়া ফাইল কলাম থেকে পড়া হয়। যা মেলানো গেছে আমরা মিলিয়েছি। name দরকার; বিক্রির জিনিসের জন্য selling_price দরকার।</string>
+    <string name="import_column_none">ব্যবহার হবে না</string>
+    <string name="import_column_unnamed">কলাম %1$d</string>
+    <string name="import_default_category">যে সারিতে ক্যাটাগরি নেই তার ক্যাটাগরি</string>
+    <string name="import_default_none">কোনোটি নয়</string>
+    <string name="import_need_name">প্রিভিউ দেখতে প্রোডাক্টের নাম থাকা কলামটি বেছে নিন।</string>
+    <string name="import_preview_title">প্রিভিউ</string>
+    <string name="import_summary">%1$d প্রস্তুত · %2$d ঠিক করতে হবে · %3$d আগে থেকেই আছে</string>
+    <string name="import_status_ready">প্রস্তুত</string>
+    <string name="import_status_invalid">ঠিক করতে হবে</string>
+    <string name="import_status_exists">আগে থেকেই আছে</string>
+    <string name="import_row_unnamed">সারি %1$d</string>
+    <string name="import_issue_row">সারি %1$d · %2$s: %3$s</string>
+    <string name="import_parse_unknown_category">ক্যাটাগরি চেনা গেল না। Garment, Packaged food, Beverage বা Ingredient লিখুন।</string>
+    <string name="import_parse_unknown_diet">Veg বা Non-veg লিখুন।</string>
+    <string name="import_parse_unknown_unit">একক চেনা গেল না। g, kg, ml, L বা pcs লিখুন।</string>
+    <string name="import_parse_unknown_stock_unit">pcs, kg বা L লিখুন।</string>
+    <string name="import_parse_invalid_date">তারিখ চেনা গেল না। 31/12/2026 বা 2026-12-31 লিখুন।</string>
+    <string name="import_confirm_title">প্রোডাক্ট ইমপোর্ট করবেন?</string>
+    <string name="import_confirm">ইমপোর্ট করুন</string>
+    <string name="import_done_title">ইমপোর্ট শেষ</string>
+    <string name="import_done_not_added">%1$dটি যোগ হয়নি: %2$s</string>
+    <string name="import_done_close">হয়েছে</string>
+    <string name="import_done_another">আরেকটি ফাইল ইমপোর্ট করুন</string>
+    <plurals name="import_item_variants">
+        <item quantity="one">%dটি ভেরিয়েন্ট</item>
+        <item quantity="other">%dটি ভেরিয়েন্ট</item>
+    </plurals>
+    <plurals name="import_issue_more">
+        <item quantity="one">…আরও %dটি সমস্যা</item>
+        <item quantity="other">…আরও %dটি সমস্যা</item>
+    </plurals>
+    <plurals name="import_action">
+        <item quantity="one">%dটি প্রোডাক্ট ইমপোর্ট করুন</item>
+        <item quantity="other">%dটি প্রোডাক্ট ইমপোর্ট করুন</item>
+    </plurals>
+    <plurals name="import_confirm_message">
+        <item quantity="one">%dটি প্রোডাক্ট আপনার ইনভেন্টরিতে যোগ হবে। যেগুলোতে সমস্যা আছে বা যেগুলো আগে থেকেই আছে সেগুলো বাদ যাবে।</item>
+        <item quantity="other">%dটি প্রোডাক্ট আপনার ইনভেন্টরিতে যোগ হবে। যেগুলোতে সমস্যা আছে বা যেগুলো আগে থেকেই আছে সেগুলো বাদ যাবে।</item>
+    </plurals>
+    <plurals name="import_done_added">
+        <item quantity="one">%dটি প্রোডাক্ট যোগ হয়েছে</item>
+        <item quantity="other">%dটি প্রোডাক্ট যোগ হয়েছে</item>
+    </plurals>
 </resources>

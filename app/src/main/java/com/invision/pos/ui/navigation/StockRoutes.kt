@@ -31,6 +31,7 @@ object StockRoutes {
     const val MOVEMENTS = "$PREFIX/movements"
     const val ALERTS = "$PREFIX/alerts?$ARG_ALERTS_TAB={$ARG_ALERTS_TAB}"
     const val COUNT = "$PREFIX/count"
+    const val IMPORT = "$PREFIX/import"
 
     fun suppliers(): String = SUPPLIERS
 
@@ -54,6 +55,8 @@ object StockRoutes {
     fun movements(): String = MOVEMENTS
 
     fun count(): String = COUNT
+
+    fun import(): String = IMPORT
 
     fun alerts(tab: AlertsTab = AlertsTab.LOW_STOCK): String = "$PREFIX/alerts?$ARG_ALERTS_TAB=${tab.name}"
 }

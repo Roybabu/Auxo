@@ -26,7 +26,7 @@ class RouteAccessTest {
         InventoryRoutes.LIST, InventoryRoutes.PRODUCT, InventoryRoutes.EDITOR, InventoryRoutes.LABELS,
         CustomerRoutes.LIST, CustomerRoutes.DETAIL, CustomerRoutes.EDITOR, CustomerRoutes.PAYMENT, CustomerRoutes.HISTORY,
         StockRoutes.SUPPLIERS, StockRoutes.SUPPLIER_EDITOR, StockRoutes.PURCHASES, StockRoutes.ORDER, StockRoutes.ORDER_EDITOR,
-        StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS, StockRoutes.COUNT,
+        StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS, StockRoutes.COUNT, StockRoutes.IMPORT,
         MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
         MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.LOYALTY, MoreRoutes.RECOVERY_CODE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route,
@@ -56,6 +56,14 @@ class RouteAccessTest {
         assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.USER_MANAGEMENT))
         assertFalse(allowed(Role.EMPLOYEE, MoreRoutes.ACTIVITY_LOG))
         assertEquals(Permission.MANAGE_USERS, RouteAccess.permissionFor(MoreRoutes.USER_MANAGEMENT))
+    }
+
+    @Test
+    fun theProductImport_needsTheManageProductsPermission() {
+        assertEquals(Permission.MANAGE_PRODUCTS, RouteAccess.permissionFor(StockRoutes.IMPORT))
+        assertTrue(allowed(Role.SUPER_ADMIN, StockRoutes.IMPORT))
+        assertFalse(allowed(Role.EMPLOYEE, StockRoutes.IMPORT))
+        assertTrue(openWith(Permission.MANAGE_PRODUCTS).contains(StockRoutes.IMPORT))
     }
 
     @Test

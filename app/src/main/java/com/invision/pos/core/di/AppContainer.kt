@@ -203,6 +203,8 @@ class AppContainer(context: Context) {
     }
 
     val saveProduct: SaveProductUseCase by lazy { SaveProductUseCase(inventoryRepository, barcodeGenerator) }
+    val importProducts: com.invision.pos.domain.usecase.ImportProductsUseCase by lazy { com.invision.pos.domain.usecase.ImportProductsUseCase(saveProduct) }
+    val importFileReader: com.invision.pos.domain.imports.ImportFileReader by lazy { com.invision.pos.core.imports.ContentResolverImportReader(appContext) }
 
     val adjustStock: AdjustStockUseCase by lazy { AdjustStockUseCase(inventoryRepository, clock) }
 
