@@ -1368,7 +1368,7 @@
     <string name="receipt_item">পণ্য</string>
     <string name="receipt_amount">পরিমাণ</string>
     <string name="receipt_qty_price">%1$d x %2$s</string>
-    <string name="receipt_mrp_discount_line">এমআরপি %1$s  ছাড়</string>
+    <string name="receipt_mrp_discount_line">"এমআরপি %1$s  ছাড়"</string>
     <string name="receipt_discount">ছাড়</string>
     <string name="receipt_hsn">HSN %1$s</string>
     <string name="receipt_gst_rate_line">GST %1$s</string>

@@ -1368,7 +1368,7 @@ in %2$s</string>
     <string name="receipt_item">Item</string>
     <string name="receipt_amount">Amount</string>
     <string name="receipt_qty_price">%1$d x %2$s</string>
-    <string name="receipt_mrp_discount_line">MRP %1$s  Discount</string>
+    <string name="receipt_mrp_discount_line">"MRP %1$s  Discount"</string>
     <string name="receipt_discount">Discount</string>
     <string name="receipt_hsn">HSN %1$s</string>
     <string name="receipt_gst_rate_line">GST %1$s</string>

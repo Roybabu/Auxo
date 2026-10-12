@@ -120,7 +120,7 @@ import java.io.File
 /** Step 4 screens rendered with sample data, with screenshots in app/build/outputs/screenshots/. */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w392dp-h850dp-xhdpi")
+@Config(qualifiers = "w392dp-h3200dp-xhdpi")
 class OperationsScreenTest {
 
     @get:Rule

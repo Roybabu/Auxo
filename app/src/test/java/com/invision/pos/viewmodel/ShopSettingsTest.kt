@@ -61,7 +61,7 @@ private class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w392dp-h850dp-xhdpi")
+@Config(qualifiers = "w392dp-h3200dp-xhdpi")
 class ShopSettingsTest {
 
     @get:Rule

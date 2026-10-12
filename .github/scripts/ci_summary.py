@@ -119,14 +119,21 @@ def annotate(level, title, items):
 errors, warnings = build_problems()
 test_summary, test_failures = test_results(DEVICE_RESULTS if DEVICE else UNIT_RESULTS)
 annotate("error", "Build errors", errors)
-# GitHub cuts an annotation at about 4 KB, so one long list loses most failures. First a short list of just the
-# names, then each failure on its own with a trimmed reason.
+# GitHub cuts an annotation at about 4 KB and shows only 10 per step, so failures are packed one short line each
+# (test name and the first line of the reason) into a few annotations.
 failure_title = "Device test failures" if DEVICE else "Test failures"
-annotate("error", failure_title + " - names", [f.split(": ", 1)[0] for f in test_failures])
-for failure in test_failures[:30]:
+packed, chunk = [], ""
+for failure in test_failures:
     name, _, reason = failure.partition(": ")
-    short = " | ".join(reason.split(" | ")[:3])[:600]
-    print(f"::error title={name.rsplit('.', 2)[-2]}.{name.rsplit('.', 1)[-1]}::{escape(short)}")
+    line = f"{name.replace('com.invision.pos.', '')}: {reason.split(' | ')[0][:170]}\n"
+    if len(chunk) + len(line) > 3800:
+        packed.append(chunk)
+        chunk = ""
+    chunk += line
+if chunk:
+    packed.append(chunk)
+for index, text in enumerate(packed[:9], 1):
+    print(f"::error title={failure_title} {index}/{len(packed)}::{escape(text.rstrip())}")
 annotate("warning", "Compiler warnings", warnings)
 
 if DEVICE:

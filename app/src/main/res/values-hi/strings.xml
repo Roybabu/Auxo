@@ -1368,7 +1368,7 @@
     <string name="receipt_item">सामान</string>
     <string name="receipt_amount">राशि</string>
     <string name="receipt_qty_price">%1$d x %2$s</string>
-    <string name="receipt_mrp_discount_line">एमआरपी %1$s  छूट</string>
+    <string name="receipt_mrp_discount_line">"एमआरपी %1$s  छूट"</string>
     <string name="receipt_discount">छूट</string>
     <string name="receipt_hsn">HSN %1$s</string>
     <string name="receipt_gst_rate_line">GST %1$s</string>

@@ -41,7 +41,7 @@ import java.io.File
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w392dp-h850dp-xhdpi")
+@Config(qualifiers = "w392dp-h3200dp-xhdpi")
 class AppFlowTest {
 
     @get:Rule

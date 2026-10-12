@@ -11,7 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
+// Real pixels are needed to check what was drawn.
 @RunWith(AndroidJUnit4::class)
+@org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
 class ReceiptRasterTest {
 
     private fun bit(image: com.invision.pos.core.printer.DotImage, x: Int, y: Int): Boolean =
