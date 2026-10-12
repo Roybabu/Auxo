@@ -126,7 +126,8 @@ class FileAccountStore(directory: File) : AccountStore {
                             .put("hash", Base64.encodeToString(a.hash, Base64.NO_WRAP))
                             .put("iterations", a.iterations)
                             .put("createdAt", a.createdAtMillis)
-                            .put("granted", JSONArray().also { list -> if (a.role == Role.EMPLOYEE) a.granted.forEach { list.put(it.name) } }),
+                            .put("granted", JSONArray().also { list -> if (a.role == Role.EMPLOYEE) a.granted.forEach { list.put(it.name) } })
+                            .also { json -> a.recovery?.takeIf { a.role == Role.SUPER_ADMIN }?.let { json.put("recovery", encodeRecovery(it)) } },
                     )
                 }
             },
@@ -150,6 +151,7 @@ class FileAccountStore(directory: File) : AccountStore {
                 iterations = a.getInt("iterations"),
                 createdAtMillis = a.getLong("createdAt"),
                 granted = decodeGranted(a),
+                recovery = decodeRecovery(a),
             )
         }
         require(accounts.isNotEmpty())
@@ -171,6 +173,29 @@ class FileAccountStore(directory: File) : AccountStore {
         val names = account.optJSONArray("granted") ?: return emptySet()
         val known = (0 until names.length()).mapNotNull { i -> Permission.entries.firstOrNull { it.name == names.optString(i) } }
         return PermissionOptions.normalize(known.toSet())
+    }
+
+    private fun encodeRecovery(r: RecoveryRecord): JSONObject = JSONObject()
+        .put("salt", Base64.encodeToString(r.salt, Base64.NO_WRAP))
+        .put("hash", Base64.encodeToString(r.hash, Base64.NO_WRAP))
+        .put("iterations", r.iterations)
+        .put("createdAt", r.createdAtMillis)
+
+    /**
+     * The recovery code proof, if the registry has one. A registry written before recovery codes existed has
+     * none. Only the Super Admin may have one: an Employee entry carrying it means the file was edited.
+     */
+    private fun decodeRecovery(account: JSONObject): RecoveryRecord? {
+        val json = account.optJSONObject("recovery") ?: return null
+        require(Role.valueOf(account.getString("role")) == Role.SUPER_ADMIN) { "recovery code on an employee" }
+        val record = RecoveryRecord(
+            salt = Base64.decode(json.getString("salt"), Base64.NO_WRAP),
+            hash = Base64.decode(json.getString("hash"), Base64.NO_WRAP),
+            iterations = json.getInt("iterations"),
+            createdAtMillis = json.getLong("createdAt"),
+        )
+        require(record.salt.isNotEmpty() && record.hash.isNotEmpty() && record.iterations > 0) { "empty recovery code proof" }
+        return record
     }
 
     private fun decodeLegacy(text: String): UserAccount {

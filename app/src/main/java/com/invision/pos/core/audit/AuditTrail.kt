@@ -43,6 +43,8 @@ enum class AuditAction {
     AUTO_BACKUP_FAILED,
     AUTO_BACKUP_SETTINGS_CHANGED,
     DAY_CLOSED,
+    RECOVERY_CODE_SET,
+    PASSWORD_RESET_WITH_CODE,
 }
 
 /** The record an action touched, as a short type name and an id. */

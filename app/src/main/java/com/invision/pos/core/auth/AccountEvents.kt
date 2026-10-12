@@ -1,6 +1,6 @@
 package com.invision.pos.core.auth
 
-enum class AccountEventKind { SIGNED_IN, SIGNED_OUT, EMPLOYEE_CREATED, EMPLOYEE_TURNED_ON, EMPLOYEE_TURNED_OFF, PASSWORD_RESET, ACCESS_CHANGED }
+enum class AccountEventKind { SIGNED_IN, SIGNED_OUT, EMPLOYEE_CREATED, EMPLOYEE_TURNED_ON, EMPLOYEE_TURNED_OFF, PASSWORD_RESET, ACCESS_CHANGED, RECOVERY_CODE_SET, PASSWORD_RESET_WITH_CODE }
 
 /** Something that happened to the accounts, with the person who did it. */
 data class AccountEvent(

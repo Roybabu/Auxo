@@ -19,5 +19,12 @@ fun AccountEvent.toAuditDraft(): AuditDraft {
             "Changed what $who may do: " + (granted.orEmpty().takeIf { it.isNotEmpty() }?.joinToString { it.name.lowercase().replace('_', ' ') } ?: "billing only"),
         )
         AccountEventKind.PASSWORD_RESET -> AuditDraft(AuditAction.PASSWORD_RESET, AuditEntity.USER, targetId, "Reset the password of $who")
+        AccountEventKind.RECOVERY_CODE_SET -> AuditDraft(AuditAction.RECOVERY_CODE_SET, AuditEntity.USER, actor.id, "${actor.name} created a new recovery code")
+        AccountEventKind.PASSWORD_RESET_WITH_CODE -> AuditDraft(
+            AuditAction.PASSWORD_RESET_WITH_CODE,
+            AuditEntity.USER,
+            actor.id,
+            "${actor.name} reset their own password with the recovery code and was given a new code",
+        )
     }
 }

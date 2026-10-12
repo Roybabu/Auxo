@@ -22,6 +22,8 @@ class UserAccount(
     val createdAtMillis: Long,
     /** Extras the Super Admin switched on for this Employee. Always empty for the Super Admin, who holds everything. */
     val granted: Set<Permission> = emptySet(),
+    /** Proof of the Super Admin's recovery code, if one was set up. Always null for an Employee. */
+    val recovery: RecoveryRecord? = null,
 ) {
     val permissions: Set<Permission> get() = RolePermissions.of(role, granted)
 
@@ -31,7 +33,8 @@ class UserAccount(
         hash: ByteArray = this.hash,
         iterations: Int = this.iterations,
         granted: Set<Permission> = this.granted,
-    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis, granted)
+        recovery: RecoveryRecord? = this.recovery,
+    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis, granted, recovery)
 
     fun toManaged() = ManagedUser(id, name, identifier, role, active, createdAtMillis, if (role == Role.EMPLOYEE) granted else emptySet())
 
