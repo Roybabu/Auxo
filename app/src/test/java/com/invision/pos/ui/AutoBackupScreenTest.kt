@@ -23,6 +23,7 @@ import com.invision.pos.ui.theme.InvisionTheme
 import com.invision.pos.viewmodel.AutoBackupUiState
 import com.invision.pos.viewmodel.BackupUiState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -198,7 +199,9 @@ class AutoBackupScreenTest {
     fun home_whenWorking_showsTheLastBackupTime() {
         notice(AutoBackupUiState(settings = withFolder.copy(lastSuccessMillis = 1_700_000_000_000), status = AutoBackupStatus.OK))
         composeRule.onNodeWithText("Backups are working").assertIsDisplayed()
-        composeRule.onNodeWithTag("home_backup_detail").assertTextContains("Last automatic backup:", substring = true)
+        val text = composeRule.onNodeWithTag("home_backup_detail").fetchSemanticsNode().config
+            .getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString { it.text }
+        assertTrue("detail text was: $text", text?.startsWith("Last automatic backup:") == true)
     }
 
     @Test
