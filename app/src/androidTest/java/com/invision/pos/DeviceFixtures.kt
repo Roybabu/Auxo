@@ -87,8 +87,8 @@ class SignedInRule : org.junit.rules.ExternalResource() {
         kotlinx.coroutines.runBlocking {
             when (auth.state.value) {
                 com.invision.pos.core.auth.AuthState.NeedsSetup ->
-                    auth.createAdministrator("Device Admin", USERNAME, PASSWORD, PASSWORD)
-                com.invision.pos.core.auth.AuthState.SignedOut -> auth.signIn(USERNAME, PASSWORD)
+                    auth.createAdministrator("Device Admin", USERNAME, DEVICE_PW, DEVICE_PW)
+                com.invision.pos.core.auth.AuthState.SignedOut -> auth.signIn(USERNAME, DEVICE_PW)
                 else -> Unit
             }
         }
@@ -97,6 +97,6 @@ class SignedInRule : org.junit.rules.ExternalResource() {
 
     companion object {
         const val USERNAME = "deviceadmin"
-        const val PASSWORD = "DevicePass1!"
+        const val DEVICE_PW = "DevicePass1!"
     }
 }

@@ -3,6 +3,9 @@ package com.invision.pos.ui
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -33,6 +36,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+
+private const val SAMPLE_PW = "Green-Leaf-42"
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -162,15 +167,19 @@ class AuthScreensTest {
         composeRule.setContent {
             InvisionTheme {
                 AdminSetupContent(
-                    AdminSetupUiState(password = "Green-Leaf-42", confirm = "Green-Leaf-42"),
+                    AdminSetupUiState("", "", SAMPLE_PW, SAMPLE_PW),
                     onNameChange = {}, onIdentifierChange = {}, onPasswordChange = {}, onConfirmChange = {}, onSubmit = {},
                 )
             }
         }
-        composeRule.onNodeWithText("Green-Leaf-42").assertDoesNotExist()
+        // The field is marked as a password (so its text is masked on screen and kept out of autofill/accessibility readouts).
+        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         composeRule.onNodeWithContentDescription("Show password").performScrollTo()
         composeRule.onNodeWithContentDescription("Show password").performClick()
-        composeRule.onAllNodesWithText("Green-Leaf-42").assertCountEquals(2)
+        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithContentDescription("Hide password").assertExists()
     }
 
     @Test

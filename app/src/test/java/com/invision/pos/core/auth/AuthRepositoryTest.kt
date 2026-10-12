@@ -51,9 +51,9 @@ class AuthRepositoryTest {
     private suspend fun LocalAuthRepository.setUp(
         name: String = "Roy Babu",
         identifier: String = "roy.babu",
-        password: String = "Green-Leaf-42",
-        confirm: String = password,
-    ) = createAdministrator(name, identifier, password, confirm)
+        pw: String = "Green-Leaf-42",
+        confirm: String = pw,
+    ) = createAdministrator(name, identifier, pw, confirm)
 
     // First launch
 
@@ -81,7 +81,7 @@ class AuthRepositoryTest {
 
     @Test
     fun thePasswordIsNeverStoredInPlainText() = runBlocking {
-        launch().setUp(password = "Green-Leaf-42")
+        launch().setUp(pw = "Green-Leaf-42")
         val saved = accountFile.readText()
         assertFalse(saved.contains("Green-Leaf-42"))
         assertFalse(saved.lowercase().contains("green-leaf"))
@@ -110,7 +110,7 @@ class AuthRepositoryTest {
     @Test
     fun invalidInput_createsNothing() = runBlocking {
         val auth = launch()
-        val result = auth.setUp(name = "", identifier = "no", password = "short")
+        val result = auth.setUp(name = "", identifier = "no", pw = "short")
         assertTrue(result is SetupResult.Invalid)
         val errors = (result as SetupResult.Invalid).errors
         assertEquals(SetupError.NAME_REQUIRED, errors[SetupField.NAME])
@@ -123,7 +123,7 @@ class AuthRepositoryTest {
     @Test
     fun aPasswordMismatch_createsNothing() = runBlocking {
         val auth = launch()
-        val result = auth.setUp(password = "Green-Leaf-42", confirm = "Green-Leaf-24")
+        val result = auth.setUp(pw = "Green-Leaf-42", confirm = "Green-Leaf-24")
         assertEquals(SetupError.CONFIRM_MISMATCH, (result as SetupResult.Invalid).errors[SetupField.CONFIRM])
         assertFalse(accountFile.exists())
         // The same person can correct it and finish.
@@ -141,11 +141,11 @@ class AuthRepositoryTest {
 
     @Test
     fun anExistingAdministrator_isDetected_andSetupIsRefused_withoutChangingTheAccount() = runBlocking {
-        launch().setUp(name = "Roy Babu", identifier = "roy.babu", password = "Green-Leaf-42")
+        launch().setUp(name = "Roy Babu", identifier = "roy.babu", pw = "Green-Leaf-42")
         val before = accountFile.readText()
 
         val next = launch()
-        val attempt = next.setUp(name = "Intruder", identifier = "intruder", password = "Other-Pass-99")
+        val attempt = next.setUp(name = "Intruder", identifier = "intruder", pw = "Other-Pass-99")
         assertEquals(SetupResult.AlreadyInitialized, attempt)
         assertEquals(before, accountFile.readText())
         assertEquals(AuthState.SignedOut, next.state.value)
@@ -158,8 +158,8 @@ class AuthRepositoryTest {
     @Test
     fun aStaleSetupScreen_cannotOverwriteAnAccountCreatedMeanwhile() = runBlocking {
         val stale = launch() // thinks this is a first launch
-        launch().setUp(password = "Green-Leaf-42")
-        val result = stale.setUp(name = "Late", identifier = "late.user", password = "Late-Pass-77")
+        launch().setUp(pw = "Green-Leaf-42")
+        val result = stale.setUp(name = "Late", identifier = "late.user", pw = "Late-Pass-77")
         assertEquals(SetupResult.AlreadyInitialized, result)
         assertEquals(AuthState.SignedOut, stale.state.value)
         assertEquals(SignInResult.Success, launch().signIn("roy.babu", "Green-Leaf-42"))
@@ -172,7 +172,7 @@ class AuthRepositoryTest {
         val repositories = List(3) { launch() }
         val results = (0 until 12).map { i ->
             async(Dispatchers.Default) {
-                repositories[i % repositories.size].setUp(name = "Admin $i", identifier = "admin$i", password = "Strong-Pass-$i")
+                repositories[i % repositories.size].setUp(name = "Admin $i", identifier = "admin$i", pw = "Strong-Pass-$i")
             }
         }.awaitAll()
         assertEquals(1, results.count { it == SetupResult.Created })
@@ -187,7 +187,7 @@ class AuthRepositoryTest {
     fun theSameRepositoryRefusesASecondSetup() = runBlocking {
         val auth = launch()
         assertEquals(SetupResult.Created, auth.setUp())
-        assertEquals(SetupResult.AlreadyInitialized, auth.setUp(name = "Second", identifier = "second.admin", password = "Second-Pass-1"))
+        assertEquals(SetupResult.AlreadyInitialized, auth.setUp(name = "Second", identifier = "second.admin", pw = "Second-Pass-1"))
         assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
     }
 
@@ -207,7 +207,7 @@ class AuthRepositoryTest {
 
     @Test
     fun signIn_checksTheUsernameAndPassword() = runBlocking {
-        launch().setUp(identifier = "Roy@Example.com", password = "Green-Leaf-42")
+        launch().setUp(identifier = "Roy@Example.com", pw = "Green-Leaf-42")
         val auth = launch()
         assertEquals(SignInResult.Rejected, auth.signIn("roy@example.com", "wrong-Pass-1"))
         assertEquals(SignInResult.Rejected, auth.signIn("someone.else", "Green-Leaf-42"))
@@ -220,7 +220,7 @@ class AuthRepositoryTest {
 
     @Test
     fun repeatedFailures_lockSigningInForAWhile() = runBlocking {
-        launch().setUp(password = "Green-Leaf-42")
+        launch().setUp(pw = "Green-Leaf-42")
         val auth = launch()
         repeat(5) { assertEquals(SignInResult.Rejected, auth.signIn("roy.babu", "bad-Pass-$it")) }
         // Even the right password waits while locked.

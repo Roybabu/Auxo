@@ -59,12 +59,12 @@ class AuthViewModelsTest {
     private fun AdminSetupViewModel.fill(
         name: String = "Roy Babu",
         identifier: String = "roy.babu",
-        password: String = "Green-Leaf-42",
-        confirm: String = password,
+        pw: String = "Green-Leaf-42",
+        confirm: String = pw,
     ) {
         onNameChange(name)
         onIdentifierChange(identifier)
-        onPasswordChange(password)
+        onPasswordChange(pw)
         onConfirmChange(confirm)
     }
 
@@ -138,7 +138,7 @@ class AuthViewModelsTest {
         val first = AdminSetupViewModel(auth)
         val second = AdminSetupViewModel(auth)
         first.fill()
-        second.fill(name = "Other", identifier = "other.user", password = "Other-Pass-99")
+        second.fill(name = "Other", identifier = "other.user", pw = "Other-Pass-99")
         first.submit()
         waitUntil { first.uiState.first { !it.isSubmitting } }
         second.submit()
