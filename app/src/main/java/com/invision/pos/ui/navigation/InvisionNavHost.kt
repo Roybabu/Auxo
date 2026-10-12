@@ -34,6 +34,7 @@ import com.invision.pos.ui.screens.customers.CustomerListScreen
 import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
 import com.invision.pos.ui.screens.more.ActivityLogScreen
+import com.invision.pos.ui.screens.reports.GstReportScreen
 import com.invision.pos.ui.screens.more.DayClosingScreen
 import com.invision.pos.ui.screens.more.DayEndScreen
 import com.invision.pos.ui.screens.more.BackupScreen
@@ -303,6 +304,7 @@ fun InvisionNavHost(
                         override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
                         override fun onOpenDayEnd() = navController.navigate(MoreRoutes.DAY_END)
+                        override fun onOpenGstReport() = navController.navigate(MoreRoutes.GST_REPORT)
                         override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
                 )
@@ -319,6 +321,9 @@ fun InvisionNavHost(
             }
             guarded(navController, MoreRoutes.ACTIVITY_LOG) {
                 ActivityLogScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController, MoreRoutes.GST_REPORT) {
+                GstReportScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController, MoreRoutes.DAY_END) {
                 DayEndScreen(

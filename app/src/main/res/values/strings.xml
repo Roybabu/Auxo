@@ -1191,4 +1191,25 @@ in %2$s</string>
     <string name="dayend_share">Share</string>
     <string name="dayend_share_title">Share day-end summary</string>
     <string name="dayend_output_failed">Could not print or share the summary.</string>
+    <!-- GST report -->
+    <string name="gst_title">GST report</string>
+    <string name="more_gst_body">Tax by rate, HSN summary and B2B / B2C for your accountant.</string>
+    <string name="gst_mode_month">Month</string>
+    <string name="gst_mode_range">Date range</string>
+    <string name="gst_previous">Previous</string>
+    <string name="gst_next">Next</string>
+    <string name="gst_financial_year">This financial year</string>
+    <string name="gst_period">Invoices from %1$s to %2$s</string>
+    <string name="gst_headline_title">Net of credit notes</string>
+    <string name="gst_headline_counts">%1$d invoices, %2$d credit notes</string>
+    <string name="gst_taxable">Taxable value</string>
+    <string name="gst_total_tax">Total tax</string>
+    <string name="gst_invoice_value">Invoice value</string>
+    <string name="gst_note">Read from saved invoices and credit notes. Nothing on an invoice is changed. Round-off is shown in the summary, so invoice value equals the invoice totals.</string>
+    <string name="gst_empty_title">No invoices in this period</string>
+    <string name="gst_empty_body">Choose another month or date range.</string>
+    <string name="gst_export_excel">Export Excel</string>
+    <string name="gst_export_csv">Export CSV</string>
+    <string name="gst_export_title">Share GST report</string>
+    <string name="gst_export_failed">Could not create the file to share.</string>
 </resources>

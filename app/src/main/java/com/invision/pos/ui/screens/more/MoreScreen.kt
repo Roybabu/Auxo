@@ -50,6 +50,7 @@ interface MoreActions {
     fun onOpenUsers() = Unit
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
+    fun onOpenGstReport() = Unit
     fun onSignOut() = Unit
 }
 
@@ -81,7 +82,7 @@ fun MoreScreen(
                 modifier = Modifier.testTag("more_signed_in"),
             )
 
-            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG) || can(Permission.CLOSE_DAY)) {
+            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG) || can(Permission.CLOSE_DAY) || can(Permission.GST_REPORT)) {
                 SectionHeader(stringResource(R.string.more_section_business), modifier = Modifier.padding(top = Spacing.sm))
             }
             if (can(Permission.MANAGE_SETTINGS)) {
@@ -91,6 +92,15 @@ fun MoreScreen(
                     stringResource(R.string.shop_settings_title),
                     actions::onOpenShopSettings,
                     modifier = Modifier.testTag("more_shop_settings"),
+                )
+            }
+            if (can(Permission.GST_REPORT)) {
+                MoreItem(
+                    R.drawable.ic_reports,
+                    stringResource(R.string.gst_title),
+                    stringResource(R.string.more_gst_body),
+                    actions::onOpenGstReport,
+                    modifier = Modifier.testTag("more_gst_report"),
                 )
             }
             if (can(Permission.CLOSE_DAY)) {
