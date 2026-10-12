@@ -479,3 +479,27 @@ class GstReportService(
         return com.invision.pos.domain.gst.GstReportBuilder.build(billing.invoicesBetween(from, to), period, zone)
     }
 }
+
+/** Parking and resuming bills is part of billing, so it needs the same permission as selling. */
+class AuthorizedHeldBillRepository(
+    private val inner: com.invision.pos.data.repository.HeldBillRepository,
+    private val auth: Authorizer,
+) : com.invision.pos.data.repository.HeldBillRepository {
+    override fun observeHeld(): Flow<List<com.invision.pos.domain.billing.HeldBillSummary>> =
+        auth.guarded(Permission.SELL) { inner.observeHeld() }
+
+    override suspend fun hold(cart: com.invision.pos.domain.billing.Cart, total: Money, label: String, replacingId: Long?): Long {
+        auth.require(Permission.SELL)
+        return inner.hold(cart, total, label, replacingId)
+    }
+
+    override suspend fun get(id: Long): com.invision.pos.domain.billing.HeldBill? {
+        auth.require(Permission.SELL)
+        return inner.get(id)
+    }
+
+    override suspend fun discard(id: Long) {
+        auth.require(Permission.SELL)
+        inner.discard(id)
+    }
+}

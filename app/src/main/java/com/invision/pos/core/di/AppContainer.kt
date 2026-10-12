@@ -117,6 +117,10 @@ class AppContainer(context: Context) {
     val loyaltyRepository: com.invision.pos.data.repository.LoyaltyRepository by lazy {
         com.invision.pos.data.security.AuthorizedLoyaltyRepository(com.invision.pos.data.repository.RoomLoyaltyRepository(database), authorizer, auditTrail)
     }
+    val heldBillRepository: com.invision.pos.data.repository.HeldBillRepository by lazy {
+        com.invision.pos.data.security.AuthorizedHeldBillRepository(com.invision.pos.data.repository.RoomHeldBillRepository(database, clock), authorizer)
+    }
+
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
     val purchasingRepository: PurchasingRepository by lazy { AuthorizedPurchasingRepository(RoomPurchasingRepository(database, clock), authorizer, auditTrail) }

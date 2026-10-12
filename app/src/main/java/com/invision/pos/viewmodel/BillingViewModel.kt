@@ -30,6 +30,8 @@ import com.invision.pos.domain.billing.CartValidator
 import com.invision.pos.domain.billing.CreditAccount
 import com.invision.pos.domain.billing.CustomerDetails
 import com.invision.pos.domain.billing.Discount
+import com.invision.pos.domain.billing.HeldBillSummary
+import com.invision.pos.data.repository.HeldBillRepository
 import com.invision.pos.domain.billing.DiscountPolicy
 import com.invision.pos.domain.billing.DiscountParse
 import com.invision.pos.domain.billing.PaymentCheck
@@ -125,6 +127,12 @@ data class BillingUiState(
     val isSaving: Boolean = false,
     /** The number this bill will probably get, for the UPI QR. Null until known (or without a billing store). */
     val upiInvoiceNumber: String? = null,
+    /** Bills parked at the counter, newest first. */
+    val heldBills: List<HeldBillSummary> = emptyList(),
+    /** True when the shop can park bills at all. */
+    val canHold: Boolean = false,
+    /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
+    val resumedHeldId: Long? = null,
 ) {
     val needsSetup: Boolean
         get() = settings != null && (settings.needsGstinSetup || (settings.gstRegistered && settings.stateCode.isEmpty()))
@@ -179,6 +187,10 @@ sealed interface BillingEvent {
     data object FixCart : BillingEvent
     data object SaveFailed : BillingEvent
     data class CustomerSaved(val name: String) : BillingEvent
+    data object BillHeld : BillingEvent
+
+    /** The parked bill was finished or discarded meanwhile, or cannot be read. */
+    data object HeldBillUnavailable : BillingEvent
 }
 
 class BillingViewModel(
@@ -193,6 +205,8 @@ class BillingViewModel(
     private val loyalty: LoyaltyRepository? = null,
     /** True for someone who may discount without the Employee limit (the Super Admin). */
     private val canExceedDiscountLimit: () -> Boolean = { true },
+    /** Where parked bills are kept; without it the Hold button is not offered. */
+    private val heldBills: HeldBillRepository? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
@@ -301,7 +315,14 @@ class BillingViewModel(
                 }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob)
+        val heldJob = heldBills?.let { repository ->
+            viewModelScope.launch {
+                repository.observeHeld()
+                    .catch { recalculate { it.copy(heldBills = emptyList()) } }
+                    .collect { list -> _uiState.update { it.copy(heldBills = list, canHold = true) } }
+            }
+        }
+        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob, heldJob)
     }
 
     // Search and adding items
@@ -551,8 +572,84 @@ class BillingViewModel(
                 productCount = it.productCount,
                 menu = it.menu,
                 menuSection = it.menuSection,
+                heldBills = it.heldBills,
+                canHold = it.canHold,
             )
         }
+    }
+
+    // Held bills
+
+    /** Parks the bill on the counter under an optional [label] (a customer name, a table) and starts a new one. */
+    fun holdBill(label: String) {
+        val store = heldBills ?: return
+        val state = _uiState.value
+        if (state.cart.isEmpty || state.isSaving) return
+        viewModelScope.launch {
+            val saved = runCatching { store.hold(state.cart, state.totals.grandTotal, label, state.resumedHeldId) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .isSuccess
+            if (saved) {
+                clearCart()
+                eventChannel.send(BillingEvent.BillHeld)
+            } else {
+                eventChannel.send(BillingEvent.SaveFailed)
+            }
+        }
+    }
+
+    /**
+     * Puts a parked bill back on the counter. Only when the counter is empty, so nothing being typed is lost.
+     * Stock is looked up again now (nothing was reserved), so a line that is no longer in stock is flagged.
+     */
+    fun resumeHeld(id: Long) {
+        val store = heldBills ?: return
+        val current = _uiState.value
+        if (!current.cart.isEmpty || current.resumedHeldId == id) return
+        viewModelScope.launch {
+            val held = runCatching { store.get(id) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            if (held == null) {
+                eventChannel.send(BillingEvent.HeldBillUnavailable)
+                return@launch
+            }
+            val account = held.cart.customer.customerId?.let { cid -> accounts.firstOrNull { it.customer.id == cid } }
+            val customer = if (account == null) held.cart.customer.copy(customerId = null) else held.cart.customer
+            val cart = held.cart.copy(customer = customer)
+            cart.lines.filter { it.isCustom }.maxOfOrNull { CartLine.CUSTOM_KEY_BASE - it.variantId }?.let {
+                nextCustomKey = maxOf(nextCustomKey, it + 1)
+            }
+            saleRequestId = UUID.randomUUID().toString()
+            recalculate { state ->
+                state.copy(
+                    cart = syncStock(cart),
+                    lineDiscounts = cart.lines.mapNotNull { line -> line.discount?.let { line.variantId to inputFor(it) } }.toMap(),
+                    billDiscount = inputFor(cart.billDiscount),
+                    account = account,
+                    resumedHeldId = id,
+                    customerExpanded = customer.name.isNotBlank() || customer.phone.isNotBlank(),
+                )
+            }
+        }
+    }
+
+    /** Throws a parked bill away. The screen asks first. */
+    fun discardHeld(id: Long) {
+        val store = heldBills ?: return
+        viewModelScope.launch {
+            runCatching { store.discard(id) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            _uiState.update { if (it.resumedHeldId == id) it.copy(resumedHeldId = null) else it }
+        }
+    }
+
+    private fun inputFor(discount: Discount?): DiscountInput = when (discount) {
+        null -> DiscountInput()
+        is Discount.Amount -> DiscountInput(text = discount.value.toDecimalString(), isPercent = false)
+        is Discount.Percent -> DiscountInput(
+            text = java.math.BigDecimal.valueOf(discount.basisPoints.toLong(), 2).stripTrailingZeros().toPlainString(),
+            isPercent = true,
+        )
     }
 
     // Payment
@@ -653,6 +750,8 @@ class BillingViewModel(
             _uiState.update { it.copy(isSaving = false) }
             when (result) {
                 is CheckoutResult.Completed -> {
+                    // The bill is finished, so its parked copy (if it was resumed) goes.
+                    state.resumedHeldId?.let { held -> runCatching { heldBills?.discard(held) } }
                     clearCart()
                     eventChannel.send(BillingEvent.Completed(result.invoiceId, result.number, result.change))
                 }
@@ -825,6 +924,7 @@ class BillingViewModel(
                     shop = container.shopPreferences,
                     loyalty = container.loyaltyRepository,
                     canExceedDiscountLimit = { container.authorizer.can(com.invision.pos.core.auth.Permission.UNLIMITED_DISCOUNT) },
+                    heldBills = container.heldBillRepository,
                 )
             }
         }

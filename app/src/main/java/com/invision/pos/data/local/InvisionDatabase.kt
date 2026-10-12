@@ -10,6 +10,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.invision.pos.data.local.dao.AuditDao
 import com.invision.pos.data.local.dao.DayEndDao
+import com.invision.pos.data.local.dao.HeldBillDao
 import com.invision.pos.data.local.dao.BillingDao
 import com.invision.pos.data.local.dao.CustomerDao
 import com.invision.pos.data.local.dao.InventoryDao
@@ -19,6 +20,7 @@ import com.invision.pos.data.local.dao.PurchasingDao
 import com.invision.pos.data.local.entity.AppliedRequestEntity
 import com.invision.pos.data.local.entity.AuditLogEntity
 import com.invision.pos.data.local.entity.DayClosingEntity
+import com.invision.pos.data.local.entity.HeldBillEntity
 import com.invision.pos.data.local.entity.CustomerEntity
 import com.invision.pos.data.local.entity.InvoiceEntity
 import com.invision.pos.data.local.entity.InvoiceLineEntity
@@ -55,6 +57,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
  *    Written by hand ([MIGRATION_7_8]).
  * 9. Discount reasons (invoices.discount_reason, invoice_lines.discount_reason) and the employee discount
  *    limit (store_settings.employee_discount_limit_bp, 0 = none). Written by hand ([MIGRATION_8_9]).
+ * 10. Held (parked) bills: the held_bills table. Written by hand ([MIGRATION_9_10]).
  */
 @Database(
     entities = [
@@ -80,6 +83,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
         AuditLogEntity::class,
         DayClosingEntity::class,
         LoyaltySettingsEntity::class,
+        HeldBillEntity::class,
     ],
     version = InvisionDatabase.VERSION,
     exportSchema = true,
@@ -108,6 +112,8 @@ abstract class InvisionDatabase : RoomDatabase() {
 
     abstract fun dayEndDao(): DayEndDao
 
+    abstract fun heldBillDao(): HeldBillDao
+
     /**
      * Version 3 keeps food and beverage stock in batches. Existing stock becomes
      * one batch per variant, with the batch number and expiry saved on the variant.
@@ -128,7 +134,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 9
+        const val VERSION = 10
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -171,10 +177,21 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 10 adds parked bills. Nothing existing changes. */
+        val MIGRATION_9_10: Migration = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS held_bills (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, label TEXT NOT NULL, " +
+                        "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, item_count INTEGER NOT NULL, " +
+                        "total_minor INTEGER NOT NULL, payload TEXT NOT NULL)",
+                )
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

@@ -1434,4 +1434,25 @@
     <string name="settings_employee_discount_limit_help">কর্মচারী কোনো পণ্য বা বিলে সর্বাধিক কতটা ছাড় দিতে পারেন। এর বেশি শুধু সুপার অ্যাডমিন দিতে পারেন।</string>
     <string name="settings_discount_limit_none">নেই</string>
     <string name="receipt_discount_reason">ছাড়ের কারণ: %1$s</string>
+    <string name="hold_title">এই বিল হোল্ড করুন</string>
+    <string name="hold_body">এই বিল আলাদা রেখে নতুন বিল শুরু করুন। বিল শেষ না হওয়া পর্যন্ত স্টক থেকে কিছু কমে না।</string>
+    <string name="hold_label">নাম বা টেবিল (ঐচ্ছিক)</string>
+    <string name="hold_action">হোল্ড করুন</string>
+    <string name="hold_icon">বিল হোল্ড করুন</string>
+    <string name="held_icon">হোল্ড করা বিল (%1$d)</string>
+    <string name="held_title">হোল্ড করা বিল</string>
+    <string name="held_empty">কোনো বিল হোল্ডে নেই।</string>
+    <string name="held_counter_busy">অন্য বিল চালু করার আগে বর্তমান বিল হোল্ড করুন বা মুছে দিন।</string>
+    <string name="held_unnamed">হোল্ড করা বিল</string>
+    <string name="held_on_counter">এখন কাউন্টারে আছে</string>
+    <string name="held_resume">আবার চালু করুন</string>
+    <string name="held_discard">বাদ দিন</string>
+    <string name="held_discard_title">এই হোল্ড করা বিল বাদ দেবেন?</string>
+    <string name="held_discard_body">%1$s হোল্ড করা বিল থেকে সরানো হবে। এটি ফেরানো যাবে না।</string>
+    <string name="billing_bill_held">বিল হোল্ড হয়েছে। এবার পরের বিল শুরু করতে পারেন।</string>
+    <string name="held_unavailable">সেই হোল্ড করা বিলটি আর নেই।</string>
+    <plurals name="held_items">
+        <item quantity="one">%d টি পণ্য</item>
+        <item quantity="other">%d টি পণ্য</item>
+    </plurals>
 </resources>

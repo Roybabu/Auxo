@@ -352,6 +352,26 @@ class PermissionEnforcementTest {
         assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT), Permission.entries.filterNot { everything.can(it) }.toSet())
     }
 
+    // Held bills belong to billing
+
+    @Test
+    fun heldBills_needTheSellPermission() = runTest {
+        val shirt = savedShirt()
+        val cart = Cart(lines = listOf(CartLine.from(shirt, shirt.variants[0])))
+        val room = com.invision.pos.data.repository.RoomHeldBillRepository(database, TestData.clock)
+        val staff = com.invision.pos.data.security.AuthorizedHeldBillRepository(room, FixedAuthorizer(Role.EMPLOYEE))
+        val id = staff.hold(cart, Money(499_00), "Asha")
+        assertEquals("Asha", staff.observeHeld().first().single().label)
+        assertNotNull(staff.get(id))
+        staff.discard(id)
+
+        val nobody = com.invision.pos.data.security.AuthorizedHeldBillRepository(room, FixedAuthorizer(null))
+        denied(Permission.SELL) { nobody.hold(cart, Money(499_00), "x") }
+        denied(Permission.SELL) { nobody.get(1) }
+        denied(Permission.SELL) { nobody.discard(1) }
+        denied(Permission.SELL) { nobody.observeHeld().first() }
+    }
+
     // Counting sales for "back up every N invoices"
 
     @Test

@@ -1434,4 +1434,25 @@
     <string name="settings_employee_discount_limit_help">कर्मचारी किसी सामान या बिल पर अधिकतम कितनी छूट दे सकता है। इससे अधिक केवल सुपर एडमिन दे सकता है।</string>
     <string name="settings_discount_limit_none">कोई नहीं</string>
     <string name="receipt_discount_reason">छूट का कारण: %1$s</string>
+    <string name="hold_title">इस बिल को होल्ड करें</string>
+    <string name="hold_body">इस बिल को अलग रखें और नया बिल शुरू करें। बिल पूरा होने तक स्टॉक से कुछ नहीं घटता।</string>
+    <string name="hold_label">नाम या टेबल (वैकल्पिक)</string>
+    <string name="hold_action">होल्ड करें</string>
+    <string name="hold_icon">बिल होल्ड करें</string>
+    <string name="held_icon">होल्ड किए गए बिल (%1$d)</string>
+    <string name="held_title">होल्ड किए गए बिल</string>
+    <string name="held_empty">कोई बिल होल्ड पर नहीं है।</string>
+    <string name="held_counter_busy">दूसरा बिल खोलने से पहले मौजूदा बिल को होल्ड करें या साफ़ करें।</string>
+    <string name="held_unnamed">होल्ड किया गया बिल</string>
+    <string name="held_on_counter">अभी काउंटर पर है</string>
+    <string name="held_resume">फिर शुरू करें</string>
+    <string name="held_discard">हटाएँ</string>
+    <string name="held_discard_title">यह होल्ड किया गया बिल हटाएँ?</string>
+    <string name="held_discard_body">%1$s होल्ड किए गए बिलों से हटा दिया जाएगा। इसे वापस नहीं लाया जा सकता।</string>
+    <string name="billing_bill_held">बिल होल्ड हो गया। अब अगला बिल शुरू कर सकते हैं।</string>
+    <string name="held_unavailable">वह होल्ड किया गया बिल अब उपलब्ध नहीं है।</string>
+    <plurals name="held_items">
+        <item quantity="one">%d आइटम</item>
+        <item quantity="other">%d आइटम</item>
+    </plurals>
 </resources>

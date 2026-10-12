@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To9_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_andNoEmployeeDiscounts() = runTest {
+    fun migrate4To10_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_andHeldBillsWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -373,5 +373,21 @@ class DatabaseMigrationTest {
             }
             assertTrue("$table has discount_reason", "discount_reason" in columns)
         }
+
+        // Parked bills: the new table starts empty and holds a bill without touching anything else.
+        val held = com.invision.pos.data.repository.RoomHeldBillRepository(db, TestData.clock)
+        assertTrue(held.observeHeld().first().isEmpty())
+        val cart = com.invision.pos.domain.billing.Cart(
+            lines = listOf(
+                com.invision.pos.domain.billing.CartLine.custom(
+                    com.invision.pos.domain.billing.CartLine.CUSTOM_KEY_BASE,
+                    com.invision.pos.domain.billing.CustomItemDraft("Alteration", Money(100_00), 1, 0),
+                ),
+            ),
+        )
+        val id = held.hold(cart, Money(100_00), "Asha")
+        assertEquals("Asha", held.observeHeld().first().single().label)
+        assertEquals("Alteration", held.get(id)!!.cart.lines.single().productName)
+        assertEquals(Money(30_000), customers.observeAccount(1).first()!!.balance)
     }
 }

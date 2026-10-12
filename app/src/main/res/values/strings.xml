@@ -1434,4 +1434,25 @@ in %2$s</string>
     <string name="settings_employee_discount_limit_help">The most an Employee may take off an item or a bill. Only the Super Admin can give more.</string>
     <string name="settings_discount_limit_none">None</string>
     <string name="receipt_discount_reason">Discount reason: %1$s</string>
+    <string name="hold_title">Hold this bill</string>
+    <string name="hold_body">Park this bill and start a new one. Nothing is taken out of stock until it is finished.</string>
+    <string name="hold_label">Name or table (optional)</string>
+    <string name="hold_action">Hold</string>
+    <string name="hold_icon">Hold bill</string>
+    <string name="held_icon">Held bills (%1$d)</string>
+    <string name="held_title">Held bills</string>
+    <string name="held_empty">No bills are on hold.</string>
+    <string name="held_counter_busy">Hold or clear the current bill before resuming another.</string>
+    <string name="held_unnamed">Held bill</string>
+    <string name="held_on_counter">On the counter now</string>
+    <string name="held_resume">Resume</string>
+    <string name="held_discard">Discard</string>
+    <string name="held_discard_title">Discard this held bill?</string>
+    <string name="held_discard_body">%1$s will be removed from the held bills. This cannot be undone.</string>
+    <string name="billing_bill_held">Bill held. You can start the next one.</string>
+    <string name="held_unavailable">That held bill is no longer available.</string>
+    <plurals name="held_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
 </resources>

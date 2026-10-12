@@ -27,6 +27,8 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -165,6 +167,8 @@ fun BillingScreen(
     val currentOnSettings by rememberUpdatedState(onOpenSettings)
     val currentOnAddProduct by rememberUpdatedState(onAddProduct)
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var showHold by rememberSaveable { mutableStateOf(false) }
+    var showHeld by rememberSaveable { mutableStateOf(false) }
     // Adding a product or opening store settings are management jobs; an Employee only sees the message.
     val canManageSettings = can(Permission.MANAGE_SETTINGS)
     val canAddProduct = can(Permission.MANAGE_PRODUCTS)
@@ -202,6 +206,8 @@ fun BillingScreen(
                 }
                 BillingEvent.FixCart -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_fix_cart))
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
+                BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
+                BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
             }
         }
     }
@@ -269,6 +275,16 @@ fun BillingScreen(
                 actions = {
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
+                        if (uiState.canHold && !uiState.cart.isEmpty) {
+                            ActionIcon(R.drawable.ic_pause, stringResource(R.string.hold_icon), { showHold = true }, Modifier.testTag("hold_open"))
+                        }
+                        if (uiState.canHold && (uiState.heldBills.isNotEmpty() || uiState.resumedHeldId != null)) {
+                            IconButton(onClick = { showHeld = true }, modifier = Modifier.testTag("held_open")) {
+                                BadgedBox(badge = { Badge { Text(uiState.heldBills.size.toString()) } }) {
+                                    Icon(painterResource(R.drawable.ic_bookmark), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
+                                }
+                            }
+                        }
                         if (!uiState.cart.isEmpty) {
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
@@ -302,6 +318,30 @@ fun BillingScreen(
             inPayment -> PaymentContent(uiState, actions, modifier)
             else -> CartContent(uiState, actions, modifier)
         }
+    }
+
+    if (showHold) {
+        HoldBillDialog(
+            suggestion = uiState.cart.customer.name,
+            onHold = { label ->
+                showHold = false
+                viewModel.holdBill(label)
+            },
+            onDismiss = { showHold = false },
+        )
+    }
+    if (showHeld) {
+        HeldBillsDialog(
+            bills = uiState.heldBills,
+            counterIsEmpty = uiState.cart.isEmpty,
+            resumedId = uiState.resumedHeldId,
+            onResume = { id ->
+                showHeld = false
+                viewModel.resumeHeld(id)
+            },
+            onDiscard = viewModel::discardHeld,
+            onDismiss = { showHeld = false },
+        )
     }
 
     if (confirmClear) {

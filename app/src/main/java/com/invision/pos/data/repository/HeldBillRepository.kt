@@ -1,0 +1,76 @@
+package com.invision.pos.data.repository
+
+import com.invision.pos.data.local.InvisionDatabase
+import com.invision.pos.data.local.entity.HeldBillEntity
+import com.invision.pos.domain.billing.Cart
+import com.invision.pos.domain.billing.HeldBill
+import com.invision.pos.domain.billing.HeldBillSummary
+import com.invision.pos.domain.billing.HeldBills
+import com.invision.pos.domain.model.Money
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.time.Clock
+
+/**
+ * Bills parked at the counter. Parking changes nothing else: no stock is reserved, no invoice number is
+ * used and no account is touched. A held bill stays until it is finished or discarded.
+ */
+interface HeldBillRepository {
+    /** Newest first. A bill that cannot be read any more (damaged) is still listed so it can be discarded; [get] returns null for it. */
+    fun observeHeld(): Flow<List<HeldBillSummary>>
+
+    /**
+     * Parks [cart]. With [replacingId] the bill already parked under that id is updated (a resumed bill held
+     * again); if it is gone a new one is made. Returns the id.
+     */
+    suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long? = null): Long
+
+    /** The parked bill, or null if it was finished or discarded meanwhile (or cannot be read). */
+    suspend fun get(id: Long): HeldBill?
+
+    suspend fun discard(id: Long)
+}
+
+class RoomHeldBillRepository(database: InvisionDatabase, private val clock: Clock) : HeldBillRepository {
+    private val dao = database.heldBillDao()
+
+    override fun observeHeld(): Flow<List<HeldBillSummary>> = dao.observeAll().map { rows -> rows.map { it.toSummary() } }
+
+    override suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long?): Long {
+        require(!cart.isEmpty) { "Nothing to hold" }
+        val now = clock.millis()
+        val existing = replacingId?.let { dao.get(it) }
+        val entity = HeldBillEntity(
+            id = existing?.id ?: 0,
+            label = HeldBills.cleanLabel(label),
+            createdAt = existing?.createdAt ?: now,
+            updatedAt = now,
+            itemCount = cart.itemCount,
+            totalMinor = total.minorUnits,
+            payload = HeldCartCodec.encode(cart),
+        )
+        return if (existing != null) {
+            dao.update(entity)
+            existing.id
+        } else {
+            dao.insert(entity)
+        }
+    }
+
+    override suspend fun get(id: Long): HeldBill? {
+        val row = dao.get(id) ?: return null
+        val cart = HeldCartCodec.decode(row.payload) ?: return null
+        return HeldBill(row.toSummary(), cart)
+    }
+
+    override suspend fun discard(id: Long) = dao.delete(id)
+
+    private fun HeldBillEntity.toSummary() = HeldBillSummary(
+        id = id,
+        label = label,
+        createdAtMillis = createdAt,
+        updatedAtMillis = updatedAt,
+        itemCount = itemCount,
+        total = Money(totalMinor),
+    )
+}
