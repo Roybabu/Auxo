@@ -521,6 +521,7 @@
     <string name="settings_show_savings">एमआरपी पर बचत दिखाएँ</string>
     <string name="settings_show_customer">ग्राहक का विवरण दिखाएँ</string>
     <string name="settings_show_barcode">बिल नंबर का बारकोड छापें</string>
+    <string name="settings_show_upi_qr">बिल पर UPI भुगतान QR छापें</string>
     <string name="settings_saved">सेटिंग सहेज ली गईं</string>
     <string name="settings_error_required">ज़रूरी है</string>
     <string name="settings_error_too_long">बहुत लंबा है</string>
@@ -1356,6 +1357,7 @@
     <string name="receipt_credit_note">क्रेडिट नोट</string>
     <string name="receipt_walk_in">सामान्य ग्राहक</string>
     <string name="receipt_feedback">कृपया हमें अपनी राय बताएँ।</string>
+    <string name="receipt_scan_to_pay">%1$s का भुगतान करने के लिए स्कैन करें</string>
     <string name="receipt_phone">फ़ोन: %1$s</string>
     <string name="receipt_gstin">GSTIN: %1$s</string>
     <string name="receipt_inv_no">बिल सं.: %1$s</string>

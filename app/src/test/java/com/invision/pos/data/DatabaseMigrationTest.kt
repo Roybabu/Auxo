@@ -31,6 +31,7 @@ import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -311,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To7_keepsBalances_startsWithNoPoints_loyaltyOff_andBillsInEnglish() = runTest {
+    fun migrate4To8_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_andReceiptsKeepTheUpiQr() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -353,5 +354,11 @@ class DatabaseMigrationTest {
         assertEquals(com.invision.pos.domain.model.Language.ENGLISH, settings.getSettings().receipt.language)
         settings.saveSettings(TestData.settings.let { it.copy(receipt = it.receipt.copy(language = com.invision.pos.domain.model.Language.HINDI)) })
         assertEquals(com.invision.pos.domain.model.Language.HINDI, settings.getSettings().receipt.language)
+
+        // The receipt UPI QR: on for a shop that existed before, and the choice is saved.
+        assertTrue(settings.getSettings().receipt.showUpiQr)
+        settings.saveSettings(TestData.settings.let { it.copy(receipt = it.receipt.copy(showUpiQr = false)) })
+        assertFalse(settings.getSettings().receipt.showUpiQr)
+        assertEquals(TestData.settings.upiId, settings.getSettings().receipt.upiId)
     }
 }

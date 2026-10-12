@@ -306,6 +306,7 @@ fun BillingSettingsContent(
                 SwitchRow(stringResource(R.string.settings_show_tax_breakup), settings.receipt.showTaxBreakup, { v -> receipt { it.copy(showTaxBreakup = v) } })
                 SwitchRow(stringResource(R.string.settings_show_savings), settings.receipt.showSavings, { v -> receipt { it.copy(showSavings = v) } })
                 SwitchRow(stringResource(R.string.settings_show_barcode), settings.receipt.showInvoiceBarcode, { v -> receipt { it.copy(showInvoiceBarcode = v) } })
+                SwitchRow(stringResource(R.string.settings_show_upi_qr), settings.receipt.showUpiQr, { v -> receipt { it.copy(showUpiQr = v) } })
             }
         }
 

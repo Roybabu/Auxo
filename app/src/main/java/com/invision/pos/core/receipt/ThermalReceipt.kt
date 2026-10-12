@@ -5,6 +5,7 @@ import com.invision.pos.domain.model.Invoice
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.ReceiptOptions
+import com.invision.pos.domain.model.upiLinkFor
 import java.time.ZoneId
 
 enum class Align { LEFT, CENTER, RIGHT }
@@ -33,6 +34,9 @@ sealed interface ThermalElement {
 
     /** Code 128 barcode of the invoice number. */
     data class Barcode(val value: String) : ThermalElement
+
+    /** UPI payment QR for the bill, with [caption] (the amount to pay) printed under it. */
+    data class Qr(val content: String, val caption: String) : ThermalElement
 
     data object Gap : ThermalElement
 }
@@ -155,6 +159,10 @@ object ThermalReceiptBuilder {
         }
         if (options.footer.isNotBlank()) center(options.footer)
         if (labels.feedbackNote.isNotBlank()) center(labels.feedbackNote)
+        options.upiLinkFor(invoice)?.let { link ->
+            out += ThermalElement.Gap
+            out += ThermalElement.Qr(link, fillIn(labels.scanToPay, IndianNumberFormat.amount(invoice.grandTotal)))
+        }
         if (options.showInvoiceBarcode && invoice.number.isNotEmpty()) {
             out += ThermalElement.Gap
             out += ThermalElement.Barcode(invoice.number)

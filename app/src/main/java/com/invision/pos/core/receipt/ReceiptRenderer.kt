@@ -16,6 +16,7 @@ import com.invision.pos.domain.model.ReceiptPaper
 import java.time.ZoneId
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 
 /** One page of a rendered receipt, in PDF points (1/72 inch). */
 class ReceiptPage(val widthPt: Float, val heightPt: Float, val draw: (Canvas) -> Unit)
@@ -57,6 +58,7 @@ object ReceiptRenderer {
         val fontSize = 10f * (printable / spec.charsPerLine) / charWidthAt10
         val lineHeight = fontSize * 1.3f
         val barcodeHeight = fontSize * 4f
+        val qrSide = min(printable * 0.62f, fontSize * 16f)
         val regularStyle = ScriptPaint(fonts, bold = false, mono = true, size = fontSize)
         val boldStyle = ScriptPaint(fonts, bold = true, mono = true, size = fontSize)
         val logoSize = logo?.let { thermalLogoSize(it, printable, lineHeight) }
@@ -67,6 +69,7 @@ object ReceiptRenderer {
                 is ThermalElement.Line -> (if (element.large) lineHeight * 2 else lineHeight).toDouble()
                 is ThermalElement.Divider -> lineHeight.toDouble()
                 is ThermalElement.Barcode -> (barcodeHeight + lineHeight).toDouble()
+                is ThermalElement.Qr -> (qrSide + lineHeight).toDouble()
                 ThermalElement.Gap -> (lineHeight / 2).toDouble()
             }
         }.toFloat()
@@ -126,6 +129,14 @@ object ReceiptRenderer {
                         regularStyle.textSize = fontSize
                         val w = regularStyle.measureText(element.value)
                         regularStyle.draw(canvas, element.value, margin + (printable - w) / 2, y + lineHeight * 0.78f)
+                        y += lineHeight
+                    }
+                    is ThermalElement.Qr -> {
+                        QrDrawing.draw(canvas, element.content, margin + (printable - qrSide) / 2, y, qrSide)
+                        y += qrSide
+                        boldStyle.textSize = fontSize
+                        val shown = boldStyle.fit(element.caption, printable)
+                        boldStyle.draw(canvas, shown, margin + (printable - boldStyle.measureText(shown)) / 2, y + lineHeight * 0.78f)
                         y += lineHeight
                     }
                     ThermalElement.Gap -> y += lineHeight / 2
@@ -325,6 +336,8 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
 
     // Totals, tax summary, payments, notes and signature
 
+    private fun upiQrSide(): Float = line * 6f
+
     private fun endBlockHeight(): Float {
         val totals = (doc.totals.size + 1) * line + line
         val words = wrapToWidth(doc.amountInWords, contentWidth, text).size * line + line * 0.5f
@@ -334,7 +347,8 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
         val footer = (if (doc.footer.isBlank()) 0f else line * 1.5f) + (if (doc.feedbackNote.isBlank()) 0f else line * 1.5f)
         val signature = line * 4f
         val barcode = if (doc.barcode != null) line * 3f else 0f
-        return totals + words + summary + payments + notes + footer + max(signature, barcode)
+        val upi = if (doc.upiQr != null) upiQrSide() + line * 2f else 0f
+        return totals + words + summary + payments + notes + footer + upi + max(signature, barcode)
     }
 
     private fun drawEndBlock(canvas: Canvas, top: Float) {
@@ -402,6 +416,16 @@ private class SheetRenderer(private val doc: SheetInvoice, paper: ReceiptPaper, 
             val shown = fit(doc.feedbackNote, contentWidth)
             text.draw(canvas, shown, margin + (contentWidth - text.measureText(shown)) / 2, y + line)
             y += line * 1.5f
+        }
+
+        doc.upiQr?.let { link ->
+            val side = upiQrSide()
+            if (QrDrawing.draw(canvas, link, margin + (contentWidth - side) / 2, y, side)) {
+                y += side
+                val shown = fit(doc.upiCaption, contentWidth, bold)
+                bold.draw(canvas, shown, margin + (contentWidth - bold.measureText(shown)) / 2, y + line * 0.8f)
+                y += line * 2f
+            }
         }
 
         // Barcode bottom left, signature bottom right.

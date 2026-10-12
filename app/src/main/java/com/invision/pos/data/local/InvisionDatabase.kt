@@ -51,6 +51,8 @@ import com.invision.pos.data.local.entity.SupplierEntity
  * 6. Loyalty points: a points column on the customer ledger and the loyalty rules table. Written by hand
  *    (see [MIGRATION_5_6]) so building does not depend on the exported 5.json.
  * 7. The language bills are printed in (store_settings.receipt_language). Also written by hand ([MIGRATION_6_7]).
+ * 8. Whether receipts print the UPI payment QR (store_settings.receipt_show_upi_qr, on for existing shops).
+ *    Written by hand ([MIGRATION_7_8]).
  */
 @Database(
     entities = [
@@ -124,7 +126,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 7
+        const val VERSION = 8
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -148,10 +150,17 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 8: receipts may print a UPI QR. Existing shops keep getting what they asked for, so it starts on. */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN receipt_show_upi_qr INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

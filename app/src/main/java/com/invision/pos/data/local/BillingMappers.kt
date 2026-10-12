@@ -192,6 +192,10 @@ fun StoreSettingsEntity.toDomain(): StoreSettings = StoreSettings(
         showSavings = receiptShowSavings,
         showCustomer = receiptShowCustomer,
         showInvoiceBarcode = receiptShowBarcode,
+        showUpiQr = receiptShowUpiQr,
+        upiId = upiId,
+        upiPayeeName = upiPayeeName,
+        shopName = storeName,
         language = Language.fromTag(receiptLanguage) ?: Language.DEFAULT,
     ),
 )
@@ -216,5 +220,6 @@ fun StoreSettings.toEntity(): StoreSettingsEntity = StoreSettingsEntity(
     receiptShowSavings = receipt.showSavings,
     receiptShowCustomer = receipt.showCustomer,
     receiptShowBarcode = receipt.showInvoiceBarcode,
+    receiptShowUpiQr = receipt.showUpiQr,
     receiptLanguage = receipt.language.tag,
 )

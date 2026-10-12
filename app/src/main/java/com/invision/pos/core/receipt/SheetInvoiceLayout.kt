@@ -7,6 +7,7 @@ import com.invision.pos.domain.model.InvoiceLine
 import com.invision.pos.domain.model.InvoiceType
 import com.invision.pos.domain.model.Money
 import com.invision.pos.domain.model.ReceiptOptions
+import com.invision.pos.domain.model.upiLinkFor
 import com.invision.pos.domain.model.ReceiptPaper
 import java.time.ZoneId
 
@@ -51,6 +52,9 @@ data class SheetInvoice(
     /** Added after the title on pages after the first. */
     val continuedLabel: String,
     val barcode: String?,
+    /** UPI payment link to draw as a QR, and the line printed under it; null when no QR is printed. */
+    val upiQr: String? = null,
+    val upiCaption: String = "",
 )
 
 object SheetInvoiceLayout {
@@ -197,6 +201,8 @@ object SheetInvoiceLayout {
             pageNumberTemplate = labels.pageOf,
             continuedLabel = labels.continued,
             barcode = invoice.number.takeIf { options.showInvoiceBarcode && it.isNotEmpty() },
+            upiQr = options.upiLinkFor(invoice),
+            upiCaption = fillIn(labels.scanToPay, IndianNumberFormat.rupees(invoice.grandTotal)),
         )
     }
 }

@@ -521,6 +521,7 @@
     <string name="settings_show_savings">এমআরপি-তে সাশ্রয় দেখান</string>
     <string name="settings_show_customer">ক্রেতার বিবরণ দেখান</string>
     <string name="settings_show_barcode">বিল নম্বরের বারকোড ছাপুন</string>
+    <string name="settings_show_upi_qr">বিলে UPI পেমেন্ট QR ছাপুন</string>
     <string name="settings_saved">সেটিংস সংরক্ষিত হয়েছে</string>
     <string name="settings_error_required">আবশ্যক</string>
     <string name="settings_error_too_long">খুব বড়</string>
@@ -1356,6 +1357,7 @@
     <string name="receipt_credit_note">ক্রেডিট নোট</string>
     <string name="receipt_walk_in">সাধারণ ক্রেতা</string>
     <string name="receipt_feedback">অনুগ্রহ করে আপনার মতামত জানান।</string>
+    <string name="receipt_scan_to_pay">%1$s পরিশোধ করতে স্ক্যান করুন</string>
     <string name="receipt_phone">ফোন: %1$s</string>
     <string name="receipt_gstin">GSTIN: %1$s</string>
     <string name="receipt_inv_no">বিল নং: %1$s</string>

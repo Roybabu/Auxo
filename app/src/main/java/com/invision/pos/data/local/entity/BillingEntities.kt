@@ -147,6 +147,8 @@ data class StoreSettingsEntity(
     @ColumnInfo(name = "receipt_show_barcode") val receiptShowBarcode: Boolean,
     /** [com.invision.pos.domain.model.Language] tag the bill is printed in. Added in version 7; null means English. */
     @ColumnInfo(name = "receipt_language") val receiptLanguage: String? = null,
+    /** Print the UPI payment QR on receipts. Added in version 8; existing shops get it on. */
+    @ColumnInfo(name = "receipt_show_upi_qr") val receiptShowUpiQr: Boolean = true,
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1

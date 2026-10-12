@@ -22,6 +22,15 @@ data class ReceiptOptions(
     val showSavings: Boolean = true,
     val showCustomer: Boolean = true,
     val showInvoiceBarcode: Boolean = true,
+    /** Print a UPI payment QR (exact bill amount and invoice number) on sale receipts. Needs a valid UPI ID. */
+    val showUpiQr: Boolean = true,
+    /**
+     * The shop's UPI details, copied in when settings are read so a receipt can be laid out from the options
+     * alone. They are not stored here; the settings own them ([StoreSettings.upiId]).
+     */
+    val upiId: String = "",
+    val upiPayeeName: String = "",
+    val shopName: String = "",
     /**
      * The language bills and credit notes are printed and shared in. It belongs to the shop, not to a phone, so
      * every phone prints the same bill. Product and customer names are printed exactly as entered.
@@ -55,4 +64,13 @@ data class StoreSettings(
         gstin = if (gstRegistered) gstin else "",
         stateCode = stateCode,
     )
+}
+
+/**
+ * The UPI link to print as a QR on [invoice], or null when none should be printed: the setting is off, the UPI
+ * ID is missing or invalid, the document is a credit note (nothing to collect) or has no number yet.
+ */
+fun ReceiptOptions.upiLinkFor(invoice: Invoice): String? {
+    if (!showUpiQr || invoice.type != InvoiceType.SALE || invoice.number.isBlank()) return null
+    return com.invision.pos.domain.billing.Upi.billLink(upiId, upiPayeeName, shopName, invoice.grandTotal, invoice.number)
 }

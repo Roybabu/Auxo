@@ -521,6 +521,7 @@
     <string name="settings_show_savings">Show savings on MRP</string>
     <string name="settings_show_customer">Show customer details</string>
     <string name="settings_show_barcode">Print invoice number barcode</string>
+    <string name="settings_show_upi_qr">Print UPI payment QR on bills</string>
     <string name="settings_saved">Settings saved</string>
     <string name="settings_error_required">Required</string>
     <string name="settings_error_too_long">Too long</string>
@@ -1356,6 +1357,7 @@ in %2$s</string>
     <string name="receipt_credit_note">CREDIT NOTE</string>
     <string name="receipt_walk_in">Walk-in Customer</string>
     <string name="receipt_feedback">Please share your feedback with us.</string>
+    <string name="receipt_scan_to_pay">Scan to pay %1$s</string>
     <string name="receipt_phone">Phone: %1$s</string>
     <string name="receipt_gstin">GSTIN: %1$s</string>
     <string name="receipt_inv_no">Inv No: %1$s</string>
