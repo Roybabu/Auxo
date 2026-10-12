@@ -68,6 +68,7 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
         onConfirmRestore = viewModel::onRestoreConfirmed,
         onCancelRestore = viewModel::onRestoreCancelled,
         onDismissProblem = viewModel::onProblemDismissed,
+        extra = { AutoBackupSection() },
     )
 }
 
@@ -81,6 +82,8 @@ fun BackupContent(
     onConfirmRestore: () -> Unit,
     onCancelRestore: () -> Unit,
     onDismissProblem: () -> Unit,
+    /** More cards shown between making a backup and restoring one. */
+    extra: @Composable () -> Unit = {},
 ) {
     Scaffold(
         topBar = { InvisionTopAppBar(title = stringResource(R.string.backup_title), onBack = onBack) },
@@ -133,6 +136,8 @@ fun BackupContent(
                     }
                 }
             }
+
+            extra()
 
             state.saved?.let { saved ->
                 InvisionCard(modifier = Modifier.fillMaxWidth().testTag("backup_saved")) {

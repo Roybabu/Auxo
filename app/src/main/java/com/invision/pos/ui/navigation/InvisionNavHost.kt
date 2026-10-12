@@ -78,6 +78,7 @@ fun InvisionNavHost(
                     onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
                     onOpenInventory = { filter -> navController.navigateToInventory(filter) },
                     onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
+                    onOpenBackup = { navController.navigate(MoreRoutes.BACKUP) },
                 )
             } else {
                 EmployeeHomeScreen(

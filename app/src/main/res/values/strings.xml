@@ -1104,4 +1104,36 @@ in %2$s</string>
     <string name="users_access_save">Save</string>
     <string name="users_access_saved">Access updated for %1$s</string>
     <string name="users_access_note">Changes apply the next time %1$s signs in.</string>
+
+    <!-- Automatic backup -->
+    <string name="auto_backup_title">Automatic backup</string>
+    <string name="auto_backup_body">Save a backup on its own to a folder you choose, such as an SD card, a USB drive or Google Drive. Keep a copy off this phone.</string>
+    <string name="auto_backup_folder">Backup folder</string>
+    <string name="auto_backup_no_folder">No folder chosen yet</string>
+    <string name="auto_backup_folder_chosen">Folder chosen</string>
+    <string name="auto_backup_choose">Choose folder</string>
+    <string name="auto_backup_change">Change folder</string>
+    <string name="auto_backup_access_problem">The phone would not keep access to that folder. Choose it again.</string>
+    <string name="auto_backup_when">When</string>
+    <string name="auto_backup_off">Off</string>
+    <string name="auto_backup_daily">Every day</string>
+    <string name="auto_backup_weekly">Every week</string>
+    <string name="auto_backup_after_invoices">After a number of invoices</string>
+    <string name="auto_backup_every_invoices">Back up after every</string>
+    <string name="auto_backup_range">Enter a number from %1$d to %2$d.</string>
+    <string name="auto_backup_keep">Backups to keep</string>
+    <string name="auto_backup_keep_hint">Older automatic backups in the folder are deleted. Other files are never touched.</string>
+    <string name="auto_backup_needs_folder">Choose a folder to start automatic backup.</string>
+    <string name="auto_backup_last">Last automatic backup: %1$s</string>
+    <string name="auto_backup_never">No automatic backup yet</string>
+    <string name="auto_backup_now">Back up to this folder now</string>
+    <string name="auto_backup_saved">Saved %1$s</string>
+    <string name="auto_backup_not_run">Nothing was backed up. Choose a folder first.</string>
+    <string name="auto_backup_failed_folder">The backup folder is not available. Check the card, drive or account, or choose the folder again.</string>
+    <string name="auto_backup_failed_save">The backup could not be saved. Check there is space in the folder.</string>
+    <string name="home_backup_off_title">Back up automatically</string>
+    <string name="home_backup_off_body">Automatic backup is off. Tap to set it up so a lost phone does not lose your records.</string>
+    <string name="home_backup_ok_title">Backups are working</string>
+    <string name="home_backup_failed_title">Automatic backup is failing</string>
+    <string name="home_backup_overdue_title">A backup is overdue</string>
 </resources>

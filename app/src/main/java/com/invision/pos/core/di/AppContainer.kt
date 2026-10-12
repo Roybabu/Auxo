@@ -162,7 +162,8 @@ class AppContainer(context: Context) {
 
     /** Called when the app opens: catches up on a backup that came due while the phone was off or the app closed. */
     fun checkAutoBackup() {
-        autoBackupScheduler.sync(autoBackupSettings.settings.value.isActive)
+        // Only touch the background scheduler when backup is on; turning it off is done when the choice is made.
+        if (autoBackupSettings.settings.value.isActive) autoBackupScheduler.sync(true)
         background.launch { runCatching { autoBackupRunner.runIfDue() } }
     }
 

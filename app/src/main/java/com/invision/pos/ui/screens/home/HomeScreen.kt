@@ -97,6 +97,7 @@ fun HomeScreen(
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
+    onOpenBackup: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
     insightsViewModel: HomeInsightsViewModel = viewModel(factory = HomeInsightsViewModel.Factory),
 ) {
@@ -114,6 +115,7 @@ fun HomeScreen(
         insights = insights,
         onInsightsPeriodChange = insightsViewModel::onPeriodChange,
         onInsightsRetry = insightsViewModel::retry,
+        notice = { BackupStatusNotice(onOpenBackup) },
     )
 }
 
@@ -134,6 +136,7 @@ fun HomeContent(
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
+    notice: @Composable () -> Unit = {},
 ) {
     when (uiState) {
         HomeUiState.Loading -> LoadingState(modifier)
@@ -153,6 +156,7 @@ fun HomeContent(
                 insights = insights,
             onInsightsPeriodChange = onInsightsPeriodChange,
             onInsightsRetry = onInsightsRetry,
+            notice = notice,
         )
     }
 }
@@ -169,6 +173,7 @@ private fun HomeDashboard(
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
+    notice: @Composable () -> Unit = {},
 ) {
     // The header is a dark shade of the accent, so the status bar icons must be light while Home is showing.
     LightStatusBarIcons(darkIcons = false)
@@ -197,6 +202,7 @@ private fun HomeDashboard(
                 insights = insights,
                 onInsightsPeriodChange = onInsightsPeriodChange,
                 onInsightsRetry = onInsightsRetry,
+                notice = notice,
             )
         }
     }
@@ -415,6 +421,7 @@ private fun HomePanelContent(
     insights: InsightsUiState?,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit,
     onInsightsRetry: () -> Unit,
+    notice: @Composable () -> Unit,
 ) {
     val status = InvisionThemeExtras.statusColors
     val inventory = state.inventory
@@ -426,6 +433,8 @@ private fun HomePanelContent(
             .padding(horizontal = Spacing.screen, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.xl),
     ) {
+        notice()
+
         // Today
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             SectionHeader(title = stringResource(R.string.home_today))
