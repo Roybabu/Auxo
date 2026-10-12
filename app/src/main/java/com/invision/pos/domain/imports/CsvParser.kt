@@ -26,7 +26,7 @@ object CsvParser {
     const val MAX_ROWS = 1000
 
     fun parse(raw: String): CsvParseResult {
-        val text = raw.removePrefix("﻿")
+        val text = raw.removePrefix("\uFEFF")
         val delimiter = detectDelimiter(text)
         val records = ArrayList<CsvRow>()
         var cells = ArrayList<String>()
