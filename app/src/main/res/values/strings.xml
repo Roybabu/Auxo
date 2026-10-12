@@ -1360,7 +1360,7 @@ in %2$s</string>
     <string name="receipt_inv_no">Inv No: %1$s</string>
     <string name="receipt_cn_no">CN No: %1$s</string>
     <string name="receipt_date">Date: %1$s</string>
-    <string name="receipt_against">Against: %1$s</string>
+    <string name="receipt_against_line">Against: %1$s</string>
     <string name="receipt_customer">Customer: %1$s</string>
     <string name="receipt_item">Item</string>
     <string name="receipt_amount">Amount</string>
