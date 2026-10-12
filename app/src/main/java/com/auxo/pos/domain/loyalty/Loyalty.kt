@@ -1,6 +1,5 @@
 package com.auxo.pos.domain.loyalty
 
-import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.Money
 import java.math.BigInteger
 
@@ -111,15 +110,6 @@ object LoyaltyMath {
         val target = (BigInteger.valueOf(earned.toLong()) * BigInteger.valueOf(credited) / BigInteger.valueOf(saleTotal.minorUnits)).toInt()
         return (target - alreadyReversed).coerceAtLeast(0).coerceAtMost(available)
     }
-}
-
-/** Points held by a customer: the sum of the points on their ledger entries. */
-object LoyaltyPoints {
-    fun balance(entries: List<LedgerEntry>): Int = entries.sumOf { it.points }
-
-    fun earnedTotal(entries: List<LedgerEntry>): Int = entries.filter { it.points > 0 }.sumOf { it.points }
-
-    fun usedTotal(entries: List<LedgerEntry>): Int = entries.filter { it.points < 0 }.sumOf { -it.points }
 }
 
 /** What a point gives back as a share of the spending that earned it, e.g. "1" or "0.5" (percent). */

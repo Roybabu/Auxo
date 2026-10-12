@@ -1,7 +1,5 @@
 package com.auxo.pos.domain.loyalty
 
-import com.auxo.pos.domain.model.LedgerEntry
-import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -120,23 +118,5 @@ class LoyaltyTest {
         val errors = (LoyaltyRuleValidator.check(true, "10", "11") as LoyaltyRuleCheck.Invalid).errors
         assertEquals(setOf(LoyaltyRuleError.VALUE_ABOVE_SPEND), errors)
         assertTrue(LoyaltyRuleValidator.check(true, "10", "10") is LoyaltyRuleCheck.Valid)
-    }
-
-    // Points on the ledger
-
-    private fun entry(type: LedgerEntryType, amount: Long, points: Int, at: Long, id: Long = at) =
-        LedgerEntry(id = id, customerId = 1, type = type, amount = Money(amount), points = points, createdAtMillis = at)
-
-    @Test
-    fun pointsBalance_isTheSumOfThePointsOnTheLedger() {
-        val entries = listOf(
-            entry(LedgerEntryType.SALE, 50_000, 0, 1),
-            entry(LedgerEntryType.POINTS_EARNED, 0, 20, 2),
-            entry(LedgerEntryType.POINTS_REDEEMED, 0, -8, 3),
-            entry(LedgerEntryType.POINTS_REVERSED, 0, -2, 4),
-        )
-        assertEquals(10, LoyaltyPoints.balance(entries))
-        assertEquals(20, LoyaltyPoints.earnedTotal(entries))
-        assertEquals(10, LoyaltyPoints.usedTotal(entries))
     }
 }

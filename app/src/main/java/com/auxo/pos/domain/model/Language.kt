@@ -20,8 +20,5 @@ enum class Language(val tag: String, val nativeName: String) {
 
         /** The language saved under [tag], or null for anything unknown. */
         fun fromTag(tag: String?): Language? = entries.firstOrNull { it.tag == tag }
-
-        /** The supported language that matches [device]'s language, or English. */
-        fun closestTo(device: Locale): Language = entries.firstOrNull { it.tag == device.language } ?: DEFAULT
     }
 }

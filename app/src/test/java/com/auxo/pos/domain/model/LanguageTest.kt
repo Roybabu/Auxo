@@ -3,7 +3,6 @@ package com.auxo.pos.domain.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.util.Locale
 
 class LanguageTest {
 
@@ -27,16 +26,6 @@ class LanguageTest {
         assertNull(Language.fromTag(""))
         assertNull(Language.fromTag(null))
         assertNull(Language.fromTag("HI"))
-    }
-
-    @Test
-    fun thePhoneLanguage_mapsToTheClosestSupportedOne_orEnglish() {
-        assertEquals(Language.HINDI, Language.closestTo(Locale.forLanguageTag("hi-IN")))
-        assertEquals(Language.BENGALI, Language.closestTo(Locale.forLanguageTag("bn-BD")))
-        assertEquals(Language.BENGALI, Language.closestTo(Locale.forLanguageTag("bn-IN")))
-        assertEquals(Language.ENGLISH, Language.closestTo(Locale.forLanguageTag("en-IN")))
-        assertEquals(Language.ENGLISH, Language.closestTo(Locale.forLanguageTag("ta-IN")))
-        assertEquals(Language.ENGLISH, Language.closestTo(Locale.ROOT))
     }
 
     @Test

@@ -17,14 +17,6 @@ interface LanguageRepository {
     fun setAppLanguage(language: Language?)
 }
 
-class InMemoryLanguageRepository(initial: Language? = null) : LanguageRepository {
-    private val state = MutableStateFlow(initial)
-    override val appLanguage: StateFlow<Language?> = state.asStateFlow()
-    override fun setAppLanguage(language: Language?) {
-        state.value = language
-    }
-}
-
 /** Saves the choice on the device. */
 class SharedPrefsLanguageRepository(private val prefs: SharedPreferences) : LanguageRepository {
 

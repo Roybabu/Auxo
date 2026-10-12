@@ -101,7 +101,6 @@ data class BillingUiState(
     val showErrors: Boolean = false,
     val searchText: String = "",
     val searchResults: List<ProductSearchResult> = emptyList(),
-    /** Items that sold the most over the last 30 days, for quick adding when nothing is typed. */
     /** Dishes matching the search. */
     val menuResults: List<MenuItem> = emptyList(),
     /** Available dishes, for quick adding when the store has a menu. */
