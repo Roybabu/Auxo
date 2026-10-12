@@ -68,7 +68,9 @@ class PasswordHasher(
 
     /** Compares in constant time. */
     fun matches(password: String, account: UserAccount): Boolean =
-        MessageDigest.isEqual(hash(password, account.salt, account.iterations), account.hash)
+        // An empty password is never a right one, and some Android crypto providers refuse to hash it at all
+        // (the error was a crash when "show recovery code" was tapped with the password box empty).
+        password.isNotEmpty() && MessageDigest.isEqual(hash(password, account.salt, account.iterations), account.hash)
 
     companion object {
         const val DEFAULT_ITERATIONS = 600_000
