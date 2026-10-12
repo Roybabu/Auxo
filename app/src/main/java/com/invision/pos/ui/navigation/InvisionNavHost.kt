@@ -34,6 +34,8 @@ import com.invision.pos.ui.screens.customers.CustomerListScreen
 import com.invision.pos.ui.screens.menu.MenuEditorScreen
 import com.invision.pos.ui.screens.menu.MenuListScreen
 import com.invision.pos.ui.screens.more.ActivityLogScreen
+import com.invision.pos.ui.screens.more.DayClosingScreen
+import com.invision.pos.ui.screens.more.DayEndScreen
 import com.invision.pos.ui.screens.more.BackupScreen
 import com.invision.pos.ui.screens.more.MoreActions
 import com.invision.pos.ui.screens.more.AppearanceScreen
@@ -300,6 +302,7 @@ fun InvisionNavHost(
                         override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
                         override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
+                        override fun onOpenDayEnd() = navController.navigate(MoreRoutes.DAY_END)
                         override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
                 )
@@ -316,6 +319,19 @@ fun InvisionNavHost(
             }
             guarded(navController, MoreRoutes.ACTIVITY_LOG) {
                 ActivityLogScreen(onBack = { navController.popBackStack() })
+            }
+            guarded(navController, MoreRoutes.DAY_END) {
+                DayEndScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenClosing = { navController.navigate(MoreRoutes.dayClosing(it)) },
+                )
+            }
+            guarded(
+                navController,
+                route = MoreRoutes.DAY_CLOSING,
+                arguments = listOf(navArgument(MoreRoutes.ARG_CLOSING_ID) { type = NavType.LongType }),
+            ) {
+                DayClosingScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController,
                 route = MoreRoutes.MENU_EDITOR,

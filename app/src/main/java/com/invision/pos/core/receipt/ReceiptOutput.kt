@@ -149,7 +149,7 @@ object ReceiptOutput {
     private fun pointsToMils(points: Float): Int = (points / 72f * 1000f).roundToInt()
 }
 
-private class ReceiptPrintAdapter(
+internal class ReceiptPrintAdapter(
     private val pages: List<ReceiptPage>,
     private val fileName: String,
 ) : PrintDocumentAdapter() {
