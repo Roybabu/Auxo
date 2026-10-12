@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.domain.inventory.CountLine
 import com.auxo.pos.domain.inventory.CountReason
@@ -18,7 +17,6 @@ import com.auxo.pos.ui.screens.stock.StockCountActions
 import com.auxo.pos.ui.screens.stock.StockCountContent
 import com.auxo.pos.ui.theme.AuxoTheme
 import com.auxo.pos.viewmodel.CountCandidate
-import com.auxo.pos.viewmodel.CountEditor
 import com.auxo.pos.viewmodel.CountStage
 import com.auxo.pos.viewmodel.StockCountUiState
 import org.junit.Assert.assertEquals

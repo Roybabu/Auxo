@@ -2,7 +2,6 @@ package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.model.Invoice
 import com.auxo.pos.domain.model.InvoiceType
-import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
 import com.auxo.pos.domain.model.Product

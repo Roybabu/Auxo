@@ -23,7 +23,6 @@ import com.auxo.pos.ui.theme.AuxoTheme
 import com.auxo.pos.viewmodel.AutoBackupUiState
 import com.auxo.pos.viewmodel.BackupUiState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

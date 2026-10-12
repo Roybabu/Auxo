@@ -4,7 +4,6 @@ import com.auxo.pos.core.printer.DeviceList
 import com.auxo.pos.core.printer.PairedDevice
 import com.auxo.pos.core.printer.PrintResult
 import com.auxo.pos.core.printer.SavedPrinter
-import com.auxo.pos.domain.model.Language
 import com.auxo.pos.domain.model.ReceiptPaper
 import com.auxo.pos.testutil.FakeBluetoothDevices
 import com.auxo.pos.testutil.FakePrinterPreferences

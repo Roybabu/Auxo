@@ -9,7 +9,6 @@ import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.ReceiptOptions
 import com.auxo.pos.domain.model.ReceiptPaper
-import com.auxo.pos.testutil.TestData
 import com.auxo.pos.ui.screens.billing.CashSuggestions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

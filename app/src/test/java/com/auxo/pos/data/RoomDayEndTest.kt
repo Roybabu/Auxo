@@ -5,7 +5,6 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.data.local.AuxoDatabase
-import com.auxo.pos.data.repository.ReturnResult
 import com.auxo.pos.data.repository.RoomBillingRepository
 import com.auxo.pos.data.repository.CloseDayResult
 import com.auxo.pos.data.repository.RoomCustomerRepository
@@ -25,9 +24,7 @@ import com.auxo.pos.domain.billing.SaleBuilder
 import com.auxo.pos.domain.billing.taxModeFor
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.Invoice
-import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money
-import com.auxo.pos.domain.model.PaymentKind
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
 import com.auxo.pos.domain.model.Product

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -49,7 +48,6 @@ import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.components.LoadingState
 import com.auxo.pos.ui.screens.inventory.labelRes
-import com.auxo.pos.ui.screens.inventory.stockText
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.MenuEditorEvent
 import com.auxo.pos.viewmodel.MenuEditorUiState

@@ -1,6 +1,5 @@
 package com.auxo.pos.viewmodel
 
-import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.billing.LineIssue
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.usecase.CheckoutUseCase

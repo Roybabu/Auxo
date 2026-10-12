@@ -1,6 +1,5 @@
 package com.auxo.pos.domain.billing
 
-import com.auxo.pos.domain.model.Language
 
 /**
  * The words used to spell out an amount in one language, with the Indian places (crore, lakh, thousand, hundred).
