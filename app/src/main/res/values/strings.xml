@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">InVision</string>
+    <string name="app_name">Auxo</string>
 
     <!-- Main navigation -->
     <string name="nav_home">Home</string>
@@ -259,7 +259,7 @@
     <string name="labels_show_mrp">Show MRP</string>
     <string name="labels_match_stock">Match stock</string>
     <string name="labels_none">Set copies for at least one variant.</string>
-    <string name="labels_job_name">Invision labels: %1$s</string>
+    <string name="labels_job_name">Auxo labels: %1$s</string>
     <plurals name="labels_count">
         <item quantity="one">%d label</item>
         <item quantity="other">%d labels</item>
@@ -878,7 +878,7 @@
     <string name="more_backup_body">Save everything to a file, or move it to another phone</string>
     <string name="backup_title">Backup and restore</string>
     <string name="backup_make_title">Back up this phone</string>
-    <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, the menu, your store settings and your app colour. The file goes into the Invision folder in Documents on this phone.</string>
+    <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, the menu, your store settings and your app colour. The file goes into the Auxo folder in Documents on this phone.</string>
     <string name="backup_now">Back up now</string>
     <string name="backup_working">Working…</string>
     <string name="backup_last">Last backup: %1$s</string>
@@ -889,7 +889,7 @@ in %2$s</string>
     <string name="backup_share">Share or send</string>
     <string name="backup_share_title">Send backup</string>
     <string name="backup_restore_title">Restore from a backup</string>
-    <string name="backup_restore_body">Use this on a new phone, or to go back to an earlier backup. Choose a backup file from the Invision folder, or from wherever you copied it.</string>
+    <string name="backup_restore_body">Use this on a new phone, or to go back to an earlier backup. Choose a backup file from the Auxo folder, or from wherever you copied it.</string>
     <string name="backup_restore_choose">Choose backup file</string>
     <string name="backup_privacy">Backup files include customer details and sales and are not locked with a password. Keep them private.</string>
     <string name="backup_confirm_title">Replace everything on this phone?</string>
@@ -897,9 +897,9 @@ in %2$s</string>
     <string name="backup_confirm_action">Replace and restart</string>
     <string name="backup_restoring">Restoring your data…</string>
     <string name="backup_dismiss">OK</string>
-    <string name="backup_error_not_a_backup">That file is not an Invision backup.</string>
+    <string name="backup_error_not_a_backup">That file is not an Auxo backup.</string>
     <string name="backup_error_wrong_app">That backup is from a different app.</string>
-    <string name="backup_error_newer">That backup was made by a newer version of Invision. Update the app and try again.</string>
+    <string name="backup_error_newer">That backup was made by a newer version of Auxo. Update the app and try again.</string>
     <string name="backup_error_corrupt">That backup is damaged, so nothing was changed.</string>
     <string name="backup_error_unreadable">That file could not be opened.</string>
     <string name="backup_error_save">The backup could not be saved. Check that the phone has free space and try again.</string>
@@ -983,7 +983,7 @@ in %2$s</string>
     <string name="insights_compare_title">Sales and purchases</string>
     <string name="insights_legend_sales">Net sales</string>
     <string name="insights_legend_purchases">Purchases received</string>
-    <string name="insights_compare_note">Purchases are goods received from suppliers. Other expenses aren\'t recorded in Invision, so this is not profit.</string>
+    <string name="insights_compare_note">Purchases are goods received from suppliers. Other expenses aren\'t recorded in Auxo, so this is not profit.</string>
     <string name="insights_compare_description">Net sales %1$s and purchases received %2$s, by period.</string>
     <string name="insights_payments_title">How bills were paid</string>
     <string name="insights_payments_total">Total</string>
@@ -1002,7 +1002,7 @@ in %2$s</string>
     <string name="insights_top_sold">%1$d sold</string>
     <string name="insights_top_empty">No products sold in this period.</string>
     <string name="insights_expenses_title">Expense categories</string>
-    <string name="insights_expenses_unavailable">Invision doesn\'t record expenses yet, so there is nothing to chart here. Goods received from suppliers are shown under Sales and purchases.</string>
+    <string name="insights_expenses_unavailable">Auxo doesn\'t record expenses yet, so there is nothing to chart here. Goods received from suppliers are shown under Sales and purchases.</string>
     <string name="insights_stock_title">Stock health</string>
     <string name="insights_stock_ok">In stock</string>
     <string name="insights_stock_low">Low</string>
@@ -1015,7 +1015,7 @@ in %2$s</string>
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_tagline">Billing and inventory for your shop</string>
+    <string name="auth_tagline">Built to grow.</string>
     <string name="auth_setup_title">Set up your administrator</string>
     <string name="auth_setup_body">Create the one administrator account for this device. You will use it to sign in each time the app opens. It is stored only on this device.</string>
     <string name="auth_field_name">Your name</string>
@@ -1060,7 +1060,7 @@ in %2$s</string>
     <string name="recovery_screen_title">Recovery code</string>
     <string name="more_recovery_body">Make a code that lets you reset the Super Admin password</string>
     <string name="recovery_title">Make your recovery code</string>
-    <string name="recovery_intro">If you forget the Super Admin password, this code lets you set a new one. Nothing else can: the app has no server and no one at Invision can reset it for you.</string>
+    <string name="recovery_intro">If you forget the Super Admin password, this code lets you set a new one. Nothing else can: the app has no server and no one at Auxo can reset it for you.</string>
     <string name="recovery_intro_warning">You will see the code once. Write it on paper and keep it somewhere safe, away from this device. Anyone who has it can reset your password.</string>
     <string name="recovery_field_password">Your password</string>
     <string name="recovery_create">Show my recovery code</string>
@@ -1141,7 +1141,7 @@ in %2$s</string>
     <string name="lock_wrong_password">That password is not right.</string>
     <string name="lock_unavailable">That did not work. Use your password to unlock.</string>
     <string name="lock_sign_out">Sign out and let someone else sign in</string>
-    <string name="lock_fingerprint_title">Unlock InVision</string>
+    <string name="lock_fingerprint_title">Unlock Auxo</string>
     <string name="lock_fingerprint_cancel">Use PIN or password</string>
     <string name="auth_unreadable_title">Administrator account unreadable</string>
     <string name="auth_unreadable_body">The saved administrator account could not be read, so the app cannot open. For safety, it will not offer to create a new one. Close and reopen the app to try again. If this keeps happening, the data on this device may be damaged.</string>

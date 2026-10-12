@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">InVision</string>
+    <string name="app_name">Auxo</string>
 
     <!-- Main navigation -->
     <string name="nav_home">হোম</string>
@@ -259,7 +259,7 @@
     <string name="labels_show_mrp">এমআরপি দেখান</string>
     <string name="labels_match_stock">স্টকের সমান</string>
     <string name="labels_none">অন্তত একটি ভ্যারিয়েন্টের কপি ঠিক করুন।</string>
-    <string name="labels_job_name">Invision লেবেল: %1$s</string>
+    <string name="labels_job_name">Auxo লেবেল: %1$s</string>
     <plurals name="labels_count">
         <item quantity="one">%dটি লেবেল</item>
         <item quantity="other">%dটি লেবেল</item>
@@ -878,7 +878,7 @@
     <string name="more_backup_body">সবকিছু একটি ফাইলে সংরক্ষণ করুন, বা অন্য ফোনে নিয়ে যান</string>
     <string name="backup_title">ব্যাকআপ ও রিস্টোর</string>
     <string name="backup_make_title">এই ফোনের ব্যাকআপ নিন</string>
-    <string name="backup_make_body">আপনি যা কিছু লিখেছেন তা একটি ফাইলে সংরক্ষণ করে: পণ্য ও স্টক, বিল ও ফেরত, ক্রেতা ও বাকি, সরবরাহকারী ও ক্রয়, মেনু, দোকানের সেটিংস এবং অ্যাপের রং। ফাইলটি এই ফোনের Documents-এর Invision ফোল্ডারে যায়।</string>
+    <string name="backup_make_body">আপনি যা কিছু লিখেছেন তা একটি ফাইলে সংরক্ষণ করে: পণ্য ও স্টক, বিল ও ফেরত, ক্রেতা ও বাকি, সরবরাহকারী ও ক্রয়, মেনু, দোকানের সেটিংস এবং অ্যাপের রং। ফাইলটি এই ফোনের Documents-এর Auxo ফোল্ডারে যায়।</string>
     <string name="backup_now">এখনই ব্যাকআপ নিন</string>
     <string name="backup_working">কাজ চলছে…</string>
     <string name="backup_last">শেষ ব্যাকআপ: %1$s</string>
@@ -888,7 +888,7 @@
     <string name="backup_share">শেয়ার করুন বা পাঠান</string>
     <string name="backup_share_title">ব্যাকআপ পাঠান</string>
     <string name="backup_restore_title">ব্যাকআপ থেকে রিস্টোর করুন</string>
-    <string name="backup_restore_body">নতুন ফোনে অথবা আগের কোনো ব্যাকআপে ফিরে যেতে এটি ব্যবহার করুন। Invision ফোল্ডার থেকে, বা যেখানে কপি করেছেন সেখান থেকে ব্যাকআপ ফাইল বাছুন।</string>
+    <string name="backup_restore_body">নতুন ফোনে অথবা আগের কোনো ব্যাকআপে ফিরে যেতে এটি ব্যবহার করুন। Auxo ফোল্ডার থেকে, বা যেখানে কপি করেছেন সেখান থেকে ব্যাকআপ ফাইল বাছুন।</string>
     <string name="backup_restore_choose">ব্যাকআপ ফাইল বাছুন</string>
     <string name="backup_privacy">ব্যাকআপ ফাইলে ক্রেতার বিবরণ ও বিক্রি থাকে এবং তা পাসওয়ার্ড দিয়ে তালাবন্ধ নয়। এগুলো গোপন রাখুন।</string>
     <string name="backup_confirm_title">এই ফোনের সবকিছু বদলে দেবেন?</string>
@@ -896,9 +896,9 @@
     <string name="backup_confirm_action">বদলে আবার চালু করুন</string>
     <string name="backup_restoring">আপনার ডেটা রিস্টোর হচ্ছে…</string>
     <string name="backup_dismiss">ঠিক আছে</string>
-    <string name="backup_error_not_a_backup">এটি Invision-এর ব্যাকআপ নয়।</string>
+    <string name="backup_error_not_a_backup">এটি Auxo-এর ব্যাকআপ নয়।</string>
     <string name="backup_error_wrong_app">এই ব্যাকআপ অন্য একটি অ্যাপের।</string>
-    <string name="backup_error_newer">এই ব্যাকআপ Invision-এর নতুন সংস্করণে তৈরি। অ্যাপ আপডেট করে আবার চেষ্টা করুন।</string>
+    <string name="backup_error_newer">এই ব্যাকআপ Auxo-এর নতুন সংস্করণে তৈরি। অ্যাপ আপডেট করে আবার চেষ্টা করুন।</string>
     <string name="backup_error_corrupt">এই ব্যাকআপ নষ্ট, তাই কিছুই বদলানো হয়নি।</string>
     <string name="backup_error_unreadable">ফাইলটি খোলা যায়নি।</string>
     <string name="backup_error_save">ব্যাকআপ সংরক্ষণ করা যায়নি। ফোনে জায়গা আছে কি না দেখে আবার চেষ্টা করুন।</string>
@@ -982,7 +982,7 @@
     <string name="insights_compare_title">বিক্রি ও ক্রয়</string>
     <string name="insights_legend_sales">নিট বিক্রি</string>
     <string name="insights_legend_purchases">গৃহীত ক্রয়</string>
-    <string name="insights_compare_note">ক্রয় মানে সরবরাহকারীর কাছ থেকে পাওয়া মাল। অন্য খরচ Invision-এ লেখা হয় না, তাই এটি লাভ নয়।</string>
+    <string name="insights_compare_note">ক্রয় মানে সরবরাহকারীর কাছ থেকে পাওয়া মাল। অন্য খরচ Auxo-এ লেখা হয় না, তাই এটি লাভ নয়।</string>
     <string name="insights_compare_description">সময় অনুযায়ী নিট বিক্রি %1$s এবং গৃহীত ক্রয় %2$s।</string>
     <string name="insights_payments_title">বিলের পেমেন্ট কীভাবে হয়েছে</string>
     <string name="insights_payments_total">মোট</string>
@@ -1001,7 +1001,7 @@
     <string name="insights_top_sold">%1$d বিক্রি হয়েছে</string>
     <string name="insights_top_empty">এই সময়ে কোনো পণ্য বিক্রি হয়নি।</string>
     <string name="insights_expenses_title">খরচের বিভাগ</string>
-    <string name="insights_expenses_unavailable">Invision এখনও খরচ লেখে না, তাই এখানে চার্ট করার কিছু নেই। সরবরাহকারীর কাছ থেকে পাওয়া মাল বিক্রি ও ক্রয়ের অংশে দেখানো হয়।</string>
+    <string name="insights_expenses_unavailable">Auxo এখনও খরচ লেখে না, তাই এখানে চার্ট করার কিছু নেই। সরবরাহকারীর কাছ থেকে পাওয়া মাল বিক্রি ও ক্রয়ের অংশে দেখানো হয়।</string>
     <string name="insights_stock_title">স্টকের অবস্থা</string>
     <string name="insights_stock_ok">স্টকে আছে</string>
     <string name="insights_stock_low">কম</string>
@@ -1014,7 +1014,7 @@
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_tagline">আপনার দোকানের বিলিং ও ইনভেন্টরি</string>
+    <string name="auth_tagline">Built to grow.</string>
     <string name="auth_setup_title">আপনার অ্যাডমিন তৈরি করুন</string>
     <string name="auth_setup_body">এই ডিভাইসের জন্য একমাত্র অ্যাডমিন অ্যাকাউন্ট তৈরি করুন। অ্যাপ খুললেই প্রতিবার আপনি এটি দিয়ে সাইন ইন করবেন। এটি শুধু এই ডিভাইসেই থাকে।</string>
     <string name="auth_field_name">আপনার নাম</string>
@@ -1059,7 +1059,7 @@
     <string name="recovery_screen_title">রিকভারি কোড</string>
     <string name="more_recovery_body">এমন একটি কোড বানান যা দিয়ে সুপার অ্যাডমিনের পাসওয়ার্ড রিসেট করা যায়</string>
     <string name="recovery_title">আপনার রিকভারি কোড বানান</string>
-    <string name="recovery_intro">সুপার অ্যাডমিনের পাসওয়ার্ড ভুলে গেলে এই কোড দিয়ে নতুন পাসওয়ার্ড দেওয়া যায়। আর কিছু দিয়ে হয় না: অ্যাপে কোনো সার্ভার নেই এবং Invision-এর কেউ আপনার হয়ে এটি রিসেট করতে পারে না।</string>
+    <string name="recovery_intro">সুপার অ্যাডমিনের পাসওয়ার্ড ভুলে গেলে এই কোড দিয়ে নতুন পাসওয়ার্ড দেওয়া যায়। আর কিছু দিয়ে হয় না: অ্যাপে কোনো সার্ভার নেই এবং Auxo-এর কেউ আপনার হয়ে এটি রিসেট করতে পারে না।</string>
     <string name="recovery_intro_warning">কোডটি আপনি একবারই দেখতে পাবেন। কাগজে লিখে এই ডিভাইস থেকে দূরে নিরাপদ জায়গায় রাখুন। যার কাছে এটি থাকবে সে আপনার পাসওয়ার্ড রিসেট করতে পারবে।</string>
     <string name="recovery_field_password">আপনার পাসওয়ার্ড</string>
     <string name="recovery_create">আমার রিকভারি কোড দেখান</string>
@@ -1140,7 +1140,7 @@
     <string name="lock_wrong_password">পাসওয়ার্ডটি ঠিক নয়।</string>
     <string name="lock_unavailable">এটি কাজ করেনি। আনলক করতে পাসওয়ার্ড ব্যবহার করুন।</string>
     <string name="lock_sign_out">সাইন আউট করুন এবং অন্য কাউকে সাইন ইন করতে দিন</string>
-    <string name="lock_fingerprint_title">InVision আনলক করুন</string>
+    <string name="lock_fingerprint_title">Auxo আনলক করুন</string>
     <string name="lock_fingerprint_cancel">পিন বা পাসওয়ার্ড ব্যবহার করুন</string>
     <string name="auth_unreadable_title">অ্যাডমিন অ্যাকাউন্ট পড়া যাচ্ছে না</string>
     <string name="auth_unreadable_body">সংরক্ষিত অ্যাডমিন অ্যাকাউন্ট পড়া যায়নি, তাই অ্যাপ খুলতে পারছে না। নিরাপত্তার জন্য এটি নতুন অ্যাকাউন্ট তৈরির সুযোগ দেবে না। অ্যাপ বন্ধ করে আবার খুলুন। এমন বারবার হলে এই ডিভাইসের ডেটা নষ্ট হয়ে থাকতে পারে।</string>

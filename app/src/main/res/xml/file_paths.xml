@@ -4,5 +4,5 @@
     <cache-path name="receipts" path="receipts/" />
     <cache-path name="exports" path="exports/" />
     <cache-path name="capture" path="capture/" />
-    <external-files-path name="backups" path="Invision/" />
+    <external-files-path name="backups" path="Auxo/" />
 </paths>

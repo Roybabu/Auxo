@@ -6,15 +6,15 @@ import xml.etree.ElementTree as ET
 
 # Packages that hold money, stock and ledger rules; shown on their own.
 KEY_PACKAGES = [
-    "com/invision/pos/domain/billing",
-    "com/invision/pos/domain/inventory",
-    "com/invision/pos/domain/customers",
-    "com/invision/pos/domain/purchasing",
-    "com/invision/pos/domain/reports",
-    "com/invision/pos/domain/usecase",
-    "com/invision/pos/data/repository",
-    "com/invision/pos/data/local",
-    "com/invision/pos/viewmodel",
+    "com/auxo/pos/domain/billing",
+    "com/auxo/pos/domain/inventory",
+    "com/auxo/pos/domain/customers",
+    "com/auxo/pos/domain/purchasing",
+    "com/auxo/pos/domain/reports",
+    "com/auxo/pos/domain/usecase",
+    "com/auxo/pos/data/repository",
+    "com/auxo/pos/data/local",
+    "com/auxo/pos/viewmodel",
 ]
 
 
@@ -42,7 +42,7 @@ def main():
         if name in KEY_PACKAGES:
             missed, covered = counter(package, "LINE")
             b_missed, b_covered = counter(package, "BRANCH")
-            rows.append((name.replace("com/invision/pos/", ""), missed, covered, b_missed, b_covered))
+            rows.append((name.replace("com/auxo/pos/", ""), missed, covered, b_missed, b_covered))
     all_missed, all_covered = counter(root, "LINE")
     all_b_missed, all_b_covered = counter(root, "BRANCH")
 

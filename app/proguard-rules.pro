@@ -1,4 +1,4 @@
-# Project-specific R8/ProGuard rules for the Invision app.
+# Project-specific R8/ProGuard rules for the Auxo app.
 # Release minification is currently disabled in app/build.gradle.kts.
 # Add keep rules here when enabling it (for example for serialization or
 # reflection-based libraries added in later steps).

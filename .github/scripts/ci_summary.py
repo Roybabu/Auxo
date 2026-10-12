@@ -130,8 +130,8 @@ packed, chunk = [], ""
 for failure in test_failures:
     name, _, reason = failure.partition(": ")
     parts = reason.split(' | ')
-    frame = next((p.strip() for p in parts[1:] if 'com.invision.pos' in p), '')
-    line = f"{name.replace('com.invision.pos.', '')}: {parts[0][:330]} {frame.replace('com.invision.pos.', '')[:90]}\n"
+    frame = next((p.strip() for p in parts[1:] if 'com.auxo.pos' in p), '')
+    line = f"{name.replace('com.auxo.pos.', '')}: {parts[0][:330]} {frame.replace('com.auxo.pos.', '')[:90]}\n"
     if len(chunk) + len(line) > 3800:
         packed.append(chunk)
         chunk = ""
@@ -152,7 +152,7 @@ for title, text in rows:
 summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
 if summary_path:
     with open(summary_path, "a", encoding="utf-8") as out:
-        heading = "Invision device tests" if DEVICE else "Invision CI results"
+        heading = "Auxo device tests" if DEVICE else "Auxo CI results"
         out.write(f"### {heading}\n\n| Check | Result |\n|---|---|\n")
         for title, text in rows:
             out.write(f"| {title} | {text.replace('|', '/')} |\n")

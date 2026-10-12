@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Invision"
+rootProject.name = "Auxo"
 include(":app")

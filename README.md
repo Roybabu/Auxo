@@ -1,6 +1,6 @@
-# 🧾 Invision
+<p align="center"><img src="design/auxo/png/auxo-logo-horizontal-tagline.png" alt="Auxo: Built to grow." width="420"></p>
 
-**A whole shop in your pocket.** Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee.
+**Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee. The name comes from the Greek *auxō*, "to increase or grow".
 
 Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
 
@@ -13,6 +13,10 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 - **See the numbers.** Twelve reports, day-end cash closing, a GST report, CSV export.
 - **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, activity log, backup and restore.
 - **Print anywhere.** PDF, Android printing, or straight to a Bluetooth receipt printer (58, 76 or 80 mm).
+
+## Brand assets
+
+The Auxo symbol and logos (horizontal, vertical, dark background, one-colour for print) are in `design/auxo/`, as SVG and PNG. They and the launcher icon are drawn by `tools/make_auxo_brand.py`, so they always share the same symbol. Wordmark letters are outlines of Poppins Bold (SIL Open Font License).
 
 ## One rule: the books must add up
 
@@ -30,8 +34,8 @@ Money is stored in whole paise, never as decimals. A sale saves the invoice, pay
 
 **Clone and run**
 ```bash
-git clone https://github.com/Roybabu/Invision.git
-cd Invision
+git clone https://github.com/Roybabu/Auxo.git
+cd Auxo
 git checkout -b my-change          # work on your own branch
 ```
 Open the folder in Android Studio, let it sync, pick a device and press Run. If you build from the command line, create `local.properties` with `sdk.dir=/path/to/Android/sdk` (Android Studio does this for you).
@@ -50,7 +54,7 @@ Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.gi
 ## Where things live
 
 ```
-app/src/main/java/com/invision/pos/
+app/src/main/java/com/auxo/pos/
 ├── core/       sign-in, backup, printing, receipts, photos, DI
 ├── data/       Room database, repositories, permission checks
 ├── domain/     billing, GST, inventory, reports (plain Kotlin)

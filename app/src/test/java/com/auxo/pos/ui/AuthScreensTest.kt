@@ -1,0 +1,294 @@
+package com.auxo.pos.ui
+
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.auxo.pos.core.auth.AuthState
+import com.auxo.pos.core.auth.SetupError
+import com.auxo.pos.core.auth.SetupField
+import com.auxo.pos.ui.screens.auth.AdminSetupContent
+import com.auxo.pos.ui.screens.auth.LoginContent
+import com.auxo.pos.ui.theme.AuxoTheme
+import com.auxo.pos.viewmodel.AdminSetupUiState
+import com.auxo.pos.viewmodel.LoginMessage
+import com.auxo.pos.viewmodel.LoginUiState
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+private const val SAMPLE_PW = "Green-Leaf-42"
+
+@RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w392dp-h850dp-xhdpi")
+class AuthScreensTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private fun gate(state: AuthState) {
+        composeRule.setContent {
+            AuxoTheme {
+                AuthGate(
+                    state = state,
+                    setup = { Text("SETUP SCREEN", modifier = Modifier.testTag("fake_setup")) },
+                    login = { Text("LOGIN SCREEN", modifier = Modifier.testTag("fake_login")) },
+                    app = { Text("THE APP", modifier = Modifier.testTag("fake_app")) },
+                )
+            }
+        }
+    }
+
+    // The gate
+
+    @Test
+    fun firstLaunch_showsAdminSetup_only() {
+        gate(AuthState.NeedsSetup)
+        composeRule.onNodeWithTag("fake_setup").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_app").assertDoesNotExist()
+    }
+
+    @Test
+    fun laterLaunches_showLogin_neverSetup() {
+        gate(AuthState.SignedOut)
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_app").assertDoesNotExist()
+    }
+
+    @Test
+    fun signedIn_showsTheApp() {
+        gate(AuthState.SignedIn("Roy"))
+        composeRule.onNodeWithTag("fake_app").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
+    }
+
+    @Test
+    fun anUnreadableAccount_showsAnExplanation_notSetup() {
+        gate(AuthState.Unreadable)
+        composeRule.onNodeWithTag("auth_unreadable").assertIsDisplayed()
+        composeRule.onNodeWithText("Administrator account unreadable").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
+        composeRule.onNodeWithTag("setup_submit").assertDoesNotExist()
+    }
+
+    // Setup screen
+
+    private fun setup(state: AdminSetupUiState = AdminSetupUiState(), onSubmit: () -> Unit = {}) {
+        composeRule.setContent {
+            AuxoTheme {
+                AdminSetupContent(state, onNameChange = {}, onIdentifierChange = {}, onPasswordChange = {}, onConfirmChange = {}, onSubmit = onSubmit)
+            }
+        }
+    }
+
+    @Test
+    fun onAPhone_theFormUsesTheFullWidth_belowTheBrand() {
+        setup()
+        val left = composeRule.onNodeWithTag("setup_name").getUnclippedBoundsInRoot().left
+        assertTrue("form starts at ${left.value}dp", left.value < 40f)
+        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+    }
+
+    @Test
+    fun setupScreen_hasTheFourFields_andTheAuxoLogo() {
+        setup()
+        composeRule.onNodeWithTag("auth_screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_name").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_identifier").assertExists()
+        composeRule.onNodeWithTag("setup_password").assertExists()
+        composeRule.onNodeWithTag("setup_confirm").assertExists()
+        composeRule.onNodeWithContentDescription("Auxo").assertExists()
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsEnabled()
+    }
+
+    @Test
+    fun setupScreen_showsFieldErrors_includingAMismatch() {
+        setup(
+            AdminSetupUiState(
+                submitted = true,
+                errors = mapOf(
+                    SetupField.NAME to SetupError.NAME_REQUIRED,
+                    SetupField.IDENTIFIER to SetupError.IDENTIFIER_INVALID,
+                    SetupField.PASSWORD to SetupError.PASSWORD_TOO_SHORT,
+                    SetupField.CONFIRM to SetupError.CONFIRM_MISMATCH,
+                ),
+            ),
+        )
+        composeRule.onNodeWithText("Enter your name.").assertExists()
+        composeRule.onNodeWithText("Use at least 8 characters.").assertExists()
+        composeRule.onNodeWithText("The passwords do not match.").assertExists()
+        composeRule.onNodeWithText("Use 3 to 32 letters, numbers, dots, dashes or underscores, or a valid email address.").assertExists()
+    }
+
+    @Test
+    fun setupScreen_disablesTheButton_whileSaving_soItCannotBeSubmittedTwice() {
+        var submits = 0
+        setup(AdminSetupUiState(isSubmitting = true), onSubmit = { submits++ })
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithText("Creating…").assertExists()
+        composeRule.onNodeWithTag("setup_name").assertIsNotEnabled()
+        assertEquals(0, submits)
+    }
+
+    @Test
+    fun setupScreen_submitsWhenTheButtonIsTapped() {
+        var submits = 0
+        setup(onSubmit = { submits++ })
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().performClick()
+        assertEquals(1, submits)
+    }
+
+    @Test
+    fun setupScreen_hidesPasswords_untilToggled() {
+        composeRule.setContent {
+            AuxoTheme {
+                AdminSetupContent(
+                    AdminSetupUiState("", "", SAMPLE_PW, SAMPLE_PW),
+                    onNameChange = {}, onIdentifierChange = {}, onPasswordChange = {}, onConfirmChange = {}, onSubmit = {},
+                )
+            }
+        }
+        // The field is marked as a password (so its text is masked on screen and kept out of autofill/accessibility readouts).
+        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithContentDescription("Show password").performScrollTo()
+        composeRule.onNodeWithContentDescription("Show password").performClick()
+        // The fields stay marked as passwords (keyboard type), so only the on-screen text changes; the toggle flips its label.
+        composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+        composeRule.onNodeWithContentDescription("Hide password").assertExists()
+    }
+
+    @Test
+    fun setup_offersNoOnlineSignIn() {
+        setup()
+        for (text in listOf("Sign in with", "Google", "server", "Server", "Cloud")) {
+            composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+    }
+
+    // Login screen
+
+    private fun login(state: LoginUiState = LoginUiState(), onSignIn: () -> Unit = {}) {
+        composeRule.setContent {
+            AuxoTheme { LoginContent(state, onIdentifierChange = {}, onPasswordChange = {}, onSignIn = onSignIn) }
+        }
+    }
+
+    @Test
+    fun loginScreen_hasNoSetupOptions_andOnlyOffersForgotPasswordWhenAskedTo() {
+        login()
+        composeRule.onNodeWithTag("login").assertIsDisplayed()
+        composeRule.onNodeWithTag("login_identifier").assertExists()
+        composeRule.onNodeWithTag("login_password").assertExists()
+        composeRule.onNodeWithTag("setup_name").assertDoesNotExist()
+        composeRule.onNodeWithTag("setup_submit").assertDoesNotExist()
+        for (text in listOf("Forgot", "Create administrator", "Register", "Sign up", "Cloud", "server")) {
+            composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun loginScreen_explainsMissingFields_insteadOfDisablingTheButton() {
+        var signIns = 0
+        login(LoginUiState(identifier = "", password = "", identifierMissing = true, passwordMissing = true), onSignIn = { signIns++ })
+        composeRule.onNodeWithTag("login_submit").assertIsEnabled()
+        composeRule.onNodeWithText("Enter your username or email.").assertIsDisplayed()
+        composeRule.onNodeWithText("Enter your password.").assertIsDisplayed()
+        composeRule.onNodeWithTag("login_submit").performClick()
+        assertEquals(1, signIns)
+    }
+
+    @Test
+    fun loginScreen_hasNoOfflineModeOrServerOptions() {
+        login()
+        for (text in listOf("Offline", "offline", "Online", "online", "Server", "server", "Cloud", "cloud", "Connect", "Business", "OTP", "Register", "Google")) {
+            composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+        composeRule.onNodeWithContentDescription("Auxo").assertExists()
+        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+    }
+
+    @Test
+    fun loginButton_isEnabledWithBothFields_andSignsIn() {
+        var signIns = 0
+        login(LoginUiState(identifier = "roy", password = "x"), onSignIn = { signIns++ })
+        composeRule.onNodeWithTag("login_submit").assertIsEnabled().performClick()
+        assertEquals(1, signIns)
+    }
+
+    @Test
+    fun loginMessages_areShown() {
+        login(LoginUiState(identifier = "roy", message = LoginMessage.Rejected))
+        composeRule.onNodeWithText("Incorrect username or password.").assertIsDisplayed()
+    }
+
+    @Test
+    fun lockoutMessage_countsSeconds() {
+        login(LoginUiState(identifier = "roy", message = LoginMessage.LockedOut(30)))
+        composeRule.onNodeWithText("Too many attempts. Try again in 30 seconds.").assertIsDisplayed()
+    }
+}
+
+@RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w1024dp-h768dp-mdpi")
+class AuthScreensTabletTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    @Test
+    fun onATablet_setupAndLogin_putTheBrandBesideTheForm() {
+        composeRule.setContent {
+            AuxoTheme {
+                AdminSetupContent(AdminSetupUiState(), {}, {}, {}, {}, {})
+            }
+        }
+        composeRule.onNodeWithTag("auth_screen").assertIsDisplayed()
+        // The wide layout shows the app name as text next to the form; the narrow one has only the logo.
+        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithText("Billing and inventory for your shop").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_name").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun onATablet_login_isUsable() {
+        composeRule.setContent {
+            AuxoTheme { LoginContent(LoginUiState(identifier = "roy", password = "x"), {}, {}, {}) }
+        }
+        composeRule.onNodeWithText("Auxo").assertIsDisplayed()
+        composeRule.onNodeWithTag("login_submit").assertIsDisplayed().assertIsEnabled()
+    }
+
+    @Test
+    fun onATablet_theFormSitsInTheRightHalf() {
+        composeRule.setContent { AuxoTheme { AdminSetupContent(AdminSetupUiState(), {}, {}, {}, {}, {}) } }
+        val left = composeRule.onNodeWithTag("setup_name").getUnclippedBoundsInRoot().left
+        assertTrue("form starts at ${left.value}dp", left.value >= 500f)
+    }
+}

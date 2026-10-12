@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.invision.pos"
+    namespace = "com.auxo.pos"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.invision.pos"
+        applicationId = "com.auxo.pos"
         minSdk = 26
         targetSdk = 37
         versionCode = 4

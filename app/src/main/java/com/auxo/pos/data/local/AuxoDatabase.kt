@@ -1,0 +1,266 @@
+package com.auxo.pos.data.local
+
+import android.content.Context
+import androidx.room.AutoMigration
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.auxo.pos.data.local.dao.AuditDao
+import com.auxo.pos.data.local.dao.DayEndDao
+import com.auxo.pos.data.local.dao.HeldBillDao
+import com.auxo.pos.data.local.dao.QuotationDao
+import com.auxo.pos.data.local.dao.BillingDao
+import com.auxo.pos.data.local.dao.CustomerDao
+import com.auxo.pos.data.local.dao.InventoryDao
+import com.auxo.pos.data.local.dao.MenuDao
+import com.auxo.pos.data.local.dao.OperationDao
+import com.auxo.pos.data.local.dao.PurchasingDao
+import com.auxo.pos.data.local.dao.StockCountDao
+import com.auxo.pos.data.local.entity.AppliedRequestEntity
+import com.auxo.pos.data.local.entity.AuditLogEntity
+import com.auxo.pos.data.local.entity.DayClosingEntity
+import com.auxo.pos.data.local.entity.HeldBillEntity
+import com.auxo.pos.data.local.entity.QuotationEntity
+import com.auxo.pos.data.local.entity.CustomerEntity
+import com.auxo.pos.data.local.entity.InvoiceEntity
+import com.auxo.pos.data.local.entity.InvoiceLineEntity
+import com.auxo.pos.data.local.entity.LedgerEntryEntity
+import com.auxo.pos.data.local.entity.LoyaltySettingsEntity
+import com.auxo.pos.data.local.entity.MenuItemEntity
+import com.auxo.pos.data.local.entity.NumberSequenceEntity
+import com.auxo.pos.data.local.entity.PaymentEntity
+import com.auxo.pos.data.local.entity.ProductEntity
+import com.auxo.pos.data.local.entity.ProductVariantEntity
+import com.auxo.pos.data.local.entity.PurchaseOrderEntity
+import com.auxo.pos.data.local.entity.PurchaseOrderLineEntity
+import com.auxo.pos.data.local.entity.PurchaseReceiptEntity
+import com.auxo.pos.data.local.entity.PurchaseReceiptLineEntity
+import com.auxo.pos.data.local.entity.RecipeLineEntity
+import com.auxo.pos.data.local.entity.StockBatchEntity
+import com.auxo.pos.data.local.entity.StockCountEntity
+import com.auxo.pos.data.local.entity.StockMovementEntity
+import com.auxo.pos.data.local.entity.StoreSettingsEntity
+import com.auxo.pos.data.local.entity.SupplierEntity
+
+/**
+ * Version history:
+ * 1. Products, variants and stock movements (Step 2).
+ * 2. GST and HSN on products, invoices, invoice lines, payments, settings and
+ *    number sequences; stock movements link to invoices (Step 3).
+ * 3. Stock batches, suppliers, purchase orders and goods receipts, customers and
+ *    their ledger, restaurant menu and recipes, one-time request ids (Step 4).
+ * 4. Activity log of who changed, returned or deleted what (roles and User Management).
+ * 5. Day-end closings: the cash counted and the day's figures, one row per closed day.
+ * 6. Loyalty points: a points column on the customer ledger and the loyalty rules table. Written by hand
+ *    (see [MIGRATION_5_6]) so building does not depend on the exported 5.json.
+ * 7. The language bills are printed in (store_settings.receipt_language). Also written by hand ([MIGRATION_6_7]).
+ * 8. Whether receipts print the UPI payment QR (store_settings.receipt_show_upi_qr, on for existing shops).
+ *    Written by hand ([MIGRATION_7_8]).
+ * 9. Discount reasons (invoices.discount_reason, invoice_lines.discount_reason) and the employee discount
+ *    limit (store_settings.employee_discount_limit_bp, 0 = none). Written by hand ([MIGRATION_8_9]).
+ * 10. Held (parked) bills: the held_bills table. Written by hand ([MIGRATION_9_10]).
+ * 11. Open restaurant orders: service type, table and kitchen-ticket columns on held_bills, and service type
+ *     and table on invoices. Written by hand ([MIGRATION_10_11]).
+ * 12. Quotations: the quotations table. Written by hand ([MIGRATION_11_12]).
+ * 13. The expiring-soon warning window (store_settings.expiry_warning_days, 30 for existing shops). Written by hand
+ *     ([MIGRATION_12_13]).
+ * 14. Stock counts: the stock_counts table. Written by hand ([MIGRATION_13_14]).
+ * 15. Product photos: products.photo_file, the name of the photo file (null for existing products). Written by
+ *     hand ([MIGRATION_14_15]).
+ */
+@Database(
+    entities = [
+        ProductEntity::class,
+        ProductVariantEntity::class,
+        StockMovementEntity::class,
+        InvoiceEntity::class,
+        InvoiceLineEntity::class,
+        PaymentEntity::class,
+        StoreSettingsEntity::class,
+        NumberSequenceEntity::class,
+        StockBatchEntity::class,
+        AppliedRequestEntity::class,
+        SupplierEntity::class,
+        PurchaseOrderEntity::class,
+        PurchaseOrderLineEntity::class,
+        PurchaseReceiptEntity::class,
+        PurchaseReceiptLineEntity::class,
+        CustomerEntity::class,
+        LedgerEntryEntity::class,
+        MenuItemEntity::class,
+        RecipeLineEntity::class,
+        AuditLogEntity::class,
+        DayClosingEntity::class,
+        LoyaltySettingsEntity::class,
+        HeldBillEntity::class,
+        QuotationEntity::class,
+        StockCountEntity::class,
+    ],
+    version = AuxoDatabase.VERSION,
+    exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, spec = AuxoDatabase.BatchBackfill::class),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
+    ],
+)
+abstract class AuxoDatabase : RoomDatabase() {
+
+    abstract fun inventoryDao(): InventoryDao
+
+    abstract fun billingDao(): BillingDao
+
+    abstract fun purchasingDao(): PurchasingDao
+
+    abstract fun customerDao(): CustomerDao
+
+    abstract fun menuDao(): MenuDao
+
+    abstract fun operationDao(): OperationDao
+
+    abstract fun auditDao(): AuditDao
+
+    abstract fun dayEndDao(): DayEndDao
+
+    abstract fun heldBillDao(): HeldBillDao
+
+    abstract fun quotationDao(): QuotationDao
+
+    abstract fun stockCountDao(): StockCountDao
+
+    /**
+     * Version 3 keeps food and beverage stock in batches. Existing stock becomes
+     * one batch per variant, with the batch number and expiry saved on the variant.
+     */
+    class BatchBackfill : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "INSERT INTO stock_batches (variant_id, batch_number, expiry_epoch_day, quantity, received_at, unit_cost_minor) " +
+                    "SELECT v.id, v.batch_number, v.expiry_epoch_day, v.stock_quantity, " +
+                    "CAST(strftime('%s', 'now') AS INTEGER) * 1000, v.cost_minor " +
+                    "FROM product_variants v JOIN products p ON p.id = v.product_id " +
+                    "WHERE p.category IN ('PACKAGED_FOOD', 'BEVERAGE') AND v.stock_quantity > 0",
+            )
+        }
+    }
+
+    companion object {
+        const val NAME = "auxo.db"
+
+        /** The database version above, for code that checks a file against it. */
+        const val VERSION = 15
+
+        /**
+         * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
+         * starts switched off because the settings table starts empty. The SQL must match the entities exactly;
+         * Room checks the result against the version 6 schema when the database opens.
+         */
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE customer_ledger ADD COLUMN points INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS loyalty_settings (id INTEGER NOT NULL, enabled INTEGER NOT NULL, " +
+                        "spend_per_point_minor INTEGER NOT NULL, point_value_minor INTEGER NOT NULL, PRIMARY KEY(id))",
+                )
+            }
+        }
+
+        /** Version 7 adds the bill language. Existing shops keep printing in English (a missing value means English). */
+        val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN receipt_language TEXT")
+            }
+        }
+
+        /** Version 8: receipts may print a UPI QR. Existing shops keep getting what they asked for, so it starts on. */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN receipt_show_upi_qr INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        /**
+         * Version 9: discount reasons and the employee discount limit. Old bills have no reason, and the limit
+         * starts at 0, so Employees cannot discount until the Super Admin allows it.
+         */
+        val MIGRATION_8_9: Migration = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE invoices ADD COLUMN discount_reason TEXT")
+                db.execSQL("ALTER TABLE invoice_lines ADD COLUMN discount_reason TEXT")
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN employee_discount_limit_bp INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /** Version 10 adds parked bills. Nothing existing changes. */
+        val MIGRATION_9_10: Migration = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS held_bills (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, label TEXT NOT NULL, " +
+                        "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, item_count INTEGER NOT NULL, " +
+                        "total_minor INTEGER NOT NULL, payload TEXT NOT NULL)",
+                )
+            }
+        }
+
+        /** Version 11: open restaurant orders. Existing parked bills are plain bills (no service type, no tickets). */
+        val MIGRATION_10_11: Migration = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN service_type TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN table_number TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN kot_sent TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN kot_count INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN service_type TEXT")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN table_number TEXT")
+            }
+        }
+
+        /** Version 12: quotations. Nothing existing changes; the table starts empty. */
+        val MIGRATION_11_12: Migration = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS quotations (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, number TEXT NOT NULL, " +
+                        "created_at INTEGER NOT NULL, valid_until_day INTEGER NOT NULL, customer_name TEXT NOT NULL, " +
+                        "customer_phone TEXT NOT NULL, item_count INTEGER NOT NULL, total_minor INTEGER NOT NULL, " +
+                        "payload TEXT NOT NULL, status TEXT NOT NULL, converted_invoice_id INTEGER)",
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_quotations_number ON quotations (number)")
+            }
+        }
+
+        /** Version 13: the expiring-soon window. Existing shops keep the 30 days they always had. */
+        val MIGRATION_12_13: Migration = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN expiry_warning_days INTEGER NOT NULL DEFAULT 30")
+            }
+        }
+
+        /** Version 14: stock counts. Nothing existing changes; the table starts empty. */
+        val MIGRATION_13_14: Migration = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS stock_counts (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, started_at INTEGER NOT NULL, " +
+                        "status TEXT NOT NULL, payload TEXT NOT NULL, finished_at INTEGER, reason TEXT, note TEXT, " +
+                        "adjusted_count INTEGER NOT NULL DEFAULT 0)",
+                )
+            }
+        }
+
+        /** Version 15: product photos. Existing products have none; the files live outside the database. */
+        val MIGRATION_14_15: Migration = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE products ADD COLUMN photo_file TEXT")
+            }
+        }
+
+        /** A builder with every migration added. All code that opens the database file goes through this. */
+        fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
+            Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+
+        fun create(context: Context): AuxoDatabase = builder(context).build()
+    }
+}
