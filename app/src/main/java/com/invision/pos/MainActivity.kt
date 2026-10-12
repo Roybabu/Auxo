@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.invision.pos.core.auth.AuthState
 import com.invision.pos.ui.AuthGate
 import com.invision.pos.ui.InvisionApp
 import com.invision.pos.ui.LocalExpiryWarningDays
@@ -21,8 +22,12 @@ import com.invision.pos.ui.lock.LocalFingerprint
 import com.invision.pos.ui.LocalSuppliersEnabled
 import com.invision.pos.ui.theme.InvisionTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MainActivity : FragmentActivity() {
 
     /** Every screen reads its text through this context, so the chosen app language applies to all of them. */
@@ -71,8 +76,17 @@ class MainActivity : FragmentActivity() {
             }
             val logo by container.storeLogoRepository.logo.collectAsStateWithLifecycle()
             val suppliers by shop.suppliers.collectAsStateWithLifecycle()
-            val expiryDays by remember { container.settingsRepository.observeSettings().map { it.expiryWarningDays } }
-                .collectAsStateWithLifecycle(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
+            // Settings may only be read by someone signed in, so nothing is read before sign-in (or if it is refused).
+            val expiryDays by remember {
+                container.authRepository.state.flatMapLatest { auth ->
+                    if (auth is AuthState.SignedIn) {
+                        container.settingsRepository.observeSettings().map { it.expiryWarningDays }
+                            .catch { emit(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS) }
+                    } else {
+                        flowOf(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
+                    }
+                }
+            }.collectAsStateWithLifecycle(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
                 CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.invision.pos.ui.LocalProductPhotos provides container.productPhotos, com.invision.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
