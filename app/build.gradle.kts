@@ -102,6 +102,8 @@ dependencies {
     implementation(libs.androidx.biometric)
     // Newer than the one biometric pulls in; fixes permission requests from Compose in a FragmentActivity.
     implementation(libs.androidx.fragment)
+    // Reads the camera orientation of product photos (replaces android.media.ExifInterface).
+    implementation(libs.androidx.exifinterface)
 
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)
