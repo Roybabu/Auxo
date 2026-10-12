@@ -28,7 +28,7 @@ class WhatsAppShareTest {
         assertEquals("com.whatsapp", intent.`package`)
         assertEquals("Invoice INV from Shop", intent.getStringExtra(Intent.EXTRA_TEXT))
         assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
-        assertTrue(intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM).toString().endsWith("INV-1.pdf"))
+        assertTrue(androidx.core.content.IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, android.net.Uri::class.java).toString().endsWith("INV-1.pdf"))
         assertNull(WhatsAppShare.invoiceIntent(context, file, invoice, "x", null).`package`)
     }
 
