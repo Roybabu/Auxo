@@ -60,8 +60,8 @@ class ExpiryWarningViewModelTest {
 
     @Test
     fun withoutSettings_theSummaryUsesThirtyDays() = runTest {
-        val withDefault = ObserveInventorySummaryUseCase(inventory, TestData.clock).first()
-        val thirty = ObserveInventorySummaryUseCase(inventory, TestData.clock, FakeSettingsRepository(TestData.settings.copy(expiryWarningDays = 30))).first()
+        val withDefault = ObserveInventorySummaryUseCase(inventory, TestData.clock)().first()
+        val thirty = ObserveInventorySummaryUseCase(inventory, TestData.clock, FakeSettingsRepository(TestData.settings.copy(expiryWarningDays = 30)))().first()
         assertEquals(thirty, withDefault)
     }
 

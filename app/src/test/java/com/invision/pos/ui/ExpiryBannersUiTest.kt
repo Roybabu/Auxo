@@ -1,6 +1,5 @@
 package com.invision.pos.ui
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertTextContains
@@ -13,6 +12,7 @@ import com.invision.pos.core.format.MoneyFormatter
 import com.invision.pos.domain.billing.BillCalculator
 import com.invision.pos.domain.billing.Cart
 import com.invision.pos.domain.billing.CartValidator
+import com.invision.pos.domain.billing.taxModeFor
 import com.invision.pos.domain.inventory.InventorySummaryCalculator
 import com.invision.pos.domain.inventory.StockFilter
 import com.invision.pos.domain.model.StoreSettings
