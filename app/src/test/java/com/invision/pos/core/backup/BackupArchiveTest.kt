@@ -148,6 +148,6 @@ class BackupArchiveTest {
         )
         BackupArchive.read(ByteArrayInputStream(bytes), work)
         assertEquals(listOf("invision.db"), work.list()!!.toList())
-        assertTrue(!java.io.File(work.parentFile.parentFile, "evil.txt").exists())
+        assertTrue(!java.io.File(work.parentFile!!.parentFile, "evil.txt").exists())
     }
 }
