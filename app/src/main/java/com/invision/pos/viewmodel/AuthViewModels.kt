@@ -82,6 +82,7 @@ class AdminSetupViewModel(private val auth: AuthRepository) : ViewModel() {
 
 sealed interface LoginMessage {
     data object Rejected : LoginMessage
+    data object Deactivated : LoginMessage
     data class LockedOut(val seconds: Int) : LoginMessage
     data object Unavailable : LoginMessage
 }
@@ -124,6 +125,7 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
                     // The app moves on by itself once signed in.
                     SignInResult.Success -> state.copy(isSigningIn = false, password = "")
                     SignInResult.Rejected -> state.copy(isSigningIn = false, password = "", message = LoginMessage.Rejected)
+                    SignInResult.Deactivated -> state.copy(isSigningIn = false, password = "", message = LoginMessage.Deactivated)
                     is SignInResult.LockedOut -> state.copy(isSigningIn = false, password = "", message = LoginMessage.LockedOut(result.seconds))
                     SignInResult.Unavailable -> state.copy(isSigningIn = false, message = LoginMessage.Unavailable)
                 }

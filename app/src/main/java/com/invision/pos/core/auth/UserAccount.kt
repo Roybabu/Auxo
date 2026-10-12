@@ -6,17 +6,32 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 /**
- * The one administrator. Only a salted hash of the password is kept, never the password itself.
- * [identifier] is the normalised (lower-case) username or email address.
+ * A local sign-in account. Only a salted hash of the password is kept, never the password itself.
+ * [identifier] is the normalised (lower-case) username or email address. [id] is never reused: accounts are
+ * deactivated, not deleted, so records that name an account keep pointing at the same person.
  */
-class AdminAccount(
+class UserAccount(
+    val id: Long,
     val name: String,
     val identifier: String,
+    val role: Role,
+    val active: Boolean,
     val salt: ByteArray,
     val hash: ByteArray,
     val iterations: Int,
     val createdAtMillis: Long,
-)
+) {
+    fun copy(
+        active: Boolean = this.active,
+        salt: ByteArray = this.salt,
+        hash: ByteArray = this.hash,
+        iterations: Int = this.iterations,
+    ) = UserAccount(id, name, identifier, role, active, salt, hash, iterations, createdAtMillis)
+
+    fun toManaged() = ManagedUser(id, name, identifier, role, active, createdAtMillis)
+
+    fun toSession() = SessionUser(id, name, role)
+}
 
 /** Salted PBKDF2-HMAC-SHA256, available on every supported Android version (API 26+). */
 class PasswordHasher(
@@ -38,7 +53,7 @@ class PasswordHasher(
     }
 
     /** Compares in constant time. */
-    fun matches(password: String, account: AdminAccount): Boolean =
+    fun matches(password: String, account: UserAccount): Boolean =
         MessageDigest.isEqual(hash(password, account.salt, account.iterations), account.hash)
 
     companion object {

@@ -43,6 +43,7 @@ internal fun SetupError.messageRes(): Int = when (this) {
     SetupError.NAME_TOO_LONG -> R.string.auth_error_name_too_long
     SetupError.IDENTIFIER_REQUIRED -> R.string.auth_error_identifier_required
     SetupError.IDENTIFIER_INVALID -> R.string.auth_error_identifier_invalid
+    SetupError.IDENTIFIER_TAKEN -> R.string.auth_error_identifier_taken
     SetupError.PASSWORD_REQUIRED -> R.string.auth_error_password_required
     SetupError.PASSWORD_TOO_SHORT -> R.string.auth_error_password_short
     SetupError.PASSWORD_TOO_LONG -> R.string.auth_error_password_long

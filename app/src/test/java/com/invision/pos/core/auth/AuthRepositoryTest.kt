@@ -44,9 +44,9 @@ class AuthRepositoryTest {
     }
 
     /** A new repository over the same folder is what the next app launch sees. */
-    private fun launch() = LocalAuthRepository(FileAdminAccountStore(dir), hasher, clock, Dispatchers.Default)
+    private fun launch() = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default)
 
-    private val accountFile get() = File(dir, "admin_account.json")
+    private val accountFile get() = File(dir, "accounts.json")
 
     private suspend fun LocalAuthRepository.setUp(
         name: String = "Roy Babu",
@@ -65,7 +65,7 @@ class AuthRepositoryTest {
 
     @Test
     fun aLeftoverTemporaryFile_isNotAnAccount() {
-        File(dir, "admin_account.json.tmp").writeText("{half written")
+        File(dir, "accounts.json.tmp").writeText("{half written")
         assertEquals(AuthState.NeedsSetup, launch().state.value)
     }
 
@@ -93,18 +93,18 @@ class AuthRepositoryTest {
     @Test
     fun twoAccountsWithTheSamePassword_getDifferentSaltsAndHashes() = runBlocking {
         launch().setUp()
-        val first = FileAdminAccountStore(dir).read() as StoredAdmin.Present
+        val first = FileAccountStore(dir).read() as StoredAccounts.Present
         val otherDir = File(context.cacheDir, "auth-${UUID.randomUUID()}").apply { mkdirs() }
-        LocalAuthRepository(FileAdminAccountStore(otherDir), hasher, clock).setUp()
-        val second = FileAdminAccountStore(otherDir).read() as StoredAdmin.Present
-        assertFalse(first.account.salt.contentEquals(second.account.salt))
-        assertFalse(first.account.hash.contentEquals(second.account.hash))
+        LocalAuthRepository(FileAccountStore(otherDir), hasher, clock).setUp()
+        val second = FileAccountStore(otherDir).read() as StoredAccounts.Present
+        assertFalse(first.accounts.single().salt.contentEquals(second.accounts.single().salt))
+        assertFalse(first.accounts.single().hash.contentEquals(second.accounts.single().hash))
     }
 
     @Test
     fun setupLeavesNoTemporaryFileBehind() = runBlocking {
         launch().setUp()
-        assertFalse(File(dir, "admin_account.json.tmp").exists())
+        assertFalse(File(dir, "accounts.json.tmp").exists())
     }
 
     @Test
@@ -177,7 +177,7 @@ class AuthRepositoryTest {
         }.awaitAll()
         assertEquals(1, results.count { it == SetupResult.Created })
         assertEquals(11, results.count { it == SetupResult.AlreadyInitialized })
-        val saved = (FileAdminAccountStore(dir).read() as StoredAdmin.Present).account
+        val saved = (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.single()
         // Whoever won, the account is that one attempt's and still works.
         val index = saved.identifier.removePrefix("admin").toInt()
         assertEquals(SignInResult.Success, launch().signIn("admin$index", "Strong-Pass-$index"))
@@ -264,7 +264,7 @@ class AuthRepositoryTest {
         assertFalse(a.contentEquals(hasher.hash("Green-Leaf-42", hasher.newSalt())))
         assertEquals(32, a.size)
         assertNotEquals(salt.toList(), hasher.newSalt().toList())
-        val account = AdminAccount("N", "n.n", salt, a, 1_000, 0L)
+        val account = UserAccount(1L, "N", "n.n", Role.SUPER_ADMIN, true, salt, a, 1_000, 0L)
         assertTrue(hasher.matches("Green-Leaf-42", account))
         assertFalse(hasher.matches("green-leaf-42", account))
     }

@@ -4,7 +4,7 @@ import com.invision.pos.domain.billing.BusinessTime
 import android.content.Context
 import com.invision.pos.core.appearance.AppearanceRepository
 import com.invision.pos.core.auth.AuthRepository
-import com.invision.pos.core.auth.FileAdminAccountStore
+import com.invision.pos.core.auth.FileAccountStore
 import com.invision.pos.core.auth.LocalAuthRepository
 import com.invision.pos.core.shop.FileStoreLogoRepository
 import com.invision.pos.core.shop.ShopPreferences
@@ -75,7 +75,7 @@ class AppContainer(context: Context) {
 
     val storeLogoRepository: StoreLogoRepository by lazy { FileStoreLogoRepository(appContext) }
 
-    val authRepository: AuthRepository by lazy { LocalAuthRepository(FileAdminAccountStore(appContext.filesDir), clock = clock) }
+    val authRepository: AuthRepository by lazy { LocalAuthRepository(FileAccountStore(appContext.filesDir), clock = clock) }
 
     val backupService: BackupService by lazy {
         BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, shopPreferences)

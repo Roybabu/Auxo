@@ -3,16 +3,16 @@ package com.invision.pos.viewmodel
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.invision.pos.core.auth.AdminAccountStore
+import com.invision.pos.core.auth.AccountStore
 import com.invision.pos.core.auth.AuthRepository
 import com.invision.pos.core.auth.AuthState
-import com.invision.pos.core.auth.FileAdminAccountStore
+import com.invision.pos.core.auth.FileAccountStore
 import com.invision.pos.core.auth.LocalAuthRepository
 import com.invision.pos.core.auth.PasswordHasher
 import com.invision.pos.core.auth.SetupError
 import com.invision.pos.core.auth.SetupField
 import com.invision.pos.core.auth.SetupResult
-import com.invision.pos.core.auth.StoredAdmin
+import com.invision.pos.core.auth.StoredAccounts
 import com.invision.pos.testutil.MainDispatcherRule
 import java.io.File
 import java.util.UUID
@@ -44,13 +44,13 @@ class AuthViewModelsTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private lateinit var dir: File
-    private lateinit var store: AdminAccountStore
+    private lateinit var store: AccountStore
     private lateinit var auth: CountingAuth
 
     @Before
     fun freshDevice() {
         dir = File(context.cacheDir, "auth-vm-${UUID.randomUUID()}").apply { mkdirs() }
-        store = FileAdminAccountStore(dir)
+        store = FileAccountStore(dir)
         auth = CountingAuth(LocalAuthRepository(store, PasswordHasher(iterations = 1_000)))
     }
 
@@ -86,7 +86,7 @@ class AuthViewModelsTest {
         assertTrue(state.submitted)
         assertEquals(setOf(SetupField.NAME, SetupField.IDENTIFIER, SetupField.PASSWORD, SetupField.CONFIRM), state.errors.keys)
         assertEquals(0, auth.setups)
-        assertEquals(StoredAdmin.Missing, store.read())
+        assertEquals(StoredAccounts.Missing, store.read())
     }
 
     @Test
@@ -96,7 +96,7 @@ class AuthViewModelsTest {
         viewModel.submit()
         assertEquals(SetupError.CONFIRM_MISMATCH, viewModel.uiState.value.errors[SetupField.CONFIRM])
         assertEquals(0, auth.setups)
-        assertEquals(StoredAdmin.Missing, store.read())
+        assertEquals(StoredAccounts.Missing, store.read())
     }
 
     @Test
@@ -116,7 +116,7 @@ class AuthViewModelsTest {
         viewModel.submit()
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
         assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
-        assertTrue(store.read() is StoredAdmin.Present)
+        assertTrue(store.read() is StoredAccounts.Present)
         assertEquals("", viewModel.uiState.value.password)
         assertEquals("", viewModel.uiState.value.confirm)
     }
@@ -130,7 +130,7 @@ class AuthViewModelsTest {
         viewModel.submit()
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
         assertEquals(1, auth.setups)
-        assertTrue(store.read() is StoredAdmin.Present)
+        assertTrue(store.read() is StoredAccounts.Present)
     }
 
     @Test
@@ -143,7 +143,7 @@ class AuthViewModelsTest {
         waitUntil { first.uiState.first { !it.isSubmitting } }
         second.submit()
         waitUntil { second.uiState.first { !it.isSubmitting } }
-        val saved = (store.read() as StoredAdmin.Present).account
+        val saved = (store.read() as StoredAccounts.Present).accounts.single()
         assertEquals("roy.babu", saved.identifier)
     }
 
@@ -156,7 +156,7 @@ class AuthViewModelsTest {
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
     }
 
-    private fun restart() = CountingAuth(LocalAuthRepository(FileAdminAccountStore(dir), PasswordHasher(iterations = 1_000)))
+    private fun restart() = CountingAuth(LocalAuthRepository(FileAccountStore(dir), PasswordHasher(iterations = 1_000)))
 
     @Test
     fun afterARestart_loginAcceptsTheAdministrator() {

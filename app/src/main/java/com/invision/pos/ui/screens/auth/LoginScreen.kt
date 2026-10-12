@@ -76,6 +76,7 @@ fun LoginContent(
                 Text(
                     text = when (message) {
                         LoginMessage.Rejected -> stringResource(R.string.auth_login_rejected)
+                        LoginMessage.Deactivated -> stringResource(R.string.auth_login_deactivated)
                         is LoginMessage.LockedOut -> pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds)
                         LoginMessage.Unavailable -> stringResource(R.string.auth_login_unavailable)
                     },

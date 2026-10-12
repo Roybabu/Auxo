@@ -993,6 +993,7 @@ in %2$s</string>
     <string name="auth_error_name_too_long">Use 60 characters or fewer.</string>
     <string name="auth_error_identifier_required">Enter a username or email address.</string>
     <string name="auth_error_identifier_invalid">Use 3 to 32 letters, numbers, dots, dashes or underscores, or a valid email address.</string>
+    <string name="auth_error_identifier_taken">That username is already used by another account.</string>
     <string name="auth_error_password_required">Enter a password.</string>
     <string name="auth_error_password_short">Use at least 8 characters.</string>
     <string name="auth_error_password_long">Use 128 characters or fewer.</string>
@@ -1009,6 +1010,7 @@ in %2$s</string>
     <string name="auth_error_login_password_required">Enter your password.</string>
     <string name="auth_login_rejected">Incorrect username or password.</string>
     <string name="auth_login_unavailable">Sign-in is not available right now. Close the app and open it again.</string>
+    <string name="auth_login_deactivated">This account has been turned off. Ask the Super Admin to turn it back on.</string>
     <plurals name="auth_login_locked">
         <item quantity="one">Too many attempts. Try again in %d second.</item>
         <item quantity="other">Too many attempts. Try again in %d seconds.</item>
