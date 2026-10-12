@@ -319,6 +319,7 @@ fun InvisionNavHost(
                         override fun onOpenAppearance() = navController.navigate(MoreRoutes.APPEARANCE)
                         override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
                         override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
+                        override fun onOpenPrinter() = navController.navigate(MoreRoutes.PRINTER)
                         override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenRecoveryCode() = navController.navigate(MoreRoutes.RECOVERY_CODE)
                         override fun onOpenQuickUnlock() = navController.navigate(MoreRoutes.QUICK_UNLOCK)
@@ -384,6 +385,9 @@ fun InvisionNavHost(
                     onBack = { navController.popBackStack() },
                     onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
                 )
+            }
+            guarded(navController, MoreRoutes.PRINTER) {
+                com.invision.pos.ui.screens.more.PrinterSettingsScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController, MoreRoutes.STORE_DETAILS) {
                 StoreDetailsScreen(onBack = { navController.popBackStack() })

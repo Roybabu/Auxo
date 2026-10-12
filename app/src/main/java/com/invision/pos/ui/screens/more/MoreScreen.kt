@@ -49,6 +49,7 @@ interface MoreActions {
     fun onOpenAppearance() = Unit
     fun onOpenBackup() = Unit
     fun onOpenShopSettings() = Unit
+    fun onOpenPrinter() = Unit
     fun onOpenUsers() = Unit
     fun onOpenRecoveryCode() = Unit
     fun onOpenQuickUnlock() = Unit
@@ -97,6 +98,15 @@ fun MoreScreen(
                     stringResource(R.string.shop_settings_title),
                     actions::onOpenShopSettings,
                     modifier = Modifier.testTag("more_shop_settings"),
+                )
+            }
+            if (can(Permission.MANAGE_SETTINGS)) {
+                MoreItem(
+                    R.drawable.ic_print,
+                    stringResource(R.string.printer_title),
+                    stringResource(R.string.more_printer_body),
+                    actions::onOpenPrinter,
+                    modifier = Modifier.testTag("more_printer"),
                 )
             }
             if (can(Permission.GST_REPORT)) {

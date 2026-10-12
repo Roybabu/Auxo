@@ -74,7 +74,7 @@ class MainActivity : FragmentActivity() {
             val expiryDays by remember { container.settingsRepository.observeSettings().map { it.expiryWarningDays } }
                 .collectAsStateWithLifecycle(com.invision.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
             InvisionTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.invision.pos.ui.LocalProductPhotos provides container.productPhotos) {
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.invision.pos.ui.LocalProductPhotos provides container.productPhotos, com.invision.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
                     val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
                     val lock by container.authRepository.lock.collectAsStateWithLifecycle()

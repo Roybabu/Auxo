@@ -1691,4 +1691,38 @@
     <string name="editor_photo_choose">गैलरी से चुनें</string>
     <string name="editor_photo_remove">फ़ोटो हटाएँ</string>
     <string name="editor_photo_failed">यह तस्वीर इस्तेमाल नहीं हो सकी। दूसरी चुनें, या देखें कि कैमरा ऐप इंस्टॉल है।</string>
+
+    <!-- Bluetooth printer -->
+    <string name="printer_title">ब्लूटूथ प्रिंटर</string>
+    <string name="more_printer_body">रसीद प्रिंटर चुनें और टेस्ट करें</string>
+    <string name="printer_print_button">ब्लूटूथ प्रिंटर पर प्रिंट करें</string>
+    <string name="printer_none">अभी कोई प्रिंटर नहीं चुना गया है। फ़ोन की ब्लूटूथ सेटिंग में प्रिंटर पेयर करें, फिर नीचे से चुनें।</string>
+    <string name="printer_current">प्रिंटर: %1$s</string>
+    <string name="printer_paper_heading">कागज़ का रोल</string>
+    <string name="printer_paper_hint">अपने प्रिंटर में लगे रोल की चौड़ाई चुनें। गलत चौड़ाई से रसीद कट जाती है या सिकुड़ जाती है।</string>
+    <string name="printer_cut">प्रिंट के बाद कागज़ काटें</string>
+    <string name="printer_cut_hint">केवल कटर वाले प्रिंटर के लिए।</string>
+    <string name="printer_test">टेस्ट प्रिंट</string>
+    <string name="printer_testing">प्रिंट हो रहा है…</string>
+    <string name="printer_test_sent">टेस्ट रसीद प्रिंटर को भेज दी गई।</string>
+    <string name="printer_forget">प्रिंटर हटाएँ</string>
+    <string name="printer_devices_heading">पेयर किए गए डिवाइस</string>
+    <string name="printer_devices_empty">कोई पेयर किया हुआ डिवाइस नहीं है। पहले ब्लूटूथ सेटिंग में प्रिंटर पेयर करें।</string>
+    <string name="printer_open_settings">ब्लूटूथ सेटिंग खोलें</string>
+    <string name="printer_allow">ब्लूटूथ की अनुमति दें</string>
+    <string name="printer_permission_body">ऐप आपके पेयर किए गए प्रिंटर देख सके, इसके लिए ब्लूटूथ की अनुमति दें।</string>
+    <string name="printer_choose">चुनें</string>
+    <string name="printer_chosen">चुना गया</string>
+    <string name="printer_test_title">टेस्ट प्रिंट</string>
+    <string name="printer_test_width">प्रति पंक्ति %1$d अक्षर</string>
+    <string name="printer_test_body">अगर यह पढ़ा जा रहा है और किनारों से कुछ कटा नहीं है, तो आपका प्रिंटर तैयार है।</string>
+    <string name="printer_result_printed">प्रिंटर को भेज दिया गया।</string>
+    <string name="printer_result_no_printer">कोई प्रिंटर नहीं चुना गया। और में, ब्लूटूथ प्रिंटर से चुनें।</string>
+    <string name="printer_result_unavailable">इस फ़ोन में ब्लूटूथ नहीं है।</string>
+    <string name="printer_result_off">ब्लूटूथ बंद है। उसे चालू करके फिर कोशिश करें।</string>
+    <string name="printer_result_permission">प्रिंट करने के लिए इस ऐप को ब्लूटूथ की अनुमति दें।</string>
+    <string name="printer_result_not_paired">प्रिंटर अब इस फ़ोन से पेयर नहीं है। ब्लूटूथ सेटिंग में उसे दोबारा पेयर करें।</string>
+    <string name="printer_result_unreachable">प्रिंटर से जुड़ नहीं सके। देखें कि वह चालू है, फ़ोन के पास है और किसी दूसरे फ़ोन से जुड़ा नहीं है।</string>
+    <string name="printer_result_write_failed">प्रिंट करते समय प्रिंटर से कनेक्शन टूट गया। कागज़ देखें और फिर कोशिश करें।</string>
+    <string name="printer_result_unsupported">इस कागज़ के आकार पर रसीद प्रिंटर से प्रिंट नहीं हो सकता। प्रिंटर सेटिंग में रोल चुनें।</string>
 </resources>

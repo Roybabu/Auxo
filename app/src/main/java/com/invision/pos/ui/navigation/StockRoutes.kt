@@ -73,6 +73,7 @@ object MoreRoutes {
     const val REPORTS = "$PREFIX/reports"
     const val BACKUP = "$PREFIX/backup"
     const val SHOP_SETTINGS = "$PREFIX/shop-settings"
+    const val PRINTER = "$PREFIX/printer"
     const val STORE_DETAILS = "$PREFIX/store-details"
     const val APPEARANCE = "$PREFIX/appearance"
     const val USER_MANAGEMENT = "$PREFIX/users"

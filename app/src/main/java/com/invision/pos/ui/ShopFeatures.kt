@@ -17,3 +17,6 @@ val LocalExpiryWarningDays = staticCompositionLocalOf { com.invision.pos.domain.
 
 /** Where product photos are loaded from. Null in previews and tests, where products show their category icon. */
 val LocalProductPhotos = staticCompositionLocalOf<com.invision.pos.core.photos.ProductPhotoStore?> { null }
+
+/** Prints receipts on the shop's Bluetooth printer. Null in previews and tests, where the button is left out. */
+val LocalReceiptPrinting = staticCompositionLocalOf<com.invision.pos.core.printer.ReceiptPrinting?> { null }

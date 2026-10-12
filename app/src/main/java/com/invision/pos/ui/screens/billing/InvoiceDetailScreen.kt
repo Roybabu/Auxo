@@ -90,6 +90,7 @@ fun InvoiceDetailScreen(
     val ready = uiState as? InvoiceDetailUiState.Ready
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val formatter = LocalMoneyFormatter.current
+    val bluetoothPrint = rememberBluetoothPrint(snackbarHostState, logo)
 
     LaunchedEffect(notice, ready?.invoice?.number) {
         val message = notice ?: return@LaunchedEffect
@@ -144,6 +145,7 @@ fun InvoiceDetailScreen(
                         }
                     }
                 },
+                onBluetoothPrint = bluetoothPrint?.let { print -> { print(state.invoice, state.receiptOptions) } },
                 onWhatsApp = {
                     scope.launch {
                         val caption = resources.getString(
@@ -179,6 +181,8 @@ fun InvoiceDetailContent(
     modifier: Modifier = Modifier,
     zone: ZoneId = BusinessTime.ZONE,
     onWhatsApp: (() -> Unit)? = null,
+    /** Prints on the shop's Bluetooth printer; the button is left out when null (no printer chosen). */
+    onBluetoothPrint: (() -> Unit)? = null,
 ) {
     val invoice = state.invoice
     val logo = LocalStoreLogo.current
@@ -200,6 +204,12 @@ fun InvoiceDetailContent(
                     OutlinedButton(onClick = onShare, modifier = Modifier.weight(1f)) {
                         Icon(painterResource(R.drawable.ic_share), contentDescription = null, modifier = Modifier.size(18.dp))
                         Text(stringResource(R.string.invoice_share), modifier = Modifier.padding(start = Spacing.sm))
+                    }
+                }
+                if (onBluetoothPrint != null) {
+                    Button(onClick = onBluetoothPrint, modifier = Modifier.fillMaxWidth().testTag("invoice_bluetooth_print")) {
+                        Icon(painterResource(R.drawable.ic_print), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(R.string.printer_print_button), modifier = Modifier.padding(start = Spacing.sm))
                     }
                 }
                 if (onWhatsApp != null) {

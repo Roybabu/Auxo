@@ -160,6 +160,13 @@ class AppContainer(context: Context) {
     /** Product photo files in the app's private storage. */
     val productPhotos: com.invision.pos.core.photos.ProductPhotoStore by lazy { com.invision.pos.core.photos.FileProductPhotoStore(appContext) }
 
+    /** The shop's Bluetooth receipt printer: which one, how wide, and printing to it. */
+    val printerPreferences: com.invision.pos.core.printer.PrinterPreferences by lazy { com.invision.pos.core.printer.SharedPrefsPrinterPreferences(appContext) }
+    val bluetoothDevices: com.invision.pos.core.printer.BluetoothDevices by lazy { com.invision.pos.core.printer.AndroidBluetoothDevices(appContext) }
+    val receiptPrinting: com.invision.pos.core.printer.ReceiptPrinting by lazy {
+        com.invision.pos.core.printer.ThermalReceiptPrinter(appContext, printerPreferences, com.invision.pos.core.printer.AndroidPrinterTransport(appContext))
+    }
+
     val storeLogoRepository: StoreLogoRepository by lazy { AuthorizedStoreLogoRepository(FileStoreLogoRepository(appContext), authorizer) }
 
     val backupService: BackupService by lazy {

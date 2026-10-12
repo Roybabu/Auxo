@@ -1691,4 +1691,38 @@ in %2$s</string>
     <string name="editor_photo_choose">Choose from gallery</string>
     <string name="editor_photo_remove">Remove photo</string>
     <string name="editor_photo_failed">That picture could not be used. Try another, or check that a camera app is installed.</string>
+
+    <!-- Bluetooth printer -->
+    <string name="printer_title">Bluetooth printer</string>
+    <string name="more_printer_body">Choose a receipt printer and test it</string>
+    <string name="printer_print_button">Print on Bluetooth printer</string>
+    <string name="printer_none">No printer chosen yet. Pair your printer in the phone\'s Bluetooth settings, then choose it below.</string>
+    <string name="printer_current">Printer: %1$s</string>
+    <string name="printer_paper_heading">Paper roll</string>
+    <string name="printer_paper_hint">Choose the width of the roll in your printer. A wrong width cuts off or squeezes the receipt.</string>
+    <string name="printer_cut">Cut paper after printing</string>
+    <string name="printer_cut_hint">Only for printers that have a cutter.</string>
+    <string name="printer_test">Test print</string>
+    <string name="printer_testing">Printing…</string>
+    <string name="printer_test_sent">Test receipt sent to the printer.</string>
+    <string name="printer_forget">Forget printer</string>
+    <string name="printer_devices_heading">Paired devices</string>
+    <string name="printer_devices_empty">No paired devices. Pair your printer in Bluetooth settings first.</string>
+    <string name="printer_open_settings">Open Bluetooth settings</string>
+    <string name="printer_allow">Allow Bluetooth</string>
+    <string name="printer_permission_body">Allow Bluetooth so the app can see your paired printers.</string>
+    <string name="printer_choose">Choose</string>
+    <string name="printer_chosen">Chosen</string>
+    <string name="printer_test_title">Test print</string>
+    <string name="printer_test_width">%1$d characters per line</string>
+    <string name="printer_test_body">If you can read this and nothing is cut off at the sides, your printer is ready.</string>
+    <string name="printer_result_printed">Sent to the printer.</string>
+    <string name="printer_result_no_printer">No printer chosen. Choose one in More, Bluetooth printer.</string>
+    <string name="printer_result_unavailable">This phone has no Bluetooth.</string>
+    <string name="printer_result_off">Bluetooth is off. Turn it on and try again.</string>
+    <string name="printer_result_permission">Allow Bluetooth for this app to print.</string>
+    <string name="printer_result_not_paired">The printer is no longer paired with this phone. Pair it again in Bluetooth settings.</string>
+    <string name="printer_result_unreachable">Couldn\'t reach the printer. Check that it is switched on, close to the phone and not connected to another phone.</string>
+    <string name="printer_result_write_failed">The connection to the printer dropped while printing. Check the paper and try again.</string>
+    <string name="printer_result_unsupported">This paper size cannot be printed on a receipt printer. Choose a roll in the printer settings.</string>
 </resources>

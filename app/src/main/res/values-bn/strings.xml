@@ -1691,4 +1691,38 @@
     <string name="editor_photo_choose">গ্যালারি থেকে বেছে নিন</string>
     <string name="editor_photo_remove">ছবি সরান</string>
     <string name="editor_photo_failed">এই ছবিটি ব্যবহার করা গেল না। অন্য একটি বেছে নিন, অথবা দেখুন ক্যামেরা অ্যাপ ইনস্টল করা আছে কি না।</string>
+
+    <!-- Bluetooth printer -->
+    <string name="printer_title">ব্লুটুথ প্রিন্টার</string>
+    <string name="more_printer_body">রসিদ প্রিন্টার বেছে নিন ও টেস্ট করুন</string>
+    <string name="printer_print_button">ব্লুটুথ প্রিন্টারে প্রিন্ট করুন</string>
+    <string name="printer_none">এখনও কোনও প্রিন্টার বাছা হয়নি। ফোনের ব্লুটুথ সেটিংসে প্রিন্টার পেয়ার করুন, তারপর নিচ থেকে বেছে নিন।</string>
+    <string name="printer_current">প্রিন্টার: %1$s</string>
+    <string name="printer_paper_heading">কাগজের রোল</string>
+    <string name="printer_paper_hint">আপনার প্রিন্টারের রোলের চওড়া বেছে নিন। ভুল চওড়া হলে রসিদ কেটে যায় বা চেপে যায়।</string>
+    <string name="printer_cut">প্রিন্টের পরে কাগজ কাটুন</string>
+    <string name="printer_cut_hint">শুধু কাটার আছে এমন প্রিন্টারের জন্য।</string>
+    <string name="printer_test">টেস্ট প্রিন্ট</string>
+    <string name="printer_testing">প্রিন্ট হচ্ছে…</string>
+    <string name="printer_test_sent">টেস্ট রসিদ প্রিন্টারে পাঠানো হয়েছে।</string>
+    <string name="printer_forget">প্রিন্টার সরান</string>
+    <string name="printer_devices_heading">পেয়ার করা ডিভাইস</string>
+    <string name="printer_devices_empty">কোনও পেয়ার করা ডিভাইস নেই। আগে ব্লুটুথ সেটিংসে প্রিন্টার পেয়ার করুন।</string>
+    <string name="printer_open_settings">ব্লুটুথ সেটিংস খুলুন</string>
+    <string name="printer_allow">ব্লুটুথের অনুমতি দিন</string>
+    <string name="printer_permission_body">অ্যাপ যাতে আপনার পেয়ার করা প্রিন্টার দেখতে পায়, তার জন্য ব্লুটুথের অনুমতি দিন।</string>
+    <string name="printer_choose">বেছে নিন</string>
+    <string name="printer_chosen">বাছা হয়েছে</string>
+    <string name="printer_test_title">টেস্ট প্রিন্ট</string>
+    <string name="printer_test_width">প্রতি লাইনে %1$d অক্ষর</string>
+    <string name="printer_test_body">এটি পড়তে পারলে এবং দুই পাশে কিছু কেটে না গেলে আপনার প্রিন্টার তৈরি।</string>
+    <string name="printer_result_printed">প্রিন্টারে পাঠানো হয়েছে।</string>
+    <string name="printer_result_no_printer">কোনও প্রিন্টার বাছা হয়নি। আরও, ব্লুটুথ প্রিন্টার থেকে বেছে নিন।</string>
+    <string name="printer_result_unavailable">এই ফোনে ব্লুটুথ নেই।</string>
+    <string name="printer_result_off">ব্লুটুথ বন্ধ আছে। চালু করে আবার চেষ্টা করুন।</string>
+    <string name="printer_result_permission">প্রিন্ট করতে এই অ্যাপকে ব্লুটুথের অনুমতি দিন।</string>
+    <string name="printer_result_not_paired">প্রিন্টারটি আর এই ফোনের সঙ্গে পেয়ার করা নেই। ব্লুটুথ সেটিংসে আবার পেয়ার করুন।</string>
+    <string name="printer_result_unreachable">প্রিন্টারের সঙ্গে যুক্ত হওয়া গেল না। দেখুন সেটি চালু আছে, ফোনের কাছে আছে এবং অন্য ফোনের সঙ্গে যুক্ত নেই।</string>
+    <string name="printer_result_write_failed">প্রিন্ট চলার সময় প্রিন্টারের সংযোগ কেটে গেছে। কাগজ দেখে আবার চেষ্টা করুন।</string>
+    <string name="printer_result_unsupported">এই কাগজের মাপে রসিদ প্রিন্টারে প্রিন্ট হয় না। প্রিন্টার সেটিংসে রোল বেছে নিন।</string>
 </resources>

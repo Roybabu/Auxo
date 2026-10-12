@@ -94,6 +94,7 @@ class RoleAccessFlowTest {
         "reports" to MoreRoutes.REPORTS,
         "backup" to MoreRoutes.BACKUP,
         "shop settings" to MoreRoutes.SHOP_SETTINGS,
+        "bluetooth printer" to MoreRoutes.PRINTER,
         "store details" to MoreRoutes.STORE_DETAILS,
         "user management" to MoreRoutes.USER_MANAGEMENT,
         "activity log" to MoreRoutes.ACTIVITY_LOG,
