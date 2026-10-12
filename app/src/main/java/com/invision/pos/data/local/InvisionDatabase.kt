@@ -58,6 +58,8 @@ import com.invision.pos.data.local.entity.SupplierEntity
  * 9. Discount reasons (invoices.discount_reason, invoice_lines.discount_reason) and the employee discount
  *    limit (store_settings.employee_discount_limit_bp, 0 = none). Written by hand ([MIGRATION_8_9]).
  * 10. Held (parked) bills: the held_bills table. Written by hand ([MIGRATION_9_10]).
+ * 11. Open restaurant orders: service type, table and kitchen-ticket columns on held_bills, and service type
+ *     and table on invoices. Written by hand ([MIGRATION_10_11]).
  */
 @Database(
     entities = [
@@ -134,7 +136,7 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 10
+        const val VERSION = 11
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -188,10 +190,22 @@ abstract class InvisionDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 11: open restaurant orders. Existing parked bills are plain bills (no service type, no tickets). */
+        val MIGRATION_10_11: Migration = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN service_type TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN table_number TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN kot_sent TEXT")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN kot_count INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN service_type TEXT")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN table_number TEXT")
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
             Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
 
         fun create(context: Context): InvisionDatabase = builder(context).build()
     }

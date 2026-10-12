@@ -83,6 +83,8 @@ object SaleBuilder {
             loyaltyPointsRedeemed = cart.loyalty?.points ?: 0,
             discountReason = if (cart.billDiscount != null) DiscountPolicy.cleanReason(cart.billDiscountReason) else null,
             loyaltyDiscount = totals.loyaltyDiscount,
+            serviceType = cart.serviceType,
+            tableNumber = if (cart.serviceType == ServiceType.DINE_IN) KitchenOrders.normalizeTable(cart.tableNumber).ifEmpty { null } else null,
         )
     }
 }

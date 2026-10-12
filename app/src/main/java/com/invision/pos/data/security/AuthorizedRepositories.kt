@@ -502,4 +502,14 @@ class AuthorizedHeldBillRepository(
         auth.require(Permission.SELL)
         inner.discard(id)
     }
+
+    override suspend fun placeOrder(
+        cart: com.invision.pos.domain.billing.Cart,
+        total: Money,
+        label: String,
+        replacingId: Long?,
+    ): com.invision.pos.domain.billing.PlaceOrderResult {
+        auth.require(Permission.SELL)
+        return inner.placeOrder(cart, total, label, replacingId)
+    }
 }

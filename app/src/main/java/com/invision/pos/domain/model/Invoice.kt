@@ -135,6 +135,10 @@ data class Invoice(
     val loyaltyPointsRedeemed: Int = 0,
     /** Why the bill as a whole was discounted; null when it was not. Per-line reasons are on the lines. */
     val discountReason: String? = null,
+    /** Dine-in or takeaway, for restaurant bills. */
+    val serviceType: com.invision.pos.domain.billing.ServiceType? = null,
+    /** The table a dine-in bill was for. */
+    val tableNumber: String? = null,
     /**
      * The part of [discountTotal] that is loyalty points. Not stored: the sale is checked against the
      * employee discount limit with it left out, because points are not a discount given at the counter.

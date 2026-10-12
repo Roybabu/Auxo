@@ -312,7 +312,7 @@ class DatabaseMigrationTest {
      * runs through it.)
      */
     @Test
-    fun migrate4To10_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_andHeldBillsWork() = runTest {
+    fun migrate4To11_keepsBalances_startsWithNoPoints_loyaltyOff_billsInEnglish_upiQrOn_noEmployeeDiscounts_heldBillsAndOpenOrdersWork() = runTest {
         createFromSchema(4).also {
             it.execSQL(
                 "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
@@ -389,5 +389,22 @@ class DatabaseMigrationTest {
         assertEquals("Asha", held.observeHeld().first().single().label)
         assertEquals("Alteration", held.get(id)!!.cart.lines.single().productName)
         assertEquals(Money(30_000), customers.observeAccount(1).first()!!.balance)
+
+        // Open restaurant orders: a parked bill becomes an open table, and bills record the table.
+        val order = held.placeOrder(
+            cart.copy(serviceType = com.invision.pos.domain.billing.ServiceType.DINE_IN, tableNumber = "t2"),
+            Money(100_00),
+            "",
+        ) as com.invision.pos.domain.billing.PlaceOrderResult.Placed
+        assertEquals("KOT-001", order.kotNumber)
+        assertEquals("T2", held.observeHeld().first().first { it.id == order.orderId }.tableNumber)
+        // The bill parked before is still just a parked bill.
+        assertNull(held.observeHeld().first().first { it.id == id }.serviceType)
+        for (table in listOf("held_bills", "invoices")) {
+            val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
+                generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+            }
+            assertTrue("$table has table_number and service_type", "table_number" in columns && "service_type" in columns)
+        }
     }
 }

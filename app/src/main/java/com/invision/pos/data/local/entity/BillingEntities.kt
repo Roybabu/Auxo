@@ -52,6 +52,9 @@ data class InvoiceEntity(
     @ColumnInfo(name = "customer_id") val customerId: Long? = null,
     /** Why the bill was discounted. Added in version 9. */
     @ColumnInfo(name = "discount_reason") val discountReason: String? = null,
+    /** DINE_IN or TAKEAWAY for restaurant bills. Added in version 11. */
+    @ColumnInfo(name = "service_type") val serviceType: String? = null,
+    @ColumnInfo(name = "table_number") val tableNumber: String? = null,
 )
 
 @Entity(

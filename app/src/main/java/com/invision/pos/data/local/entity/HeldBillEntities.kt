@@ -17,4 +17,12 @@ data class HeldBillEntity(
     @ColumnInfo(name = "item_count") val itemCount: Int,
     @ColumnInfo(name = "total_minor") val totalMinor: Long,
     val payload: String,
+    /** DINE_IN or TAKEAWAY when the bill is an open restaurant order. Added in version 11. */
+    @ColumnInfo(name = "service_type") val serviceType: String? = null,
+    /** The table of an open dine-in order, normalised (upper case). */
+    @ColumnInfo(name = "table_number") val tableNumber: String? = null,
+    /** What the kitchen has been told so far, as text (see KitchenOrderCodec). */
+    @ColumnInfo(name = "kot_sent") val kotSent: String? = null,
+    /** How many kitchen tickets this order has had. */
+    @ColumnInfo(name = "kot_count") val kotCount: Int = 0,
 )

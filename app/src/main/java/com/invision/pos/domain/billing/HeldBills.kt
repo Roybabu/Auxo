@@ -12,7 +12,14 @@ data class HeldBillSummary(
     val itemCount: Int,
     /** The total when it was parked. Prices and stock are checked again when it is resumed. */
     val total: Money,
-)
+    /** Set when this is an open restaurant order rather than a plain parked bill. */
+    val serviceType: ServiceType? = null,
+    val tableNumber: String? = null,
+    /** How many kitchen tickets it has had; 0 for a bill that was only parked. */
+    val kotCount: Int = 0,
+) {
+    val isOpenOrder: Boolean get() = serviceType != null
+}
 
 /** A parked bill with everything needed to put it back on the counter. */
 data class HeldBill(val summary: HeldBillSummary, val cart: Cart)

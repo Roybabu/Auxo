@@ -31,6 +31,10 @@ import com.invision.pos.domain.billing.CreditAccount
 import com.invision.pos.domain.billing.CustomerDetails
 import com.invision.pos.domain.billing.Discount
 import com.invision.pos.domain.billing.HeldBillSummary
+import com.invision.pos.domain.billing.KitchenOrders
+import com.invision.pos.domain.billing.KitchenTicket
+import com.invision.pos.domain.billing.PlaceOrderResult
+import com.invision.pos.domain.billing.ServiceType
 import com.invision.pos.data.repository.HeldBillRepository
 import com.invision.pos.domain.billing.DiscountPolicy
 import com.invision.pos.domain.billing.DiscountParse
@@ -133,6 +137,11 @@ data class BillingUiState(
     val canHold: Boolean = false,
     /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
     val resumedHeldId: Long? = null,
+    /** True when the restaurant menu is on: dine-in or takeaway, a table and kitchen tickets are offered. */
+    val restaurantMode: Boolean = false,
+    /** Set after "Place order" is pressed with the service or table missing, to show what is needed. */
+    val orderShowErrors: Boolean = false,
+    val isPlacingOrder: Boolean = false,
 ) {
     val needsSetup: Boolean
         get() = settings != null && (settings.needsGstinSetup || (settings.gstRegistered && settings.stateCode.isEmpty()))
@@ -189,6 +198,15 @@ sealed interface BillingEvent {
     data class CustomerSaved(val name: String) : BillingEvent
     data object BillHeld : BillingEvent
 
+    /** The order was sent to the kitchen; the ticket is ready to print or share. */
+    data class OrderPlaced(val ticket: KitchenTicket) : BillingEvent
+
+    /** Another open order already has this table. */
+    data class TableInUse(val table: String) : BillingEvent
+
+    /** Nothing new to send since the last ticket. */
+    data object NothingNewForKitchen : BillingEvent
+
     /** The parked bill was finished or discarded meanwhile, or cannot be read. */
     data object HeldBillUnavailable : BillingEvent
 }
@@ -209,7 +227,7 @@ class BillingViewModel(
     private val heldBills: HeldBillRepository? = null,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BillingUiState())
+    private val _uiState = MutableStateFlow(BillingUiState(restaurantMode = shop?.restaurantMenu?.value ?: false))
     val uiState: StateFlow<BillingUiState> = _uiState.asStateFlow()
 
     private val eventChannel = Channel<BillingEvent>(Channel.BUFFERED)
@@ -308,6 +326,7 @@ class BillingViewModel(
                     menuEnabled = enabled
                     recalculate { state ->
                         state.copy(
+                            restaurantMode = enabled,
                             menu = if (enabled) allMenu.filter { it.available } else emptyList(),
                             menuResults = searchMenu(state.searchText),
                         )
@@ -574,7 +593,60 @@ class BillingViewModel(
                 menuSection = it.menuSection,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
+                restaurantMode = it.restaurantMode,
             )
+        }
+    }
+
+    // Restaurant orders
+
+    fun onServiceTypeChange(type: ServiceType?) = recalculate {
+        it.copy(cart = it.cart.copy(serviceType = type, tableNumber = if (type == ServiceType.DINE_IN) it.cart.tableNumber else ""))
+    }
+
+    fun onTableNumberChange(text: String) = recalculate {
+        it.copy(cart = it.cart.copy(tableNumber = text.take(KitchenOrders.TABLE_MAX + 4)))
+    }
+
+    /**
+     * Sends the bill to the kitchen and keeps it open for its table (or as a takeaway), then clears the counter.
+     * Only the items the kitchen has not been told about go on the ticket. Stock changes only when the order is
+     * settled as a normal invoice.
+     */
+    fun placeOrder() {
+        val store = heldBills ?: return
+        val state = _uiState.value
+        if (state.cart.isEmpty || state.isSaving || state.isPlacingOrder) return
+        val service = state.cart.serviceType
+        if (service == null || (service == ServiceType.DINE_IN && KitchenOrders.normalizeTable(state.cart.tableNumber).isEmpty())) {
+            _uiState.update { it.copy(orderShowErrors = true) }
+            return
+        }
+        _uiState.update { it.copy(isPlacingOrder = true, orderShowErrors = false) }
+        viewModelScope.launch {
+            val result = runCatching { store.placeOrder(state.cart, state.totals.grandTotal, state.cart.customer.name, state.resumedHeldId) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            _uiState.update { it.copy(isPlacingOrder = false) }
+            when (result) {
+                is PlaceOrderResult.Placed -> {
+                    val ticket = KitchenTicket(
+                        shopName = state.settings?.storeName.orEmpty(),
+                        kotNumber = result.kotNumber,
+                        serviceType = service,
+                        table = KitchenOrders.normalizeTable(state.cart.tableNumber).ifEmpty { null },
+                        label = state.cart.customer.name.trim(),
+                        delta = result.delta,
+                        isAddOn = result.isAddOn,
+                        createdAtMillis = clock.millis(),
+                    )
+                    clearCart()
+                    eventChannel.send(BillingEvent.OrderPlaced(ticket))
+                }
+                is PlaceOrderResult.TableInUse -> eventChannel.send(BillingEvent.TableInUse(KitchenOrders.normalizeTable(state.cart.tableNumber)))
+                PlaceOrderResult.NothingNew -> eventChannel.send(BillingEvent.NothingNewForKitchen)
+                null -> eventChannel.send(BillingEvent.SaveFailed)
+            }
         }
     }
 
