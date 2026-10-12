@@ -3,7 +3,7 @@ An invoicing app built from scratch.
 
 Invision is an Android retail point-of-sale (POS) and invoicing app, built step by step.
 
-**Status: Step 4 — operations.** Inventory (Step 2) and billing (Step 3), plus suppliers, purchase orders and goods received, stock batches with expiry and wastage, stock movement history and alerts, customer accounts with sales on account and payments, a restaurant menu with optional recipe-based ingredient use, and filterable reports with CSV export.
+**Status: Step 4 — operations, plus the additions listed under "Added since Step 4" below (version 0.4.0).** Inventory (Step 2) and billing (Step 3), plus suppliers, purchase orders and goods received, stock batches with expiry and wastage, stock movement history and alerts, customer accounts with sales on account and payments, a restaurant menu with optional recipe-based ingredient use, and filterable reports with CSV export.
 
 ## Features
 
@@ -91,6 +91,15 @@ Invision is an Android retail point-of-sale (POS) and invoicing app, built step 
 - Set copies per variant, or "Match stock" to print one per unit in stock.
 - The preview uses the same drawing code as the printed PDF. Printing goes through Android's print system, so it works with any installed print service (Wi-Fi printers, PDF, label printer apps).
 
+### Added since Step 4
+These were built after the sections above were written. Most of them have unit and screen tests, but none has been run on a physical phone.
+- **Sign-in and roles:** a Super Admin and Employees, each with a password. The Super Admin chooses which extras an Employee gets (returns, day-end, figures, inventory, customers, purchasing, menu, settings, activity log); billing basics are always on. Wrong passwords and wrong recovery codes are counted and slow guessing down (30 seconds, doubling to 5 minutes after 5 tries); the counts are kept on the phone, so closing the app does not reset them. A recovery code lets the Super Admin reset a forgotten password. The app locks after an idle time the Super Admin sets, and can be unlocked with a PIN or the fingerprint. An activity log records changes, returns and deletions.
+- **Billing:** hold and resume bills, quotations, discounts with an Employee limit, loyalty points, a UPI payment QR on receipts, sharing an invoice on WhatsApp, and a restaurant mode that can be switched on or off.
+- **Stock:** expiry warnings with a number of days the shop chooses, reorder drafts per supplier, stock counts, product import from a CSV file, and a photo on each product (gallery or camera).
+- **Day-end and GST:** day-end closing with the cash counted, and a GST report.
+- **Backup:** backup and restore of the whole shop to a file, and automatic backups to a folder the person chooses. Only the Super Admin can use them.
+- **Bluetooth receipt printer:** pick a paired 58, 76 or 80 mm ESC/POS printer under More, print a test receipt, and print any invoice from its screen. This has never been tried on a real printer; see "Printing and barcode limits".
+
 ### Design
 - Material 3 theme with emerald accents on light surfaces, dark text, and rounded shapes.
 - Shared design tokens: spacing scale and status colours (success, warning, danger), plus reusable components such as stat tiles, status chips, cards, text fields and state views.
@@ -140,7 +149,7 @@ The debug APK is written to `app/build/outputs/apk/debug/`.
 - **Inventory logic:** money parsing, GS1 check digits, barcode rules and generation (including UPC-A sent as EAN-13), search and filters, dashboard totals and alerts, stock adjustment rules, product form validation (including GST rate and HSN), the garment size × colour matrix, labels.
 - **Step 4 domain (plain JVM):** batch allocation (earliest expiry first, returns back into the batches sold from), stock units and costs per kg or L, expired and sellable stock, reorder suggestions and draft orders per supplier, item search, purchase order and goods receipt validation (quantities, costs, over-receipts, duplicates, bill numbers, batch and expiry), purchase numbers and order text, ledger balances and running statements, account payment checks, customer and supplier validation, menu and recipe validation, every report builder, CSV escaping and formats, report periods and expiry windows.
 - **ViewModels** (with in-memory fakes): Home, Inventory, Product detail and editor, Labels, Billing (search, scanning, stock limits, discounts, customer checks, setup, cash/split/under-payment, stock sold elsewhere, place of supply, dishes, linking a saved customer, sales on account, saving a typed customer), Returns, History, Billing settings, Suppliers, Purchase orders, Receiving goods, Stock alerts and write-offs, Stock movements, Menu and dish editor, Reports, Customers, Customer account and payments.
-- **Database** (Robolectric, Room in memory): sales save everything and deduct stock; a short item saves nothing and doesn't use up an invoice number; numbering per prefix and financial year; returns restock, mark lines and record refunds, and over-returns change nothing; partial returns of a rounded bill refund exactly what was paid; deleting a product keeps its invoices; period totals and payments; settings; checkout and return use cases end to end. Migration tests build version 1 and version 2 databases from the committed schemas, fill them with earlier data, and open them with the current app (existing food stock becomes batches).
+- **Database** (Robolectric, Room in memory): sales save everything and deduct stock; a short item saves nothing and doesn't use up an invoice number; numbering per prefix and financial year; returns restock, mark lines and record refunds, and over-returns change nothing; partial returns of a rounded bill refund exactly what was paid; deleting a product keeps its invoices; period totals and payments; settings; checkout and return use cases end to end. Migration tests build version 1, 2 and 4 databases from the committed schemas, fill them with earlier data, and open them with the current app (existing food stock becomes batches; the 4 to 15 test runs every later hand-written migration and Room checks the result against the version 15 schema). Schema files for versions 6 to 14 are not committed and are not needed by any test or CI check.
 - **Stock and ledger correctness** (Robolectric, Room in memory): after every operation each item's stock equals the sum of its movements and, for batched items, the sum of its batches. Covered: sales across batches, expired stock refused, write-offs (more than a batch holds changes nothing; a repeated request writes off once), returns into the right batches, repeated stock changes, ingredient stock in grams; purchase order numbering and draft rules, partial and full receipts, over-receipts, duplicate supplier bills with and without an order, closed and cancelled orders, deleted items rolling back a receipt; opening balances, one customer per mobile number, sales on account and the credit limit, payments above the balance refused and repeated payments counted once, refunds to the account; dishes using their recipes, ingredient shortages and expired ingredients refusing the bill, dish returns, recipe edits and deletions.
 - **Data integrity** (Robolectric + plain JVM): a reconciliation helper checks the books after each scenario: stock against movements and batches, no negative stock, payments against invoice totals, invoice totals against lines, returned units against credit notes, refunds against sales, sales on account against the ledger, no repeated invoice numbers, no orphaned rows. Rollback tests show that a short line, a credit limit, an invoice that doesn't balance, a return for another sale's line, a return with one bad line and an over-received purchase line each leave nothing behind (no invoice, payment, stock movement, ledger entry, number or request id used). Repeated sale, return and receipt requests save once, also when sent at the same moment. Seeded random bills (1,000 sales in every tax mode with line and bill discounts, GST slabs, inter-state and split payments) add up to the paisa, and 500 sales returned unit by unit in any order refund exactly the bill.
 - **UI** (Robolectric + Compose): every Inventory and Billing screen and the Step 4 pages (customers, account payment, suppliers, purchase order editor and detail, receiving goods, stock alerts, write-off form, stock movements, menu, dish editor, reports and More) with sample data, receipts rendered for 58 mm, 76 mm, 80 mm, A5 and A4 (sale and credit note), a long A5 invoice spanning pages, and end-to-end flows through the real app and database. Screenshots are saved to `app/build/outputs/screenshots/`.
@@ -165,7 +174,7 @@ Known limits in billing and ledgers:
 
 Not covered by automated tests:
 - Camera scanning (needs Google Play services and a camera).
-- Output on a real printer: the print dialog is opened with the receipt, but nothing is printed.
+- Output on a real printer: the print dialog is opened with the receipt, but nothing is printed. The Bluetooth receipt printer is tested only against a fake connection (the sending logic, failures and the ESC/POS bytes), never on a real printer.
 - A physical phone: the device tests run on an emulator.
 - Opening exported CSV files in a spreadsheet app: the file contents are tested, and the share sheet path is the same one receipts use.
 
@@ -180,12 +189,22 @@ app/src/main/java/com/invision/pos/
 ├── InvisionApplication.kt     App entry point; owns the dependency container
 ├── MainActivity.kt            Single activity hosting Compose
 ├── core/
+│   ├── appearance/            Theme and accent settings
+│   ├── audit/                 Activity log of changes, returns and deletions
+│   ├── auth/                  Accounts, sign-in, roles and permissions, lockout, recovery code, PIN and fingerprint unlock
+│   ├── backup/                Backup and restore, automatic backup to a folder
 │   ├── barcode/               Barcode bar patterns (ZXing)
+│   ├── dayend/                Day-end closing
 │   ├── di/                    Manual dependency container (AppContainer)
 │   ├── export/                CSV files in the cache and the share sheet
 │   ├── format/                Money formatting
+│   ├── imports/               CSV product import
+│   ├── locale/                App and bill language
 │   ├── label/                 Label templates, sheet layout, drawing and printing
-│   └── receipt/               Receipt layouts (58/76/80 mm, A5/A4), PDF, print and share
+│   ├── photos/                Product photos
+│   ├── printer/               Bluetooth receipt printer (ESC/POS, pairing list, sending)
+│   ├── receipt/               Receipt layouts (58/76/80 mm, A5/A4), PDF, print and share, raster for thermal printers
+│   └── shop/                  Shop-wide switches (restaurant menu, suppliers) and the store logo
 ├── data/
 │   ├── local/                 Room database, entities, DAOs, mappers, StockWriter (the one place stock changes)
 │   ├── remote/                Empty placeholder; the app makes no network calls
@@ -224,15 +243,15 @@ Android 8.0 (API 26) and newer, phones and tablets (the navigation switches betw
 
 ## Data and privacy
 
-- **Persistence:** all data stays on the device in a Room (SQLite) database, `invision.db`, schema version 3. There is no server, account or sync; the app's own code makes no network calls and its manifest requests no permissions. Libraries (the Google code scanner) may add their own, such as network access; the merged list is checked in CI but its exact contents were not read from a log.
+- **Persistence:** all data stays on the device in a Room (SQLite) database, `invision.db`, schema version 15. There is no server or sync, and the app's own code makes no network calls. Sign-in accounts are local, in a file in the app's private storage (passwords are stored only as salted hashes). The manifest asks for Bluetooth permission (`BLUETOOTH` up to Android 11, `BLUETOOTH_CONNECT` from Android 12) for the receipt printer. Libraries (the Google code scanner) may add their own, such as network access; the merged list is checked in CI but its exact contents were not read from a log.
 - **Not encrypted:** the database sits in the app's private storage, which other apps cannot read on an unmodified device, but it is not encrypted. Anyone with a rooted device or a full-disk image can read it.
-- **No backup:** Android backup and device-to-device transfer are turned off for app data. Uninstalling the app, clearing its data or losing the phone loses the store's data. There is no in-app backup or restore yet, so export reports to CSV regularly.
+- **Backup:** Android's own backup and device-to-device transfer are turned off for app data. The app has its own backup and restore (More, Backup) and can back up automatically to a chosen folder. Backup files are not encrypted. Uninstalling the app, clearing its data or losing the phone loses everything that has not been backed up to somewhere else.
 - **Temporary files:** receipt PDFs and CSV exports are written to the app's cache only when sharing, are shared through a `FileProvider` with a read grant for the chosen app, and are cleared after a day.
 - **Logging:** the app writes nothing to the system log.
 
 ## Printing and barcode limits
 
-- Receipts and labels are opened in Android's print dialog as PDFs. Nothing is sent to a printer directly, there is no ESC/POS or Bluetooth thermal printer support, and output on a real printer has not been checked.
+- Receipts and labels can be opened in Android's print dialog as PDFs. Receipts can also be sent straight to a paired Bluetooth thermal printer (classic Bluetooth serial, ESC/POS, printed as a picture so Hindi and Bengali text works). Bluetooth LE-only printers are not supported. The chunk size and pauses used when sending are untested guesses, and a printer that needs a different connection method may not work. Output on a real printer has not been checked. Labels still use Android printing only.
 - Camera scanning uses Google's code scanner and needs Google Play services. Without it, type the code or use a hardware scanner that types as a keyboard. Camera scanning has not been tested automatically.
 - Generated barcodes follow the GS1 check-digit rules; scan quality of printed labels depends on the printer and paper and has not been tested.
 
@@ -245,6 +264,10 @@ Android 8.0 (API 26) and newer, phones and tablets (the navigation switches betw
 - Database layer code is not in the coverage figures, because Robolectric loads it in a way JaCoCo cannot see.
 - No code formatter or Kotlin static analyser (ktlint, detekt) is set up; only Android lint runs.
 - The release build is not minified or signed, and has only been checked to compile in CI.
+- The Bluetooth printer has never been tried on a real printer, and the permission prompt and file pickers have not been checked on a physical phone.
+- The Hindi and Bengali texts have not been reviewed by a native speaker.
+- The database and backup files are not encrypted.
+- Some files are very large (for example `BillingScreen.kt` and `BillingViewModel.kt`, each over 1,000 lines).
 
 ## Languages and fonts
 
