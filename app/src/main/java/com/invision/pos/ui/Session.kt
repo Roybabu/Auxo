@@ -3,6 +3,7 @@ package com.invision.pos.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import com.invision.pos.core.auth.Permission
 import com.invision.pos.core.auth.Role
