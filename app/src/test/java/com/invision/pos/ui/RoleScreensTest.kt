@@ -161,10 +161,11 @@ class RoleScreensTest {
             auth.createAdministrator("Roy Babu", "roy.babu", OWNER_PW, OWNER_PW)
             if (withEmployee) auth.createEmployee("Asha K", "asha.k", STAFF_PW, STAFF_PW)
         }
+        val viewModel = UserManagementViewModel(auth)
         composeRule.setContent {
             InvisionTheme {
                 CompositionLocalProvider(LocalInlineForms provides true) {
-                    UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth))
+                    UserManagementScreen(onBack = {}, viewModel = viewModel)
                 }
             }
         }
@@ -255,9 +256,10 @@ class RoleScreensTest {
             auth.signOut()
             auth.signIn("asha.k", STAFF_PW)
         }
+        val viewModel = UserManagementViewModel(auth)
         composeRule.setContent { InvisionTheme {
                 CompositionLocalProvider(LocalInlineForms provides true) {
-                    UserManagementScreen(onBack = {}, viewModel = UserManagementViewModel(auth))
+                    UserManagementScreen(onBack = {}, viewModel = viewModel)
                 }
             } }
         // The data layer refused to list anyone, so the screen shows an error and no accounts.

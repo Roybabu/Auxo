@@ -65,7 +65,7 @@ class RouteAccessTest {
 
     @Test
     fun anEmployee_seesOnlyTheBillingMoreAndHomeTabs() {
-        val tabs = TopLevelDestination.entries.filter { it.permission == null || RolePermissions.allows(Role.EMPLOYEE, it.permission!!) }
+        val tabs = TopLevelDestination.entries.filter { it.permission == null || RolePermissions.allows(Role.EMPLOYEE, it.permission) }
         assertEquals(listOf(TopLevelDestination.HOME, TopLevelDestination.BILLING, TopLevelDestination.MORE), tabs)
         assertNull(TopLevelDestination.HOME.permission)
     }
