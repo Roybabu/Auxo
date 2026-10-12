@@ -285,7 +285,7 @@ class StoreDetailsAndLogoTest {
     fun home_logo_isACircle_withNoBorder() {
         home(logo = logo)
         val bounds = composeRule.onNodeWithTag("home_logo").getUnclippedBoundsInRoot()
-        assertEquals(bounds.width.value, bounds.height.value, 0.5f)
+        assertEquals(bounds.right.value - bounds.left.value, bounds.bottom.value - bounds.top.value, 0.5f)
         // Pixels at the four corners of the tile are outside the circle, so they show the header behind it.
         val image = composeRule.onNodeWithTag("home_logo").captureToImage().asAndroidBitmap()
         val inset = 2

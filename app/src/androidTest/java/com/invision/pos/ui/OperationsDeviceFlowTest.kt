@@ -124,8 +124,11 @@ class OperationsDeviceFlowTest {
         }
 
         clickTab("More")
-        waitFor(hasText("Purchase orders") and hasClickAction(), "Purchase orders entry")
-        composeRule.onNode(hasText("Purchase orders") and hasClickAction()).performClick()
+        // Purchase orders now live inside Suppliers.
+        waitFor(hasText("Suppliers") and hasClickAction(), "Suppliers entry")
+        composeRule.onNode(hasText("Suppliers") and hasClickAction()).performClick()
+        waitFor(hasTestTag("supplier_purchase_orders"), "Purchase orders entry")
+        composeRule.onNodeWithTag("supplier_purchase_orders").performClick()
         waitFor(hasText(orderNumber) and hasClickAction(), "order $orderNumber")
         composeRule.onNode(hasText(orderNumber) and hasClickAction()).performClick()
 
