@@ -10,6 +10,8 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -229,6 +231,40 @@ class BillingScreenTest {
         composeRule.onNodeWithTag("payment").performScrollToNode(hasTestTag("payment_status"))
         screenshot("25_payment_upi_qr")
         assertTrue(!completed)
+    }
+
+    private fun upiPayment(upiId: String, role: com.invision.pos.core.auth.Role) {
+        val state = cartState(sampleCart, BillingStage.PAYMENT, listOf(PaymentDraft(1, PaymentMethod.UPI, "100.00")))
+            .copy(settings = settings.copy(upiId = upiId), upiInvoiceNumber = "INV/26-27/00007")
+        composeRule.setContent {
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.invision.pos.ui.LocalCapabilities provides com.invision.pos.ui.Capabilities(role, "Asha K"),
+            ) { InvisionTheme { PaymentContent(state, object : BillingActions {}) } }
+        }
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun upiQr_showsTheInvoiceNumber_whenUpiIdIsValid() {
+        upiPayment("roymart@okaxis", com.invision.pos.core.auth.Role.EMPLOYEE)
+        composeRule.onNodeWithTag("payment").performScrollToNode(hasTestTag("upi_invoice_number"))
+        composeRule.onNodeWithTag("upi_invoice_number").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("upi_hint").assertCountEquals(0)
+    }
+
+    @Test
+    fun upiHint_isShownToSuperAdminOnly_whenUpiIdIsMissing() {
+        upiPayment("", com.invision.pos.core.auth.Role.SUPER_ADMIN)
+        composeRule.onNodeWithTag("payment").performScrollToNode(hasTestTag("upi_hint"))
+        composeRule.onNodeWithTag("upi_hint").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("upi_invoice_number").assertCountEquals(0)
+    }
+
+    @Test
+    fun upiHint_isHiddenFromEmployees() {
+        upiPayment("", com.invision.pos.core.auth.Role.EMPLOYEE)
+        composeRule.onAllNodesWithTag("upi_hint").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("upi_invoice_number").assertCountEquals(0)
     }
 
     private fun detailState(invoice: Invoice, paper: ReceiptPaper) = InvoiceDetailUiState.Ready(

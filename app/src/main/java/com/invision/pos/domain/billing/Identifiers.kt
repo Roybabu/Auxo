@@ -73,6 +73,29 @@ object Upi {
         return "upi://pay?" + params.joinToString("&") { (key, value) -> "$key=${encode(value)}" }
     }
 
+    /**
+     * The UPI reference for an invoice: letters and digits only, at most 35 characters, which is what UPI apps
+     * accept ("INV/26-27/00007" becomes "INV262700007").
+     */
+    fun reference(invoiceNumber: String): String = invoiceNumber.filter { it.isLetterOrDigit() }.take(MAX_REFERENCE)
+
+    /**
+     * The link a customer scans to pay one bill: the shop's UPI ID, the exact [amount] and the invoice number as
+     * the reference and the note. Null when there is nothing safe to show: no UPI ID, a UPI ID that is not
+     * valid, or an amount that is not above zero.
+     */
+    fun billLink(vpa: String, payeeName: String, shopName: String, amount: Money, invoiceNumber: String): String? {
+        if (!isValidVpa(vpa) || amount <= Money.ZERO) return null
+        val payee = payeeName.trim().ifEmpty { shopName.trim() }.ifEmpty { vpa.trim() }.take(MAX_PAYEE)
+        val number = invoiceNumber.trim()
+        val note = if (number.isEmpty()) shopName.trim() else "Invoice $number"
+        return paymentUri(vpa, payee, amount, note.take(MAX_NOTE), reference(number))
+    }
+
+    private const val MAX_REFERENCE = 35
+    private const val MAX_NOTE = 50
+    private const val MAX_PAYEE = 50
+
     private fun encode(value: String): String =
         URLEncoder.encode(value, StandardCharsets.UTF_8.name()).replace("+", "%20")
 }

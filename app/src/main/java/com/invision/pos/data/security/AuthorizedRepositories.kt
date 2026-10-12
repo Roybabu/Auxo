@@ -92,6 +92,11 @@ class AuthorizedBillingRepository(
         return result
     }
 
+    override suspend fun previewInvoiceNumber(invoicePrefix: String, day: java.time.LocalDate): String {
+        auth.require(Permission.SELL)
+        return inner.previewInvoiceNumber(invoicePrefix, day)
+    }
+
     override suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice> {
         auth.require(Permission.VIEW_REPORTS)
         return inner.invoicesBetween(fromMillis, toMillis)

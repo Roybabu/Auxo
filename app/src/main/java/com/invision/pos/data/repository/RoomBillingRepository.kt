@@ -65,6 +65,12 @@ class RoomBillingRepository(
     override fun observeSalesTotals(fromMillis: Long, toMillis: Long): Flow<SalesTotals> =
         dao.observeSalesTotals(fromMillis, toMillis).map { SalesTotals(Money(it.netMinor), it.billCount) }
 
+    override suspend fun previewInvoiceNumber(invoicePrefix: String, day: java.time.LocalDate): String {
+        val year = InvoiceNumbers.financialYearStart(day)
+        val next = operations.sequenceValue(InvoiceNumbers.sequenceKey(invoicePrefix, year)) ?: 1L
+        return InvoiceNumbers.format(invoicePrefix, year, next)
+    }
+
     override suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice> =
         dao.invoicesBetween(fromMillis, toMillis).map { it.toDomain() }
 

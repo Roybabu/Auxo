@@ -120,6 +120,8 @@ data class BillingUiState(
     val paymentRemaining: Money = Money.ZERO,
     val paymentShowErrors: Boolean = false,
     val isSaving: Boolean = false,
+    /** The number this bill will probably get, for the UPI QR. Null until known (or without a billing store). */
+    val upiInvoiceNumber: String? = null,
 ) {
     val needsSetup: Boolean
         get() = settings != null && (settings.needsGstinSetup || (settings.gstRegistered && settings.stateCode.isEmpty()))
@@ -558,6 +560,19 @@ class BillingViewModel(
         // The amount starts as the whole bill, and can be changed for a part payment.
         val first = PaymentDraft(key = nextPaymentKey++, method = PaymentMethod.CASH, amount = state.totals.grandTotal.toDecimalString())
         updatePayments(listOf(first), stage = BillingStage.PAYMENT)
+        loadUpiInvoiceNumber(state.settings?.invoicePrefix)
+    }
+
+    /** Looks up the number the QR will carry. The sale keeps whatever number it is really given. */
+    private fun loadUpiInvoiceNumber(prefix: String?) {
+        val store = billing ?: return
+        if (prefix == null) return
+        viewModelScope.launch {
+            val number = runCatching { store.previewInvoiceNumber(prefix, today) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            _uiState.update { it.copy(upiInvoiceNumber = number) }
+        }
     }
 
     fun backToCart() = _uiState.update { it.copy(stage = BillingStage.CART, paymentShowErrors = false) }

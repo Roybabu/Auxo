@@ -70,6 +70,32 @@ class IdentifiersTest {
     }
 
     @Test
+    fun upiBillLink_carriesExactAmountAndInvoiceNumber() {
+        val link = Upi.billLink("roymart@okaxis", "Roy Mart", "Roy Mart Store", Money(1_250_50), "INV/26-27/00007")!!
+        assertEquals(
+            "upi://pay?pa=roymart%40okaxis&pn=Roy%20Mart&am=1250.50&cu=INR&tn=Invoice%20INV%2F26-27%2F00007&tr=INV262700007",
+            link,
+        )
+    }
+
+    @Test
+    fun upiBillLink_fallsBackToShopNameAndHidesWhenUnusable() {
+        val link = Upi.billLink("roymart@okaxis", " ", "Roy Mart Store", Money(10_00), "")!!
+        assertTrue(link.contains("pn=Roy%20Mart%20Store"))
+        assertTrue(link.contains("tn=Roy%20Mart%20Store"))
+        assertFalse(link.contains("tr="))
+        assertNull(Upi.billLink("", "Roy", "Shop", Money(10_00), "INV/1"))
+        assertNull(Upi.billLink("not a vpa", "Roy", "Shop", Money(10_00), "INV/1"))
+        assertNull(Upi.billLink("roymart@okaxis", "Roy", "Shop", Money.ZERO, "INV/1"))
+    }
+
+    @Test
+    fun upiReference_keepsLettersAndDigitsOnly_andIsCapped() {
+        assertEquals("INV262700007", Upi.reference("INV/26-27/00007"))
+        assertEquals(35, Upi.reference("A".repeat(80)).length)
+    }
+
+    @Test
     fun states() {
         assertEquals("West Bengal", IndianStates.byCode("19")?.name)
         assertEquals(37, IndianStates.ALL.size)

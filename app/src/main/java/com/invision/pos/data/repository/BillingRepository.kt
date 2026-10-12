@@ -62,6 +62,12 @@ interface BillingRepository {
      */
     suspend fun recordSale(invoice: Invoice, invoicePrefix: String, requestId: String? = null): SaleResult
 
+    /**
+     * The number the next sale will get, for showing on the payment screen (the UPI QR carries it). Nothing is
+     * reserved: the number is only taken when the sale is saved, so this can differ if another sale is saved first.
+     */
+    suspend fun previewInvoiceNumber(invoicePrefix: String, day: java.time.LocalDate): String
+
     /** Full invoices and credit notes in [fromMillis, toMillis), oldest first, for reports. */
     suspend fun invoicesBetween(fromMillis: Long, toMillis: Long): List<Invoice>
 

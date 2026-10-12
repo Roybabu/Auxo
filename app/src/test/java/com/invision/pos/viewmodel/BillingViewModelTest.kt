@@ -164,6 +164,23 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun payment_previewsTheInvoiceNumberForTheUpiQr_withoutUsingIt() = runTest {
+        val viewModel = BillingViewModel(
+            inventory, settings, CheckoutUseCase(billing, settings, TestData.clock),
+            clock = TestData.clock, billing = billing,
+        )
+        viewModel.onBarcodeScanned(TestData.EAN[0])
+        assertNull(viewModel.uiState.value.upiInvoiceNumber)
+        viewModel.proceedToPayment()
+        val shown = viewModel.uiState.value.upiInvoiceNumber
+        assertEquals("INV/26-27/00001", shown)
+        viewModel.onTenderedChange(viewModel.uiState.value.payments.single().key, "500")
+        viewModel.completeSale()
+        val event = viewModel.events.first() as BillingEvent.Completed
+        assertEquals(shown, event.number)
+    }
+
+    @Test
     fun customerDetails_validatedBeforePayment() = runTest {
         val viewModel = createViewModel()
         viewModel.onBarcodeScanned(TestData.EAN[2])

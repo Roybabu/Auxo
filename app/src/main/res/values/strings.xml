@@ -395,6 +395,7 @@
     <string name="payment_card_last4">Card last 4 digits (optional)</string>
     <string name="payment_upi_qr">Customer scans to pay %1$s</string>
     <string name="payment_upi_not_set">Add your UPI ID in Billing settings to show a payment QR code.</string>
+    <string name="payment_upi_invalid">Your UPI ID in Billing settings is not valid, so the payment QR code is hidden.</string>
     <string name="payment_add_split">Split payment</string>
     <string name="payment_rest_on_account">Put the remaining %1$s on account</string>
     <string name="payment_split_summary">Paid now %1$s, on account %2$s</string>

@@ -136,6 +136,11 @@ class FakeBillingRepository(private val inventory: FakeInventoryRepository) : Bi
         return ReturnResult.Recorded(id, number)
     }
 
+    override suspend fun previewInvoiceNumber(invoicePrefix: String, day: java.time.LocalDate): String {
+        val year = InvoiceNumbers.financialYearStart(day)
+        return InvoiceNumbers.format(invoicePrefix, year, sequences[InvoiceNumbers.sequenceKey(invoicePrefix, year)] ?: 1L)
+    }
+
     private fun nextNumber(prefix: String, millis: Long): String {
         val year = InvoiceNumbers.financialYearStart(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
         val key = InvoiceNumbers.sequenceKey(prefix, year)

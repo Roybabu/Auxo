@@ -1054,6 +1054,7 @@ private fun TotalRow(label: String, value: String, emphasised: Boolean = false) 
 fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Modifier = Modifier) {
     val formatter = LocalMoneyFormatter.current
     val settings = state.settings
+    val canManageSettings = can(Permission.MANAGE_SETTINGS)
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -1108,14 +1109,18 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                         PaymentMethod.CASH -> CashFields(draft.amount, draft.tendered, error, onTendered = { actions.onTenderedChange(draft.key, it) }, onTenderedDone = { actions.onTenderedDone(draft.key) })
                         PaymentMethod.UPI -> {
                             val amount = Money.parseOrNull(draft.amount)
-                            if (settings != null && settings.upiId.isNotBlank() && amount != null && !amount.isZero) {
-                                val uri = Upi.paymentUri(
+                            val uri = if (settings != null && amount != null) {
+                                Upi.billLink(
                                     vpa = settings.upiId,
-                                    payeeName = settings.upiPayeeName.ifBlank { settings.storeName },
+                                    payeeName = settings.upiPayeeName,
+                                    shopName = settings.storeName,
                                     amount = amount,
-                                    note = settings.storeName,
-                                    reference = "",
+                                    invoiceNumber = state.upiInvoiceNumber.orEmpty(),
                                 )
+                            } else {
+                                null
+                            }
+                            if (uri != null && settings != null && amount != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                     QrCode(
                                         content = uri,
@@ -1123,13 +1128,18 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                                         modifier = Modifier.size(200.dp),
                                     )
                                     Text(stringResource(R.string.payment_upi_qr, formatter.format(amount)), style = MaterialTheme.typography.bodySmall)
+                                    state.upiInvoiceNumber?.let { Text(it, style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag("upi_invoice_number")) }
                                     Text(settings.upiId, style = MaterialTheme.typography.labelMedium)
                                 }
-                            } else if (settings?.upiId.isNullOrBlank()) {
+                            } else if (settings != null && !Upi.isValidVpa(settings.upiId) && canManageSettings) {
+                                // Only the Super Admin can fix the setting, so only they see the hint.
                                 Text(
-                                    stringResource(R.string.payment_upi_not_set),
+                                    stringResource(
+                                        if (settings.upiId.isBlank()) R.string.payment_upi_not_set else R.string.payment_upi_invalid,
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.testTag("upi_hint"),
                                 )
                             }
                             InvisionTextField(

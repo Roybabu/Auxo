@@ -395,6 +395,7 @@
     <string name="payment_card_last4">कार्ड के आखिरी 4 अंक (ज़रूरी नहीं)</string>
     <string name="payment_upi_qr">%1$s चुकाने के लिए ग्राहक स्कैन करें</string>
     <string name="payment_upi_not_set">भुगतान QR कोड दिखाने के लिए बिलिंग सेटिंग में अपना UPI ID जोड़ें।</string>
+    <string name="payment_upi_invalid">बिलिंग सेटिंग में आपका UPI ID मान्य नहीं है, इसलिए भुगतान QR कोड छिपा है।</string>
     <string name="payment_add_split">भुगतान बाँटें</string>
     <string name="payment_rest_on_account">बाकी %1$s खाते में डालें</string>
     <string name="payment_split_summary">अभी चुकाया %1$s, खाते में %2$s</string>

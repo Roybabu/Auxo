@@ -120,6 +120,18 @@ class RoomBillingRepositoryTest {
     }
 
     @Test
+    fun previewInvoiceNumber_showsTheNextNumberWithoutUsingIt() = runTest {
+        val day = java.time.LocalDate.of(2026, 10, 12)
+        assertEquals("INV/26-27/00001", billing.previewInvoiceNumber("INV", day))
+        assertEquals("INV/26-27/00001", billing.previewInvoiceNumber("INV", day))
+        val biscuits = saveNew(TestData.biscuits())
+        val saved = billing.recordSale(sale(CartLine.from(biscuits, biscuits.variants[0])), "INV") as SaleResult.Recorded
+        assertEquals("INV/26-27/00001", saved.number)
+        assertEquals("INV/26-27/00002", billing.previewInvoiceNumber("INV", day))
+        assertEquals("INV/26-27/00001", billing.previewInvoiceNumber("EST", day))
+    }
+
+    @Test
     fun numbering_isPerPrefixAndFinancialYear() = runTest {
         // No expiry, so the sales next April can still take this stock.
         val biscuits = saveNew(TestData.biscuits(expiry = null))
