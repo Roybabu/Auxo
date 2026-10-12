@@ -28,6 +28,19 @@ enum class LedgerEntryType {
 
     /** Money received against the account. */
     PAYMENT,
+
+    /** Loyalty points earned on a sale. Carries points only; the money amount is zero. */
+    POINTS_EARNED,
+
+    /** Loyalty points used as a discount on a sale. */
+    POINTS_REDEEMED,
+
+    /** Points taken back because goods from the sale were returned. */
+    POINTS_REVERSED,
+    ;
+
+    /** True for entries that move loyalty points and never change what the customer owes. */
+    val isPoints: Boolean get() = this == POINTS_EARNED || this == POINTS_REDEEMED || this == POINTS_REVERSED
 }
 
 /**
@@ -47,6 +60,8 @@ data class LedgerEntry(
     val reference: String? = null,
     val note: String? = null,
     val createdAtMillis: Long,
+    /** Loyalty points added (positive) or taken off (negative). Zero for ordinary money entries. */
+    val points: Int = 0,
 )
 
 /** A customer with what they owe now. */
@@ -55,4 +70,6 @@ data class CustomerAccount(
     /** Positive when the customer owes the store. */
     val balance: Money,
     val lastActivityMillis: Long? = null,
+    /** Loyalty points the customer holds now. */
+    val points: Int = 0,
 )

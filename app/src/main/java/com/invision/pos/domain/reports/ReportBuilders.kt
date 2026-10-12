@@ -449,6 +449,9 @@ object Reports {
         LedgerEntryType.SALE -> "Sale on account"
         LedgerEntryType.RETURN -> "Return"
         LedgerEntryType.PAYMENT -> "Payment received"
+        LedgerEntryType.POINTS_EARNED -> "Points earned"
+        LedgerEntryType.POINTS_REDEEMED -> "Points used"
+        LedgerEntryType.POINTS_REVERSED -> "Points taken back"
     }
 
     /** One customer's account: every entry with the running balance, oldest first. */

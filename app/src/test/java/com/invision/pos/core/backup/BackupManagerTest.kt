@@ -2,7 +2,6 @@ package com.invision.pos.core.backup
 
 import android.content.Context
 import android.net.Uri
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.core.appearance.AppAccent
@@ -48,7 +47,7 @@ class BackupManagerTest {
     private lateinit var database: InvisionDatabase
 
     private fun open(): InvisionDatabase =
-        Room.databaseBuilder(context, InvisionDatabase::class.java, InvisionDatabase.NAME).allowMainThreadQueries().build()
+        InvisionDatabase.builder(context).allowMainThreadQueries().build()
 
     private fun manager(db: InvisionDatabase) = BackupManager(context, db, appearance, storage, TestData.clock)
 

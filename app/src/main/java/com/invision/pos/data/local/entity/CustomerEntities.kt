@@ -49,12 +49,27 @@ data class LedgerEntryEntity(
     val reference: String?,
     val note: String?,
     @ColumnInfo(name = "created_at") val createdAt: Long,
+    /** Loyalty points added or taken off. Added in version 6; 0 for money entries. */
+    @ColumnInfo(name = "points", defaultValue = "0") val points: Int = 0,
+)
+
+/**
+ * The shop's loyalty rules, one row (id 1). Added in version 6. Kept apart from the store settings so saving
+ * those can never switch loyalty on or change its rules.
+ */
+@Entity(tableName = "loyalty_settings")
+data class LoyaltySettingsEntity(
+    @PrimaryKey val id: Int = 1,
+    val enabled: Boolean,
+    @ColumnInfo(name = "spend_per_point_minor") val spendPerPointMinor: Long,
+    @ColumnInfo(name = "point_value_minor") val pointValueMinor: Long,
 )
 
 data class CustomerAccountRow(
     @Embedded val customer: CustomerEntity,
     @ColumnInfo(name = "balance_minor") val balanceMinor: Long,
     @ColumnInfo(name = "last_activity") val lastActivity: Long?,
+    @ColumnInfo(name = "points_balance") val pointsBalance: Int = 0,
 )
 
 data class LedgerEntryRow(

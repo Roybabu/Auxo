@@ -33,6 +33,9 @@ fun LedgerEntryType.labelRes(): Int = when (this) {
     LedgerEntryType.SALE -> R.string.ledger_sale
     LedgerEntryType.RETURN -> R.string.ledger_return
     LedgerEntryType.PAYMENT -> R.string.ledger_payment
+    LedgerEntryType.POINTS_EARNED -> R.string.ledger_points_earned
+    LedgerEntryType.POINTS_REDEEMED -> R.string.ledger_points_redeemed
+    LedgerEntryType.POINTS_REVERSED -> R.string.ledger_points_reversed
 }
 
 @StringRes

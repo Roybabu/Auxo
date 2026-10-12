@@ -169,6 +169,7 @@ fun CustomerAccountRow.toDomain(): CustomerAccount = CustomerAccount(
     customer = customer.toDomain(),
     balance = Money(balanceMinor),
     lastActivityMillis = lastActivity,
+    points = pointsBalance,
 )
 
 fun LedgerEntryRow.toDomain(): LedgerEntry = entry.toDomain(invoiceNumber)
@@ -184,6 +185,7 @@ fun LedgerEntryEntity.toDomain(invoiceNumber: String? = null): LedgerEntry = Led
     reference = reference,
     note = note,
     createdAtMillis = createdAt,
+    points = points,
 )
 
 fun LedgerEntry.toEntity(): LedgerEntryEntity = LedgerEntryEntity(
@@ -196,6 +198,7 @@ fun LedgerEntry.toEntity(): LedgerEntryEntity = LedgerEntryEntity(
     reference = reference,
     note = note,
     createdAt = createdAtMillis,
+    points = points,
 )
 
 /** A payment received against an account, shown with invoice payments. */

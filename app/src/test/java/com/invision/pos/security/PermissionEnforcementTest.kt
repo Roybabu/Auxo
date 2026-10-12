@@ -347,7 +347,8 @@ class PermissionEnforcementTest {
         assertFalse(everything.can(Permission.BACKUP_AND_RESTORE))
         assertTrue(everything.can(Permission.RECEIVE_GOODS))
         assertFalse(everything.can(Permission.GST_REPORT))
-        assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT), Permission.entries.filterNot { everything.can(it) }.toSet())
+        assertFalse(everything.can(Permission.MANAGE_LOYALTY))
+        assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY), Permission.entries.filterNot { everything.can(it) }.toSet())
     }
 
     // Counting sales for "back up every N invoices"

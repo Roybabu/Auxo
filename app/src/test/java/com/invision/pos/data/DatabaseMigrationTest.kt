@@ -2,7 +2,6 @@ package com.invision.pos.data
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.invision.pos.data.local.InvisionDatabase
@@ -106,7 +105,7 @@ class DatabaseMigrationTest {
     @Test
     fun migrate1To2_keepsInventory_andBillingWorks() = runTest {
         createVersion1()
-        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = InvisionDatabase.builder(context, name).allowMainThreadQueries().build()
         database = db
         val inventory = RoomInventoryRepository(db, TestData.clock)
 
@@ -157,7 +156,7 @@ class DatabaseMigrationTest {
             close()
         }
 
-        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = InvisionDatabase.builder(context, name).allowMainThreadQueries().build()
         database = db
         val inventory = RoomInventoryRepository(db, TestData.clock)
         val biscuits = inventory.getProduct(2)!!.variants.single()
@@ -239,7 +238,7 @@ class DatabaseMigrationTest {
             close()
         }
 
-        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = InvisionDatabase.builder(context, name).allowMainThreadQueries().build()
         database = db
         val billing = RoomBillingRepository(db)
         val inventory = RoomInventoryRepository(db, TestData.clock)
@@ -294,14 +293,58 @@ class DatabaseMigrationTest {
             )
             it.close()
         }
-        val db = Room.databaseBuilder(context, InvisionDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = InvisionDatabase.builder(context, name).allowMainThreadQueries().build()
         database = db
 
-        assertEquals(5, db.openHelper.readableDatabase.version)
+        assertEquals(InvisionDatabase.VERSION, db.openHelper.readableDatabase.version)
         assertEquals("Signed in", db.auditDao().observeRecent(10).first().single().summary)
         val dayEnd = com.invision.pos.data.repository.RoomDayEndRepository(db, TestData.clock)
         assertTrue(dayEnd.observeClosings().first().isEmpty())
         val result = dayEnd.closeDay(java.time.LocalDate.now(TestData.clock), Money(1_000), null, "Test Admin")
         assertTrue(result is com.invision.pos.data.repository.CloseDayResult.Closed)
+    }
+
+    /**
+     * A shop with a customer who owes money, opened from version 4. It goes 4 -> 5 (automatic) and 5 -> 6
+     * (by hand): every balance stays as it was, nobody holds points, and loyalty is off until the Super Admin
+     * switches it on. (Version 5's own schema file is not needed: the chain runs through it.)
+     */
+    @Test
+    fun migrate4To6_keepsBalances_startsWithNoPoints_andLoyaltyOff() = runTest {
+        createFromSchema(4).also {
+            it.execSQL(
+                "INSERT INTO customers (id, name, phone, email, gstin, state_code, address, credit_limit_minor, notes, created_at, updated_at) " +
+                    "VALUES (1, 'Asha', '9876543210', NULL, NULL, NULL, NULL, NULL, NULL, 100, 100)",
+            )
+            it.execSQL(
+                "INSERT INTO customer_ledger (id, customer_id, type, amount_minor, invoice_id, method, reference, note, created_at) VALUES " +
+                    "(1, 1, 'OPENING_BALANCE', 50000, NULL, NULL, NULL, NULL, 100), (2, 1, 'PAYMENT', -20000, NULL, 'CASH', NULL, NULL, 200)",
+            )
+            it.close()
+        }
+        val db = InvisionDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+
+        assertEquals(InvisionDatabase.VERSION, db.openHelper.readableDatabase.version)
+        val customers = com.invision.pos.data.repository.RoomCustomerRepository(db, TestData.clock)
+        val account = customers.observeAccount(1).first()!!
+        assertEquals(Money(30_000), account.balance)
+        assertEquals(0, account.points)
+        assertEquals(listOf(0, 0), customers.observeLedger(1).first().map { it.points })
+
+        val loyalty = com.invision.pos.data.repository.RoomLoyaltyRepository(db)
+        assertEquals(com.invision.pos.domain.loyalty.LoyaltyRules.OFF, loyalty.getRules())
+
+        // The new column and table accept data.
+        db.customerDao().insertEntry(
+            com.invision.pos.data.local.entity.LedgerEntryEntity(
+                customerId = 1, type = "POINTS_EARNED", amountMinor = 0, invoiceId = null, method = null, reference = null, note = null,
+                createdAt = 300, points = 12,
+            ),
+        )
+        assertEquals(12, customers.observeAccount(1).first()!!.points)
+        assertEquals(Money(30_000), customers.observeAccount(1).first()!!.balance)
+        loyalty.saveRules(com.invision.pos.domain.loyalty.LoyaltyRules(true, Money(5_000), Money(50)))
+        assertEquals(com.invision.pos.domain.loyalty.LoyaltyRules(true, Money(5_000), Money(50)), loyalty.getRules())
     }
 }

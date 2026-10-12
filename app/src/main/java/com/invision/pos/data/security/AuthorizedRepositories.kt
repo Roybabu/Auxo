@@ -129,6 +129,33 @@ class AuthorizedSettingsRepository(private val inner: SettingsRepository, privat
     }
 }
 
+/** Reading the rules is part of billing; changing them is for the Super Admin only ([Permission.MANAGE_LOYALTY]). */
+class AuthorizedLoyaltyRepository(
+    private val inner: com.invision.pos.data.repository.LoyaltyRepository,
+    private val auth: Authorizer,
+    private val audit: AuditTrail,
+) : com.invision.pos.data.repository.LoyaltyRepository {
+    override fun observeRules(): Flow<com.invision.pos.domain.loyalty.LoyaltyRules> = auth.guarded(Permission.SELL) { inner.observeRules() }
+
+    override suspend fun getRules(): com.invision.pos.domain.loyalty.LoyaltyRules {
+        auth.require(Permission.SELL)
+        return inner.getRules()
+    }
+
+    override suspend fun saveRules(rules: com.invision.pos.domain.loyalty.LoyaltyRules) {
+        auth.require(Permission.MANAGE_LOYALTY)
+        audit.recording({ inner.saveRules(rules) }) {
+            val state = if (rules.enabled) "on" else "off"
+            AuditDraft(
+                AuditAction.LOYALTY_CHANGED,
+                AuditEntity.LOYALTY,
+                1L,
+                "Loyalty points $state: 1 point per Rs ${rules.spendPerPoint.toDecimalString()} spent, each point worth Rs ${rules.pointValue.toDecimalString()}",
+            )
+        }
+    }
+}
+
 class AuthorizedInventoryRepository(private val inner: InventoryRepository, private val auth: Authorizer, private val audit: AuditTrail) : InventoryRepository {
     // Looking products up is part of billing.
     override fun observeProducts(): Flow<List<Product>> = auth.guarded(Permission.SELL) { inner.observeProducts() }

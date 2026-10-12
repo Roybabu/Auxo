@@ -43,6 +43,7 @@ enum class AuditAction {
     AUTO_BACKUP_FAILED,
     AUTO_BACKUP_SETTINGS_CHANGED,
     DAY_CLOSED,
+    LOYALTY_CHANGED,
     RECOVERY_CODE_SET,
     PASSWORD_RESET_WITH_CODE,
     PIN_CHANGED,
@@ -66,6 +67,7 @@ object AuditEntity {
     const val SETTINGS = "settings"
     const val BACKUP = "backup"
     const val DAY_CLOSING = "day_closing"
+    const val LOYALTY = "loyalty"
 }
 
 /** What to write down; the time and the person are added when it is saved. */

@@ -114,6 +114,9 @@ class AppContainer(context: Context) {
         if (autoBackupRunner.isDueNow()) background.launch { runCatching { autoBackupRunner.runIfDue() } }
     }
 
+    val loyaltyRepository: com.invision.pos.data.repository.LoyaltyRepository by lazy {
+        com.invision.pos.data.security.AuthorizedLoyaltyRepository(com.invision.pos.data.repository.RoomLoyaltyRepository(database), authorizer, auditTrail)
+    }
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
     val purchasingRepository: PurchasingRepository by lazy { AuthorizedPurchasingRepository(RoomPurchasingRepository(database, clock), authorizer, auditTrail) }

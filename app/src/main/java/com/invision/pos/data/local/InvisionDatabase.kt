@@ -6,6 +6,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.invision.pos.data.local.dao.AuditDao
 import com.invision.pos.data.local.dao.DayEndDao
@@ -22,6 +23,7 @@ import com.invision.pos.data.local.entity.CustomerEntity
 import com.invision.pos.data.local.entity.InvoiceEntity
 import com.invision.pos.data.local.entity.InvoiceLineEntity
 import com.invision.pos.data.local.entity.LedgerEntryEntity
+import com.invision.pos.data.local.entity.LoyaltySettingsEntity
 import com.invision.pos.data.local.entity.MenuItemEntity
 import com.invision.pos.data.local.entity.NumberSequenceEntity
 import com.invision.pos.data.local.entity.PaymentEntity
@@ -46,6 +48,8 @@ import com.invision.pos.data.local.entity.SupplierEntity
  *    their ledger, restaurant menu and recipes, one-time request ids (Step 4).
  * 4. Activity log of who changed, returned or deleted what (roles and User Management).
  * 5. Day-end closings: the cash counted and the day's figures, one row per closed day.
+ * 6. Loyalty points: a points column on the customer ledger and the loyalty rules table. Written by hand
+ *    (see [MIGRATION_5_6]) so building does not depend on the exported 5.json.
  */
 @Database(
     entities = [
@@ -70,6 +74,7 @@ import com.invision.pos.data.local.entity.SupplierEntity
         RecipeLineEntity::class,
         AuditLogEntity::class,
         DayClosingEntity::class,
+        LoyaltySettingsEntity::class,
     ],
     version = InvisionDatabase.VERSION,
     exportSchema = true,
@@ -118,9 +123,27 @@ abstract class InvisionDatabase : RoomDatabase() {
         const val NAME = "invision.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 5
+        const val VERSION = 6
 
-        fun create(context: Context): InvisionDatabase =
-            Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, NAME).build()
+        /**
+         * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
+         * starts switched off because the settings table starts empty. The SQL must match the entities exactly;
+         * Room checks the result against the version 6 schema when the database opens.
+         */
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE customer_ledger ADD COLUMN points INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS loyalty_settings (id INTEGER NOT NULL, enabled INTEGER NOT NULL, " +
+                        "spend_per_point_minor INTEGER NOT NULL, point_value_minor INTEGER NOT NULL, PRIMARY KEY(id))",
+                )
+            }
+        }
+
+        /** A builder with every migration added. All code that opens the database file goes through this. */
+        fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<InvisionDatabase> =
+            Room.databaseBuilder(context.applicationContext, InvisionDatabase::class.java, name).addMigrations(MIGRATION_5_6)
+
+        fun create(context: Context): InvisionDatabase = builder(context).build()
     }
 }

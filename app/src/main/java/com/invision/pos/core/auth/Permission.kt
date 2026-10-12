@@ -28,6 +28,9 @@ enum class Permission {
     /** The GST report and its Excel/CSV export for the accountant. Super Admin only: it cannot be given to an employee. */
     GST_REPORT,
 
+    /** Switch loyalty points on or off and set what a point earns and is worth. Super Admin only: it cannot be given to an employee. */
+    MANAGE_LOYALTY,
+
     /** Sales today, stock value and insights on Home. */
     VIEW_DASHBOARD,
 

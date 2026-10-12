@@ -18,14 +18,18 @@ object Ledger {
     /** Positive when the customer owes the store. */
     fun balance(entries: List<LedgerEntry>): Money = entries.fold(Money.ZERO) { acc, entry -> acc + entry.amount }
 
-    /** Entries oldest first, each with the running balance. */
+    /** Money entries oldest first, each with the running balance. Loyalty point entries are not money and are left out. */
     fun statement(entries: List<LedgerEntry>): List<LedgerLine> {
         var balance = Money.ZERO
-        return entries.sortedWith(compareBy({ it.createdAtMillis }, { it.id })).map { entry ->
+        return entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id })).map { entry ->
             balance += entry.amount
             LedgerLine(entry, balance)
         }
     }
+
+    /** Loyalty point entries, newest first. */
+    fun pointsHistory(entries: List<LedgerEntry>): List<LedgerEntry> =
+        entries.filter { it.type.isPoints }.sortedWith(compareByDescending<LedgerEntry> { it.createdAtMillis }.thenByDescending { it.id })
 
     /** Total put on accounts and total collected, for summaries. */
     fun totals(entries: List<LedgerEntry>): Pair<Money, Money> {

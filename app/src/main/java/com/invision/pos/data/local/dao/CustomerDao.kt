@@ -2,6 +2,7 @@ package com.invision.pos.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.invision.pos.data.local.entity.AccountPaymentRow
@@ -9,6 +10,7 @@ import com.invision.pos.data.local.entity.CustomerAccountRow
 import com.invision.pos.data.local.entity.CustomerEntity
 import com.invision.pos.data.local.entity.LedgerEntryEntity
 import com.invision.pos.data.local.entity.LedgerEntryRow
+import com.invision.pos.data.local.entity.LoyaltySettingsEntity
 import kotlinx.coroutines.flow.Flow
 
 /** Thrown inside a payment transaction when the amount is more than the customer owes. */
@@ -18,14 +20,16 @@ class OverpaymentException(val balanceMinor: Long) : RuntimeException("Payment i
 abstract class CustomerDao {
 
     @Query(
-        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity " +
+        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity, " +
+            "COALESCE(SUM(l.points), 0) AS points_balance " +
             "FROM customers c LEFT JOIN customer_ledger l ON l.customer_id = c.id " +
             "GROUP BY c.id ORDER BY c.name COLLATE NOCASE",
     )
     abstract fun observeAccounts(): Flow<List<CustomerAccountRow>>
 
     @Query(
-        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity " +
+        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity, " +
+            "COALESCE(SUM(l.points), 0) AS points_balance " +
             "FROM customers c LEFT JOIN customer_ledger l ON l.customer_id = c.id WHERE c.id = :customerId GROUP BY c.id",
     )
     abstract fun observeAccount(customerId: Long): Flow<CustomerAccountRow?>
@@ -60,4 +64,27 @@ abstract class CustomerDao {
             "ORDER BY l.created_at DESC, l.id DESC",
     )
     abstract fun observeAccountPayments(fromMillis: Long, toMillis: Long): Flow<List<AccountPaymentRow>>
+
+    @Query("SELECT COALESCE(SUM(points), 0) FROM customer_ledger WHERE customer_id = :customerId")
+    abstract suspend fun pointsBalance(customerId: Long): Int
+
+    /** Points already taken back for returns of one sale (the returns are credit notes pointing at the sale). */
+    @Query(
+        "SELECT COALESCE(SUM(l.points), 0) FROM customer_ledger l JOIN invoices i ON i.id = l.invoice_id " +
+            "WHERE l.type = 'POINTS_REVERSED' AND i.original_invoice_id = :saleId",
+    )
+    abstract suspend fun pointsReversedFor(saleId: Long): Int
+
+    /** Points earned on one sale. */
+    @Query("SELECT COALESCE(SUM(points), 0) FROM customer_ledger WHERE type = 'POINTS_EARNED' AND invoice_id = :saleId")
+    abstract suspend fun pointsEarnedOn(saleId: Long): Int
+
+    @Query("SELECT * FROM loyalty_settings WHERE id = 1")
+    abstract fun observeLoyalty(): Flow<LoyaltySettingsEntity?>
+
+    @Query("SELECT * FROM loyalty_settings WHERE id = 1")
+    abstract suspend fun getLoyalty(): LoyaltySettingsEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun upsertLoyalty(settings: LoyaltySettingsEntity)
 }

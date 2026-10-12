@@ -614,6 +614,9 @@
     <string name="ledger_sale">Sale on account</string>
     <string name="ledger_return">Return</string>
     <string name="ledger_payment">Payment received</string>
+    <string name="ledger_points_earned">Points earned</string>
+    <string name="ledger_points_redeemed">Points used</string>
+    <string name="ledger_points_reversed">Points taken back</string>
     <string name="account_payment_title">Receive payment</string>
     <string name="account_payment_due">Owes %1$s</string>
     <string name="account_payment_nothing_due">Nothing is due on this account.</string>
