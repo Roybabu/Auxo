@@ -218,13 +218,13 @@ private fun BoxWithConstraintsScope.LoginLeaves() {
     val w = maxWidth
     val h = maxHeight
     @Composable
-    fun leaf(@DrawableRes picture: Int, at: Alignment, x: Dp, y: Dp, width: Dp, degrees: Float) =
+    fun Leaf(@DrawableRes picture: Int, at: Alignment, x: Dp, y: Dp, width: Dp, degrees: Float) =
         Illustration(picture, Modifier.align(at).offset(x = x, y = y).width(width).rotate(degrees))
-    leaf(R.drawable.onb_leaf_9, Alignment.TopStart, w * 0.08f, h * 0.07f, w * 0.12f, -25f)
-    leaf(R.drawable.onb_leaf_2, Alignment.TopEnd, w * -0.06f, h * 0.15f, w * 0.11f, 30f)
-    leaf(R.drawable.onb_leaf_10, Alignment.TopStart, w * 0.02f, h * 0.21f, w * 0.10f, -50f)
-    leaf(R.drawable.onb_leaf_5, Alignment.CenterEnd, w * 0.01f, h * 0.10f, w * 0.08f, 120f)
-    leaf(R.drawable.onb_leaf_4, Alignment.BottomStart, w * -0.02f, h * -0.04f, w * 0.13f, 40f)
-    leaf(R.drawable.onb_leaf_8, Alignment.BottomEnd, w * -0.04f, h * -0.07f, w * 0.10f, -60f)
-    leaf(R.drawable.onb_leaf_6, Alignment.BottomEnd, w * 0.02f, h * -0.16f, w * 0.14f, 20f)
+    Leaf(R.drawable.onb_leaf_9, Alignment.TopStart, w * 0.08f, h * 0.07f, w * 0.12f, -25f)
+    Leaf(R.drawable.onb_leaf_2, Alignment.TopEnd, w * -0.06f, h * 0.15f, w * 0.11f, 30f)
+    Leaf(R.drawable.onb_leaf_10, Alignment.TopStart, w * 0.02f, h * 0.21f, w * 0.10f, -50f)
+    Leaf(R.drawable.onb_leaf_5, Alignment.CenterEnd, w * 0.01f, h * 0.10f, w * 0.08f, 120f)
+    Leaf(R.drawable.onb_leaf_4, Alignment.BottomStart, w * -0.02f, h * -0.04f, w * 0.13f, 40f)
+    Leaf(R.drawable.onb_leaf_8, Alignment.BottomEnd, w * -0.04f, h * -0.07f, w * 0.10f, -60f)
+    Leaf(R.drawable.onb_leaf_6, Alignment.BottomEnd, w * 0.02f, h * -0.16f, w * 0.14f, 20f)
 }
