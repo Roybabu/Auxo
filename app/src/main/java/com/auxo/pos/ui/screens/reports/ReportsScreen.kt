@@ -45,7 +45,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.export.FileExport
 import com.auxo.pos.core.format.MoneyFormatter
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.formatRatePercent
 import com.auxo.pos.domain.reports.ColumnAlign
 import com.auxo.pos.domain.reports.ExpiryWindow
@@ -56,7 +55,7 @@ import com.auxo.pos.domain.reports.ReportTable
 import com.auxo.pos.domain.reports.ReportType
 import com.auxo.pos.domain.reports.ReportValue
 import com.auxo.pos.ui.LocalCapabilities
-import com.auxo.pos.ui.visibleCategories
+import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.LocalSuppliersEnabled
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.components.DateField
@@ -66,7 +65,7 @@ import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.format.DateFormats
 import com.auxo.pos.ui.format.LocalMoneyFormatter
-import com.auxo.pos.ui.screens.inventory.filterLabelRes
+import com.auxo.pos.ui.screens.more.label
 import com.auxo.pos.ui.screens.stock.labelRes
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.ReportsEvent
@@ -132,7 +131,7 @@ interface ReportsActions {
     fun onTypeChange(type: ReportType) = Unit
     fun onPresetChange(preset: PeriodPreset) = Unit
     fun onCustomRangeChange(from: LocalDate?, to: LocalDate?) = Unit
-    fun onCategoryChange(category: ProductCategory?) = Unit
+    fun onCategoryChange(categoryId: Long?) = Unit
     fun onSupplierChange(supplierId: Long?) = Unit
     fun onItemKindChange(kind: ItemKind) = Unit
     fun onExpiryWindowChange(window: ExpiryWindow) = Unit
@@ -166,7 +165,7 @@ fun ReportsScreen(
             override fun onTypeChange(type: ReportType) = viewModel.onTypeChange(type)
             override fun onPresetChange(preset: PeriodPreset) = viewModel.onPresetChange(preset)
             override fun onCustomRangeChange(from: LocalDate?, to: LocalDate?) = viewModel.onCustomRangeChange(from, to)
-            override fun onCategoryChange(category: ProductCategory?) = viewModel.onCategoryChange(category)
+            override fun onCategoryChange(categoryId: Long?) = viewModel.onCategoryChange(categoryId)
             override fun onSupplierChange(supplierId: Long?) = viewModel.onSupplierChange(supplierId)
             override fun onItemKindChange(kind: ItemKind) = viewModel.onItemKindChange(kind)
             override fun onExpiryWindowChange(window: ExpiryWindow) = viewModel.onExpiryWindowChange(window)
@@ -268,12 +267,13 @@ fun ReportsContent(
         }
         if (type.usesCategory) {
             ChipRow {
-                FilterChip(selected = filters.category == null, onClick = { actions.onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
-                visibleCategories().forEach { category ->
+                FilterChip(selected = filters.categoryId == null, onClick = { actions.onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
+                selectableCategories(alsoShow = filters.categoryId).forEach { row ->
                     FilterChip(
-                        selected = filters.category == category,
-                        onClick = { actions.onCategoryChange(category) },
-                        label = { Text(stringResource(category.filterLabelRes())) },
+                        selected = filters.categoryId == row.id,
+                        onClick = { actions.onCategoryChange(row.id) },
+                        label = { Text(row.label()) },
+                        modifier = Modifier.testTag("report_category_${row.id}"),
                     )
                 }
             }

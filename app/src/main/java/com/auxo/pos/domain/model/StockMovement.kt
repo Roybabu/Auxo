@@ -53,6 +53,8 @@ data class StockMovementRecord(
     val productName: String,
     val variantLabel: String,
     val category: ProductCategory,
+    /** The shop category the product is listed under; null when it has none. */
+    val categoryId: Long? = null,
     val stockUnit: StockUnit,
     val batchNumber: String?,
     /** Invoice, credit note or goods receipt number. */

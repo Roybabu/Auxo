@@ -274,8 +274,8 @@ object Reports {
     }
 
     /** Stock on hand and its value at cost and at selling price. */
-    fun stockValue(products: List<Product>, category: ProductCategory? = null): ReportTable {
-        val rows = products.filter { it.tracksStock && (category == null || it.category == category) }.flatMap { product ->
+    fun stockValue(products: List<Product>, categoryId: Long? = null): ReportTable {
+        val rows = products.filter { it.tracksStock && (categoryId == null || it.categoryId == categoryId) }.flatMap { product ->
             product.variants.map { variant ->
                 val unit = product.stockUnit
                 listOf(
@@ -328,9 +328,9 @@ object Reports {
     fun stockMovements(
         movements: List<StockMovementRecord>,
         reasons: Set<StockChangeReason> = emptySet(),
-        category: ProductCategory? = null,
+        categoryId: Long? = null,
     ): ReportTable {
-        val list = movements.filter { (reasons.isEmpty() || it.movement.reason in reasons) && (category == null || it.category == category) }
+        val list = movements.filter { (reasons.isEmpty() || it.movement.reason in reasons) && (categoryId == null || it.categoryId == categoryId) }
         return ReportTable(
             title = "Stock movements",
             columns = listOf(col("When"), col("Item"), col("Variant"), col("Reason"), col("Change", END), col("Batch"), col("Reference"), col("Note")),
@@ -350,8 +350,8 @@ object Reports {
     }
 
     /** Stock written off as expired, damaged or spoiled, with its value at cost. */
-    fun wastage(movements: List<StockMovementRecord>, category: ProductCategory? = null): ReportTable {
-        val list = movements.filter { it.movement.reason.isWastage && (category == null || it.category == category) }
+    fun wastage(movements: List<StockMovementRecord>, categoryId: Long? = null): ReportTable {
+        val list = movements.filter { it.movement.reason.isWastage && (categoryId == null || it.categoryId == categoryId) }
         val values = list.map { record -> record.valueAtCost?.let { Money(-it.minorUnits) } }
         return ReportTable(
             title = "Wastage",

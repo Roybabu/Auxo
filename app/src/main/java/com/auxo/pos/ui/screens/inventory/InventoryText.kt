@@ -34,16 +34,6 @@ fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.RESTAURANT -> R.string.category_restaurant
 }
 
-/** Plural label used on filter chips, e.g. "Garments". */
-@StringRes
-fun ProductCategory.filterLabelRes(): Int = when (this) {
-    ProductCategory.GARMENT -> R.string.filter_garments
-    ProductCategory.PACKAGED_FOOD -> R.string.filter_packaged_food
-    ProductCategory.BEVERAGE -> R.string.filter_beverages
-    ProductCategory.INGREDIENT -> R.string.filter_ingredients
-    ProductCategory.RESTAURANT -> R.string.filter_restaurant
-}
-
 @DrawableRes
 fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.drawable.ic_garment

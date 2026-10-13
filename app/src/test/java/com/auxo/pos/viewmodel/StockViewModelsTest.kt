@@ -142,7 +142,7 @@ class StockMovementsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.biscuits()))
+    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt().copy(categoryId = 1), TestData.biscuits().copy(categoryId = 2)))
 
     private suspend fun move(variantId: Long, change: Int, reason: StockChangeReason) =
         inventory.recordStockChange(StockMovement(variantId = variantId, quantityChange = change, reason = reason, createdAtMillis = TestData.clock.millis()))
@@ -164,7 +164,7 @@ class StockMovementsViewModelTest {
         viewModel.onGroupChange(MovementGroup.WASTAGE)
         assertEquals(listOf(StockChangeReason.DAMAGED), viewModel.uiState.value.movements.map { it.movement.reason })
         viewModel.onGroupChange(MovementGroup.ALL)
-        viewModel.onCategoryChange(ProductCategory.PACKAGED_FOOD)
+        viewModel.onCategoryChange(2)
         assertEquals(listOf("Butter Biscuits"), viewModel.uiState.value.movements.map { it.productName })
         viewModel.onCategoryChange(null)
         viewModel.onQueryChange("navy")

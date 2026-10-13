@@ -15,7 +15,6 @@ import com.auxo.pos.domain.inventory.ReorderPlanner
 import com.auxo.pos.domain.inventory.ReorderSuggestion
 import com.auxo.pos.domain.model.BatchWithProduct
 import com.auxo.pos.domain.model.Money
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockChangeReason
 import com.auxo.pos.domain.model.StockMovementRecord
 import com.auxo.pos.domain.model.Supplier
@@ -63,7 +62,7 @@ data class StockMovementsUiState(
     val loadFailed: Boolean = false,
     val range: HistoryRange = HistoryRange.LAST_7_DAYS,
     val group: MovementGroup = MovementGroup.ALL,
-    val category: ProductCategory? = null,
+    val categoryId: Long? = null,
     val query: String = "",
     val movements: List<StockMovementRecord> = emptyList(),
     /** Stock written off in the movements shown, at cost. */
@@ -79,7 +78,7 @@ sealed interface StockMovementsEvent {
 private data class MovementFilters(
     val range: HistoryRange = HistoryRange.LAST_7_DAYS,
     val group: MovementGroup = MovementGroup.ALL,
-    val category: ProductCategory? = null,
+    val categoryId: Long? = null,
     val query: String = "",
 )
 
@@ -100,12 +99,12 @@ class StockMovementsViewModel(
             val (from, to) = f.range.bounds(clock)
             inventory.observeMovementHistory(from, to)
                 .map { records ->
-                    val shown = filterMovements(records, f.group, f.category, f.query)
+                    val shown = filterMovements(records, f.group, f.categoryId, f.query)
                     StockMovementsUiState(
                         isLoading = false,
                         range = f.range,
                         group = f.group,
-                        category = f.category,
+                        categoryId = f.categoryId,
                         query = f.query,
                         movements = shown,
                         wastageValue = wastageValue(shown),
@@ -113,7 +112,7 @@ class StockMovementsViewModel(
                         outCount = shown.count { it.movement.quantityChange < 0 },
                     )
                 }
-                .catch { emit(StockMovementsUiState(isLoading = false, loadFailed = true, range = f.range, group = f.group, category = f.category, query = f.query)) }
+                .catch { emit(StockMovementsUiState(isLoading = false, loadFailed = true, range = f.range, group = f.group, categoryId = f.categoryId, query = f.query)) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), StockMovementsUiState())
 
@@ -121,7 +120,7 @@ class StockMovementsViewModel(
 
     fun onGroupChange(group: MovementGroup) = filters.update { it.copy(group = group) }
 
-    fun onCategoryChange(category: ProductCategory?) = filters.update { it.copy(category = category) }
+    fun onCategoryChange(categoryId: Long?) = filters.update { it.copy(categoryId = categoryId) }
 
     fun onQueryChange(query: String) = filters.update { it.copy(query = query.take(40)) }
 
@@ -140,13 +139,13 @@ class StockMovementsViewModel(
         fun filterMovements(
             records: List<StockMovementRecord>,
             group: MovementGroup,
-            category: ProductCategory?,
+            categoryId: Long?,
             query: String,
         ): List<StockMovementRecord> {
             val text = query.trim()
             return records.filter { record ->
                 (group == MovementGroup.ALL || record.movement.reason in group.reasons) &&
-                    (category == null || record.category == category) &&
+                    (categoryId == null || record.categoryId == categoryId) &&
                     (
                         text.isEmpty() ||
                             record.productName.contains(text, ignoreCase = true) ||

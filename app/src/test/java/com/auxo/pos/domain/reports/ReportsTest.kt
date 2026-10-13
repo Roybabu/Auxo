@@ -94,13 +94,13 @@ class ReportsTest {
 
     @Test
     fun stockValue_lowStock_andExpiry() {
-        val products = listOf(TestData.tShirt(), TestData.flour(grams = 2_500))
+        val products = listOf(TestData.tShirt().copy(categoryId = 1), TestData.flour(grams = 2_500).copy(categoryId = 4))
         val value = Reports.stockValue(products)
         val flourRow = value.rows.single { (it[0] as ReportValue.Text).value == "Wheat Flour" }
         assertEquals(ReportValue.Quantity(2_500, StockUnit.GRAM), flourRow[3])
         assertEquals(Money(11_250), amount(flourRow[4])) // 2.5 kg at ₹45/kg
         assertEquals(ReportValue.Empty, flourRow[5]) // ingredients have no selling value
-        assertEquals(1, Reports.stockValue(products, ProductCategory.INGREDIENT).rows.size)
+        assertEquals(1, Reports.stockValue(products, categoryId = 4).rows.size)
 
         val low = Reports.lowStock(listOf(TestData.tShirt().copy(preferredSupplierId = 3)), listOf(Supplier(id = 3, name = "Roy Textiles")))
         assertEquals(ReportValue.Text("Roy Textiles"), low.rows.single().last())
@@ -124,7 +124,7 @@ class ReportsTest {
     fun wastage_valuesWriteOffsAtCost_andIgnoresSales() {
         fun record(change: Int, reason: StockChangeReason, cost: Money?) = StockMovementRecord(
             movement = StockMovement(variantId = 41, quantityChange = change, reason = reason, createdAtMillis = 0),
-            productId = 4, productName = "Wheat Flour", variantLabel = "", category = ProductCategory.INGREDIENT,
+            productId = 4, productName = "Wheat Flour", variantLabel = "", category = ProductCategory.INGREDIENT, categoryId = 4,
             stockUnit = StockUnit.GRAM, batchNumber = "F1", reference = null, unitCost = cost,
         )
         val records = listOf(
@@ -139,6 +139,11 @@ class ReportsTest {
         assertEquals(ReportValue.Empty, table.rows[1][6]) // cost unknown
         assertEquals(Money(2_250), amount(table.totals!![6]))
         assertEquals(1, Reports.stockMovements(records, setOf(StockChangeReason.USED)).rows.size)
+        // A filter by shop category keeps only that category's records.
+        assertEquals(3, Reports.stockMovements(records, categoryId = 4).rows.size)
+        assertEquals(0, Reports.stockMovements(records, categoryId = 9).rows.size)
+        assertEquals(2, Reports.wastage(records, categoryId = 4).rows.size)
+        assertEquals(0, Reports.wastage(records, categoryId = 9).rows.size)
     }
 
     @Test

@@ -73,6 +73,23 @@ class CategoryProductsTest {
     }
 
     @Test
+    fun stockMovements_carryTheShopCategory_soReportsCanSeparateTwoOfTheSameKind() = runTest {
+        val categories = RoomCategoryRepository(database)
+        val inventory = RoomInventoryRepository(database, TestData.clock)
+        val sweets = (categories.addCategory("Sweets", ProductCategory.PACKAGED_FOOD) as CategoryResult.Done).id
+        val snacks = (categories.addCategory("Snacks", ProductCategory.PACKAGED_FOOD) as CategoryResult.Done).id
+        inventory.saveProduct(fresh(TestData.biscuits()).copy(name = "Laddoo", categoryId = sweets))
+        val chips = fresh(TestData.biscuits()).copy(name = "Chips", categoryId = snacks)
+        inventory.saveProduct(chips.copy(variants = chips.variants.map { it.copy(barcode = TestData.EAN[5]) }))
+
+        val history = inventory.observeMovementHistory(0, Long.MAX_VALUE).first()
+        assertEquals(setOf(sweets, snacks), history.map { it.categoryId }.toSet())
+        val onlySweets = com.auxo.pos.domain.reports.Reports.stockMovements(history, categoryId = sweets)
+        assertTrue(onlySweets.rows.isNotEmpty())
+        assertTrue(onlySweets.rows.all { (it[1] as com.auxo.pos.domain.reports.ReportValue.Text).value == "Laddoo" })
+    }
+
+    @Test
     fun aCustomCategory_keepsItsProducts_whenSwitchedOff_andTheyStillSell() = runTest {
         val categories = RoomCategoryRepository(database)
         val inventory = RoomInventoryRepository(database, TestData.clock)

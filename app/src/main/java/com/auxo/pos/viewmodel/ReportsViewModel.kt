@@ -70,7 +70,7 @@ data class ReportFilters(
     val preset: PeriodPreset = PeriodPreset.THIS_MONTH,
     val customFrom: LocalDate? = null,
     val customTo: LocalDate? = null,
-    val category: ProductCategory? = null,
+    val categoryId: Long? = null,
     val supplierId: Long? = null,
     val itemKind: ItemKind = ItemKind.ALL,
     val expiryWindow: ExpiryWindow = ExpiryWindow.WITHIN_30_DAYS,
@@ -125,7 +125,7 @@ class ReportsViewModel(
     fun onCustomRangeChange(from: LocalDate?, to: LocalDate?) =
         change { it.copy(preset = PeriodPreset.CUSTOM, customFrom = from, customTo = to) }
 
-    fun onCategoryChange(category: ProductCategory?) = change { it.copy(category = category) }
+    fun onCategoryChange(categoryId: Long?) = change { it.copy(categoryId = categoryId) }
 
     fun onSupplierChange(supplierId: Long?) = change { it.copy(supplierId = supplierId) }
 
@@ -195,9 +195,9 @@ class ReportsViewModel(
             ReportType.GST_RATES -> Reports.gstRates(billing.invoicesBetween(from, to))
             ReportType.HSN_SUMMARY -> Reports.hsnSummary(billing.invoicesBetween(from, to))
             ReportType.PURCHASES -> Reports.purchases(purchasing.observeReceipts(from, to).first(), filters.supplierId)
-            ReportType.STOCK_MOVEMENTS -> Reports.stockMovements(inventory.observeMovementHistory(from, to).first(), category = filters.category)
-            ReportType.WASTAGE -> Reports.wastage(inventory.observeMovementHistory(from, to).first(), filters.category)
-            ReportType.STOCK_VALUE -> Reports.stockValue(inventory.observeProducts().first(), filters.category)
+            ReportType.STOCK_MOVEMENTS -> Reports.stockMovements(inventory.observeMovementHistory(from, to).first(), categoryId = filters.categoryId)
+            ReportType.WASTAGE -> Reports.wastage(inventory.observeMovementHistory(from, to).first(), filters.categoryId)
+            ReportType.STOCK_VALUE -> Reports.stockValue(inventory.observeProducts().first(), filters.categoryId)
             ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), runCatching { purchasing.observeSuppliers().first() }.getOrDefault(emptyList()), withSupplier = shop?.suppliers?.value ?: true)
             ReportType.EXPIRY -> Reports.expiry(inventory.observeBatches().first(), today, filters.expiryWindow)
             ReportType.CUSTOMER_BALANCES -> Reports.customerBalances(customers.observeAccounts().first(), filters.onlyOutstanding)

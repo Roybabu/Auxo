@@ -72,11 +72,6 @@
     <string name="category_ingredient">উপকরণ</string>
     <string name="category_restaurant">রেস্তোরাঁ</string>
     <string name="filter_all">সব</string>
-    <string name="filter_garments">পোশাক</string>
-    <string name="filter_packaged_food">প্যাকেটজাত খাবার</string>
-    <string name="filter_beverages">পানীয়</string>
-    <string name="filter_ingredients">উপকরণ</string>
-    <string name="filter_restaurant">রেস্তোরাঁ</string>
     <string name="stock_filter_low">কম স্টক</string>
     <string name="stock_filter_out">স্টক শেষ</string>
     <string name="stock_filter_expiring">মেয়াদ শেষ হচ্ছে</string>

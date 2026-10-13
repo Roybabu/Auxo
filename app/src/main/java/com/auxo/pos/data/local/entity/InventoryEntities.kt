@@ -195,6 +195,7 @@ data class MovementRow(
     @ColumnInfo(name = "product_id") val productId: Long,
     @ColumnInfo(name = "product_name") val productName: String,
     val category: String,
+    @ColumnInfo(name = "category_id") val categoryId: Long?,
     @ColumnInfo(name = "stock_unit") val stockUnit: String?,
     val size: String?,
     val colour: String?,

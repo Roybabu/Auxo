@@ -72,11 +72,6 @@
     <string name="category_ingredient">Ingredient</string>
     <string name="category_restaurant">Restaurant</string>
     <string name="filter_all">All</string>
-    <string name="filter_garments">Garments</string>
-    <string name="filter_packaged_food">Packaged food</string>
-    <string name="filter_beverages">Beverages</string>
-    <string name="filter_ingredients">Ingredients</string>
-    <string name="filter_restaurant">Restaurant</string>
     <string name="stock_filter_low">Low stock</string>
     <string name="stock_filter_out">Out of stock</string>
     <string name="stock_filter_expiring">Expiring</string>

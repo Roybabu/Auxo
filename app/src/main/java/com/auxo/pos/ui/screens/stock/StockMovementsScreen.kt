@@ -35,10 +35,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.export.FileExport
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockMovementRecord
 import com.auxo.pos.ui.components.ActionIcon
-import com.auxo.pos.ui.visibleCategories
+import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.AuxoCard
@@ -50,7 +49,7 @@ import com.auxo.pos.ui.components.StatusChip
 import com.auxo.pos.ui.format.DateFormats
 import com.auxo.pos.ui.format.LocalMoneyFormatter
 import com.auxo.pos.ui.screens.billing.labelRes
-import com.auxo.pos.ui.screens.inventory.filterLabelRes
+import com.auxo.pos.ui.screens.more.label
 import com.auxo.pos.ui.screens.inventory.labelRes
 import com.auxo.pos.ui.theme.AuxoThemeExtras
 import com.auxo.pos.ui.theme.Spacing
@@ -125,7 +124,7 @@ fun StockMovementsContent(
     state: StockMovementsUiState,
     onRangeChange: (HistoryRange) -> Unit,
     onGroupChange: (MovementGroup) -> Unit,
-    onCategoryChange: (ProductCategory?) -> Unit,
+    onCategoryChange: (Long?) -> Unit,
     onQueryChange: (String) -> Unit,
     onRetry: () -> Unit,
     onOpenProduct: (Long) -> Unit,
@@ -157,12 +156,13 @@ fun StockMovementsContent(
                 }
             }
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                FilterChip(selected = state.category == null, onClick = { onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
-                visibleCategories().forEach { category ->
+                FilterChip(selected = state.categoryId == null, onClick = { onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
+                selectableCategories(alsoShow = state.categoryId).forEach { row ->
                     FilterChip(
-                        selected = state.category == category,
-                        onClick = { onCategoryChange(category) },
-                        label = { Text(stringResource(category.filterLabelRes())) },
+                        selected = state.categoryId == row.id,
+                        onClick = { onCategoryChange(row.id) },
+                        label = { Text(row.label()) },
+                        modifier = Modifier.testTag("movement_category_${row.id}"),
                     )
                 }
             }

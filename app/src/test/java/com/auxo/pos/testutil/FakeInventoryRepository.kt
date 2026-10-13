@@ -178,6 +178,7 @@ class FakeInventoryRepository(initial: List<Product> = emptyList()) : InventoryR
                         productName = product.name,
                         variantLabel = variant.attributesLabel,
                         category = product.category,
+                        categoryId = product.categoryId,
                         stockUnit = product.stockUnit,
                         batchNumber = null,
                         reference = null,

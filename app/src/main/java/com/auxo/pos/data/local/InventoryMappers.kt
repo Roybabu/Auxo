@@ -160,6 +160,7 @@ fun MovementRow.toDomain(): StockMovementRecord = StockMovementRecord(
     productName = productName,
     variantLabel = variantLabel(size, colour, netQuantityMilli, netQuantityUnit),
     category = enumValueOrNull<ProductCategory>(category) ?: ProductCategory.GARMENT,
+    categoryId = categoryId,
     stockUnit = stockUnitOf(stockUnit),
     batchNumber = batchNumberRef,
     reference = invoiceNumber ?: receiptNumber,

@@ -96,7 +96,8 @@ abstract class InventoryDao {
     abstract fun observeMovementsForProduct(productId: Long, limit: Int): Flow<List<StockMovementEntity>>
 
     @Query(
-        "SELECT m.*, p.id AS product_id, p.name AS product_name, p.category AS category, p.stock_unit AS stock_unit, " +
+        "SELECT m.*, p.id AS product_id, p.name AS product_name, p.category AS category, p.category_id AS category_id, " +
+            "p.stock_unit AS stock_unit, " +
             "v.size AS size, v.colour AS colour, v.net_quantity_milli AS net_quantity_milli, " +
             "v.net_quantity_unit AS net_quantity_unit, v.cost_minor AS cost_minor, " +
             "b.batch_number AS batch_number_ref, i.number AS invoice_number, r.number AS receipt_number " +
