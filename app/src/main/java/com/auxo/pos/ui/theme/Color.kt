@@ -49,4 +49,8 @@ val AuthMint = Color(0xFFD9F3E7)
 val AuthMintLight = Color(0xFFF0FBF6)
 val AuthDotIdle = Color(0xFFD5DEDA)
 val AuthCard = Color(0xFFFFFFFF)
+/** Two soft greens for the sign-in screens: the page behind, and the card on it. Light enough for dark text and the dark logo. */
+val AuthGreenPage = Color(0xFFBFE4CD)
+val AuthGreenPageDeep = Color(0xFFA2D5B7)
+val AuthGreenCard = Color(0xFFE3F5EA)
 val AuthAmber = Color(0xFFC77700)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +40,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
@@ -72,20 +75,33 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
-/** The code, large and in a fixed-width face, so it is easy to copy by hand. */
+/**
+ * The code, large and in a fixed-width face, so it is easy to copy by hand. It always stays on one line: the letters shrink
+ * to fit the card rather than wrapping, because a code split across two lines is easy to copy wrongly.
+ */
 @Composable
 internal fun RecoveryCodeCard(code: String, modifier: Modifier = Modifier) {
     AuxoCard(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = code,
-            style = MaterialTheme.typography.headlineSmall,
-            fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(Spacing.lg).testTag("recovery_code"),
-        )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.lg)) {
+            // A fixed-width letter is about 0.62 of its size wide, so this is the biggest size that fits the whole code.
+            val fitted = with(LocalDensity.current) { (maxWidth / (code.length.coerceAtLeast(1) * 0.62f)).toSp() }
+            Text(
+                text = code,
+                style = MaterialTheme.typography.headlineSmall,
+                fontSize = fitted.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE),
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                softWrap = false,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth().testTag("recovery_code"),
+            )
+        }
     }
 }
+
+private val MAX_CODE_SIZE = 24.sp
+private val MIN_CODE_SIZE = 10.sp
 
 @Composable
 private fun TypeCodeField(value: String, onChange: (String) -> Unit, onDone: () -> Unit, error: String?, enabled: Boolean) {

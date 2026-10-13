@@ -1,7 +1,10 @@
 package com.auxo.pos.ui
 
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -42,6 +45,23 @@ class RecoveryScreensTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    // The code card
+
+    @Test
+    fun theCode_staysOnOneLine_evenInANarrowCard() {
+        composeRule.setContent {
+            AuxoTheme {
+                androidx.compose.foundation.layout.Box(Modifier.width(260.dp)) {
+                    com.auxo.pos.ui.screens.auth.RecoveryCodeCard("SEL9U-GD96A-LWYSH-M7VLV")
+                }
+            }
+        }
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        composeRule.onNodeWithTag("recovery_code").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals(1, layouts.single().lineCount)
+        assertEquals("SEL9U-GD96A-LWYSH-M7VLV", layouts.single().layoutInput.text.text)
+    }
 
     // The gate
 

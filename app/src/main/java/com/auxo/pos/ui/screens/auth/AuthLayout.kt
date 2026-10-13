@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -34,8 +33,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
-import com.auxo.pos.ui.theme.AuthMint
-import com.auxo.pos.ui.theme.AuthMintLight
+import com.auxo.pos.ui.theme.AuthGreenCard
+import com.auxo.pos.ui.theme.AuthGreenPage
+import com.auxo.pos.ui.theme.AuthGreenPageDeep
 import com.auxo.pos.ui.theme.Spacing
 
 /** Width from which the brand sits beside the form instead of above it (tablets, phones on their side). */
@@ -63,7 +63,7 @@ private const val LOGO_ASPECT = 1050f / 342f
 fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val backdrop = if (dark) Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.background))
-    else Brush.verticalGradient(listOf(Color.White, AuthMintLight, AuthMint))
+    else Brush.verticalGradient(listOf(AuthGreenPage, AuthGreenPageDeep))
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(backdrop).testTag("auth_screen")) {
         if (maxWidth >= WIDE_LAYOUT_FROM) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -78,7 +78,7 @@ fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Column(
-                        modifier = Modifier.clip(RoundedCornerShape(36.dp)).background(Color.White).padding(32.dp),
+                        modifier = Modifier.clip(RoundedCornerShape(36.dp)).background(AuthGreenCard).padding(32.dp),
                     ) { BrandLogo(width = 320.dp) }
                 }
                 Column(
@@ -118,7 +118,7 @@ private fun FormCard(content: @Composable () -> Unit) {
     Surface(
         modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) MaterialTheme.colorScheme.surface else AuthGreenCard,
         shadowElevation = 6.dp,
     ) {
         Column(modifier = Modifier.padding(16.dp)) { content() }
