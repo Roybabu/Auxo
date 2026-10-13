@@ -88,7 +88,7 @@ internal fun RecoveryCodeCard(code: String, modifier: Modifier = Modifier) {
             Text(
                 text = code,
                 style = MaterialTheme.typography.headlineSmall,
-                fontSize = fitted.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE),
+                fontSize = fitted.value.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE).sp,
                 fontFamily = FontFamily.Monospace,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
@@ -100,8 +100,8 @@ internal fun RecoveryCodeCard(code: String, modifier: Modifier = Modifier) {
     }
 }
 
-private val MAX_CODE_SIZE = 24.sp
-private val MIN_CODE_SIZE = 10.sp
+private const val MAX_CODE_SIZE = 24f
+private const val MIN_CODE_SIZE = 10f
 
 @Composable
 private fun TypeCodeField(value: String, onChange: (String) -> Unit, onDone: () -> Unit, error: String?, enabled: Boolean) {
