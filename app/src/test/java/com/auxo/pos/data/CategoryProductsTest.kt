@@ -29,6 +29,7 @@ import com.auxo.pos.ui.screens.inventory.ProductEditorActions
 import com.auxo.pos.ui.screens.inventory.ProductEditorContent
 import com.auxo.pos.ui.theme.AuxoTheme
 import com.auxo.pos.viewmodel.ProductEditorUiState
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
