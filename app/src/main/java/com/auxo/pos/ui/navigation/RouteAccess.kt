@@ -51,6 +51,7 @@ object RouteAccess {
         MoreRoutes.SHOP_SETTINGS to Permission.MANAGE_SETTINGS,
         MoreRoutes.PRINTER to Permission.MANAGE_SETTINGS,
         MoreRoutes.STORE_DETAILS to Permission.MANAGE_SETTINGS,
+        MoreRoutes.CATEGORIES to Permission.MANAGE_SETTINGS,
         MoreRoutes.USER_MANAGEMENT to Permission.MANAGE_USERS,
         MoreRoutes.RECOVERY_CODE to Permission.MANAGE_USERS,
         MoreRoutes.ACTIVITY_LOG to Permission.VIEW_ACTIVITY_LOG,

@@ -360,7 +360,11 @@ fun AuxoNavHost(
                 ShopSettingsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
+                    onOpenCategories = { navController.navigate(MoreRoutes.CATEGORIES) },
                 )
+            }
+            guarded(navController, MoreRoutes.CATEGORIES) {
+                com.auxo.pos.ui.screens.more.CategoriesScreen(onBack = { navController.popBackStack() })
             }
             guarded(navController, MoreRoutes.PRINTER) {
                 com.auxo.pos.ui.screens.more.PrinterSettingsScreen(onBack = { navController.popBackStack() })

@@ -1696,4 +1696,25 @@ in %2$s</string>
     <string name="printer_result_write_failed">The connection to the printer dropped while printing. Check the paper and try again.</string>
     <string name="printer_result_unsupported">This paper size cannot be printed on a receipt printer. Choose a roll in the printer settings.</string>
     <string name="printer_result_render_failed">The receipt could not be prepared for the printer. Close other apps and try again.</string>
+
+    <string name="categories_title">Product categories</string>
+    <string name="categories_body">Choose what your shop sells. Switching a category off only stops it being offered for new products; its products, stock and bills are kept.</string>
+    <string name="categories_add">Add category</string>
+    <string name="categories_add_sub">Add subcategory</string>
+    <string name="categories_rename">Rename</string>
+    <string name="categories_rename_hint">Leave blank to use the standard name.</string>
+    <string name="categories_name">Name</string>
+    <string name="categories_works_like">Works like: %1$s</string>
+    <string name="categories_behaves_like">Behaves like</string>
+    <string name="categories_behaves_like_hint">This sets the details a product asks for, such as size and colour, weight or volume, expiry and stock.</string>
+    <string name="categories_delete_title">Delete %1$s?</string>
+    <string name="categories_delete_body">This category has no products. It will be removed from the list.</string>
+    <string name="categories_error_blank">Enter a name.</string>
+    <string name="categories_error_long">Use 40 characters or fewer.</string>
+    <string name="categories_error_taken">That name is already in use.</string>
+    <string name="categories_error_last">Keep at least one category that you sell in switched on.</string>
+    <string name="categories_error_in_use">Products still use this category. Switch it off instead.</string>
+    <string name="categories_error_built_in">Built-in categories can be switched off or renamed, but not deleted.</string>
+    <string name="categories_error_failed">That change could not be saved. Please try again.</string>
+    <string name="shop_categories_body">Choose the categories you sell in, rename them, add your own and list subcategories.</string>
 </resources>

@@ -34,10 +34,11 @@ import com.auxo.pos.viewmodel.ShopViewModel
 fun ShopSettingsScreen(
     onBack: () -> Unit,
     onOpenStoreDetails: () -> Unit,
+    onOpenCategories: () -> Unit = {},
     viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange, onOpenStoreDetails)
+    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories)
 }
 
 @Composable
@@ -47,6 +48,7 @@ fun ShopSettingsContent(
     onRestaurantMenuChange: (Boolean) -> Unit,
     onSuppliersChange: (Boolean) -> Unit = {},
     onOpenStoreDetails: () -> Unit = {},
+    onOpenCategories: () -> Unit = {},
 ) {
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
@@ -72,6 +74,18 @@ fun ShopSettingsContent(
                         Text(stringResource(R.string.store_details_title), style = MaterialTheme.typography.titleSmall)
                         Text(
                             stringResource(R.string.store_details_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            AuxoCard(onClick = onOpenCategories, modifier = Modifier.fillMaxWidth().testTag("shop_categories")) {
+                Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.categories_title), style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            stringResource(R.string.shop_categories_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

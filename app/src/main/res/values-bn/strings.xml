@@ -1696,4 +1696,25 @@
     <string name="printer_result_write_failed">প্রিন্ট চলার সময় প্রিন্টারের সংযোগ কেটে গেছে। কাগজ দেখে আবার চেষ্টা করুন।</string>
     <string name="printer_result_unsupported">এই কাগজের মাপে রসিদ প্রিন্টারে প্রিন্ট হয় না। প্রিন্টার সেটিংসে রোল বেছে নিন।</string>
     <string name="printer_result_render_failed">রসিদটি প্রিন্টারের জন্য তৈরি করা গেল না। অন্য অ্যাপ বন্ধ করে আবার চেষ্টা করুন।</string>
+
+    <string name="categories_title">পণ্যের বিভাগ</string>
+    <string name="categories_body">আপনার দোকান কী বিক্রি করে তা বেছে নিন। কোনো বিভাগ বন্ধ করলে শুধু নতুন পণ্যের জন্য তা আর দেখানো হয় না; তার পণ্য, স্টক ও বিল থেকে যায়।</string>
+    <string name="categories_add">বিভাগ যোগ করুন</string>
+    <string name="categories_add_sub">উপবিভাগ যোগ করুন</string>
+    <string name="categories_rename">নাম বদলান</string>
+    <string name="categories_rename_hint">সাধারণ নামের জন্য ফাঁকা রাখুন।</string>
+    <string name="categories_name">নাম</string>
+    <string name="categories_works_like">যেভাবে কাজ করে: %1$s</string>
+    <string name="categories_behaves_like">যার মতো আচরণ করবে</string>
+    <string name="categories_behaves_like_hint">এটি ঠিক করে পণ্যে কী তথ্য চাওয়া হবে, যেমন সাইজ ও রং, ওজন বা পরিমাণ, মেয়াদ ও স্টক।</string>
+    <string name="categories_delete_title">%1$s মুছবেন?</string>
+    <string name="categories_delete_body">এই বিভাগে কোনো পণ্য নেই। এটি তালিকা থেকে সরে যাবে।</string>
+    <string name="categories_error_blank">একটি নাম লিখুন।</string>
+    <string name="categories_error_long">৪০ অক্ষর বা তার কম রাখুন।</string>
+    <string name="categories_error_taken">এই নামটি আগেই ব্যবহার হচ্ছে।</string>
+    <string name="categories_error_last">অন্তত একটি বিক্রির বিভাগ চালু রাখুন।</string>
+    <string name="categories_error_in_use">এই বিভাগে এখনো পণ্য আছে। বরং এটি বন্ধ করুন।</string>
+    <string name="categories_error_built_in">তৈরি করা বিভাগ বন্ধ বা নাম বদলানো যায়, মোছা যায় না।</string>
+    <string name="categories_error_failed">পরিবর্তনটি সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="shop_categories_body">কোন বিভাগে বিক্রি করেন তা বেছে নিন, নাম বদলান, নিজের বিভাগ ও উপবিভাগ যোগ করুন।</string>
 </resources>
