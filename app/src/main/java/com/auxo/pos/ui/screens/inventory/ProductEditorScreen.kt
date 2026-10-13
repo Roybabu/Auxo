@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import com.auxo.pos.ui.components.ProductPhoto
+import com.auxo.pos.ui.visibleCategories
 import java.io.File
 import java.io.IOException
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -99,6 +101,9 @@ interface ProductEditorActions {
     fun onDescriptionChange(value: String)
     fun onMaterialChange(value: String)
     fun onDietTypeChange(dietType: DietType?)
+    fun onSubcategoryChange(value: String) = Unit
+    fun onAvailableChange(available: Boolean) = Unit
+    fun onTracksStockChange(tracks: Boolean) = Unit
     fun onGstChoiceChange(choice: GstChoice) = Unit
     fun onCustomGstRateChange(value: String) = Unit
     fun onHsnChange(value: String) = Unit
@@ -176,6 +181,9 @@ fun ProductEditorScreen(
             override fun onDescriptionChange(value: String) = viewModel.onDescriptionChange(value)
             override fun onMaterialChange(value: String) = viewModel.onMaterialChange(value)
             override fun onDietTypeChange(dietType: DietType?) = viewModel.onDietTypeChange(dietType)
+            override fun onSubcategoryChange(value: String) = viewModel.onSubcategoryChange(value)
+            override fun onAvailableChange(available: Boolean) = viewModel.onAvailableChange(available)
+            override fun onTracksStockChange(tracks: Boolean) = viewModel.onTracksStockChange(tracks)
             override fun onGstChoiceChange(choice: GstChoice) = viewModel.onGstChoiceChange(choice)
             override fun onCustomGstRateChange(value: String) = viewModel.onCustomGstRateChange(value)
             override fun onHsnChange(value: String) = viewModel.onHsnChange(value)
@@ -285,7 +293,7 @@ fun ProductEditorContent(
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     SectionHeader(stringResource(R.string.editor_category))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                        ProductCategory.entries.forEach { category ->
+                        visibleCategories().forEach { category ->
                             FilterChip(
                                 selected = form.category == category,
                                 onClick = { actions.onCategoryChange(category) },
@@ -303,12 +311,16 @@ fun ProductEditorContent(
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
 
+        if (form.category.canSkipStock) {
+            item(key = "restaurant") { RestaurantSection(form, errors, actions) }
+        }
+
         if (form.category.isSold) {
             item(key = "tax") { TaxSection(form, errors, actions) }
         }
 
         // Nothing to show here without suppliers unless the item can be counted in more than one unit.
-        if (suppliersEnabled || form.category.allowedStockUnits.size > 1) {
+        if (form.tracksStock && (suppliersEnabled || form.category.allowedStockUnits.size > 1)) {
             item(key = "purchasing") { PurchasingSection(form, uiState.suppliers, actions) }
         }
 
@@ -339,6 +351,7 @@ fun ProductEditorContent(
                 index = form.variants.indexOf(row),
                 category = form.category,
                 unit = form.stockUnit,
+                tracksStock = form.tracksStock,
                 errors = errors.forVariant(row.key),
                 canRemove = !form.category.usesSizeAndColour && form.variants.size > 1,
                 actions = actions,
@@ -455,7 +468,7 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            if (form.category == ProductCategory.PACKAGED_FOOD) {
+            if (form.category.usesDietType) {
                 Text(stringResource(R.string.editor_diet), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     listOf(null, DietType.VEG, DietType.NON_VEG).forEach { diet ->
@@ -478,6 +491,52 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
+}
+
+/** Menu section, whether the item can be billed, and whether it keeps a stock count. Restaurant items only. */
+@Composable
+private fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_restaurant")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            SectionHeader(stringResource(R.string.editor_restaurant))
+            AuxoTextField(
+                value = form.subcategory,
+                onValueChange = actions::onSubcategoryChange,
+                label = stringResource(R.string.editor_subcategory),
+                error = errors.fields[FormField.SUBCATEGORY]?.let { stringResource(it.messageRes()) },
+                supportingText = stringResource(R.string.editor_subcategory_hint),
+                capitalization = KeyboardCapitalization.Words,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("editor_subcategory"),
+            )
+            SwitchRow(
+                title = stringResource(R.string.editor_available),
+                body = stringResource(R.string.editor_available_hint),
+                checked = form.available,
+                onCheckedChange = actions::onAvailableChange,
+                modifier = Modifier.testTag("editor_available"),
+            )
+            SwitchRow(
+                title = stringResource(R.string.editor_track_stock),
+                body = stringResource(R.string.editor_track_stock_hint),
+                checked = form.tracksStock,
+                onCheckedChange = actions::onTracksStockChange,
+                modifier = Modifier.testTag("editor_track_stock"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -769,6 +828,7 @@ private fun VariantEditorCard(
     index: Int,
     category: ProductCategory,
     unit: StockUnit,
+    tracksStock: Boolean,
     errors: Map<VariantField, FieldError>,
     canRemove: Boolean,
     actions: ProductEditorActions,
@@ -784,6 +844,7 @@ private fun VariantEditorCard(
                 val title = when {
                     category.usesSizeAndColour -> listOf(row.size, row.colour).filter { it.isNotBlank() }.joinToString(" · ")
                     category.usesNetQuantity -> stringResource(R.string.editor_pack, index + 1)
+                    category == ProductCategory.RESTAURANT -> stringResource(R.string.editor_price_and_cost)
                     else -> stringResource(R.string.editor_stock_and_cost)
                 }
                 Text(text = title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -830,15 +891,17 @@ private fun VariantEditorCard(
                             .weight(1f)
                             .testTag("variant_price_$index"),
                     )
-                    AuxoTextField(
-                        value = row.mrp,
-                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
-                        label = stringResource(R.string.field_mrp),
-                        prefix = currency,
-                        error = errorFor(VariantField.MRP),
-                        keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier.weight(1f),
-                    )
+                    if (category != ProductCategory.RESTAURANT) {
+                        AuxoTextField(
+                            value = row.mrp,
+                            onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
+                            label = stringResource(R.string.field_mrp),
+                            prefix = currency,
+                            error = errorFor(VariantField.MRP),
+                            keyboardType = KeyboardType.Decimal,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
             // Quantities are typed in pieces, kg or L; ingredients may use up to 3 decimals.
@@ -863,26 +926,32 @@ private fun VariantEditorCard(
                         .weight(1f)
                         .testTag("variant_cost_$index"),
                 )
+                if (tracksStock) {
+                    AuxoTextField(
+                        value = row.lowStockThreshold,
+                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(lowStockThreshold = sanitizeQuantity(value)) } },
+                        label = quantityLabel(R.string.field_low_stock),
+                        error = errorFor(VariantField.LOW_STOCK),
+                        keyboardType = quantityKeyboard,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            if (tracksStock) {
                 AuxoTextField(
-                    value = row.lowStockThreshold,
-                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(lowStockThreshold = sanitizeQuantity(value)) } },
-                    label = quantityLabel(R.string.field_low_stock),
-                    error = errorFor(VariantField.LOW_STOCK),
+                    value = row.reorderQuantity,
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(reorderQuantity = sanitizeQuantity(value)) } },
+                    label = quantityLabel(R.string.field_reorder_quantity),
+                    error = errorFor(VariantField.REORDER),
+                    supportingText = stringResource(R.string.field_reorder_quantity_hint),
                     keyboardType = quantityKeyboard,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            AuxoTextField(
-                value = row.reorderQuantity,
-                onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(reorderQuantity = sanitizeQuantity(value)) } },
-                label = quantityLabel(R.string.field_reorder_quantity),
-                error = errorFor(VariantField.REORDER),
-                supportingText = stringResource(R.string.field_reorder_quantity_hint),
-                keyboardType = quantityKeyboard,
-                modifier = Modifier.fillMaxWidth(),
-            )
 
-            if (row.isSaved) {
+            if (!tracksStock) {
+                // Nothing to count: no stock figure to enter.
+            } else if (row.isSaved) {
                 Text(
                     text = stringResource(R.string.editor_stock_locked, unit.format(row.currentStock ?: 0)),
                     style = MaterialTheme.typography.bodySmall,
@@ -901,36 +970,39 @@ private fun VariantEditorCard(
                 )
             }
 
-            AuxoTextField(
-                value = row.barcode,
-                onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(barcode = value.trim().take(32)) } },
-                label = stringResource(R.string.field_barcode),
-                placeholder = stringResource(R.string.field_barcode_hint),
-                error = errorFor(VariantField.BARCODE),
-                supportingText = if (row.barcode.isBlank()) stringResource(R.string.field_barcode_hint) else null,
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Row {
-                        IconButton(onClick = { actions.onScanBarcode(key) }) {
-                            Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.action_scan))
+            // An item sold without a stock count needs no barcode or code; a barcode is made when it is saved.
+            if (tracksStock) {
+                AuxoTextField(
+                    value = row.barcode,
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(barcode = value.trim().take(32)) } },
+                    label = stringResource(R.string.field_barcode),
+                    placeholder = stringResource(R.string.field_barcode_hint),
+                    error = errorFor(VariantField.BARCODE),
+                    supportingText = if (row.barcode.isBlank()) stringResource(R.string.field_barcode_hint) else null,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        Row {
+                            IconButton(onClick = { actions.onScanBarcode(key) }) {
+                                Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.action_scan))
+                            }
+                            IconButton(onClick = { actions.onGenerateBarcode(key) }) {
+                                Icon(
+                                    painterResource(R.drawable.ic_autorenew),
+                                    contentDescription = stringResource(R.string.action_generate_barcode),
+                                )
+                            }
                         }
-                        IconButton(onClick = { actions.onGenerateBarcode(key) }) {
-                            Icon(
-                                painterResource(R.drawable.ic_autorenew),
-                                contentDescription = stringResource(R.string.action_generate_barcode),
-                            )
-                        }
-                    }
-                },
-            )
-            AuxoTextField(
-                value = row.sku,
-                onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sku = value.trim().take(32)) } },
-                label = stringResource(R.string.field_sku),
-                error = errorFor(VariantField.SKU),
-                capitalization = KeyboardCapitalization.Characters,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                    },
+                )
+                AuxoTextField(
+                    value = row.sku,
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sku = value.trim().take(32)) } },
+                    label = stringResource(R.string.field_sku),
+                    error = errorFor(VariantField.SKU),
+                    capitalization = KeyboardCapitalization.Characters,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             if (category.tracksExpiry && row.isSaved) {
                 Text(

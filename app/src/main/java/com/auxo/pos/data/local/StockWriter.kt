@@ -55,6 +55,9 @@ class StockWriter(private val dao: InventoryDao) {
         return batches.filter { it.expiryEpochDay == null || it.expiryEpochDay >= day }
     }
 
+    /** False for a restaurant item sold without a stock count: nothing is checked, taken or put back for it. */
+    suspend fun keepsStock(variantId: Long): Boolean = dao.variantStock(variantId)?.tracksStock ?: true
+
     /** Units of [variantId] that can be taken now; with [sellableOn], expired batches don't count. */
     suspend fun available(variantId: Long, sellableOn: LocalDate? = null): Int {
         val row = dao.variantStock(variantId) ?: return 0
@@ -150,6 +153,7 @@ class StockWriter(private val dao: InventoryDao) {
     suspend fun restoreFromSale(saleId: Long, variantId: Long, quantity: Int, info: MovementInfo) {
         require(quantity > 0) { "Quantity must be positive" }
         val row = dao.variantStock(variantId) ?: return
+        if (!row.tracksStock) return
         if (!isTracked(row)) {
             add(variantId, quantity, info)
             return

@@ -132,15 +132,28 @@ class ProductEditorViewModel(
         } else {
             listOf(VariantForm(key = newKey(), unit = category.defaultUnit, barcode = initialBarcode.orEmpty()))
         }
+        // The 5% a restaurant item starts with is a default, not a choice, so it does not follow the form to another category.
+        val carried = if (base.category == ProductCategory.RESTAURANT && base.gst == GstChoice.Standard(ProductCategory.RESTAURANT_GST_BASIS_POINTS)) GstChoice.NotSet else base.gst
         val gst = when {
-            base.gst is GstChoice.Apparel && category != ProductCategory.GARMENT -> GstChoice.NotSet
-            base.gst is GstChoice.NotSet -> GstChoice.defaultFor(category)
-            else -> base.gst
+            carried is GstChoice.Apparel && category != ProductCategory.GARMENT -> GstChoice.NotSet
+            carried is GstChoice.NotSet -> GstChoice.defaultFor(category)
+            else -> carried
+        }
+        // Restaurant items are billed under the service accounting code, which fills the code field until it is changed.
+        val hsnCode = when {
+            category == ProductCategory.RESTAURANT && base.hsnCode.isBlank() -> ProductCategory.RESTAURANT_SAC
+            category != ProductCategory.RESTAURANT && base.hsnCode == ProductCategory.RESTAURANT_SAC -> ""
+            else -> base.hsnCode
         }
         return base.copy(
             category = category,
             variants = variants,
-            dietType = base.dietType.takeIf { category == ProductCategory.PACKAGED_FOOD },
+            dietType = base.dietType.takeIf { category.usesDietType },
+            subcategory = if (category == ProductCategory.RESTAURANT) base.subcategory else "",
+            available = true,
+            // A restaurant item starts without a stock count; everything else always keeps one.
+            tracksStock = !category.canSkipStock,
+            hsnCode = hsnCode,
             gst = if (category.isSold) gst else GstChoice.NotSet,
             stockUnit = base.stockUnit.takeIf { it in category.allowedStockUnits } ?: category.allowedStockUnits.first(),
         )
@@ -174,6 +187,12 @@ class ProductEditorViewModel(
     fun onMaterialChange(value: String) = editForm { it.copy(material = value.take(ProductFormValidator.MATERIAL_MAX + 20)) }
 
     fun onDietTypeChange(dietType: DietType?) = editForm { it.copy(dietType = dietType) }
+
+    fun onSubcategoryChange(value: String) = editForm { it.copy(subcategory = value.take(ProductFormValidator.SUBCATEGORY_MAX + 10)) }
+
+    fun onAvailableChange(available: Boolean) = editForm { it.copy(available = available) }
+
+    fun onTracksStockChange(tracks: Boolean) = editForm { form -> if (form.category.canSkipStock) form.copy(tracksStock = tracks) else form }
 
     fun onGstChoiceChange(choice: GstChoice) = editForm { it.copy(gst = choice) }
 

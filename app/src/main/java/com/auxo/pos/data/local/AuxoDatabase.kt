@@ -15,7 +15,6 @@ import com.auxo.pos.data.local.dao.QuotationDao
 import com.auxo.pos.data.local.dao.BillingDao
 import com.auxo.pos.data.local.dao.CustomerDao
 import com.auxo.pos.data.local.dao.InventoryDao
-import com.auxo.pos.data.local.dao.MenuDao
 import com.auxo.pos.data.local.dao.OperationDao
 import com.auxo.pos.data.local.dao.PurchasingDao
 import com.auxo.pos.data.local.dao.StockCountDao
@@ -29,7 +28,6 @@ import com.auxo.pos.data.local.entity.InvoiceEntity
 import com.auxo.pos.data.local.entity.InvoiceLineEntity
 import com.auxo.pos.data.local.entity.LedgerEntryEntity
 import com.auxo.pos.data.local.entity.LoyaltySettingsEntity
-import com.auxo.pos.data.local.entity.MenuItemEntity
 import com.auxo.pos.data.local.entity.NumberSequenceEntity
 import com.auxo.pos.data.local.entity.PaymentEntity
 import com.auxo.pos.data.local.entity.ProductEntity
@@ -38,7 +36,6 @@ import com.auxo.pos.data.local.entity.PurchaseOrderEntity
 import com.auxo.pos.data.local.entity.PurchaseOrderLineEntity
 import com.auxo.pos.data.local.entity.PurchaseReceiptEntity
 import com.auxo.pos.data.local.entity.PurchaseReceiptLineEntity
-import com.auxo.pos.data.local.entity.RecipeLineEntity
 import com.auxo.pos.data.local.entity.StockBatchEntity
 import com.auxo.pos.data.local.entity.StockCountEntity
 import com.auxo.pos.data.local.entity.StockMovementEntity
@@ -70,6 +67,9 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  * 14. Stock counts: the stock_counts table. Written by hand ([MIGRATION_13_14]).
  * 15. Product photos: products.photo_file, the name of the photo file (null for existing products). Written by
  *     hand ([MIGRATION_14_15]).
+ * 16. The restaurant menu moves into products: products.subcategory, products.available and products.tracks_stock,
+ *     each menu dish becomes a Restaurant product, and the menu_items and recipe_lines tables are dropped. Written
+ *     by hand ([MIGRATION_15_16], see [DishMigration]).
  */
 @Database(
     entities = [
@@ -90,8 +90,6 @@ import com.auxo.pos.data.local.entity.SupplierEntity
         PurchaseReceiptLineEntity::class,
         CustomerEntity::class,
         LedgerEntryEntity::class,
-        MenuItemEntity::class,
-        RecipeLineEntity::class,
         AuditLogEntity::class,
         DayClosingEntity::class,
         LoyaltySettingsEntity::class,
@@ -117,8 +115,6 @@ abstract class AuxoDatabase : RoomDatabase() {
     abstract fun purchasingDao(): PurchasingDao
 
     abstract fun customerDao(): CustomerDao
-
-    abstract fun menuDao(): MenuDao
 
     abstract fun operationDao(): OperationDao
 
@@ -152,7 +148,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 15
+        const val VERSION = 16
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -256,10 +252,18 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Version 16: dishes become Restaurant products (see [DishMigration]). Existing products keep stock tracking
+         * and stay available, because the new columns default to on.
+         */
+        val MIGRATION_15_16: Migration = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) = DishMigration.run(db)
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }

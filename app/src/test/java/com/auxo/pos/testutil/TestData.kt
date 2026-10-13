@@ -122,6 +122,29 @@ object TestData {
         ),
     )
 
+    /** A restaurant dish: a product with one variant, no stock count, 5% GST. */
+    fun dish(
+        id: Long = 40,
+        name: String = "Masala Dosa",
+        price: Money = Money(12_000),
+        subcategory: String? = "Breakfast",
+        available: Boolean = true,
+        tracksStock: Boolean = false,
+        stock: Int = 0,
+    ) = Product(
+        id = id,
+        name = name,
+        category = ProductCategory.RESTAURANT,
+        hsnCode = ProductCategory.RESTAURANT_SAC,
+        gstRate = com.auxo.pos.domain.model.GstRate.Fixed(ProductCategory.RESTAURANT_GST_BASIS_POINTS),
+        subcategory = subcategory,
+        available = available,
+        tracksStock = tracksStock,
+        variants = listOf(
+            variant(id = id * 10 + 1, barcode = "DISH-$id", price = price.minorUnits, stock = stock, lowStock = 0),
+        ),
+    )
+
     fun juice(id: Long = 3, stock: Int = 0) = Product(
         id = id,
         name = "Mango Juice",

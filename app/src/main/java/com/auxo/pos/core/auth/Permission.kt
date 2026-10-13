@@ -54,7 +54,10 @@ enum class Permission {
     MANAGE_PURCHASES,
     RECEIVE_GOODS,
 
-    // Restaurant menu.
+    /**
+     * Managed the restaurant menu. Restaurant items are now products, managed with [MANAGE_PRODUCTS], so this is no
+     * longer offered or checked. It stays only so access settings saved earlier still load.
+     */
     MANAGE_MENU,
 
     // Settings and data.
@@ -89,7 +92,7 @@ enum class PermissionGroup(val permissions: List<Permission>) {
     INVENTORY(listOf(Permission.MANAGE_PRODUCTS, Permission.VIEW_STOCK_RECORDS, Permission.ADJUST_STOCK)),
     CUSTOMERS(listOf(Permission.MANAGE_CUSTOMERS, Permission.RECEIVE_ACCOUNT_PAYMENT)),
     PURCHASING(listOf(Permission.MANAGE_SUPPLIERS, Permission.MANAGE_PURCHASES, Permission.RECEIVE_GOODS)),
-    SHOP(listOf(Permission.MANAGE_MENU, Permission.MANAGE_SETTINGS, Permission.VIEW_ACTIVITY_LOG)),
+    SHOP(listOf(Permission.MANAGE_SETTINGS, Permission.VIEW_ACTIVITY_LOG)),
 }
 
 /**

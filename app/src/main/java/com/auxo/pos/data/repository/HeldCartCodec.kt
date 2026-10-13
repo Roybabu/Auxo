@@ -66,7 +66,6 @@ object HeldCartCodec {
         put("qty", line.quantity)
         line.discount?.let { put("discount", encodeDiscount(it)) }
         put("discountReason", line.discountReason)
-        line.menuItemId?.let { put("menuItemId", it) }
         put("custom", line.isCustom)
     }
 
@@ -83,10 +82,9 @@ object HeldCartCodec {
         quantity = o.getInt("qty"),
         discount = o.optJSONObject("discount")?.let(::decodeDiscount),
         discountReason = o.optString("discountReason", ""),
-        // Shop products are looked up again from the shop's stock when the bill is resumed; dishes and
-        // one-off items have no stock of their own.
-        availableStock = if (o.optBoolean("custom", false) || o.has("menuItemId")) CartLine.UNLIMITED else null,
-        menuItemId = if (o.has("menuItemId")) o.getLong("menuItemId") else null,
+        // Products are looked up again from the shop's stock when the bill is resumed; one-off items have
+        // no stock of their own.
+        availableStock = if (o.optBoolean("custom", false)) CartLine.UNLIMITED else null,
         isCustom = o.optBoolean("custom", false),
     )
 

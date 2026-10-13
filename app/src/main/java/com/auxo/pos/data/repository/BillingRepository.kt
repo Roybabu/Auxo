@@ -13,9 +13,6 @@ sealed interface SaleResult {
     /** Nothing was saved: these variants are missing or don't have enough unexpired stock. */
     data class StockShortage(val variantIds: Set<Long>) : SaleResult
 
-    /** Nothing was saved: dishes need more of these ingredients than are in stock. */
-    data class IngredientShortage(val variantIds: Set<Long>) : SaleResult
-
     /** Nothing was saved: the amount on account would go past the customer's credit limit. */
     data object CreditLimitExceeded : SaleResult
 

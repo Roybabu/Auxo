@@ -227,29 +227,29 @@ object InsightsBuilder {
 
     private fun ProductCategory?.toDepartment(): Department = when (this) {
         ProductCategory.GARMENT -> Department.GARMENTS
+        ProductCategory.RESTAURANT -> Department.RESTAURANT
         ProductCategory.PACKAGED_FOOD -> Department.PACKAGED_FOOD
         ProductCategory.BEVERAGE -> Department.BEVERAGES
         ProductCategory.INGREDIENT, null -> Department.OTHER
     }
 
     private fun topProducts(invoices: List<Invoice>): List<ProductRank> {
-        data class Key(val name: String, val dish: Boolean)
         class Totals(var quantity: Long = 0, var amount: Long = 0)
 
-        val totals = linkedMapOf<Key, Totals>()
+        val totals = linkedMapOf<String, Totals>()
         for (invoice in invoices) {
             val sign = sign(invoice)
             for (line in invoice.lines) {
-                val entry = totals.getOrPut(Key(line.productName, line.menuItemId != null)) { Totals() }
+                val entry = totals.getOrPut(line.productName) { Totals() }
                 entry.quantity += sign * line.quantity
                 entry.amount += sign * line.total.minorUnits
             }
         }
         return totals.entries
             .filter { it.value.quantity > 0 && it.value.amount > 0 }
-            .sortedWith(compareByDescending<Map.Entry<Key, Totals>> { it.value.amount }.thenBy { it.key.name.lowercase() })
+            .sortedWith(compareByDescending<Map.Entry<String, Totals>> { it.value.amount }.thenBy { it.key.lowercase() })
             .take(TOP_PRODUCTS)
-            .map { ProductRank(it.key.name, it.value.quantity, Money(it.value.amount)) }
+            .map { ProductRank(it.key, it.value.quantity, Money(it.value.amount)) }
     }
 }
 

@@ -192,4 +192,47 @@ class GarmentVariantsTest {
         assertEquals("4", updated[0].openingStock)
         assertEquals("", updated[1].openingStock)
     }
+
+    private fun dishForm(vararg rows: VariantForm) = ProductForm(
+        category = ProductCategory.RESTAURANT,
+        name = "Masala Dosa",
+        subcategory = "Breakfast",
+        tracksStock = false,
+        variants = rows.toList().ifEmpty { listOf(VariantForm(key = key(), sellingPrice = "120", openingStock = "9", lowStockThreshold = "3", reorderQuantity = "4")) },
+    )
+
+    @Test
+    fun aDish_needsOnlyANameAndAPrice_andIgnoresStockFigures() {
+        val product = (ProductFormValidator.validate(dishForm()) as ProductValidation.Valid).product
+        assertEquals(ProductCategory.RESTAURANT, product.category)
+        assertEquals("Breakfast", product.subcategory)
+        assertEquals(false, product.tracksStock)
+        assertTrue(product.available)
+        val variant = product.variants.single()
+        assertEquals(Money(12_000), variant.sellingPrice)
+        assertEquals(0, variant.stockQuantity)
+        assertEquals(0, variant.lowStockThreshold)
+        assertNull(variant.expiryDate)
+    }
+
+    @Test
+    fun aDishThatCountsStock_keepsItsOpeningStock() {
+        val product = (ProductFormValidator.validate(dishForm().copy(tracksStock = true)) as ProductValidation.Valid).product
+        assertEquals(true, product.tracksStock)
+        assertEquals(9, product.variants.single().stockQuantity)
+    }
+
+    @Test
+    fun aDish_needsAPrice_andAShortSubcategory() {
+        val noPrice = dishForm(VariantForm(key = key(), sellingPrice = ""))
+        assertTrue(errorsOf(noPrice).variants.values.any { it.isNotEmpty() })
+        assertEquals(FieldError.TOO_LONG, errorsOf(dishForm().copy(subcategory = "B".repeat(41))).fields[FormField.SUBCATEGORY])
+    }
+
+    @Test
+    fun otherCategories_alwaysCountStock_andHaveNoSubcategory() {
+        val product = (ProductFormValidator.validate(garmentForm().copy(tracksStock = false, subcategory = "Tops")) as ProductValidation.Valid).product
+        assertEquals(true, product.tracksStock)
+        assertNull(product.subcategory)
+    }
 }

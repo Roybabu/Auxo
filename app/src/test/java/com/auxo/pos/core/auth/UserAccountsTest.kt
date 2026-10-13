@@ -327,7 +327,7 @@ class UserAccountsTest {
 
     // Per-employee access
 
-    private val menuAndReturns = setOf(Permission.MANAGE_MENU, Permission.PROCESS_RETURN)
+    private val menuAndReturns = setOf(Permission.VIEW_ACTIVITY_LOG, Permission.PROCESS_RETURN)
 
     @Test
     fun anEmployee_createdWithExtras_getsThem_andKeepsThemAfterARestart() = runBlocking {
@@ -373,13 +373,13 @@ class UserAccountsTest {
         val owner = ownerWithEmployee()
         val employee = launch()
         employee.signIn("asha.k", EMPLOYEE_PW)
-        owner.setEmployeeAccess(2L, setOf(Permission.MANAGE_MENU))
+        owner.setEmployeeAccess(2L, setOf(Permission.VIEW_ACTIVITY_LOG))
         employee.revalidate()
-        assertTrue(Permission.MANAGE_MENU in (employee.state.value as AuthState.SignedIn).permissions)
+        assertTrue(Permission.VIEW_ACTIVITY_LOG in (employee.state.value as AuthState.SignedIn).permissions)
 
         owner.setEmployeeAccess(2L, emptySet())
         employee.revalidate()
-        assertFalse(Permission.MANAGE_MENU in (employee.state.value as AuthState.SignedIn).permissions)
+        assertFalse(Permission.VIEW_ACTIVITY_LOG in (employee.state.value as AuthState.SignedIn).permissions)
         assertTrue(employee.state.value is AuthState.SignedIn)
     }
 
@@ -400,7 +400,7 @@ class UserAccountsTest {
         ownerWithEmployee()
         val employee = launch()
         employee.signIn("asha.k", EMPLOYEE_PW)
-        assertEquals(UserChangeResult.Denied, employee.setEmployeeAccess(2L, setOf(Permission.MANAGE_MENU)))
+        assertEquals(UserChangeResult.Denied, employee.setEmployeeAccess(2L, setOf(Permission.VIEW_ACTIVITY_LOG)))
         assertEquals(RolePermissions.BASE, (employee.state.value as AuthState.SignedIn).permissions)
     }
 
@@ -448,13 +448,13 @@ class UserAccountsTest {
         val events = mutableListOf<AccountEvent>()
         val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { events += it })
         auth.setUpOwner()
-        auth.createEmployee("Asha K", "asha.k", EMPLOYEE_PW, EMPLOYEE_PW, setOf(Permission.MANAGE_MENU))
+        auth.createEmployee("Asha K", "asha.k", EMPLOYEE_PW, EMPLOYEE_PW, setOf(Permission.VIEW_ACTIVITY_LOG))
         auth.setEmployeeAccess(2L, emptySet())
         assertEquals(
             listOf(AccountEventKind.EMPLOYEE_CREATED, AccountEventKind.ACCESS_CHANGED, AccountEventKind.ACCESS_CHANGED),
             events.map { it.kind },
         )
-        assertEquals(setOf(Permission.MANAGE_MENU), events[1].granted)
+        assertEquals(setOf(Permission.VIEW_ACTIVITY_LOG), events[1].granted)
         assertEquals(emptySet<Permission>(), events[2].granted)
         assertEquals("Asha K", events[2].targetName)
     }

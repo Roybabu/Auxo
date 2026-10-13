@@ -238,7 +238,9 @@ class PurchaseOrderEditorViewModel(
         val productsJob = viewModelScope.launch {
             inventory.observeProducts()
                 .catch { _uiState.update { it.copy(loadFailed = true) } }
-                .collect { list ->
+                .collect { all ->
+                    // Restaurant items sold without a stock count are not bought or received.
+                    val list = all.filter { it.tracksStock }
                     products = list
                     _uiState.update { it.copy(picker = it.picker.copy(results = pickItems(list, it.picker.query) { true })) }
                 }
@@ -571,7 +573,9 @@ class ReceiveGoodsViewModel(
         val productsJob = viewModelScope.launch {
             inventory.observeProducts()
                 .catch { _uiState.update { it.copy(loadFailed = true) } }
-                .collect { list ->
+                .collect { all ->
+                    // Restaurant items sold without a stock count are not bought or received.
+                    val list = all.filter { it.tracksStock }
                     products = list
                     _uiState.update { it.copy(picker = it.picker.copy(results = pickItems(list, it.picker.query) { true })) }
                 }

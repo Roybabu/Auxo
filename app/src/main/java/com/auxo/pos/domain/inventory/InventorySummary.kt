@@ -65,6 +65,8 @@ object InventorySummaryCalculator {
         val alerts = mutableListOf<StockAlert>()
 
         for (product in products) {
+            // Restaurant items sold without a stock count have nothing to value or restock.
+            if (!product.tracksStock) continue
             for (variant in product.variants) {
                 val inStock = variant.stockQuantity.coerceAtLeast(0)
                 variant.costPrice?.let { valueAtCost += product.stockUnit.costOf(inStock, it) }

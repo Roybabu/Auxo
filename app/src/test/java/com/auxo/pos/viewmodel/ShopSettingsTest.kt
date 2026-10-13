@@ -14,12 +14,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.content.Context
 import com.auxo.pos.core.shop.SharedPrefsShopPreferences
 import com.auxo.pos.core.shop.ShopPreferences
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.usecase.CheckoutUseCase
 import com.auxo.pos.testutil.FakeBillingRepository
 import com.auxo.pos.testutil.FakeInventoryRepository
-import com.auxo.pos.testutil.FakeMenuRepository
 import com.auxo.pos.testutil.FakeSettingsRepository
 import com.auxo.pos.testutil.MainDispatcherRule
 import com.auxo.pos.testutil.TestData
@@ -70,7 +68,7 @@ class ShopSettingsTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val dosa = MenuItem(id = 5, name = "Masala Dosa", section = "Breakfast", price = Money(12_000))
+    private val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
 
     @Test
     fun theRestaurantMenu_isOffUntilTheShopTurnsItOn() {
@@ -113,31 +111,27 @@ class ShopSettingsTest {
     }
 
     @Test
-    fun billing_offersDishesOnlyWhileTheMenuIsOn() = runTest {
-        val inventory = FakeInventoryRepository(listOf(TestData.tShirt()))
+    fun billing_offersTheRestaurantQuickListOnlyWhileRestaurantModeIsOn() = runTest {
+        val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), dosa))
         val settings = FakeSettingsRepository()
         val prefs = FakeShopPreferences(initial = false)
         val viewModel = BillingViewModel(
             inventory = inventory,
             settingsRepository = settings,
             checkout = CheckoutUseCase(FakeBillingRepository(inventory), settings, TestData.clock),
-            menuRepository = FakeMenuRepository(listOf(dosa)),
             clock = TestData.clock,
             shop = prefs,
         )
         keepActive(viewModel.uiState)
 
-        assertTrue(viewModel.uiState.value.menu.isEmpty())
-        viewModel.onSearchTextChange("dosa")
-        assertTrue(viewModel.uiState.value.menuResults.isEmpty())
+        assertTrue(viewModel.uiState.value.quickItems.isEmpty())
 
         prefs.setRestaurantMenu(true)
-        assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.menu.map { it.name })
-        assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.menuResults.map { it.name })
+        assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.quickItems.map { it.product.name })
+        assertEquals(listOf("Breakfast"), viewModel.uiState.value.quickSections)
 
         prefs.setRestaurantMenu(false)
-        assertTrue(viewModel.uiState.value.menu.isEmpty())
-        assertTrue(viewModel.uiState.value.menuResults.isEmpty())
+        assertTrue(viewModel.uiState.value.quickItems.isEmpty())
     }
 
     @Test

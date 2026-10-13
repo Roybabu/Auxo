@@ -14,7 +14,6 @@ import com.auxo.pos.data.security.AuthorizedBackupService
 import com.auxo.pos.data.security.AuthorizedBillingRepository
 import com.auxo.pos.data.security.AuthorizedCustomerRepository
 import com.auxo.pos.data.security.AuthorizedInventoryRepository
-import com.auxo.pos.data.security.AuthorizedMenuRepository
 import com.auxo.pos.data.security.AuthorizedPurchasingRepository
 import com.auxo.pos.data.security.AuthorizedSettingsRepository
 import com.auxo.pos.data.security.AuthorizedShopPreferences
@@ -47,12 +46,10 @@ import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.InventoryRepository
-import com.auxo.pos.data.repository.MenuRepository
 import com.auxo.pos.data.repository.PurchasingRepository
 import com.auxo.pos.data.repository.RoomBillingRepository
 import com.auxo.pos.data.repository.RoomCustomerRepository
 import com.auxo.pos.data.repository.RoomInventoryRepository
-import com.auxo.pos.data.repository.RoomMenuRepository
 import com.auxo.pos.data.repository.RoomPurchasingRepository
 import com.auxo.pos.data.repository.RoomSettingsRepository
 import com.auxo.pos.data.repository.SettingsRepository
@@ -146,7 +143,6 @@ class AppContainer(context: Context) {
         com.auxo.pos.data.security.AuthorizedDayEndRepository(com.auxo.pos.data.repository.RoomDayEndRepository(database, clock), authorizer, auditTrail)
     }
 
-    val menuRepository: MenuRepository by lazy { AuthorizedMenuRepository(RoomMenuRepository(database, clock), authorizer, auditTrail) }
 
     val barcodeGenerator: InternalBarcodeGenerator by lazy { InternalBarcodeGenerator() }
 

@@ -15,12 +15,10 @@ import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.InventoryRepository
-import com.auxo.pos.data.repository.MenuRepository
 import com.auxo.pos.data.repository.PurchasingRepository
 import com.auxo.pos.data.repository.RoomBillingRepository
 import com.auxo.pos.data.repository.RoomCustomerRepository
 import com.auxo.pos.data.repository.RoomInventoryRepository
-import com.auxo.pos.data.repository.RoomMenuRepository
 import com.auxo.pos.data.repository.RoomPurchasingRepository
 import com.auxo.pos.data.repository.RoomSettingsRepository
 import com.auxo.pos.data.repository.SaleResult
@@ -30,7 +28,6 @@ import com.auxo.pos.data.repository.SettingsRepository
 import com.auxo.pos.data.security.AuthorizedBillingRepository
 import com.auxo.pos.data.security.AuthorizedCustomerRepository
 import com.auxo.pos.data.security.AuthorizedInventoryRepository
-import com.auxo.pos.data.security.AuthorizedMenuRepository
 import com.auxo.pos.data.security.AuthorizedPurchasingRepository
 import com.auxo.pos.data.security.AuthorizedSettingsRepository
 import com.auxo.pos.domain.billing.BillCalculator
@@ -42,7 +39,6 @@ import com.auxo.pos.domain.billing.SaleBuilder
 import com.auxo.pos.domain.billing.taxModeFor
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.Invoice
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
@@ -83,7 +79,6 @@ class PermissionEnforcementTest {
         val inventory: InventoryRepository,
         val customers: CustomerRepository,
         val purchasing: PurchasingRepository,
-        val menu: MenuRepository,
     )
 
     @Before
@@ -105,7 +100,6 @@ class PermissionEnforcementTest {
             AuthorizedInventoryRepository(RoomInventoryRepository(database, TestData.clock), auth, trail),
             AuthorizedCustomerRepository(RoomCustomerRepository(database, TestData.clock), auth, trail),
             AuthorizedPurchasingRepository(RoomPurchasingRepository(database, TestData.clock) { ZoneOffset.UTC }, auth, trail),
-            AuthorizedMenuRepository(RoomMenuRepository(database, TestData.clock), auth, trail),
         )
     }
 
@@ -116,7 +110,7 @@ class PermissionEnforcementTest {
     private val tables = listOf(
         "audit_log", "products", "product_variants", "stock_movements", "stock_batches", "invoices", "invoice_lines", "payments",
         "store_settings", "number_sequences", "suppliers", "purchase_orders", "purchase_receipts", "customers",
-        "customer_ledger", "menu_items", "applied_requests",
+        "customer_ledger", "applied_requests",
     )
 
     private fun snapshot() = tables.associateWith { count(database, it) }
@@ -172,13 +166,11 @@ class PermissionEnforcementTest {
     }
 
     @Test
-    fun anEmployee_canSearchProductsAndMenu_andReadSettingsForBilling() = runTest {
+    fun anEmployee_canSearchProducts_andReadSettingsForBilling() = runTest {
         val shirt = savedShirt()
-        admin.menu.saveItem(MenuItem(name = "Masala Dosa", section = "Mains", price = Money(9_000)))
         assertEquals(1, employee.inventory.observeProducts().first().size)
         assertNotNull(employee.inventory.getProduct(shirt.id))
         assertNotNull(employee.inventory.findByBarcode(shirt.variants[0].barcode))
-        assertEquals(1, employee.menu.observeMenu().first().size)
         employee.settings.getSettings()
         employee.settings.observeSettings().first()
     }
@@ -251,18 +243,13 @@ class PermissionEnforcementTest {
     }
 
     @Test
-    fun anEmployee_cannotChangeTheMenuSettingsOrAccountBalances() = runTest {
-        val dish = admin.menu.saveItem(MenuItem(name = "Masala Dosa", section = "Mains", price = Money(9_000)))
+    fun anEmployee_cannotChangeSettingsOrAccountBalances() = runTest {
         val customerId = (admin.customers.saveCustomer(Customer(name = "Anita Das", phone = "9830012345")) as SaveCustomerResult.Saved).customerId
         val before = snapshot()
-        denied(Permission.MANAGE_MENU) { employee.menu.saveItem(MenuItem(name = "New", section = "Mains", price = Money(100))) }
-        denied(Permission.MANAGE_MENU) { employee.menu.setAvailable(dish, false) }
-        denied(Permission.MANAGE_MENU) { employee.menu.deleteItem(dish) }
         denied(Permission.MANAGE_SETTINGS) { employee.settings.saveSettings(store.copy(storeName = "Hijacked")) }
         denied(Permission.RECEIVE_ACCOUNT_PAYMENT) { employee.customers.receivePayment(customerId, Money(100), PaymentMethod.CASH, null, null, "p1") }
         denied(Permission.MANAGE_CUSTOMERS) { employee.customers.observeLedger(customerId).first() }
         assertEquals(before, snapshot())
-        assertEquals(1, admin.menu.observeMenu().first().size)
     }
 
     // The Super Admin can do all of it
@@ -283,9 +270,6 @@ class PermissionEnforcementTest {
         admin.inventory.observeMovementHistory(0, Long.MAX_VALUE).first()
         admin.purchasing.saveSupplier(Supplier(name = "Acme"))
         assertEquals(1, admin.purchasing.observeSuppliers().first().size)
-        val dish = admin.menu.saveItem(MenuItem(name = "Masala Dosa", section = "Mains", price = Money(9_000)))
-        admin.menu.setAvailable(dish, false)
-        admin.menu.deleteItem(dish)
     }
 
     // Nobody signed in
@@ -313,16 +297,13 @@ class PermissionEnforcementTest {
         val movement = StockMovement(variantId = shirt.variants[0].id, quantityChange = 5, reason = StockChangeReason.RECEIVED, createdAtMillis = now)
         denied(Permission.ADJUST_STOCK) { staff.inventory.recordStockChange(movement) }
         denied(Permission.MANAGE_SUPPLIERS) { staff.purchasing.saveSupplier(Supplier(name = "Acme")) }
-        denied(Permission.MANAGE_MENU) { staff.menu.saveItem(MenuItem(name = "Dosa", section = "Mains", price = Money(9_000))) }
         denied(Permission.VIEW_FINANCIALS) { staff.billing.observeSalesTotals(0, Long.MAX_VALUE).first() }
     }
 
     @Test
-    fun anEmployee_givenTheMenuAndSuppliers_canUseJustThose() = runTest {
-        val staff = employeeWith(Permission.MANAGE_MENU, Permission.MANAGE_SUPPLIERS)
-        staff.menu.saveItem(MenuItem(name = "Masala Dosa", section = "Mains", price = Money(9_000)))
+    fun anEmployee_givenSuppliers_canUseJustThose() = runTest {
+        val staff = employeeWith(Permission.MANAGE_SUPPLIERS)
         staff.purchasing.saveSupplier(Supplier(name = "Acme"))
-        assertEquals(1, admin.menu.observeMenu().first().size)
         assertEquals(1, staff.purchasing.observeSuppliers().first().size)
         denied(Permission.MANAGE_PURCHASES) { staff.purchasing.observeOrders().first() }
         denied(Permission.MANAGE_PRODUCTS) { staff.inventory.deleteProduct(savedShirt().id) }

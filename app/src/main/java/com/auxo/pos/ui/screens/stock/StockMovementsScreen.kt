@@ -38,6 +38,7 @@ import com.auxo.pos.core.export.FileExport
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockMovementRecord
 import com.auxo.pos.ui.components.ActionIcon
+import com.auxo.pos.ui.visibleCategories
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.AuxoCard
@@ -157,7 +158,7 @@ fun StockMovementsContent(
             }
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 FilterChip(selected = state.category == null, onClick = { onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
-                ProductCategory.entries.forEach { category ->
+                visibleCategories().forEach { category ->
                     FilterChip(
                         selected = state.category == category,
                         onClick = { onCategoryChange(category) },

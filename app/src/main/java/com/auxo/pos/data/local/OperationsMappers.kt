@@ -5,21 +5,17 @@ import com.auxo.pos.data.local.entity.CustomerAccountRow
 import com.auxo.pos.data.local.entity.CustomerEntity
 import com.auxo.pos.data.local.entity.LedgerEntryEntity
 import com.auxo.pos.data.local.entity.LedgerEntryRow
-import com.auxo.pos.data.local.entity.MenuItemEntity
-import com.auxo.pos.data.local.entity.MenuItemWithRecipe
 import com.auxo.pos.data.local.entity.PurchaseOrderEntity
 import com.auxo.pos.data.local.entity.PurchaseOrderLineEntity
 import com.auxo.pos.data.local.entity.PurchaseOrderWithLines
 import com.auxo.pos.data.local.entity.PurchaseReceiptLineEntity
 import com.auxo.pos.data.local.entity.PurchaseReceiptWithLines
-import com.auxo.pos.data.local.entity.RecipeLineEntity
 import com.auxo.pos.data.local.entity.SupplierEntity
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.domain.model.DietType
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentKind
 import com.auxo.pos.domain.model.PaymentMethod
@@ -29,7 +25,6 @@ import com.auxo.pos.domain.model.PurchaseOrderLine
 import com.auxo.pos.domain.model.PurchaseOrderStatus
 import com.auxo.pos.domain.model.PurchaseReceipt
 import com.auxo.pos.domain.model.PurchaseReceiptLine
-import com.auxo.pos.domain.model.RecipeLine
 import com.auxo.pos.domain.model.Supplier
 import java.time.LocalDate
 
@@ -212,39 +207,3 @@ fun AccountPaymentRow.toPaymentRecord(): PaymentRecord = PaymentRecord(
     createdAtMillis = entry.createdAt,
     customerName = customerName,
 )
-
-// Menu
-
-fun MenuItemWithRecipe.toDomain(): MenuItem = MenuItem(
-    id = item.id,
-    name = item.name,
-    section = item.section,
-    description = item.description,
-    price = Money(item.priceMinor),
-    gstRateBasisPoints = item.gstRateBasisPoints,
-    sacCode = item.sacCode,
-    dietType = item.dietType?.let { enumValueOrNull<DietType>(it) },
-    available = item.available,
-    deductIngredients = item.deductIngredients,
-    sortOrder = item.sortOrder,
-    recipe = recipe.sortedBy { it.id }.map { RecipeLine(variantId = it.variantId, quantity = it.quantity) },
-)
-
-fun MenuItem.toEntity(nowMillis: Long, createdAtMillis: Long? = null): MenuItemEntity = MenuItemEntity(
-    id = id,
-    name = name,
-    section = section,
-    description = description,
-    priceMinor = price.minorUnits,
-    gstRateBasisPoints = gstRateBasisPoints,
-    sacCode = sacCode,
-    dietType = dietType?.name,
-    available = available,
-    deductIngredients = deductIngredients,
-    sortOrder = sortOrder,
-    createdAt = createdAtMillis ?: nowMillis,
-    updatedAt = nowMillis,
-)
-
-fun RecipeLine.toEntity(menuItemId: Long): RecipeLineEntity =
-    RecipeLineEntity(menuItemId = menuItemId, variantId = variantId, quantity = quantity)

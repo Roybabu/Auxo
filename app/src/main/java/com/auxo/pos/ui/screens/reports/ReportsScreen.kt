@@ -56,6 +56,7 @@ import com.auxo.pos.domain.reports.ReportTable
 import com.auxo.pos.domain.reports.ReportType
 import com.auxo.pos.domain.reports.ReportValue
 import com.auxo.pos.ui.LocalCapabilities
+import com.auxo.pos.ui.visibleCategories
 import com.auxo.pos.ui.LocalSuppliersEnabled
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.components.DateField
@@ -268,7 +269,7 @@ fun ReportsContent(
         if (type.usesCategory) {
             ChipRow {
                 FilterChip(selected = filters.category == null, onClick = { actions.onCategoryChange(null) }, label = { Text(stringResource(R.string.movements_all_items)) })
-                ProductCategory.entries.forEach { category ->
+                visibleCategories().forEach { category ->
                     FilterChip(
                         selected = filters.category == category,
                         onClick = { actions.onCategoryChange(category) },

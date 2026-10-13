@@ -36,7 +36,6 @@ object SaleBuilder {
         val lines = cart.lines.zip(totals.lines).map { (line, amounts) ->
             InvoiceLine(
                 variantId = line.stockVariantId,
-                menuItemId = line.menuItemId,
                 productName = line.productName,
                 variantLabel = line.variantLabel,
                 barcode = line.barcode,

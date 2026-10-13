@@ -12,7 +12,6 @@ import com.auxo.pos.domain.customers.AccountPaymentError
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
@@ -24,7 +23,6 @@ import com.auxo.pos.domain.usecase.ReceiveAccountPaymentUseCase
 import com.auxo.pos.testutil.FakeBillingRepository
 import com.auxo.pos.testutil.FakeCustomerRepository
 import com.auxo.pos.testutil.FakeInventoryRepository
-import com.auxo.pos.testutil.FakeMenuRepository
 import com.auxo.pos.testutil.FakePurchasingRepository
 import com.auxo.pos.testutil.FakeSettingsRepository
 import com.auxo.pos.testutil.MainDispatcherRule
@@ -47,6 +45,8 @@ class ReportsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
+    private val idli = TestData.dish(id = 6, name = "Idli", price = Money(6_000), available = false)
     private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.biscuits()))
     private val billing = FakeBillingRepository(inventory)
     private val purchasing = FakePurchasingRepository(inventory)
@@ -237,41 +237,41 @@ class BillingAccountsAndMenuTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.flour()))
+    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.flour(), dosa, idli))
     private val billing = FakeBillingRepository(inventory)
     private val settings = FakeSettingsRepository()
     private val anita = Customer(id = 1, name = "Anita Das", phone = "9830012345", creditLimit = Money(100_000))
     private val customers = FakeCustomerRepository(listOf(anita))
-    private val dosa = MenuItem(id = 5, name = "Masala Dosa", section = "Breakfast", price = Money(12_000))
-    private val menu = FakeMenuRepository(listOf(dosa, MenuItem(id = 6, name = "Idli", section = "Breakfast", price = Money(6_000), available = false)))
 
     private fun viewModel() = BillingViewModel(
         inventory = inventory,
         settingsRepository = settings,
         checkout = CheckoutUseCase(billing, settings, TestData.clock, customers),
         customers = customers,
-        menuRepository = menu,
         clock = TestData.clock,
     )
 
     @Test
-    fun dishes_canBeBilled_butIngredientsCant() = runTest {
+    fun dishes_canBeBilled_withoutStock_butIngredientsAndUnavailableOnesCant() = runTest {
         val viewModel = viewModel()
         val events = record(viewModel.events)
-        assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.menu.map { it.name })
-        assertEquals(1, viewModel.uiState.value.productCount) // flour is an ingredient
+        assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.quickItems.map { it.product.name })
+        assertEquals(3, viewModel.uiState.value.productCount) // flour is an ingredient
 
         viewModel.onSearchTextChange("flour")
         assertTrue(viewModel.uiState.value.searchResults.isEmpty())
         viewModel.onSearchTextChange("dosa")
-        viewModel.onSearchSubmitted()
-        viewModel.addMenuItem(dosa)
+        val result = viewModel.uiState.value.searchResults.single()
+        viewModel.addResult(result)
+        viewModel.addResult(result)
         val line = viewModel.uiState.value.cart.lines.single()
-        assertEquals(2, line.quantity)
-        assertEquals(dosa.id, line.menuItemId)
+        assertEquals(2, line.quantity) // no stock count, so nothing limits it
+        assertEquals(dosa.id, line.productId)
+        assertEquals("Breakfast", line.variantLabel)
         assertEquals(Money(24_000), viewModel.uiState.value.totals.grandTotal)
 
-        viewModel.addMenuItem(menu.items.value.first { it.name == "Idli" })
+        viewModel.onSearchTextChange("idli")
+        viewModel.addResult(viewModel.uiState.value.searchResults.single())
         assertEquals(BillingEvent.OutOfStock("Idli"), events.last())
     }
 

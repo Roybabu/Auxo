@@ -11,7 +11,7 @@ class KitchenOrdersTest {
     private fun line(key: Long, name: String, qty: Int, variant: String = "") = CartLine(
         variantId = key, productId = 0, productName = name, variantLabel = variant, barcode = "", hsnCode = null,
         unitPrice = Money(100_00), mrp = null, gstRate = GstRate.Fixed(500), quantity = qty,
-        availableStock = CartLine.UNLIMITED, menuItemId = -key,
+        availableStock = CartLine.UNLIMITED,
     )
 
     @Test

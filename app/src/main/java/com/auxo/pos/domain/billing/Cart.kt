@@ -2,21 +2,18 @@ package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.loyalty.LoyaltyRedemption
 import com.auxo.pos.domain.model.GstRate
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Product
+import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.ProductVariant
 import java.time.LocalDate
 
 /**
- * One line in the cart: a shop product variant or a restaurant dish, with the
- * details needed for the invoice.
+ * One line in the cart: a product variant (a garment, a packaged item or a restaurant item) or a one-off
+ * item typed in at the counter, with the details needed for the invoice.
  */
 data class CartLine(
-    /**
-     * Identifies the line. For shop products this is the variant id; for dishes it
-     * is minus the menu item id (see [forMenuItem]), so the two never clash.
-     */
+    /** Identifies the line: the variant id, or a negative key for a one-off item (see [CUSTOM_KEY_BASE]). */
     val variantId: Long,
     val productId: Long,
     val productName: String,
@@ -32,11 +29,9 @@ data class CartLine(
     val discountReason: String = "",
     /**
      * Units that can be sold right now, or null if the item no longer exists or
-     * can't be sold. Dishes have no stock limit of their own.
+     * can't be sold. An item sold without a stock count has no limit.
      */
     val availableStock: Int?,
-    /** Set for restaurant dishes. */
-    val menuItemId: Long? = null,
     /** A one-off item typed in at the counter: not in the shop's list, so no stock is tracked. */
     val isCustom: Boolean = false,
 ) {
@@ -46,14 +41,14 @@ data class CartLine(
     /** [wanted] kept within what can be sold. An item that cannot be sold at all is left as asked. */
     fun withinStock(wanted: Int): Int = if (availableStock == null) wanted else wanted.coerceAtMost(availableStock)
 
-    /** The inventory variant sold, or null for a dish. */
-    val stockVariantId: Long? get() = if (menuItemId == null && !isCustom) variantId else null
+    /** The inventory variant sold, or null for a one-off item. */
+    val stockVariantId: Long? get() = if (!isCustom) variantId else null
 
     companion object {
-        /** No stock limit for dishes; ingredients are checked when the sale is saved. */
+        /** No stock limit: one-off items and restaurant items sold without a stock count. */
         const val UNLIMITED = Int.MAX_VALUE
 
-        /** Custom item keys count down from here, far below any dish key. */
+        /** Custom item keys count down from here, far below any variant id. */
         const val CUSTOM_KEY_BASE: Long = -(1L shl 40)
 
         /** A one-off item that is not in the shop's list yet. [key] must come from [CUSTOM_KEY_BASE] downwards. */
@@ -72,40 +67,28 @@ data class CartLine(
             isCustom = true,
         )
 
-        /** Line key for a dish. */
-        fun keyForMenuItem(menuItemId: Long): Long = -menuItemId
-
         /**
-         * A shop product line. With [today], batch-tracked items can only sell
-         * stock that hasn't expired.
+         * A product line. With [today], batch-tracked items can only sell stock that hasn't expired. A restaurant
+         * item sold without a stock count has no limit, and is unavailable while it is switched off.
          */
         fun from(product: Product, variant: ProductVariant, quantity: Int = 1, today: LocalDate? = null) = CartLine(
             variantId = variant.id,
             productId = product.id,
             productName = product.name,
-            variantLabel = variant.attributesLabel,
+            // A restaurant item is shown under its menu section, as a dish was.
+            variantLabel = if (product.category == ProductCategory.RESTAURANT) product.subcategory.orEmpty() else variant.attributesLabel,
             barcode = variant.barcode,
             hsnCode = product.hsnCode,
             unitPrice = variant.sellingPrice,
             mrp = variant.mrp,
             gstRate = product.gstRate,
             quantity = quantity,
-            availableStock = if (today != null) variant.sellableQuantity(today) else variant.stockQuantity,
-        )
-
-        fun forMenuItem(item: MenuItem, quantity: Int = 1) = CartLine(
-            variantId = keyForMenuItem(item.id),
-            productId = 0,
-            productName = item.name,
-            variantLabel = item.section,
-            barcode = "",
-            hsnCode = item.sacCode,
-            unitPrice = item.price,
-            mrp = null,
-            gstRate = GstRate.Fixed(item.gstRateBasisPoints),
-            quantity = quantity,
-            availableStock = if (item.available) UNLIMITED else null,
-            menuItemId = item.id,
+            availableStock = when {
+                !product.available -> null
+                !product.tracksStock -> UNLIMITED
+                today != null -> variant.sellableQuantity(today)
+                else -> variant.stockQuantity
+            },
         )
     }
 }

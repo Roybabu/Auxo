@@ -89,7 +89,7 @@ data class InvoiceLine(
     val returnedQuantity: Int = 0,
     /** On a credit note: the sale line this return is for. */
     val originalLineId: Long? = null,
-    /** Set for restaurant dishes instead of [variantId]. */
+    /** Set on dish lines sold before the menu moved into products; those lines are linked to the product through [variantId] too. */
     val menuItemId: Long? = null,
     /** Why this line was discounted at the counter; null when it was not (a bill discount has its own reason). */
     val discountReason: String? = null,

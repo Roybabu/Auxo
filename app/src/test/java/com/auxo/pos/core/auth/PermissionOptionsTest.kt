@@ -21,14 +21,15 @@ class PermissionOptionsTest {
 
     @Test
     fun everyPermission_isEitherAnOption_aBasic_orSuperAdminOnly() {
-        val accounted = PermissionOptions.all.toSet() + RolePermissions.BASE + setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT)
+        val accounted = PermissionOptions.all.toSet() + RolePermissions.BASE + setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT, Permission.MANAGE_MENU)
         assertEquals(Permission.entries.toSet(), accounted)
     }
 
     @Test
     fun normalize_dropsWhatCanNeverBeGranted() {
-        val result = PermissionOptions.normalize(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_MENU))
-        assertEquals(setOf(Permission.MANAGE_MENU), result)
+        val result = PermissionOptions.normalize(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.MANAGE_MENU, Permission.VIEW_ACTIVITY_LOG))
+        // The retired menu permission can no longer be granted, even if an old setting still names it.
+        assertEquals(setOf(Permission.VIEW_ACTIVITY_LOG), result)
     }
 
     @Test
@@ -71,9 +72,9 @@ class PermissionOptionsTest {
 
     @Test
     fun anEmployee_holdsTheBasicsPlusWhatWasGranted_andNeverUserManagement() {
-        val granted = setOf(Permission.MANAGE_MENU, Permission.MANAGE_USERS)
+        val granted = setOf(Permission.VIEW_ACTIVITY_LOG, Permission.MANAGE_USERS)
         val held = RolePermissions.of(Role.EMPLOYEE, granted)
-        assertEquals(RolePermissions.BASE + Permission.MANAGE_MENU, held)
+        assertEquals(RolePermissions.BASE + Permission.VIEW_ACTIVITY_LOG, held)
         assertFalse(RolePermissions.allows(Role.EMPLOYEE, Permission.MANAGE_USERS, granted))
     }
 

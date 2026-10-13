@@ -196,6 +196,7 @@ fun ProductDetailContent(
                 variant = variant,
                 category = product.category,
                 unit = product.stockUnit,
+                tracksStock = product.tracksStock,
                 today = state.today,
                 onAdjustStock = { onAdjustStock(variant) },
             )
@@ -244,12 +245,17 @@ private fun ProductHeader(product: Product) {
                     text = stringResource(product.category.labelRes()),
                     tone = AuxoThemeExtras.statusColors.neutral,
                 )
-                StatusChip(text = stringResource(product.stockStatus.labelRes()), tone = product.stockStatus.tone())
+                if (product.tracksStock) {
+                    StatusChip(text = stringResource(product.stockStatus.labelRes()), tone = product.stockStatus.tone())
+                } else if (!product.available) {
+                    StatusChip(text = stringResource(R.string.menu_unavailable), tone = AuxoThemeExtras.statusColors.danger)
+                }
             }
             Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
             product.brand?.let { Text(stringResource(R.string.detail_brand, it), style = MaterialTheme.typography.bodyMedium) }
             product.material?.let { Text(stringResource(R.string.detail_material, it), style = MaterialTheme.typography.bodyMedium) }
-            if (product.category == ProductCategory.PACKAGED_FOOD) {
+            product.subcategory?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            if (product.category.usesDietType) {
                 Text(stringResource(product.dietType.labelRes()), style = MaterialTheme.typography.bodyMedium)
             }
             if (product.category.isSold) {
@@ -266,10 +272,12 @@ private fun ProductHeader(product: Product) {
             product.description?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(
-                text = stockText(product.stockUnit, product.totalStock),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            if (product.tracksStock) {
+                Text(
+                    text = stockText(product.stockUnit, product.totalStock),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
         }
     }
 }
@@ -279,6 +287,7 @@ private fun VariantCard(
     variant: ProductVariant,
     category: ProductCategory,
     unit: StockUnit,
+    tracksStock: Boolean,
     today: LocalDate,
     onAdjustStock: () -> Unit,
 ) {
@@ -293,6 +302,7 @@ private fun VariantCard(
                     modifier = Modifier.weight(1f),
                 )
                 when {
+                    !tracksStock -> Unit
                     variant.isExpired(today) -> StatusChip(stringResource(R.string.status_expired), status.danger)
                     variant.stockStatus == StockStatus.OUT_OF_STOCK ->
                         StatusChip(stringResource(R.string.stock_status_out), status.danger)
@@ -352,13 +362,15 @@ private fun VariantCard(
             if (category.tracksExpiry && variant.batches.isNotEmpty()) {
                 BatchList(variant = variant, unit = unit, today = today)
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stockText(unit, variant.stockQuantity),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                OutlinedButton(onClick = onAdjustStock) { Text(stringResource(R.string.action_adjust_stock)) }
+            if (tracksStock) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stockText(unit, variant.stockQuantity),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedButton(onClick = onAdjustStock) { Text(stringResource(R.string.action_adjust_stock)) }
+                }
             }
         }
     }

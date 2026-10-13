@@ -124,7 +124,9 @@ class StockCountViewModel(
     }
 
     val uiState: StateFlow<StockCountUiState> = combine(
-        combine(counts.observeOpen(), inventory.observeProducts()) { count, list ->
+        combine(counts.observeOpen(), inventory.observeProducts()) { count, all ->
+            // Restaurant items sold without a stock count have nothing to count.
+            val list = all.filter { it.tracksStock }
             products = list
             Loaded.Data(count, list) as Loaded
         }.catch { emit(Loaded.Failed) },

@@ -256,6 +256,17 @@ class InsightsBuilderTest {
     }
 
     @Test
+    fun restaurantProducts_areTheRestaurantDepartment() {
+        val bill = sale(shirt, 1, at(today))
+        val variantId = bill.lines.single().variantId!!
+        val insights = build(
+            InsightsPeriod.LAST_7_DAYS, listOf(bill),
+            categoryByVariant = mapOf(variantId to com.auxo.pos.domain.model.ProductCategory.RESTAURANT),
+        )
+        assertEquals(listOf(Department.RESTAURANT), insights.departments.map { it.department })
+    }
+
+    @Test
     fun topProducts_areRankedByNetSales_andReturnedOnesDropOut() {
         val shirts = sale(shirt, 3, at(today))
         val food = sale(biscuits, 1, at(today))

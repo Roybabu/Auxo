@@ -97,7 +97,7 @@ class AccessOptionsScreenTest {
         composeRule.onNodeWithTag("perm_RECEIVE_GOODS").assertIsOn()
         composeRule.onNodeWithTag("perm_MANAGE_PURCHASES").assertIsOn()
         composeRule.onNodeWithTag("perm_MANAGE_SUPPLIERS").assertIsOn()
-        composeRule.onNodeWithTag("perm_MANAGE_MENU").assertIsOff()
+        composeRule.onNodeWithTag("perm_VIEW_ACTIVITY_LOG").assertIsOff()
 
         composeRule.onNodeWithTag("perm_MANAGE_SUPPLIERS").performClick()
         composeRule.onNodeWithTag("perm_MANAGE_SUPPLIERS").assertIsOff()
@@ -114,12 +114,12 @@ class AccessOptionsScreenTest {
         composeRule.onNodeWithTag("employee_identifier").performTextInput("asha.k")
         composeRule.onNodeWithTag("employee_password").performTextInput(STAFF_PW)
         composeRule.onNodeWithTag("employee_confirm").performTextInput(STAFF_PW)
-        composeRule.onNodeWithTag("perm_MANAGE_MENU").performClick()
+        composeRule.onNodeWithTag("perm_VIEW_ACTIVITY_LOG").performClick()
         composeRule.onNodeWithTag("perm_PROCESS_RETURN").performClick()
         composeRule.onNodeWithTag("employee_create").performClick()
         waitFor("user_asha.k")
 
-        assertEquals(setOf(Permission.MANAGE_MENU, Permission.PROCESS_RETURN), grantedToAsha())
+        assertEquals(setOf(Permission.VIEW_ACTIVITY_LOG, Permission.PROCESS_RETURN), grantedToAsha())
         composeRule.onNodeWithTag("user_access_asha.k").assertIsDisplayed()
         auth.signOut()
         assertEquals(SignInResult.Success, runBlocking { auth.signIn("asha.k", STAFF_PW) })
@@ -168,17 +168,6 @@ class AccessOptionsScreenTest {
                 }
             }
         }
-    }
-
-    @Test
-    fun more_forAnEmployeeWithTheMenu_showsTheMenuAndNothingElseRestricted() {
-        moreFor(Permission.MANAGE_MENU)
-        composeRule.onNodeWithTag("more_list").assertIsDisplayed()
-        composeRule.onAllNodesWithTag("more_user_management").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("more_shop_settings").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("more_activity_log").assertCountEquals(0)
-        composeRule.onNodeWithTag("more_invoices").assertIsDisplayed()
-        assertTrue(composeRule.onAllNodesWithText("Restaurant menu").fetchSemanticsNodes().isNotEmpty())
     }
 
     @Test

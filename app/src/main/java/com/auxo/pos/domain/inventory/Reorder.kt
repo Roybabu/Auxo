@@ -56,7 +56,7 @@ object ReorderPlanner {
      * Variants that are out of stock or low (1 unit or fewer, or at or below the level set on the item).
      * Out-of-stock items come first, then by name.
      */
-    fun suggestions(products: List<Product>): List<ReorderSuggestion> = products.flatMap { product ->
+    fun suggestions(products: List<Product>): List<ReorderSuggestion> = products.filter { it.tracksStock }.flatMap { product ->
         product.variants
             .filter { it.needsRestock }
             .map { ReorderSuggestion(product, it, suggestedQuantity(it)) }

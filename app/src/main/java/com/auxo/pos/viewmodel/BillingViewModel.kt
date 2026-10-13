@@ -9,7 +9,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.InventoryRepository
-import com.auxo.pos.data.repository.MenuRepository
 import com.auxo.pos.data.repository.SaveCustomerResult
 import com.auxo.pos.data.repository.SettingsRepository
 import com.auxo.pos.domain.barcode.BarcodeCheck
@@ -56,10 +55,10 @@ import com.auxo.pos.domain.contacts.CustomerValidation
 import com.auxo.pos.domain.contacts.CustomerValidator
 import com.auxo.pos.domain.inventory.InventoryFilter
 import com.auxo.pos.domain.model.CustomerAccount
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.Product
+import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.ProductVariant
 import com.auxo.pos.domain.model.StoreSettings
 import com.auxo.pos.domain.usecase.CheckoutResult
@@ -101,12 +100,10 @@ data class BillingUiState(
     val showErrors: Boolean = false,
     val searchText: String = "",
     val searchResults: List<ProductSearchResult> = emptyList(),
-    /** Dishes matching the search. */
-    val menuResults: List<MenuItem> = emptyList(),
-    /** Available dishes, for quick adding when the store has a menu. */
-    val menu: List<MenuItem> = emptyList(),
-    /** Menu section shown in the quick-add card; null shows the first section. */
-    val menuSection: String? = null,
+    /** Available restaurant items, for quick adding in restaurant mode. */
+    val quickItems: List<ProductSearchResult> = emptyList(),
+    /** Subcategory shown in the quick-add card; null shows the first one. */
+    val quickSection: String? = null,
     val lineDiscounts: Map<Long, DiscountInput> = emptyMap(),
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
@@ -143,7 +140,7 @@ data class BillingUiState(
     val canHold: Boolean = false,
     /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
     val resumedHeldId: Long? = null,
-    /** True when the restaurant menu is on: dine-in or takeaway, a table and kitchen tickets are offered. */
+    /** True in restaurant mode: dine-in or takeaway, a table and kitchen tickets are offered. */
     val restaurantMode: Boolean = false,
     /** Set after "Place order" is pressed with the service or table missing, to show what is needed. */
     val orderShowErrors: Boolean = false,
@@ -188,8 +185,8 @@ data class BillingUiState(
     /** What the points being used take off. */
     val loyaltyDiscount: Money get() = totals.loyaltyDiscount
 
-    /** Menu sections with available dishes, in menu order. */
-    val menuSections: List<String> get() = menu.map { it.section }.distinct()
+    /** Subcategories that have available restaurant items; an empty name means no subcategory. */
+    val quickSections: List<String> get() = quickItems.map { it.product.subcategory.orEmpty() }.distinct()
 }
 
 enum class CustomerSaveError { NAME_REQUIRED, INVALID_PHONE, INVALID_DETAILS, PHONE_IN_USE, FAILED }
@@ -200,7 +197,6 @@ sealed interface BillingEvent {
     data class BarcodeNotFound(val barcode: String) : BillingEvent
     data object ScannerUnavailable : BillingEvent
     data object StockChanged : BillingEvent
-    data class IngredientsShort(val names: List<String>) : BillingEvent
     data object CreditLimitExceeded : BillingEvent
     data object CustomerMissing : BillingEvent
     data object LoyaltyUnavailable : BillingEvent
@@ -240,7 +236,6 @@ class BillingViewModel(
     private val settingsRepository: SettingsRepository,
     private val checkout: CheckoutUseCase,
     private val customers: CustomerRepository? = null,
-    private val menuRepository: MenuRepository? = null,
     private val clock: Clock = BusinessTime.clock(),
     private val billing: BillingRepository? = null,
     private val shop: com.auxo.pos.core.shop.ShopPreferences? = null,
@@ -261,12 +256,10 @@ class BillingViewModel(
 
     private var products: List<Product> = emptyList()
 
-    private var allMenu: List<MenuItem> = emptyList()
-    private var menuLoaded = false
     private var nextCustomKey = 0L
 
-    /** False when the shop has the restaurant menu switched off: no dishes are offered or found. */
-    private var menuEnabled = shop?.restaurantMenu?.value ?: true
+    /** False when restaurant mode is switched off: the quick-add card is not offered. */
+    private var restaurantEnabled = shop?.restaurantMenu?.value ?: true
     private var accounts: List<CustomerAccount> = emptyList()
     private var nextPaymentKey = 0
 
@@ -305,26 +298,10 @@ class BillingViewModel(
                             expiredItemCount = list.count { p -> p.category.isSold && p.variants.any { it.expiredQuantity(today) > 0 } },
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
+                            quickItems = quickItems(),
                         )
                     }
                 }
-        }
-        val menuJob = menuRepository?.let { repository ->
-            viewModelScope.launch {
-                repository.observeMenu()
-                    .catch { _uiState.update { it.copy(loadFailed = true) } }
-                    .collect { list ->
-                        allMenu = list
-                        menuLoaded = true
-                        recalculate { state ->
-                            state.copy(
-                                menu = if (menuEnabled) list.filter { it.available } else emptyList(),
-                                menuResults = searchMenu(state.searchText),
-                                cart = syncStock(state.cart),
-                            )
-                        }
-                    }
-            }
         }
         val customersJob = customers?.let { repository ->
             viewModelScope.launch {
@@ -350,14 +327,8 @@ class BillingViewModel(
         val shopJob = shop?.let { prefs ->
             viewModelScope.launch {
                 prefs.restaurantMenu.collect { enabled ->
-                    menuEnabled = enabled
-                    recalculate { state ->
-                        state.copy(
-                            restaurantMode = enabled,
-                            menu = if (enabled) allMenu.filter { it.available } else emptyList(),
-                            menuResults = searchMenu(state.searchText),
-                        )
-                    }
+                    restaurantEnabled = enabled
+                    recalculate { state -> state.copy(restaurantMode = enabled, quickItems = quickItems()) }
                 }
             }
         }
@@ -375,13 +346,13 @@ class BillingViewModel(
                     .collect { list -> _uiState.update { it.copy(quotations = list, canQuote = true) } }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, menuJob, shopJob, customersJob, loyaltyJob, heldJob, quotationJob)
+        loadJobs = listOfNotNull(settingsJob, productsJob, shopJob, customersJob, loyaltyJob, heldJob, quotationJob)
     }
 
     // Search and adding items
 
     fun onSearchTextChange(text: String) {
-        _uiState.update { it.copy(searchText = text, searchResults = search(text), menuResults = searchMenu(text)) }
+        _uiState.update { it.copy(searchText = text, searchResults = search(text)) }
     }
 
     /**
@@ -395,12 +366,11 @@ class BillingViewModel(
         val state = _uiState.value
         when {
             exact != null -> add(exact.first, exact.second, clearSearch = true)
-            state.searchResults.size == 1 && state.menuResults.isEmpty() -> {
+            state.searchResults.size == 1 -> {
                 val only = state.searchResults.single()
                 add(only.product, only.variant, clearSearch = true)
             }
-            state.menuResults.size == 1 && state.searchResults.isEmpty() -> addMenuItem(state.menuResults.single())
-            BarcodeRules.check(text) is BarcodeCheck.Valid && state.searchResults.isEmpty() && state.menuResults.isEmpty() ->
+            BarcodeRules.check(text) is BarcodeCheck.Valid && state.searchResults.isEmpty() ->
                 eventChannel.trySend(BillingEvent.BarcodeNotFound(text))
         }
     }
@@ -424,7 +394,7 @@ class BillingViewModel(
     private fun add(product: Product, variant: ProductVariant, clearSearch: Boolean) {
         val inCart = _uiState.value.cart.lines.firstOrNull { it.variantId == variant.id }?.quantity ?: 0
         val label = listOf(product.name, variant.attributesLabel).filter { it.isNotBlank() }.joinToString(" ")
-        val available = variant.sellableQuantity(today)
+        val available = product.sellableUnits(variant, today)
         when {
             available <= 0 -> {
                 eventChannel.trySend(BillingEvent.OutOfStock(label))
@@ -438,23 +408,6 @@ class BillingViewModel(
                 cart = state.cart.add(CartLine.from(product, variant, today = today)),
                 searchText = if (clearSearch) "" else state.searchText,
                 searchResults = if (clearSearch) emptyList() else state.searchResults,
-                menuResults = if (clearSearch) emptyList() else state.menuResults,
-            )
-        }
-    }
-
-    /** Adds one serving of a dish. */
-    fun addMenuItem(item: MenuItem) {
-        if (!item.available) {
-            eventChannel.trySend(BillingEvent.OutOfStock(item.name))
-            return
-        }
-        recalculate { state ->
-            state.copy(
-                cart = state.cart.add(CartLine.forMenuItem(item)),
-                searchText = "",
-                searchResults = emptyList(),
-                menuResults = emptyList(),
             )
         }
     }
@@ -467,9 +420,9 @@ class BillingViewModel(
         return true
     }
 
-    fun onMenuSectionChange(section: String?) = _uiState.update { it.copy(menuSection = section) }
+    fun onQuickSectionChange(section: String?) = _uiState.update { it.copy(quickSection = section) }
 
-    // Cart lines, keyed by CartLine.variantId (dishes use minus the menu item id)
+    // Cart lines, keyed by CartLine.variantId
 
     fun increment(lineKey: Long) {
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
@@ -623,8 +576,8 @@ class BillingViewModel(
                 loyaltyRules = it.loyaltyRules,
                 productsLoaded = it.productsLoaded,
                 productCount = it.productCount,
-                menu = it.menu,
-                menuSection = it.menuSection,
+                quickItems = it.quickItems,
+                quickSection = it.quickSection,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
                 restaurantMode = it.restaurantMode,
@@ -752,7 +705,7 @@ class BillingViewModel(
                 eventChannel.send(BillingEvent.QuotationUnavailable)
                 return@launch
             }
-            val repriced = QuotationRepricing.reprice(quotation.cart, products, allMenu)
+            val repriced = QuotationRepricing.reprice(quotation.cart, products)
             val account = repriced.cart.customer.customerId?.let { cid -> accounts.firstOrNull { it.customer.id == cid } }
             val customer = if (account == null) repriced.cart.customer.copy(customerId = null) else repriced.cart.customer
             val cart = repriced.cart.copy(customer = customer)
@@ -966,12 +919,6 @@ class BillingViewModel(
                     _uiState.update { it.copy(stage = BillingStage.CART, showErrors = true) }
                     eventChannel.send(BillingEvent.StockChanged)
                 }
-                is CheckoutResult.IngredientsShort -> {
-                    val names = products.flatMap { product -> product.variants.map { product to it } }
-                        .filter { (_, variant) -> variant.id in result.variantIds }
-                        .map { (product, variant) -> listOf(product.name, variant.attributesLabel).filter { it.isNotBlank() }.joinToString(" ") }
-                    eventChannel.send(BillingEvent.IngredientsShort(names))
-                }
                 is CheckoutResult.CartInvalid -> {
                     _uiState.update { it.copy(stage = BillingStage.CART, showErrors = true) }
                     eventChannel.send(BillingEvent.FixCart)
@@ -1048,22 +995,28 @@ class BillingViewModel(
         }
     }
 
-    /** Keeps cart stock figures current: deleted items and dishes taken off the menu become unavailable. */
+    /** Keeps cart stock figures current: deleted items and restaurant items switched off become unavailable. */
     private fun syncStock(cart: Cart): Cart {
         val day = today
-        val stock = products.flatMap { it.variants }.associate { it.id to it.sellableQuantity(day) }
-        val dishes = allMenu.associateBy { it.id }
-        return cart.copy(
-            lines = cart.lines.map { line ->
-                val menuItemId = line.menuItemId
-                when {
-                    line.isCustom -> line
-                    menuItemId == null -> line.copy(availableStock = stock[line.variantId])
-                    !menuLoaded -> line
-                    else -> line.copy(availableStock = if (dishes[menuItemId]?.available == true) CartLine.UNLIMITED else null)
+        val stock: Map<Long, Int?> = products.flatMap { product ->
+            product.variants.map { variant ->
+                variant.id to when {
+                    !product.available -> null
+                    !product.tracksStock -> CartLine.UNLIMITED
+                    else -> variant.sellableQuantity(day)
                 }
-            },
-        )
+            }
+        }.toMap()
+        return cart.copy(lines = cart.lines.map { line -> if (line.isCustom) line else line.copy(availableStock = stock[line.variantId]) })
+    }
+
+    /** Available restaurant items grouped by subcategory (items without one last), for the quick-add card. */
+    private fun quickItems(): List<ProductSearchResult> {
+        if (!restaurantEnabled) return emptyList()
+        return products
+            .filter { it.category == ProductCategory.RESTAURANT && it.available }
+            .sortedWith(compareBy({ it.subcategory.isNullOrBlank() }, { it.subcategory.orEmpty().lowercase() }, { it.name.lowercase() }))
+            .flatMap { product -> product.variants.map { ProductSearchResult(product, it) } }
     }
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
@@ -1090,16 +1043,7 @@ class BillingViewModel(
                 }
                 variants.map { ProductSearchResult(product, it) }
             }
-            .sortedWith(compareBy({ it.variant.sellableQuantity(day) <= 0 }, { it.product.name.lowercase() }))
-            .take(MAX_RESULTS)
-    }
-
-    private fun searchMenu(text: String): List<MenuItem> {
-        val query = text.trim()
-        if (query.isEmpty() || !menuEnabled) return emptyList()
-        return allMenu
-            .filter { it.name.contains(query, ignoreCase = true) || it.section.contains(query, ignoreCase = true) }
-            .sortedWith(compareBy({ !it.available }, { it.name.lowercase() }))
+            .sortedWith(compareBy({ it.product.sellableUnits(it.variant, day) <= 0 }, { it.product.name.lowercase() }))
             .take(MAX_RESULTS)
     }
 
@@ -1125,7 +1069,6 @@ class BillingViewModel(
                     settingsRepository = container.settingsRepository,
                     checkout = container.checkout,
                     customers = container.customerRepository,
-                    menuRepository = container.menuRepository,
                     clock = container.clock,
                     billing = container.billingRepository,
                     shop = container.shopPreferences,

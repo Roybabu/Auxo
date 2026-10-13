@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.data.local.AuxoDatabase
+import com.auxo.pos.data.local.DishMigration
 import com.auxo.pos.data.repository.ReturnResult
 import com.auxo.pos.data.repository.RoomBillingRepository
 import com.auxo.pos.data.repository.RoomInventoryRepository
@@ -28,6 +29,7 @@ import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.testutil.TestData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -450,5 +452,96 @@ class DatabaseMigrationTest {
             ),
         ) as com.auxo.pos.data.repository.SaveProductResult.Saved
         assertEquals(photoName, inventory.getProduct(saved.productId)!!.photoFile)
+    }
+
+    @Test
+    fun migrate15To16_movesDishesIntoProducts_relinksHistoryAndParkedBills_andDropsTheMenuTables() = runTest {
+        createFromSchema(15).also {
+            it.execSQL(
+                "INSERT INTO menu_items (id, name, section, description, price_minor, gst_rate_bp, sac_code, diet_type, available, deduct_ingredients, sort_order, created_at, updated_at) VALUES " +
+                    "(3, 'Masala Dosa', 'Breakfast', 'Crisp', 12000, 500, '996331', 'VEG', 1, 1, 0, 100, 200), " +
+                    "(4, 'Idli', ' ', NULL, 6000, 500, NULL, NULL, 0, 0, 1, 100, 200)",
+            )
+            it.execSQL("INSERT INTO recipe_lines (id, menu_item_id, variant_id, quantity) VALUES (1, 3, 1, 50)")
+            it.execSQL(
+                "INSERT INTO invoices (id, number, type, created_at, seller_name, seller_address, seller_phone, seller_gstin, seller_state_code, place_of_supply, " +
+                    "gst_registered, prices_include_tax, inter_state, subtotal_minor, discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor, round_off_minor, grand_total_minor, savings_minor) " +
+                    "VALUES (1, 'INV-1', 'SALE', 300, 'Shop', 'Addr', '9', '', '19', '19', 0, 1, 0, 12000, 0, 11429, 286, 285, 0, 0, 12000, 0)",
+            )
+            it.execSQL(
+                "INSERT INTO invoice_lines (id, invoice_id, variant_id, product_name, variant_label, barcode, hsn_code, quantity, unit_price_minor, mrp_minor, discount_minor, taxable_minor, " +
+                    "gst_rate_bp, cgst_minor, sgst_minor, igst_minor, total_minor, returned_quantity, original_line_id, menu_item_id, discount_reason) " +
+                    "VALUES (1, 1, NULL, 'Masala Dosa', '', '', '996331', 1, 12000, NULL, 0, 11429, 500, 286, 285, 0, 12000, 0, NULL, 3, NULL)",
+            )
+            val cart = """{"v":1,"lines":[
+                {"key":-3,"productId":0,"name":"Masala Dosa","variant":"","barcode":"","price":12000,"gst":"F500","qty":2,"discountReason":"","custom":false,"menuItemId":3},
+                {"key":-99,"productId":0,"name":"Gone","variant":"","barcode":"","price":1000,"gst":"F500","qty":1,"discountReason":"","custom":false,"menuItemId":99}
+                ],"billDiscountReason":"","customer":{"name":"","phone":"","gstin":""},"table":"T4"}""".replace("\n", "").replace("  ", "")
+            val kot = """[{"key":-3,"name":"Masala Dosa","variant":"","qty":2}]"""
+            it.execSQL(
+                "INSERT INTO held_bills (id, label, created_at, updated_at, item_count, total_minor, payload, service_type, table_number, kot_sent, kot_count) " +
+                    "VALUES (1, 'T4', 100, 100, 3, 25000, ?, 'DINE_IN', 'T4', ?, 1)",
+                arrayOf<Any?>(cart, kot),
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
+
+        // The tables are gone and the dishes are products.
+        val tables = db.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { c ->
+            generateSequence { if (c.moveToNext()) c.getString(0) else null }.toList()
+        }
+        assertFalse("menu_items" in tables)
+        assertFalse("recipe_lines" in tables)
+        val inventory = com.auxo.pos.data.repository.RoomInventoryRepository(db, TestData.clock)
+        val dishes = inventory.observeProducts().first().filter { it.category == com.auxo.pos.domain.model.ProductCategory.RESTAURANT }
+        assertEquals(setOf("Masala Dosa", "Idli"), dishes.map { it.name }.toSet())
+        val dosa = dishes.first { it.name == "Masala Dosa" }
+        assertEquals("Breakfast", dosa.subcategory)
+        assertEquals(com.auxo.pos.domain.model.GstRate.Fixed(500), dosa.gstRate)
+        assertEquals("996331", dosa.hsnCode)
+        assertFalse(dosa.tracksStock)
+        assertTrue(dosa.available)
+        assertEquals(com.auxo.pos.domain.model.Money(12_000), dosa.variants.single().sellingPrice)
+        assertEquals("DISH-3", dosa.variants.single().barcode)
+        val idli = dishes.first { it.name == "Idli" }
+        assertNull(idli.subcategory)
+        assertFalse(idli.available)
+
+        // History keeps its own copy of the line but now points at the product.
+        db.openHelper.readableDatabase.query("SELECT variant_id, product_name, unit_price_minor FROM invoice_lines WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals(dosa.variants.single().id, c.getLong(0))
+            assertEquals("Masala Dosa", c.getString(1))
+            assertEquals(12_000L, c.getLong(2))
+        }
+
+        // The parked bill opens: the dish is now an ordinary line, and a dish that no longer existed stays as a one-off item.
+        val held = db.openHelper.readableDatabase.query("SELECT payload, kot_sent FROM held_bills WHERE id = 1").use { c ->
+            c.moveToFirst()
+            c.getString(0) to c.getString(1)
+        }
+        val cart = com.auxo.pos.data.repository.HeldCartCodec.decode(held.first)!!
+        assertEquals(dosa.variants.single().id, cart.lines[0].variantId)
+        assertEquals(dosa.id, cart.lines[0].productId)
+        assertEquals("DISH-3", cart.lines[0].barcode)
+        assertTrue(cart.lines[1].isCustom)
+        assertEquals(listOf(dosa.variants.single().id), com.auxo.pos.data.repository.KitchenOrderCodec.decode(held.second).map { it.key })
+    }
+
+    @Test
+    fun dishMigration_repointsOnlyDishLines_andLeavesOtherTextAlone() {
+        val moved = mapOf(3L to DishMigration.Placement(productId = 70, variantId = 71))
+        val tickets = """[{"key":-3,"name":"Dosa","variant":"","qty":1},{"key":5,"name":"Shirt","variant":"M","qty":1},{"key":${-(1L shl 40) - 2},"name":"Gift wrap","variant":"","qty":1}]"""
+        val rewritten = JSONArray(DishMigration.repointTickets(tickets, moved))
+        assertEquals(71L, rewritten.getJSONObject(0).getLong("key"))
+        assertEquals(5L, rewritten.getJSONObject(1).getLong("key"))
+        assertEquals(-(1L shl 40) - 2, rewritten.getJSONObject(2).getLong("key"))
+        assertNull(DishMigration.repointTickets("""[{"key":5,"name":"Shirt","variant":"","qty":1}]""", moved))
+        assertNull(DishMigration.repointTickets("not json", moved))
+        assertNull(DishMigration.repointCart("""{"lines":[{"key":5}]}""", moved))
+        assertNull(DishMigration.repointCart("not json", moved))
     }
 }

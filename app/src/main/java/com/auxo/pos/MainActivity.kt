@@ -76,6 +76,7 @@ class MainActivity : FragmentActivity() {
             }
             val logo by container.storeLogoRepository.logo.collectAsStateWithLifecycle()
             val suppliers by shop.suppliers.collectAsStateWithLifecycle()
+            val restaurant by shop.restaurantMenu.collectAsStateWithLifecycle()
             // Settings may only be read by someone signed in, so nothing is read before sign-in (or if it is refused).
             val expiryDays by remember {
                 container.authRepository.state.flatMapLatest { auth ->
@@ -88,7 +89,7 @@ class MainActivity : FragmentActivity() {
                 }
             }.collectAsStateWithLifecycle(com.auxo.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
             AuxoTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.auxo.pos.ui.LocalProductPhotos provides container.productPhotos, com.auxo.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
+                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, com.auxo.pos.ui.LocalRestaurantEnabled provides restaurant, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.auxo.pos.ui.LocalProductPhotos provides container.productPhotos, com.auxo.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
                     val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
                     val lock by container.authRepository.lock.collectAsStateWithLifecycle()

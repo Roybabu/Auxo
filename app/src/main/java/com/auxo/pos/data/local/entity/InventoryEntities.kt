@@ -36,6 +36,12 @@ data class ProductEntity(
     @ColumnInfo(name = "preferred_supplier_id") val preferredSupplierId: Long? = null,
     /** File name of the product photo in the app's private photo folder. Added in version 15. */
     @ColumnInfo(name = "photo_file") val photoFile: String? = null,
+    /** Grouping inside the category, such as a restaurant menu section. Added in version 16. */
+    val subcategory: String? = null,
+    /** False takes the item off the counter without deleting it. Added in version 16. */
+    @ColumnInfo(defaultValue = "1") val available: Boolean = true,
+    /** False for a restaurant item sold without a stock count. Added in version 16. */
+    @ColumnInfo(name = "tracks_stock", defaultValue = "1") val tracksStock: Boolean = true,
 )
 
 @Entity(
@@ -163,6 +169,8 @@ data class VariantStockRow(
     val id: Long,
     val category: String,
     @ColumnInfo(name = "stock_quantity") val stockQuantity: Int,
+    /** False for a restaurant item sold without a stock count. */
+    @ColumnInfo(name = "tracks_stock") val tracksStock: Boolean = true,
 )
 
 /** Batch with its product, for expiry lists. */

@@ -2,7 +2,6 @@ package com.auxo.pos.testutil
 
 import com.auxo.pos.data.repository.AccountPaymentResult
 import com.auxo.pos.data.repository.CustomerRepository
-import com.auxo.pos.data.repository.MenuRepository
 import com.auxo.pos.data.repository.OrderUpdateResult
 import com.auxo.pos.data.repository.PurchasingRepository
 import com.auxo.pos.data.repository.ReceiveResult
@@ -13,7 +12,6 @@ import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.domain.model.InvoiceSummary
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
@@ -250,34 +248,6 @@ class FakeCustomerRepository(customers: List<Customer> = emptyList()) : Customer
                 customerName = list.firstOrNull { it.id == entry.customerId }?.name,
             )
         }
-    }
-}
-
-/** In-memory restaurant menu. */
-class FakeMenuRepository(items: List<MenuItem> = emptyList()) : MenuRepository {
-
-    val items = MutableStateFlow(items)
-    var failSaves = false
-    private var nextId = (items.maxOfOrNull { it.id } ?: 0L) + 1
-
-    override fun observeMenu(): Flow<List<MenuItem>> =
-        items.map { list -> list.sortedWith(compareBy({ it.section.lowercase() }, { it.sortOrder }, { it.name.lowercase() })) }
-
-    override suspend fun getItem(menuItemId: Long): MenuItem? = items.value.firstOrNull { it.id == menuItemId }
-
-    override suspend fun saveItem(item: MenuItem): Long {
-        if (failSaves) throw IOException("Simulated write failure")
-        val id = if (item.id == 0L) nextId++ else item.id
-        items.value = items.value.filterNot { it.id == id } + item.copy(id = id)
-        return id
-    }
-
-    override suspend fun setAvailable(menuItemId: Long, available: Boolean) {
-        items.value = items.value.map { if (it.id == menuItemId) it.copy(available = available) else it }
-    }
-
-    override suspend fun deleteItem(menuItemId: Long) {
-        items.value = items.value.filterNot { it.id == menuItemId }
     }
 }
 

@@ -105,8 +105,8 @@ object Reports {
         )
     }
 
-    /** Quantity and value sold per item, net of returns, best sellers first. */
-    fun itemSales(invoices: List<Invoice>, kind: ItemKind = ItemKind.ALL): ReportTable {
+    /** Quantity and value sold per item, net of returns, best sellers first. [restaurantVariantIds] tells dishes from other products. */
+    fun itemSales(invoices: List<Invoice>, kind: ItemKind = ItemKind.ALL, restaurantVariantIds: Set<Long> = emptySet()): ReportTable {
         data class Key(val name: String, val label: String, val dish: Boolean)
         data class Totals(var quantity: Long = 0, var taxable: Money = Money.ZERO, var total: Money = Money.ZERO)
 
@@ -114,7 +114,8 @@ object Reports {
         for (invoice in invoices) {
             val sign = if (invoice.type == InvoiceType.RETURN) -1 else 1
             for (line in invoice.lines) {
-                val dish = line.menuItemId != null
+                // Dishes sold before the menu moved into products carry the old menu link; newer ones are Restaurant products.
+                val dish = line.menuItemId != null || line.variantId in restaurantVariantIds
                 if (kind == ItemKind.PRODUCTS && dish || kind == ItemKind.DISHES && !dish) continue
                 val entry = totals.getOrPut(Key(line.productName, line.variantLabel, dish)) { Totals() }
                 entry.quantity += sign * line.quantity.toLong()
@@ -274,7 +275,7 @@ object Reports {
 
     /** Stock on hand and its value at cost and at selling price. */
     fun stockValue(products: List<Product>, category: ProductCategory? = null): ReportTable {
-        val rows = products.filter { category == null || it.category == category }.flatMap { product ->
+        val rows = products.filter { it.tracksStock && (category == null || it.category == category) }.flatMap { product ->
             product.variants.map { variant ->
                 val unit = product.stockUnit
                 listOf(
@@ -308,6 +309,7 @@ object Reports {
         ProductCategory.PACKAGED_FOOD -> "Packaged food"
         ProductCategory.BEVERAGE -> "Beverage"
         ProductCategory.INGREDIENT -> "Ingredient"
+        ProductCategory.RESTAURANT -> "Restaurant"
     }
 
     fun reasonName(reason: StockChangeReason): String = when (reason) {

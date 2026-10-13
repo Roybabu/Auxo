@@ -9,6 +9,19 @@ import androidx.compose.runtime.staticCompositionLocalOf
  */
 val LocalSuppliersEnabled = staticCompositionLocalOf { true }
 
+/**
+ * Whether the shop sells restaurant items (the Restaurant switch in Shop settings). The Restaurant category is only
+ * offered when it is on; products already in it are kept either way. On in tests that do not set it.
+ */
+val LocalRestaurantEnabled = staticCompositionLocalOf { true }
+
+/** The categories to offer in pickers and filters: Restaurant only while the shop has it switched on. */
+@androidx.compose.runtime.Composable
+fun visibleCategories(): List<com.auxo.pos.domain.model.ProductCategory> {
+    val restaurant = LocalRestaurantEnabled.current
+    return com.auxo.pos.domain.model.ProductCategory.entries.filter { restaurant || it != com.auxo.pos.domain.model.ProductCategory.RESTAURANT }
+}
+
 /** The shop's logo picture, or null when none was added. Home and the receipts use it. */
 val LocalStoreLogo = staticCompositionLocalOf<android.graphics.Bitmap?> { null }
 

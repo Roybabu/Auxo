@@ -80,6 +80,15 @@ data class Product(
     /** Null until set; GST-registered stores need it to bill the product. */
     val gstRate: GstRate? = null,
     val variants: List<ProductVariant> = emptyList(),
+    /** Optional grouping inside the category, such as "Starters" for a restaurant item. */
+    val subcategory: String? = null,
+    /** An unavailable item can't be added to a bill. Only restaurant items are ever switched off. */
+    val available: Boolean = true,
+    /**
+     * False for a restaurant item sold without a stock count: it is always sellable and takes no part in stock
+     * counts, alerts or movements. Every other category keeps stock.
+     */
+    val tracksStock: Boolean = true,
     /** How stock is counted; only ingredients use grams or millilitres. */
     val stockUnit: StockUnit = StockUnit.UNIT,
     /** Supplier that low-stock purchase orders go to by default. */
@@ -97,10 +106,21 @@ data class Product(
     /** Out of stock only when every variant is; low when any variant needs restocking. */
     val stockStatus: StockStatus
         get() = when {
+            !tracksStock -> StockStatus.IN_STOCK
             variants.all { it.stockStatus == StockStatus.OUT_OF_STOCK } -> StockStatus.OUT_OF_STOCK
             variants.any { it.stockStatus != StockStatus.IN_STOCK } -> StockStatus.LOW_STOCK
             else -> StockStatus.IN_STOCK
         }
+
+    /**
+     * Units of [variant] that can be sold on [today]: none while the item is switched off, no limit for an item sold
+     * without a stock count, otherwise the unexpired stock.
+     */
+    fun sellableUnits(variant: ProductVariant, today: LocalDate): Int = when {
+        !available -> 0
+        !tracksStock -> Int.MAX_VALUE
+        else -> variant.sellableQuantity(today)
+    }
 
     val lowestPrice: Money? get() = variants.minOfOrNull { it.sellingPrice }
 

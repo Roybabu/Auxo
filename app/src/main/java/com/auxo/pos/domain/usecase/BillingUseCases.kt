@@ -38,9 +38,6 @@ sealed interface CheckoutResult {
     /** Stock changed since the cart was built (or only expired stock is left); nothing was saved. */
     data class StockChanged(val variantIds: Set<Long>) : CheckoutResult
 
-    /** Dishes need more of these ingredients than are in stock; nothing was saved. */
-    data class IngredientsShort(val variantIds: Set<Long>) : CheckoutResult
-
     /** The amount on account is more than the customer's credit limit allows; nothing was saved. */
     data object CreditLimitExceeded : CheckoutResult
 
@@ -87,7 +84,6 @@ class CheckoutUseCase(
         return when (val result = billing.recordSale(invoice, store.invoicePrefix, requestId)) {
             is SaleResult.Recorded -> CheckoutResult.Completed(result.invoiceId, result.number, payments.change)
             is SaleResult.StockShortage -> CheckoutResult.StockChanged(result.variantIds)
-            is SaleResult.IngredientShortage -> CheckoutResult.IngredientsShort(result.variantIds)
             SaleResult.CreditLimitExceeded -> CheckoutResult.CreditLimitExceeded
             SaleResult.CustomerMissing -> CheckoutResult.CustomerMissing
             SaleResult.LoyaltyUnavailable -> CheckoutResult.LoyaltyUnavailable

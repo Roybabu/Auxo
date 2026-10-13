@@ -21,9 +21,6 @@ class StockShortageException(val variantIds: Set<Long>) : RuntimeException("Not 
 /** Thrown inside a return transaction to roll it back. */
 class ReturnQuantityException : RuntimeException("Return exceeds units sold")
 
-/** Thrown when a dish's recipe needs more of an ingredient than is in stock. */
-class IngredientShortageException(val variantIds: Set<Long>) : RuntimeException("Not enough ingredients")
-
 /** Thrown when a sale on account would take the customer past their credit limit. */
 class CreditLimitException : RuntimeException("Credit limit exceeded")
 

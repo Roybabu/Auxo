@@ -37,10 +37,11 @@ object InventoryFilter {
             .toList()
     }
 
-    /** Name, brand, size or colour contain the text; SKU or barcode match exactly or contain it. */
+    /** Name, brand, subcategory, size or colour contain the text; SKU or barcode match exactly or contain it. */
     fun matchesText(product: Product, text: String): Boolean {
         if (product.name.contains(text, ignoreCase = true)) return true
         if (product.brand?.contains(text, ignoreCase = true) == true) return true
+        if (product.subcategory?.contains(text, ignoreCase = true) == true) return true
         return product.variants.any { variant ->
             variant.barcode == text ||
                 variant.sku?.contains(text, ignoreCase = true) == true ||
@@ -50,11 +51,13 @@ object InventoryFilter {
     }
 
     private fun matchesStockFilter(product: Product, filter: StockFilter, today: LocalDate, warningDays: Long): Boolean =
-        when (filter) {
-            StockFilter.ALL -> true
-            StockFilter.LOW_STOCK -> product.variants.any { it.stockStatus == StockStatus.LOW_STOCK }
-            StockFilter.OUT_OF_STOCK -> product.variants.any { it.stockStatus == StockStatus.OUT_OF_STOCK }
-            StockFilter.EXPIRING_SOON -> product.variants.any {
+        when {
+            filter == StockFilter.ALL -> true
+            // An item sold without a stock count has no stock level or expiry to filter on.
+            !product.tracksStock -> false
+            filter == StockFilter.LOW_STOCK -> product.variants.any { it.stockStatus == StockStatus.LOW_STOCK }
+            filter == StockFilter.OUT_OF_STOCK -> product.variants.any { it.stockStatus == StockStatus.OUT_OF_STOCK }
+            else -> product.variants.any {
                 it.isExpired(today) || it.expiresWithin(today, warningDays)
             }
         }

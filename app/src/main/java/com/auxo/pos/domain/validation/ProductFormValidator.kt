@@ -40,7 +40,7 @@ enum class FieldError {
     INVALID_AMOUNT,
 }
 
-enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SIZES, COLOURS, VARIANTS, GST_RATE, HSN }
+enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SUBCATEGORY, SIZES, COLOURS, VARIANTS, GST_RATE, HSN }
 
 enum class VariantField {
     SIZE, COLOUR, NET_QUANTITY, UNIT, SELLING_PRICE, MRP, COST_PRICE,
@@ -75,6 +75,7 @@ object ProductFormValidator {
     const val BRAND_MAX = 60
     const val DESCRIPTION_MAX = 500
     const val MATERIAL_MAX = 60
+    const val SUBCATEGORY_MAX = 40
     const val SIZE_MAX = 12
     const val COLOUR_MAX = 30
     const val BATCH_MAX = 32
@@ -103,10 +104,13 @@ object ProductFormValidator {
         if (form.brand.trim().length > BRAND_MAX) fieldErrors[FormField.BRAND] = FieldError.TOO_LONG
         if (form.description.trim().length > DESCRIPTION_MAX) fieldErrors[FormField.DESCRIPTION] = FieldError.TOO_LONG
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
+        if (form.subcategory.trim().length > SUBCATEGORY_MAX) fieldErrors[FormField.SUBCATEGORY] = FieldError.TOO_LONG
 
         // Ingredients aren't sold, so they carry no GST or HSN.
         val sold = form.category.isSold
         val unit = form.stockUnit.takeIf { it in form.category.allowedStockUnits } ?: StockUnit.UNIT
+        // Only restaurant items can be sold without a stock count.
+        val tracksStock = !form.category.canSkipStock || form.tracksStock
 
         val gstRate: GstRate? = if (!sold) null else when (val choice = form.gst) {
             GstChoice.NotSet -> null
@@ -139,7 +143,7 @@ object ProductFormValidator {
 
         val validVariants = form.variants.mapNotNull { row ->
             val errors = mutableMapOf<VariantField, FieldError>()
-            val variant = validateVariant(form.category, unit, row, errors)
+            val variant = validateVariant(form.category, unit, tracksStock, row, errors)
             if (errors.isNotEmpty()) variantErrors[row.key] = errors
             variant
         }
@@ -157,10 +161,13 @@ object ProductFormValidator {
             category = form.category,
             description = form.description.trim().ifEmpty { null },
             material = if (form.category == ProductCategory.GARMENT) form.material.trim().ifEmpty { null } else null,
-            dietType = if (form.category == ProductCategory.PACKAGED_FOOD) form.dietType else null,
+            dietType = if (form.category.usesDietType) form.dietType else null,
             hsnCode = hsn.ifEmpty { null },
             gstRate = gstRate,
             variants = validVariants,
+            subcategory = form.subcategory.trim().ifEmpty { null }.takeIf { form.category == ProductCategory.RESTAURANT },
+            available = form.available || form.category != ProductCategory.RESTAURANT,
+            tracksStock = tracksStock,
             createdAtMillis = form.createdAtMillis,
             stockUnit = unit,
             preferredSupplierId = form.preferredSupplierId,
@@ -172,6 +179,7 @@ object ProductFormValidator {
     private fun validateVariant(
         category: ProductCategory,
         unit: StockUnit,
+        tracksStock: Boolean,
         row: VariantForm,
         errors: MutableMap<VariantField, FieldError>,
     ): ProductVariant? {
@@ -211,9 +219,10 @@ object ProductFormValidator {
         if (price != null && mrp != null && mrp < price) errors[VariantField.MRP] = FieldError.MRP_BELOW_PRICE
         val cost = optionalMoney(row.costPrice, VariantField.COST_PRICE, errors)
 
-        val openingStock = if (row.isSaved) 0 else optionalQuantity(row.openingStock, unit, VariantField.OPENING_STOCK, errors)
-        val lowStock = optionalQuantity(row.lowStockThreshold, unit, VariantField.LOW_STOCK, errors)
-        val reorder = optionalQuantity(row.reorderQuantity, unit, VariantField.REORDER, errors)
+        // Without a stock count there is nothing to open with, warn about or reorder.
+        val openingStock = if (row.isSaved || !tracksStock) 0 else optionalQuantity(row.openingStock, unit, VariantField.OPENING_STOCK, errors)
+        val lowStock = if (tracksStock) optionalQuantity(row.lowStockThreshold, unit, VariantField.LOW_STOCK, errors) else 0
+        val reorder = if (tracksStock) optionalQuantity(row.reorderQuantity, unit, VariantField.REORDER, errors) else 0
 
         val barcode = row.barcode.trim()
         if (barcode.isNotEmpty()) {

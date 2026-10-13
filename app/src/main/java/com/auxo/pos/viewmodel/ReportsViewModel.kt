@@ -184,7 +184,13 @@ class ReportsViewModel(
         val (from, to) = period.bounds(zone)
         return when (filters.type) {
             ReportType.SALES_SUMMARY -> Reports.salesSummary(billing.invoicesBetween(from, to), zone)
-            ReportType.ITEM_SALES -> Reports.itemSales(billing.invoicesBetween(from, to), filters.itemKind)
+            ReportType.ITEM_SALES -> {
+                val restaurantVariants = inventory.observeProducts().first()
+                    .filter { it.category == ProductCategory.RESTAURANT }
+                    .flatMap { product -> product.variants.map { it.id } }
+                    .toSet()
+                Reports.itemSales(billing.invoicesBetween(from, to), filters.itemKind, restaurantVariants)
+            }
             ReportType.COLLECTIONS -> Reports.collections(billing.invoicesBetween(from, to), customers.observeAccountPayments(from, to).first())
             ReportType.GST_RATES -> Reports.gstRates(billing.invoicesBetween(from, to))
             ReportType.HSN_SUMMARY -> Reports.hsnSummary(billing.invoicesBetween(from, to))

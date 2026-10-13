@@ -71,7 +71,7 @@ class HeldBillRepositoryTest {
                     discount = Discount.Percent(1_250), discountReason = "Festival", availableStock = 5,
                 ),
                 custom.copy(discount = Discount.Amount(Money(10_00)), discountReason = "Goodwill"),
-                CartLine.forMenuItem(com.auxo.pos.domain.model.MenuItem(id = 4, name = "Masala Dosa", section = "Breakfast", price = Money(90_00), gstRateBasisPoints = 500), 2),
+                TestData.dish(id = 4, price = Money(90_00)).let { CartLine.from(it, it.variants.single(), 2) },
             ),
             billDiscount = Discount.Amount(Money(25_00)),
             billDiscountReason = "Regular customer",
@@ -80,11 +80,11 @@ class HeldBillRepositoryTest {
         )
         val back = HeldCartCodec.decode(HeldCartCodec.encode(cart))!!
         // Stock figures are looked up again on resume; everything else must match.
-        val expected = cart.copy(lines = cart.lines.map { if (it.isCustom || it.menuItemId != null) it else it.copy(availableStock = null) })
+        val expected = cart.copy(lines = cart.lines.map { if (it.isCustom) it else it.copy(availableStock = null) })
         assertEquals(expected.copy(lines = emptyList()), back.copy(lines = emptyList()))
         assertEquals(expected.lines.map { it.copy(availableStock = null) }, back.lines.map { it.copy(availableStock = null) })
         assertEquals(CartLine.UNLIMITED, back.lines[1].availableStock)
-        assertEquals(CartLine.UNLIMITED, back.lines[2].availableStock)
+        assertNull(back.lines[2].availableStock)
         assertNull(back.lines[0].availableStock)
     }
 

@@ -1,6 +1,5 @@
 package com.auxo.pos.domain.billing
 
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Product
 import java.time.LocalDate
@@ -54,17 +53,15 @@ object QuotationRepricing {
 
     /**
      * Prices every line of a saved quotation at today's selling price, MRP and tax rate before it becomes a
-     * bill. Quantities and discounts are kept. Lines whose product or dish no longer exists are left as they
+     * bill. Quantities and discounts are kept. Lines whose product no longer exists are left as they
      * were; the stock check then marks them unavailable. One-off items keep their typed price.
      */
-    fun reprice(cart: Cart, products: List<Product>, menu: List<MenuItem>): Repriced {
+    fun reprice(cart: Cart, products: List<Product>): Repriced {
         val variants = products.flatMap { product -> product.variants.map { product to it } }.associateBy { it.second.id }
-        val dishes = menu.associateBy { it.id }
         val changed = mutableListOf<String>()
         val lines = cart.lines.map { line ->
             val now = when {
                 line.isCustom -> null
-                line.menuItemId != null -> dishes[line.menuItemId]?.let { CartLine.forMenuItem(it, line.quantity) }
                 else -> variants[line.variantId]?.let { (product, variant) -> CartLine.from(product, variant, line.quantity) }
             }
             if (now == null) {

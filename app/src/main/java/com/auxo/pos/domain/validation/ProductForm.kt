@@ -78,6 +78,12 @@ data class ProductForm(
     val description: String = "",
     val material: String = "",
     val dietType: DietType? = null,
+    /** Grouping inside the category, such as a menu section; restaurant items only. */
+    val subcategory: String = "",
+    /** Whether the item can be added to a bill; restaurant items only. */
+    val available: Boolean = true,
+    /** False sells the item without a stock count; only restaurant items can turn it off. */
+    val tracksStock: Boolean = true,
     val gst: GstChoice = GstChoice.NotSet,
     /** Custom GST rate in percent, used when [gst] is [GstChoice.Custom]. */
     val customGstRate: String = "",
@@ -104,6 +110,9 @@ data class ProductForm(
             description = product.description.orEmpty(),
             material = product.material.orEmpty(),
             dietType = product.dietType,
+            subcategory = product.subcategory.orEmpty(),
+            available = product.available,
+            tracksStock = product.tracksStock,
             gst = GstChoice.from(product.gstRate),
             customGstRate = (product.gstRate as? GstRate.Fixed)
                 ?.takeIf { it.basisPoints !in GstRate.STANDARD_BASIS_POINTS }
@@ -190,7 +199,11 @@ sealed interface GstChoice {
         }
 
         /** Default for new products: the apparel rule for garments, otherwise chosen by the user. */
-        fun defaultFor(category: com.auxo.pos.domain.model.ProductCategory): GstChoice =
-            if (category == com.auxo.pos.domain.model.ProductCategory.GARMENT) Apparel else NotSet
+        fun defaultFor(category: com.auxo.pos.domain.model.ProductCategory): GstChoice = when (category) {
+            com.auxo.pos.domain.model.ProductCategory.GARMENT -> Apparel
+            com.auxo.pos.domain.model.ProductCategory.RESTAURANT ->
+                Standard(com.auxo.pos.domain.model.ProductCategory.RESTAURANT_GST_BASIS_POINTS)
+            else -> NotSet
+        }
     }
 }

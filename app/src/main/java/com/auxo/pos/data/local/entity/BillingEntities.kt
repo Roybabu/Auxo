@@ -97,7 +97,7 @@ data class InvoiceLineEntity(
     @ColumnInfo(name = "returned_quantity") val returnedQuantity: Int,
     /** On credit notes: the sale line being returned. */
     @ColumnInfo(name = "original_line_id") val originalLineId: Long?,
-    /** Restaurant dish sold on this line. Added in version 3. */
+    /** The dish sold on this line, for invoices from before the menu moved into products in version 16. Added in version 3. */
     @ColumnInfo(name = "menu_item_id") val menuItemId: Long? = null,
     /** Why this line was discounted. Added in version 9. */
     @ColumnInfo(name = "discount_reason") val discountReason: String? = null,

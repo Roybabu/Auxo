@@ -8,7 +8,6 @@ import com.auxo.pos.data.local.RequestClaim
 import com.auxo.pos.data.local.StockWriter
 import com.auxo.pos.data.local.claim
 import com.auxo.pos.data.local.dao.CreditLimitException
-import com.auxo.pos.data.local.dao.IngredientShortageException
 import com.auxo.pos.data.local.dao.ReturnQuantityException
 import com.auxo.pos.data.local.dao.StockShortageException
 import com.auxo.pos.data.local.entity.LedgerEntryEntity
@@ -46,7 +45,6 @@ class RoomBillingRepository(
     private val dao = database.billingDao()
     private val operations = database.operationDao()
     private val customers = database.customerDao()
-    private val menu = database.menuDao()
     private val stock = StockWriter(database.inventoryDao())
 
     override fun observeInvoice(invoiceId: Long): Flow<Invoice?> = dao.observeInvoice(invoiceId).map { it?.toDomain() }
@@ -89,14 +87,12 @@ class RoomBillingRepository(
                 }
 
                 // Check everything first, so every short item is reported at once.
-                val wanted = invoice.lines.mapNotNull { line -> line.variantId?.let { it to line.quantity } }
+                // Restaurant items sold without a stock count are neither checked nor taken out.
+                val wanted = invoice.lines.mapNotNull { line -> line.variantId?.takeIf { stock.keepsStock(it) }?.let { it to line.quantity } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, quantities) -> quantities.sum() }
                 val short = wanted.filter { (variantId, quantity) -> stock.available(variantId, saleDay) < quantity }.keys
                 if (short.isNotEmpty()) throw StockShortageException(short)
-                val ingredients = ingredientsFor(invoice)
-                val shortIngredients = ingredients.filter { (variantId, quantity) -> stock.available(variantId, saleDay) < quantity }.keys
-                if (shortIngredients.isNotEmpty()) throw IngredientShortageException(shortIngredients)
                 val onAccount = invoice.payments.filter { it.method == PaymentMethod.CREDIT }
                     .fold(Money.ZERO) { acc, payment -> acc + payment.amount }
                 if (!onAccount.isZero) checkCredit(invoice.customerId, onAccount)
@@ -110,8 +106,6 @@ class RoomBillingRepository(
 
                 val sold = MovementInfo(StockChangeReason.SOLD, invoice.createdAtMillis, note = number, invoiceId = invoiceId)
                 for ((variantId, quantity) in wanted) stock.remove(variantId, quantity, sold, sellableOn = saleDay)
-                val used = MovementInfo(StockChangeReason.USED, invoice.createdAtMillis, note = number, invoiceId = invoiceId)
-                for ((variantId, quantity) in ingredients) stock.remove(variantId, quantity, used, sellableOn = saleDay)
 
                 if (!onAccount.isZero) {
                     customers.insertEntry(
@@ -133,8 +127,6 @@ class RoomBillingRepository(
             }
         } catch (e: StockShortageException) {
             SaleResult.StockShortage(e.variantIds)
-        } catch (e: IngredientShortageException) {
-            SaleResult.IngredientShortage(e.variantIds)
         } catch (e: CreditLimitException) {
             SaleResult.CreditLimitExceeded
         } catch (e: CustomerMissingException) {
@@ -192,23 +184,6 @@ class RoomBillingRepository(
         createdAt = atMillis,
         points = points,
     )
-
-    /** Ingredients needed by the dishes on [invoice] whose recipes deduct stock, per variant. */
-    private suspend fun ingredientsFor(invoice: Invoice): Map<Long, Int> {
-        val dishes = invoice.lines.mapNotNull { line -> line.menuItemId?.let { it to line.quantity } }
-        if (dishes.isEmpty()) return emptyMap()
-        val recipes = menu.getItems(dishes.map { it.first }.distinct()).associateBy { it.item.id }
-        val needed = mutableMapOf<Long, Long>()
-        for ((menuItemId, servings) in dishes) {
-            val dish = recipes[menuItemId] ?: continue
-            if (!dish.item.deductIngredients) continue
-            for (line in dish.recipe) {
-                needed[line.variantId] = (needed[line.variantId] ?: 0L) + line.quantity.toLong() * servings
-            }
-        }
-        if (needed.values.any { it > Int.MAX_VALUE }) throw IngredientShortageException(needed.filterValues { it > Int.MAX_VALUE }.keys)
-        return needed.mapValues { it.value.toInt() }
-    }
 
     /** Throws unless [customerId] exists and can take [amount] more on account. */
     private suspend fun checkCredit(customerId: Long?, amount: Money) {

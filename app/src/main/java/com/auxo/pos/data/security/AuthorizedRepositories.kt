@@ -13,7 +13,6 @@ import com.auxo.pos.data.repository.BarcodeMatch
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.InventoryRepository
-import com.auxo.pos.data.repository.MenuRepository
 import com.auxo.pos.data.repository.OrderUpdateResult
 import com.auxo.pos.data.repository.PurchasingRepository
 import com.auxo.pos.data.repository.ReceiveResult
@@ -31,7 +30,6 @@ import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.domain.model.Invoice
 import com.auxo.pos.domain.model.InvoiceSummary
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
@@ -383,38 +381,6 @@ class AuthorizedPurchasingRepository(private val inner: PurchasingRepository, pr
             (result as? ReceiveResult.Recorded)?.let {
                 AuditDraft(AuditAction.GOODS_RECEIVED, AuditEntity.PURCHASE_RECEIPT, it.receiptId, "Received goods ${it.number}")
             }
-        }
-    }
-}
-
-class AuthorizedMenuRepository(private val inner: MenuRepository, private val auth: Authorizer, private val audit: AuditTrail) : MenuRepository {
-    // Dishes are sold from the bill, so reading the menu is part of billing.
-    override fun observeMenu(): Flow<List<MenuItem>> = auth.guarded(Permission.SELL) { inner.observeMenu() }
-
-    override suspend fun getItem(menuItemId: Long): MenuItem? {
-        auth.require(Permission.SELL)
-        return inner.getItem(menuItemId)
-    }
-
-    override suspend fun saveItem(item: MenuItem): Long {
-        auth.require(Permission.MANAGE_MENU)
-        return audit.recording({ inner.saveItem(item) }) {
-            AuditDraft(AuditAction.MENU_ITEM_SAVED, AuditEntity.MENU_ITEM, it, "${if (item.id == 0L) "Added" else "Changed"} dish ${item.name}")
-        }
-    }
-
-    override suspend fun setAvailable(menuItemId: Long, available: Boolean) {
-        auth.require(Permission.MANAGE_MENU)
-        audit.recording({ inner.setAvailable(menuItemId, available) }) {
-            AuditDraft(AuditAction.MENU_ITEM_AVAILABILITY_CHANGED, AuditEntity.MENU_ITEM, menuItemId, "Dish marked ${if (available) "available" else "unavailable"}")
-        }
-    }
-
-    override suspend fun deleteItem(menuItemId: Long) {
-        auth.require(Permission.MANAGE_MENU)
-        val name = inner.getItem(menuItemId)?.name
-        audit.recording({ inner.deleteItem(menuItemId) }) {
-            AuditDraft(AuditAction.MENU_ITEM_DELETED, AuditEntity.MENU_ITEM, menuItemId, "Deleted dish ${name ?: "#$menuItemId"}")
         }
     }
 }

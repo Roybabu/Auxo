@@ -1,7 +1,6 @@
 package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.model.GstRate
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.testutil.TestData
 import org.junit.Assert.assertEquals
@@ -44,7 +43,7 @@ class QuotationsTest {
     fun reprice_followsTodaysPrice_keepingQuantityAndDiscount() {
         val old = CartLine.from(shirt, variant, 3).copy(unitPrice = Money(399_00), discount = Discount.Percent(1_000), discountReason = "Festival")
         val cart = Cart(lines = listOf(old))
-        val repriced = QuotationRepricing.reprice(cart, listOf(shirt), emptyList())
+        val repriced = QuotationRepricing.reprice(cart, listOf(shirt))
         val line = repriced.cart.lines.single()
         assertEquals(variant.sellingPrice, line.unitPrice)
         assertEquals(3, line.quantity)
@@ -56,16 +55,16 @@ class QuotationsTest {
     @Test
     fun reprice_reportsNothingWhenPricesHaveNotMoved() {
         val cart = Cart(lines = listOf(CartLine.from(shirt, variant, 1)))
-        assertTrue(QuotationRepricing.reprice(cart, listOf(shirt), emptyList()).changed.isEmpty())
+        assertTrue(QuotationRepricing.reprice(cart, listOf(shirt)).changed.isEmpty())
     }
 
     @Test
     fun reprice_leavesCustomItemsAndMissingProductsAlone_andUpdatesDishes() {
         val custom = CartLine.custom(CartLine.CUSTOM_KEY_BASE, CustomItemDraft("Alteration", Money(150_00), 1, 1_800))
         val gone = CartLine.from(shirt, variant, 1).copy(variantId = 999)
-        val dish = MenuItem(id = 4, name = "Masala Dosa", section = "Breakfast", price = Money(100_00), gstRateBasisPoints = 500)
-        val oldDish = CartLine.forMenuItem(dish.copy(price = Money(90_00)), 2)
-        val repriced = QuotationRepricing.reprice(Cart(lines = listOf(custom, gone, oldDish)), listOf(shirt), listOf(dish))
+        val dish = TestData.dish(id = 40, name = "Masala Dosa", price = Money(100_00))
+        val oldDish = CartLine.from(dish, dish.variants.single(), 2).copy(unitPrice = Money(90_00))
+        val repriced = QuotationRepricing.reprice(Cart(lines = listOf(custom, gone, oldDish)), listOf(shirt, dish))
         assertEquals(custom, repriced.cart.lines[0])
         assertEquals(gone, repriced.cart.lines[1])
         assertEquals(Money(100_00), repriced.cart.lines[2].unitPrice)
@@ -76,7 +75,7 @@ class QuotationsTest {
     @Test
     fun reprice_reportsATaxRateChange() {
         val old = CartLine.from(shirt, variant, 1).copy(gstRate = GstRate.Fixed(1_200))
-        val repriced = QuotationRepricing.reprice(Cart(lines = listOf(old)), listOf(shirt), emptyList())
+        val repriced = QuotationRepricing.reprice(Cart(lines = listOf(old)), listOf(shirt))
         assertEquals(shirt.gstRate, repriced.cart.lines.single().gstRate)
         assertEquals(listOf(shirt.name), repriced.changed)
     }

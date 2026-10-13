@@ -89,7 +89,6 @@ import com.auxo.pos.domain.billing.IndianStates
 import com.auxo.pos.domain.billing.Upi
 import com.auxo.pos.domain.loyalty.LoyaltyMath
 import com.auxo.pos.domain.model.CustomerAccount
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.ui.components.ActionIcon
@@ -131,8 +130,7 @@ interface BillingActions {
     fun onSearchTextChange(text: String) = Unit
     fun onSearchSubmitted() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
-    fun onAddMenuItem(item: MenuItem) = Unit
-    fun onMenuSectionChange(section: String?) = Unit
+    fun onQuickSectionChange(section: String?) = Unit
     fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean = false
     fun onIncrement(lineKey: Long) = Unit
     fun onDecrement(lineKey: Long) = Unit
@@ -213,10 +211,6 @@ fun BillingScreen(
                 }
                 BillingEvent.ScannerUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.scan_unavailable))
                 BillingEvent.StockChanged -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_stock_changed))
-                is BillingEvent.IngredientsShort -> snackbarHostState.showSnackbar(
-                    resources.getString(R.string.billing_ingredients_short, event.names.joinToString(", ")),
-                    duration = SnackbarDuration.Long,
-                )
                 BillingEvent.CreditLimitExceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.payment_error_credit_limit))
                 BillingEvent.CustomerMissing -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_customer_missing))
                 BillingEvent.LoyaltyUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.loyalty_unavailable))
@@ -274,8 +268,7 @@ fun BillingScreen(
             override fun onSearchTextChange(text: String) = viewModel.onSearchTextChange(text)
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
-            override fun onAddMenuItem(item: MenuItem) = viewModel.addMenuItem(item)
-            override fun onMenuSectionChange(section: String?) = viewModel.onMenuSectionChange(section)
+            override fun onQuickSectionChange(section: String?) = viewModel.onQuickSectionChange(section)
             override fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int) =
                 viewModel.addCustomItem(name, price, quantity, gstBasisPoints)
             override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
@@ -565,19 +558,7 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         }
 
         if (state.searchText.isNotBlank()) {
-            if (state.menuResults.isNotEmpty()) {
-                item(key = "menu_results") {
-                    AuxoCard(modifier = Modifier.fillMaxWidth()) {
-                        Column {
-                            state.menuResults.forEachIndexed { index, dish ->
-                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                                MenuResultRow(dish, onClick = { actions.onAddMenuItem(dish) })
-                            }
-                        }
-                    }
-                }
-            }
-            if (state.searchResults.isEmpty() && state.menuResults.isEmpty()) {
+            if (state.searchResults.isEmpty()) {
                 item(key = "no_results") {
                     Text(
                         text = stringResource(R.string.billing_no_results, state.searchText.trim()),
@@ -600,14 +581,14 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
             }
         }
 
-        if (state.searchText.isBlank() && state.menu.isNotEmpty()) {
+        if (state.searchText.isBlank() && state.quickItems.isNotEmpty()) {
             item(key = "quick_menu") { QuickMenuCard(state, actions) }
         }
 
         if (state.cart.isEmpty) {
-            if (state.searchText.isBlank() && state.menu.isEmpty()) {
+            if (state.searchText.isBlank() && state.quickItems.isEmpty()) {
                 item(key = "empty") {
-                    val noProducts = state.productCount == 0 && state.menu.isEmpty()
+                    val noProducts = state.productCount == 0
                     EmptyState(
                         iconRes = if (noProducts) R.drawable.ic_nav_inventory else R.drawable.ic_nav_billing,
                         title = stringResource(if (noProducts) R.string.billing_no_products_title else R.string.billing_empty_title),
@@ -624,7 +605,6 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 SectionHeader(title = stringResource(R.string.billing_items) + " (${state.cart.itemCount})")
             }
             items(state.cart.lines, key = { "line_${it.variantId}" }) { line ->
-                // Dishes are keyed by minus their menu item id, so the key never clashes with a variant.
                 val amounts = state.totals.lines.firstOrNull { it.variantId == line.variantId }
                 CartLineCard(
                     name = line.productName,
@@ -705,7 +685,7 @@ private fun SetupBanner(onOpenSettings: (() -> Unit)?) {
 @Composable
 private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
     val formatter = LocalMoneyFormatter.current
-    val sellable = result.variant.sellableQuantity(LocalDate.now(BusinessTime.ZONE))
+    val sellable = result.product.sellableUnits(result.variant, LocalDate.now(BusinessTime.ZONE))
     val outOfStock = sellable <= 0
     Row(
         modifier = Modifier
@@ -747,67 +727,46 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(formatter.format(result.variant.sellingPrice), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = if (outOfStock) {
-                    stringResource(R.string.billing_out_of_stock)
-                } else {
-                    stringResource(R.string.billing_in_stock, sellable)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = if (outOfStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun MenuResultRow(item: MenuItem, onClick: () -> Unit) {
-    val formatter = LocalMoneyFormatter.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = item.available, onClick = onClick)
-            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                stringResource(R.string.billing_menu_dish, item.section),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(formatter.format(item.price), style = MaterialTheme.typography.titleSmall)
-            if (!item.available) {
-                Text(stringResource(R.string.menu_unavailable), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            // An item sold without a stock count shows no figure; it is only flagged while switched off.
+            val note = when {
+                !result.product.available -> stringResource(R.string.menu_unavailable)
+                outOfStock -> stringResource(R.string.billing_out_of_stock)
+                !result.product.tracksStock -> null
+                else -> stringResource(R.string.billing_in_stock, sellable)
+            }
+            if (note != null) {
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (outOfStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
-/** Restaurant menu by section, for adding dishes with one tap. */
+/** Restaurant items by subcategory, for adding with one tap. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuickMenuCard(state: BillingUiState, actions: BillingActions) {
     val formatter = LocalMoneyFormatter.current
-    val sections = state.menuSections
-    val section = state.menuSection?.takeIf { it in sections } ?: sections.firstOrNull() ?: return
+    val sections = state.quickSections
+    val section = state.quickSection?.takeIf { it in sections } ?: sections.firstOrNull() ?: return
+    val other = stringResource(R.string.billing_quick_other)
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("quick_menu")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.billing_menu_title), style = MaterialTheme.typography.titleSmall)
             if (sections.size > 1) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     sections.forEach { name ->
-                        FilterChip(selected = name == section, onClick = { actions.onMenuSectionChange(name) }, label = { Text(name) })
+                        FilterChip(selected = name == section, onClick = { actions.onQuickSectionChange(name) }, label = { Text(name.ifBlank { other }) })
                     }
                 }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                state.menu.filter { it.section == section }.forEach { dish ->
-                    OutlinedButton(onClick = { actions.onAddMenuItem(dish) }, modifier = Modifier.testTag("dish_${dish.id}")) {
-                        Text("${dish.name} · ${formatter.format(dish.price)}")
+                state.quickItems.filter { it.product.subcategory.orEmpty() == section }.forEach { item ->
+                    OutlinedButton(onClick = { actions.onAddResult(item) }, modifier = Modifier.testTag("dish_${item.product.id}")) {
+                        Text("${item.product.name} · ${formatter.format(item.variant.sellingPrice)}")
                     }
                 }
             }

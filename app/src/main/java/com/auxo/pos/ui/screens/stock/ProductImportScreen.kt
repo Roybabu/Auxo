@@ -260,7 +260,8 @@ private fun PreviewStage(state: ProductImportUiState, actions: ProductImportActi
                             label = { Text(stringResource(R.string.import_default_none)) },
                             modifier = Modifier.testTag("import_default_none"),
                         )
-                        ProductCategory.entries.forEach { category ->
+                        // Restaurant items have no stock count and are added one at a time, not imported.
+                        ProductCategory.entries.filter { it != ProductCategory.RESTAURANT }.forEach { category ->
                             FilterChip(
                                 selected = state.defaultCategory == category,
                                 onClick = { actions.onDefaultCategoryChange(category) },

@@ -68,7 +68,7 @@ abstract class InventoryDao {
     abstract suspend fun barcodeExists(barcode: String): Boolean
 
     @Query(
-        "SELECT v.id AS id, p.category AS category, v.stock_quantity AS stock_quantity " +
+        "SELECT v.id AS id, p.category AS category, v.stock_quantity AS stock_quantity, p.tracks_stock AS tracks_stock " +
             "FROM product_variants v JOIN products p ON p.id = v.product_id WHERE v.id = :variantId",
     )
     abstract suspend fun variantStock(variantId: Long): VariantStockRow?

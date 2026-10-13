@@ -33,7 +33,6 @@ class CustomItemTest {
     fun anItemOnTheBill_isNotTiedToStock_andSavesWithoutAProduct() {
         val line = CartLine.custom(CartLine.CUSTOM_KEY_BASE, (valid() as CustomItemResult.Valid).draft)
         assertNull(line.stockVariantId)
-        assertNull(line.menuItemId)
 
         val cart = Cart(lines = listOf(line))
         val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))

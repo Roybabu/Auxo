@@ -39,7 +39,6 @@ import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.ProductCategory
@@ -85,6 +84,7 @@ import com.auxo.pos.viewmodel.AccountPaymentUiState
 import com.auxo.pos.viewmodel.AlertsTab
 import com.auxo.pos.viewmodel.BillingStage
 import com.auxo.pos.viewmodel.BillingUiState
+import com.auxo.pos.viewmodel.ProductSearchResult
 import com.auxo.pos.viewmodel.CustomerDetailUiState
 import com.auxo.pos.viewmodel.CustomerListUiState
 import com.auxo.pos.viewmodel.ItemPickerState
@@ -548,25 +548,25 @@ class OperationsScreenTest {
         composeRule.onNodeWithText("Reports").performClick()
         assertEquals(listOf("suppliers", "reports"), opened)
         screenshot("54_more")
-        composeRule.onNodeWithText("Restaurant menu").assertIsDisplayed()
     }
 
     @Test
     fun billing_quickMenu_addsDishesToTheBill() {
-        val dosa = MenuItem(id = 5, name = "Masala Dosa", section = "Breakfast", price = Money(12_000))
-        val tea = MenuItem(id = 6, name = "Masala Tea", section = "Drinks", price = Money(2_000))
-        val cart = Cart().add(CartLine.forMenuItem(dosa, 2))
+        val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
+        val tea = TestData.dish(id = 6, name = "Masala Tea", price = Money(2_000), subcategory = "Drinks")
+        val cart = Cart().add(CartLine.from(dosa, dosa.variants.single(), 2))
         val totals = BillCalculator.calculate(cart, TestData.settings.taxModeFor(cart))
-        val added = mutableListOf<MenuItem>()
+        val added = mutableListOf<ProductSearchResult>()
         show {
             CartContent(
                 state = BillingUiState(
-                    settings = TestData.settings, productsLoaded = true, productCount = 0, menu = listOf(dosa, tea),
+                    settings = TestData.settings, productsLoaded = true, productCount = 0,
+                    quickItems = listOf(dosa, tea).map { ProductSearchResult(it, it.variants.single()) },
                     cart = cart, totals = totals, check = CartValidator.check(cart, totals, true),
                 ),
                 actions = object : BillingActions {
-                    override fun onAddMenuItem(item: MenuItem) {
-                        added += item
+                    override fun onAddResult(result: ProductSearchResult) {
+                        added += result
                     }
                 },
             )
@@ -574,7 +574,7 @@ class OperationsScreenTest {
         composeRule.onNodeWithTag("quick_menu").assertIsDisplayed()
         composeRule.onNodeWithText("Drinks").assertIsDisplayed()
         composeRule.onNodeWithTag("dish_5").performClick()
-        assertEquals(listOf(dosa), added)
+        assertEquals(listOf(dosa.id), added.map { it.product.id })
         composeRule.onNodeWithText("Masala Dosa").assertIsDisplayed() // the cart line
         screenshot("55_billing_menu")
     }

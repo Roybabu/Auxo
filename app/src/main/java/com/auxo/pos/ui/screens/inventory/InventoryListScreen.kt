@@ -54,6 +54,7 @@ import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockStatus
 import com.auxo.pos.ui.components.ActionIcon
+import com.auxo.pos.ui.visibleCategories
 import com.auxo.pos.ui.LocalExpiryWarningDays
 import com.auxo.pos.ui.LocalSuppliersEnabled
 import com.auxo.pos.ui.components.EmptyState
@@ -292,7 +293,7 @@ private fun InventoryFilters(
                 onClick = { onCategorySelected(null) },
                 label = { Text(stringResource(R.string.filter_all)) },
             )
-            ProductCategory.entries.forEach { category ->
+            visibleCategories().forEach { category ->
                 FilterChip(
                     selected = uiState.query.category == category,
                     onClick = { onCategorySelected(category) },
@@ -330,6 +331,8 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
     val expiringSoon = product.variants.any { it.expiresWithin(today, warningDays) }
     // Same priority as Home alerts: expired, out of stock, expiring soon, then stock level.
     val (chipText, chipTone) = when {
+        // An item sold without a stock count has no stock level; it is only flagged while switched off.
+        !product.tracksStock -> (if (product.available) null else stringResource(R.string.menu_unavailable)) to status.danger
         hasExpired -> stringResource(R.string.status_expired) to status.danger
         product.stockStatus == StockStatus.OUT_OF_STOCK -> stringResource(R.string.stock_status_out) to status.danger
         expiringSoon -> stringResource(R.string.status_expiring) to status.warning
@@ -390,12 +393,14 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
                 )
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                StatusChip(text = chipText, tone = chipTone)
-                Text(
-                    text = stockText(product.stockUnit, product.totalStock),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (chipText != null) StatusChip(text = chipText, tone = chipTone)
+                if (product.tracksStock) {
+                    Text(
+                        text = stockText(product.stockUnit, product.totalStock),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
