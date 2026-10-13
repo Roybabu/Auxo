@@ -41,6 +41,7 @@ fun ProductWithVariants.toDomain(): Product = Product(
     preferredSupplierId = product.preferredSupplierId,
     photoFile = product.photoFile,
     subcategory = product.subcategory,
+    categoryId = product.categoryId,
     available = product.available,
     tracksStock = product.tracksStock,
 )
@@ -105,6 +106,7 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     preferredSupplierId = preferredSupplierId,
     photoFile = photoFile,
     subcategory = subcategory,
+    categoryId = categoryId,
     available = available,
     tracksStock = tracksStock,
 )

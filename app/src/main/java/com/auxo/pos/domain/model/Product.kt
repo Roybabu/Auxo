@@ -82,6 +82,8 @@ data class Product(
     val variants: List<ProductVariant> = emptyList(),
     /** Optional grouping inside the category, such as "Starters" for a restaurant item. */
     val subcategory: String? = null,
+    /** The shop category the product is listed under; null for a product saved before categories could be edited. */
+    val categoryId: Long? = null,
     /** An unavailable item can't be added to a bill. Only restaurant items are ever switched off. */
     val available: Boolean = true,
     /**

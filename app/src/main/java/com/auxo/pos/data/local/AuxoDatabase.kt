@@ -9,6 +9,7 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.auxo.pos.data.local.dao.AuditDao
+import com.auxo.pos.data.local.dao.CategoryDao
 import com.auxo.pos.data.local.dao.DayEndDao
 import com.auxo.pos.data.local.dao.HeldBillDao
 import com.auxo.pos.data.local.dao.QuotationDao
@@ -40,6 +41,8 @@ import com.auxo.pos.data.local.entity.StockBatchEntity
 import com.auxo.pos.data.local.entity.StockCountEntity
 import com.auxo.pos.data.local.entity.StockMovementEntity
 import com.auxo.pos.data.local.entity.StoreSettingsEntity
+import com.auxo.pos.data.local.entity.ShopCategoryEntity
+import com.auxo.pos.data.local.entity.ShopSubcategoryEntity
 import com.auxo.pos.data.local.entity.SupplierEntity
 
 /**
@@ -70,6 +73,9 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  * 16. The restaurant menu moves into products: products.subcategory, products.available and products.tracks_stock,
  *     each menu dish becomes a Restaurant product, and the menu_items and recipe_lines tables are dropped. Written
  *     by hand ([MIGRATION_15_16], see [DishMigration]).
+ * 17. Shop categories the admin can edit: the shop_categories and shop_subcategories tables and products.category_id.
+ *     Existing categories become rows, all on (Restaurant only if the shop already has dishes). Written by hand
+ *     ([MIGRATION_16_17]).
  */
 @Database(
     entities = [
@@ -96,6 +102,8 @@ import com.auxo.pos.data.local.entity.SupplierEntity
         HeldBillEntity::class,
         QuotationEntity::class,
         StockCountEntity::class,
+        ShopCategoryEntity::class,
+        ShopSubcategoryEntity::class,
     ],
     version = AuxoDatabase.VERSION,
     exportSchema = true,
@@ -128,6 +136,8 @@ abstract class AuxoDatabase : RoomDatabase() {
 
     abstract fun stockCountDao(): StockCountDao
 
+    abstract fun categoryDao(): CategoryDao
+
     /**
      * Version 3 keeps food and beverage stock in batches. Existing stock becomes
      * one batch per variant, with the batch number and expiry saved on the variant.
@@ -148,7 +158,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 16
+        const val VERSION = 17
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -260,10 +270,36 @@ abstract class AuxoDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) = DishMigration.run(db)
         }
 
+        /**
+         * Version 17: the shop's categories become rows. The five built-in categories are added, all on except
+         * Restaurant, which is on only when the shop already has dishes. Every product is linked to the row for its
+         * kind, and the sections already used by restaurant items become subcategories.
+         */
+        val MIGRATION_16_17: Migration = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `shop_categories` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `profile` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `sort_order` INTEGER NOT NULL, `built_in` INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `shop_subcategories` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `category_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `sort_order` INTEGER NOT NULL, FOREIGN KEY(`category_id`) REFERENCES `shop_categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_shop_subcategories_category_id_name` ON `shop_subcategories` (`category_id`, `name`)")
+                db.execSQL("ALTER TABLE products ADD COLUMN category_id INTEGER")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_products_category_id` ON `products` (`category_id`)")
+                val order = listOf("GARMENT", "PACKAGED_FOOD", "BEVERAGE", "RESTAURANT", "INGREDIENT")
+                order.forEachIndexed { index, profile ->
+                    val enabled = if (profile == "RESTAURANT") "(SELECT COUNT(*) > 0 FROM products WHERE category = 'RESTAURANT')" else "1"
+                    db.execSQL("INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) VALUES (NULL, '$profile', $enabled, $index, 1)")
+                }
+                db.execSQL("UPDATE products SET category_id = (SELECT c.id FROM shop_categories c WHERE c.profile = products.category AND c.built_in = 1)")
+                db.execSQL(
+                    "INSERT OR IGNORE INTO shop_subcategories (category_id, name, sort_order) " +
+                        "SELECT category_id, TRIM(subcategory), 0 FROM products " +
+                        "WHERE category_id IS NOT NULL AND subcategory IS NOT NULL AND TRIM(subcategory) <> '' GROUP BY category_id, TRIM(subcategory)",
+                )
+            }
+        }
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }

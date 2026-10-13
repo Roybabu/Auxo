@@ -10,7 +10,7 @@ import androidx.room.Relation
 
 @Entity(
     tableName = "products",
-    indices = [Index("name"), Index("category")],
+    indices = [Index("name"), Index("category"), Index("category_id")],
 )
 data class ProductEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -42,6 +42,8 @@ data class ProductEntity(
     @ColumnInfo(defaultValue = "1") val available: Boolean = true,
     /** False for a restaurant item sold without a stock count. Added in version 16. */
     @ColumnInfo(name = "tracks_stock", defaultValue = "1") val tracksStock: Boolean = true,
+    /** The shop category this product is listed under ([ShopCategoryEntity]). Added in version 17. */
+    @ColumnInfo(name = "category_id") val categoryId: Long? = null,
 )
 
 @Entity(

@@ -131,6 +131,10 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
+    val categoryRepository: com.auxo.pos.data.repository.CategoryRepository by lazy {
+        com.auxo.pos.data.security.AuthorizedCategoryRepository(com.auxo.pos.data.repository.RoomCategoryRepository(database), authorizer, auditTrail)
+    }
+
     val purchasingRepository: PurchasingRepository by lazy { AuthorizedPurchasingRepository(RoomPurchasingRepository(database, clock), authorizer, auditTrail) }
 
     val customerRepository: CustomerRepository by lazy { AuthorizedCustomerRepository(RoomCustomerRepository(database, clock), authorizer, auditTrail) }

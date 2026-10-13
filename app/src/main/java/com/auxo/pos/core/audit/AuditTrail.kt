@@ -41,6 +41,7 @@ enum class AuditAction {
     MENU_ITEM_AVAILABILITY_CHANGED,
     MENU_ITEM_DELETED,
     SETTINGS_SAVED,
+    CATEGORIES_CHANGED,
     BACKUP_CREATED,
     AUTO_BACKUP_SAVED,
     AUTO_BACKUP_FAILED,
@@ -69,6 +70,7 @@ object AuditEntity {
     const val PURCHASE_RECEIPT = "purchase_receipt"
     const val MENU_ITEM = "menu_item"
     const val SETTINGS = "settings"
+    const val CATEGORY = "category"
     const val BACKUP = "backup"
     const val DAY_CLOSING = "day_closing"
     const val LOYALTY = "loyalty"

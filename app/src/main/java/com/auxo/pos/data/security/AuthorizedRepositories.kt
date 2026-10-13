@@ -566,3 +566,49 @@ class AuthorizedStockCountRepository(
         }
     }
 }
+
+/** Everyone who bills or edits products may read the shop's categories; changing them is for those who may change settings. */
+class AuthorizedCategoryRepository(
+    private val inner: com.auxo.pos.data.repository.CategoryRepository,
+    private val auth: Authorizer,
+    private val audit: AuditTrail,
+) : com.auxo.pos.data.repository.CategoryRepository {
+    override fun observeCategories(): Flow<List<com.auxo.pos.domain.model.ShopCategory>> = auth.guarded(Permission.SELL) { inner.observeCategories() }
+
+    override suspend fun getCategories(): List<com.auxo.pos.domain.model.ShopCategory> {
+        auth.require(Permission.SELL)
+        return inner.getCategories()
+    }
+
+    private suspend fun change(
+        what: String,
+        id: Long,
+        block: suspend () -> com.auxo.pos.data.repository.CategoryResult,
+    ): com.auxo.pos.data.repository.CategoryResult {
+        auth.require(Permission.MANAGE_SETTINGS)
+        return audit.recording({ block() }) { result ->
+            (result as? com.auxo.pos.data.repository.CategoryResult.Done)?.let {
+                AuditDraft(AuditAction.CATEGORIES_CHANGED, AuditEntity.CATEGORY, if (it.id != 0L) it.id else id, what)
+            }
+        }
+    }
+
+    override suspend fun addCategory(name: String, profile: com.auxo.pos.domain.model.ProductCategory) =
+        change("Category \"$name\" added", 0L) { inner.addCategory(name, profile) }
+
+    override suspend fun renameCategory(id: Long, name: String) = change("Category $id renamed to \"$name\"", id) { inner.renameCategory(id, name) }
+
+    override suspend fun setEnabled(id: Long, enabled: Boolean) =
+        change("Category $id switched ${if (enabled) "on" else "off"}", id) { inner.setEnabled(id, enabled) }
+
+    override suspend fun deleteCategory(id: Long) = change("Category $id deleted", id) { inner.deleteCategory(id) }
+
+    override suspend fun addSubcategory(categoryId: Long, name: String) =
+        change("Subcategory \"$name\" added to category $categoryId", categoryId) { inner.addSubcategory(categoryId, name) }
+
+    override suspend fun renameSubcategory(id: Long, name: String) = change("Subcategory $id renamed to \"$name\"", id) { inner.renameSubcategory(id, name) }
+
+    override suspend fun deleteSubcategory(id: Long) = change("Subcategory $id deleted", id) { inner.deleteSubcategory(id) }
+
+    override suspend fun applySetup(enabledIds: Set<Long>) = change("Categories chosen during setup", 0L) { inner.applySetup(enabledIds) }
+}

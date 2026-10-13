@@ -544,4 +544,46 @@ class DatabaseMigrationTest {
         assertNull(DishMigration.repointCart("""{"lines":[{"key":5}]}""", moved))
         assertNull(DishMigration.repointCart("not json", moved))
     }
+
+    @Test
+    fun migrate16To17_makesCategoryRows_linksProducts_andTurnsRestaurantOnOnlyWhenThereAreDishes() = runTest {
+        fun product(db: SQLiteDatabase, id: Int, category: String, subcategory: String?) = db.execSQL(
+            "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at, stock_unit, " +
+                "preferred_supplier_id, photo_file, subcategory, available, tracks_stock) " +
+                "VALUES ($id, 'P$id', NULL, '$category', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, ${subcategory?.let { "'$it'" } ?: "NULL"}, 1, 1)",
+        )
+        createFromSchema(16).also {
+            product(it, 1, "GARMENT", null)
+            product(it, 2, "RESTAURANT", "Starters")
+            product(it, 3, "RESTAURANT", "Starters")
+            product(it, 4, "RESTAURANT", " ")
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
+
+        val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
+        assertEquals(5, categories.size)
+        assertTrue(categories.all { it.builtIn && it.enabled })
+
+        val inventory = RoomInventoryRepository(db, TestData.clock)
+        val garment = categories.first { it.profile == com.auxo.pos.domain.model.ProductCategory.GARMENT }
+        val restaurant = categories.first { it.profile == com.auxo.pos.domain.model.ProductCategory.RESTAURANT }
+        assertEquals(garment.id, inventory.getProduct(1)!!.categoryId)
+        assertEquals(restaurant.id, inventory.getProduct(2)!!.categoryId)
+        assertEquals(listOf("Starters"), restaurant.subcategories.map { it.name })
+    }
+
+    @Test
+    fun migrate16To17_leavesRestaurantOff_whenTheShopHasNoDishes() = runTest {
+        createFromSchema(16).close()
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
+        assertEquals(
+            listOf(true, true, true, false, true),
+            categories.map { it.enabled },
+        )
+    }
 }
