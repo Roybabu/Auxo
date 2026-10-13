@@ -121,16 +121,16 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun firstLaunch_showsTheIntroduction_beforeSetup() {
+    fun firstLaunch_showsTheIntroduction_beforeLogin() {
         gate(AuthState.NeedsSetup, onboarding = true)
         composeRule.onNodeWithTag("fake_onboarding").assertIsDisplayed()
-        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
     }
 
     @Test
-    fun onceTheIntroductionIsSeen_setupIsShown() {
+    fun onceTheIntroductionIsSeen_loginIsShown() {
         gate(AuthState.NeedsSetup, onboarding = false)
-        composeRule.onNodeWithTag("fake_setup").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_onboarding").assertDoesNotExist()
     }
 

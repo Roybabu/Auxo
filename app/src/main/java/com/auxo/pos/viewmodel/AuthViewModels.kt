@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.auth.AdminSetupValidator
 import com.auxo.pos.core.auth.AuthRepository
+import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.core.auth.SetupResult
@@ -84,6 +85,8 @@ sealed interface LoginMessage {
     data object Rejected : LoginMessage
     data object Deactivated : LoginMessage
     data class LockedOut(val seconds: Int) : LoginMessage
+    /** No business has been set up on this device yet. */
+    data object NoAccount : LoginMessage
     data object Unavailable : LoginMessage
 }
 
@@ -127,7 +130,10 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
                     SignInResult.Rejected -> state.copy(isSigningIn = false, password = "", message = LoginMessage.Rejected)
                     SignInResult.Deactivated -> state.copy(isSigningIn = false, password = "", message = LoginMessage.Deactivated)
                     is SignInResult.LockedOut -> state.copy(isSigningIn = false, password = "", message = LoginMessage.LockedOut(result.seconds))
-                    SignInResult.Unavailable -> state.copy(isSigningIn = false, message = LoginMessage.Unavailable)
+                    SignInResult.Unavailable -> state.copy(
+                        isSigningIn = false,
+                        message = if (auth.state.value == AuthState.NeedsSetup) LoginMessage.NoAccount else LoginMessage.Unavailable,
+                    )
                 }
             }
         }

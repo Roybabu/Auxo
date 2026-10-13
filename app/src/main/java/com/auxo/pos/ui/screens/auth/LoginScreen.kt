@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,15 +33,24 @@ import com.auxo.pos.viewmodel.LoginMessage
 import com.auxo.pos.viewmodel.LoginUiState
 import com.auxo.pos.viewmodel.LoginViewModel
 
-/** The sign-in screen shown each time the app opens once the administrator exists. */
+/** The sign-in screen: the first screen on every launch. [hasBusiness] is false until a business has been set up on this device. */
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)) {
+fun LoginScreen(
+    hasBusiness: Boolean = true,
+    onSetUpBusiness: () -> Unit = {},
+    viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var resetting by rememberSaveable { mutableStateOf(false) }
-    if (resetting) {
+    if (resetting && hasBusiness) {
         PasswordResetScreen(onBack = { resetting = false })
     } else {
-        LoginContent(state, viewModel::onIdentifierChange, viewModel::onPasswordChange, viewModel::signIn, onForgotPassword = { resetting = true })
+        LoginContent(
+            state, viewModel::onIdentifierChange, viewModel::onPasswordChange, viewModel::signIn,
+            // Nothing to recover when this device has no business yet.
+            onForgotPassword = if (hasBusiness) ({ resetting = true }) else null,
+            onSetUpBusiness = onSetUpBusiness,
+        )
     }
 }
 
@@ -51,6 +61,7 @@ fun LoginContent(
     onPasswordChange: (String) -> Unit,
     onSignIn: () -> Unit,
     onForgotPassword: (() -> Unit)? = null,
+    onSetUpBusiness: (() -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
@@ -85,6 +96,7 @@ fun LoginContent(
                         LoginMessage.Rejected -> stringResource(R.string.auth_login_rejected)
                         LoginMessage.Deactivated -> stringResource(R.string.auth_login_deactivated)
                         is LoginMessage.LockedOut -> pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds)
+                        LoginMessage.NoAccount -> stringResource(R.string.auth_login_no_account)
                         LoginMessage.Unavailable -> stringResource(R.string.auth_login_unavailable)
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -103,6 +115,14 @@ fun LoginContent(
                 TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.fillMaxWidth().testTag("login_forgot")) {
                     Text(stringResource(R.string.auth_login_forgot))
                 }
+            }
+            // Always present, whether or not a business exists yet: it is how a new business is started.
+            if (onSetUpBusiness != null) {
+                OutlinedButton(
+                    onClick = onSetUpBusiness,
+                    enabled = !state.isSigningIn,
+                    modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_setup_business"),
+                ) { Text(stringResource(R.string.auth_login_setup_business)) }
             }
         }
     }

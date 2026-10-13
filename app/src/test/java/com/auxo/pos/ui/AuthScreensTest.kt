@@ -1,6 +1,7 @@
 package com.auxo.pos.ui
 
 import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -51,8 +52,9 @@ class AuthScreensTest {
             AuxoTheme {
                 AuthGate(
                     state = state,
-                    setup = { Text("SETUP SCREEN", modifier = Modifier.testTag("fake_setup")) },
-                    login = { Text("LOGIN SCREEN", modifier = Modifier.testTag("fake_login")) },
+                    setup = { back -> Text("SETUP SCREEN", modifier = Modifier.testTag("fake_setup").clickable { back() }) },
+                    login = { open -> Text("LOGIN SCREEN", modifier = Modifier.testTag("fake_login").clickable { open() }) },
+                    businessExists = { back -> Text("EXISTS", modifier = Modifier.testTag("fake_exists").clickable { back() }) },
                     app = { Text("THE APP", modifier = Modifier.testTag("fake_app")) },
                 )
             }
@@ -62,11 +64,25 @@ class AuthScreensTest {
     // The gate
 
     @Test
-    fun firstLaunch_showsAdminSetup_only() {
+    fun firstLaunch_showsLogin_andSetupOnlyAfterTheLinkIsTapped() {
         gate(AuthState.NeedsSetup)
-        composeRule.onNodeWithTag("fake_setup").assertIsDisplayed()
-        composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
         composeRule.onNodeWithTag("fake_app").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_login").performClick()
+        composeRule.onNodeWithTag("fake_setup").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_setup").performClick()
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+    }
+
+    @Test
+    fun withABusinessAlready_theLink_explains_andNeverOpensSetup() {
+        gate(AuthState.SignedOut)
+        composeRule.onNodeWithTag("fake_login").performClick()
+        composeRule.onNodeWithTag("fake_exists").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_exists").performClick()
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
     }
 
     @Test
@@ -208,6 +224,36 @@ class AuthScreensTest {
         for (text in listOf("Forgot", "Create administrator", "Register", "Sign up", "Cloud", "server")) {
             composeRule.onAllNodesWithText(text, substring = true).assertCountEquals(0)
         }
+    }
+
+    @Test
+    fun loginScreen_alwaysOffersSetUpYourBusiness() {
+        var taps = 0
+        composeRule.setContent {
+            AuxoTheme { LoginContent(LoginUiState(), {}, {}, {}, onSetUpBusiness = { taps++ }) }
+        }
+        composeRule.onNodeWithTag("login_setup_business").assertIsDisplayed()
+        composeRule.onNodeWithText("Set up your business").performClick()
+        assertEquals(1, taps)
+    }
+
+    @Test
+    fun loginScreen_saysWhenThereIsNoAccountOnTheDevice() {
+        composeRule.setContent {
+            AuxoTheme { LoginContent(LoginUiState(message = com.auxo.pos.viewmodel.LoginMessage.NoAccount), {}, {}, {}, onSetUpBusiness = {}) }
+        }
+        composeRule.onNodeWithTag("login_error").assertIsDisplayed()
+        composeRule.onNodeWithText("No account was found", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun businessExistsScreen_offersOnlyAWayBack() {
+        var backs = 0
+        composeRule.setContent { AuxoTheme { com.auxo.pos.ui.screens.auth.BusinessExistsScreen { backs++ } } }
+        composeRule.onNodeWithTag("business_exists").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_submit").assertDoesNotExist()
+        composeRule.onNodeWithTag("business_exists_back").performClick()
+        assertEquals(1, backs)
     }
 
     @Test

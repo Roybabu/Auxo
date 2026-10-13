@@ -1730,4 +1730,9 @@
     <string name="onboarding_cat_electronics">ইলেকট্রনিক্স</string>
     <string name="onboarding_cat_beauty">বিউটি ও পারসোনাল কেয়ার</string>
     <string name="onboarding_cat_general">জেনারেল স্টোর</string>
+    <string name="auth_login_setup_business">আপনার ব্যবসা সেট আপ করুন</string>
+    <string name="auth_login_no_account">এই ডিভাইসে কোনো অ্যাকাউন্ট পাওয়া যায়নি। শুরু করতে “আপনার ব্যবসা সেট আপ করুন” চাপুন।</string>
+    <string name="auth_back_to_login">সাইন ইনে ফিরে যান</string>
+    <string name="auth_exists_title">এই ডিভাইসে আগে থেকেই ব্যবসা আছে</string>
+    <string name="auth_exists_body">এখানে ব্যবসা আগেই সেট আপ করা আছে, তাই আবার সেট আপ করা যাবে না। আপনার ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন। পাসওয়ার্ড ভুলে গেলে সাইন ইন স্ক্রিনে রিকভারি কোড দিয়ে “পাসওয়ার্ড ভুলে গেছেন?” ব্যবহার করুন।</string>
 </resources>

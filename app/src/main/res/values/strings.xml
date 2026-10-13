@@ -1730,4 +1730,9 @@ in %2$s</string>
     <string name="onboarding_cat_electronics">Electronics</string>
     <string name="onboarding_cat_beauty">Beauty &amp; Personal Care</string>
     <string name="onboarding_cat_general">General Store</string>
+    <string name="auth_login_setup_business">Set up your business</string>
+    <string name="auth_login_no_account">No account was found on this device. Tap “Set up your business” to get started.</string>
+    <string name="auth_back_to_login">Back to sign in</string>
+    <string name="auth_exists_title">This device already has a business</string>
+    <string name="auth_exists_body">A business is already set up here, so it cannot be set up again. Sign in with your username and password. If you forgot your password, use “Forgot password?” on the sign-in screen with your recovery code.</string>
 </resources>

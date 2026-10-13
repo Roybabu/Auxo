@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +57,7 @@ internal fun SetupError.messageRes(): Int = when (this) {
 
 /** Shown once, on the first launch, until the administrator exists. */
 @Composable
-fun AdminSetupScreen(viewModel: AdminSetupViewModel = viewModel(factory = AdminSetupViewModel.Factory)) {
+fun AdminSetupScreen(onBack: (() -> Unit)? = null, viewModel: AdminSetupViewModel = viewModel(factory = AdminSetupViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     AdminSetupContent(
         state = state,
@@ -65,6 +66,7 @@ fun AdminSetupScreen(viewModel: AdminSetupViewModel = viewModel(factory = AdminS
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmChange = viewModel::onConfirmChange,
         onSubmit = viewModel::submit,
+        onBack = onBack,
     )
 }
 
@@ -76,6 +78,7 @@ fun AdminSetupContent(
     onPasswordChange: (String) -> Unit,
     onConfirmChange: (String) -> Unit,
     onSubmit: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
@@ -150,6 +153,11 @@ fun AdminSetupContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = Spacing.xs),
             )
+            if (onBack != null) {
+                TextButton(onClick = onBack, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth().testTag("setup_back")) {
+                    Text(stringResource(R.string.auth_back_to_login))
+                }
+            }
         }
     }
 }

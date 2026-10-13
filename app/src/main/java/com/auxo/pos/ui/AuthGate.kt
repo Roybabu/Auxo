@@ -8,7 +8,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -22,6 +26,7 @@ import com.auxo.pos.ui.lock.LockOverlay
 import com.auxo.pos.ui.lock.LockScreen
 import com.auxo.pos.ui.screens.auth.AdminSetupScreen
 import com.auxo.pos.ui.screens.auth.AuthLayout
+import com.auxo.pos.ui.screens.auth.BusinessExistsScreen
 import com.auxo.pos.ui.screens.auth.CategorySetupScreen
 import com.auxo.pos.ui.screens.auth.LoginScreen
 import com.auxo.pos.ui.screens.auth.RecoveryCodeGate
@@ -29,7 +34,7 @@ import com.auxo.pos.ui.screens.onboarding.OnboardingScreen
 import com.auxo.pos.ui.theme.Spacing
 
 /**
- * Decides what the app opens to: the introduction ([onboarding]) and then Admin Setup on the very first launch, Login on every launch after that,
+ * Decides what the app opens to: the introduction ([onboarding]) once on the very first launch, then Login on every launch (with Set up your business always on it),
  * and the app itself once someone has signed in. A Super Admin without a recovery code is shown the code
  * screen first: required after setup, offered (and skippable) for an install that predates recovery codes.
  * When the app is locked the same person's lock screen covers the app, which stays as it was underneath.
@@ -37,8 +42,9 @@ import com.auxo.pos.ui.theme.Spacing
 @Composable
 fun AuthGate(
     state: AuthState,
-    setup: @Composable () -> Unit = { AdminSetupScreen() },
-    login: @Composable () -> Unit = { LoginScreen() },
+    setup: @Composable (onBack: () -> Unit) -> Unit = { AdminSetupScreen(onBack = it) },
+    login: @Composable (onSetUpBusiness: () -> Unit) -> Unit = { LoginScreen(hasBusiness = state == AuthState.SignedOut, onSetUpBusiness = it) },
+    businessExists: @Composable (onBack: () -> Unit) -> Unit = { BusinessExistsScreen(onBack = it) },
     recoveryPrompt: RecoveryPrompt = RecoveryPrompt.None,
     recovery: @Composable (canSkip: Boolean) -> Unit = { canSkip -> RecoveryCodeGate(canSkip) },
     lock: LockInfo = LockInfo(),
@@ -50,9 +56,17 @@ fun AuthGate(
     app: @Composable () -> Unit,
 ) {
     when (state) {
-        // Only before the first administrator exists, and only until the introduction has been seen once.
-        AuthState.NeedsSetup -> if (onboarding) onboardingScreen() else setup()
-        AuthState.SignedOut -> login()
+        // Login is always the first screen; the introduction comes before it once, on the very first launch.
+        // "Set up your business" is always on the login screen. With no business on the device it opens setup;
+        // with one already there it only explains, so an existing business can never be replaced from here.
+        AuthState.NeedsSetup, AuthState.SignedOut -> {
+            var settingUp by rememberSaveable { mutableStateOf(false) }
+            when {
+                state == AuthState.NeedsSetup && onboarding -> onboardingScreen()
+                settingUp -> if (state == AuthState.NeedsSetup) setup { settingUp = false } else businessExists { settingUp = false }
+                else -> login { settingUp = true }
+            }
+        }
         is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name, state.permissions)) {
             // A different person signing in gets a fresh app, never the previous person's screens.
             key(state.userId) {
