@@ -808,35 +808,6 @@
     <string name="movements_empty_body">এই সময়ের বিক্রি, গৃহীত মাল, ফেরত, বাদ দেওয়া ও সংশোধন এখানে দেখা যায়।</string>
 
     <!-- Restaurant menu -->
-    <string name="menu_title">রেস্তোরাঁর মেনু</string>
-    <string name="menu_add">খাবার যোগ করুন</string>
-    <string name="menu_search">খাবার বা বিভাগ খুঁজুন</string>
-    <string name="menu_empty_title">এখনও কোনো খাবার নেই</string>
-    <string name="menu_empty_body">বিলে বিক্রি করতে খাবার ও পানীয় যোগ করুন।</string>
-    <string name="menu_no_results">আপনার খোঁজের সঙ্গে কোনো খাবার মেলেনি।</string>
-    <string name="menu_dishes">খাবার</string>
-    <string name="menu_unavailable_count">মেনুর বাইরে</string>
-    <string name="menu_short_count">উপকরণের ঘাটতি</string>
-    <string name="menu_available_for">%1$s পাওয়া যাবে</string>
-    <string name="menu_gst">GST %1$s%%</string>
-    <string name="menu_ingredients_short">উপকরণ শেষ</string>
-    <string name="menu_editor_new">নতুন খাবার</string>
-    <string name="menu_editor_edit">খাবার সম্পাদনা করুন</string>
-    <string name="menu_field_name">খাবারের নাম</string>
-    <string name="menu_field_section">বিভাগ</string>
-    <string name="menu_field_section_hint">যেমন স্টার্টার, মূল খাবার বা পানীয়</string>
-    <string name="menu_field_description">বর্ণনা (ঐচ্ছিক)</string>
-    <string name="menu_field_price">দাম</string>
-    <string name="menu_field_gst">GST-এর হার</string>
-    <string name="menu_field_sac">SAC কোড (ঐচ্ছিক)</string>
-    <string name="menu_field_diet">নিরামিষ না আমিষ</string>
-    <string name="menu_field_available">বিক্রির জন্য পাওয়া যায়</string>
-    <string name="menu_error_sac">4, 6 বা 8 অঙ্ক ব্যবহার করুন</string>
-    <string name="menu_error_recipe_needed">স্টক থেকে যে উপকরণ বাদ যাবে তা যোগ করুন</string>
-    <string name="menu_error_duplicate_ingredient">এই উপকরণ রেসিপিতে আগেই আছে</string>
-    <string name="menu_delete">খাবার সরান</string>
-    <string name="menu_delete_title">%1$s সরাবেন?</string>
-    <string name="menu_delete_body">খাবারটি মেনু থেকে সরে যাবে। আগের বিলে তা থাকবে।</string>
 
     <!-- Reports -->
     <string name="reports_title">রিপোর্ট</string>
@@ -916,14 +887,12 @@
     <string name="accent_sunset">সূর্যাস্ত</string>
     <string name="accent_slate">ধূসর</string>
     <string name="more_section_stock">স্টক ও ক্রয়</string>
-    <string name="more_section_restaurant">রেস্তোরাঁ</string>
     <string name="more_section_records">রিপোর্ট ও রেকর্ড</string>
     <string name="more_receive_body">অর্ডার সহ বা ছাড়া যে স্টক এসেছে তা লিখে রাখুন</string>
     <string name="more_purchases_body">সরবরাহকারীকে অর্ডার ও গৃহীত মাল</string>
     <string name="more_suppliers_body">সরবরাহকারী, ক্রয়ের অর্ডার ও স্টক গ্রহণ</string>
     <string name="more_alerts_body">কম স্টক, আবার অর্ডার, মেয়াদ শেষ হতে চলা ব্যাচ ও অপচয়</string>
     <string name="more_movements_body">স্টকের প্রতিটি পরিবর্তন, CSV এক্সপোর্ট সহ</string>
-    <string name="more_menu_body">খাবার ও দাম</string>
     <string name="more_reports_body">বিক্রি, GST, স্টক, ক্রয় ও বাকি, CSV এক্সপোর্ট সহ</string>
     <string name="home_alerts_open">আবার অর্ডার ও মেয়াদ</string>
     <string name="inventory_more_options">স্টক ও ক্রয়</string>
@@ -947,10 +916,6 @@
     <plurals name="expiry_days_left">
         <item quantity="one">আর %1$d দিন বাকি (%2$s)</item>
         <item quantity="other">আর %1$d দিন বাকি (%2$s)</item>
-    </plurals>
-    <plurals name="menu_servings_left">
-        <item quantity="one">%d প্লেটের স্টক</item>
-        <item quantity="other">%d প্লেটের স্টক</item>
     </plurals>
     <plurals name="expiry_expired_value">
         <item quantity="one">মেয়াদ শেষ স্টক ক্রয়মূল্যে (%dটি ব্যাচ)</item>

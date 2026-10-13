@@ -808,35 +808,6 @@
     <string name="movements_empty_body">Sales, goods received, returns, write-offs and corrections for this period appear here.</string>
 
     <!-- Restaurant menu -->
-    <string name="menu_title">Restaurant menu</string>
-    <string name="menu_add">Add dish</string>
-    <string name="menu_search">Search dishes or sections</string>
-    <string name="menu_empty_title">No dishes yet</string>
-    <string name="menu_empty_body">Add dishes and drinks to sell them on bills.</string>
-    <string name="menu_no_results">No dishes match your search.</string>
-    <string name="menu_dishes">Dishes</string>
-    <string name="menu_unavailable_count">Off the menu</string>
-    <string name="menu_short_count">Short of ingredients</string>
-    <string name="menu_available_for">%1$s available</string>
-    <string name="menu_gst">GST %1$s%%</string>
-    <string name="menu_ingredients_short">Out of ingredients</string>
-    <string name="menu_editor_new">New dish</string>
-    <string name="menu_editor_edit">Edit dish</string>
-    <string name="menu_field_name">Dish name</string>
-    <string name="menu_field_section">Section</string>
-    <string name="menu_field_section_hint">Such as Starters, Main course or Drinks</string>
-    <string name="menu_field_description">Description (optional)</string>
-    <string name="menu_field_price">Price</string>
-    <string name="menu_field_gst">GST rate</string>
-    <string name="menu_field_sac">SAC code (optional)</string>
-    <string name="menu_field_diet">Veg or non-veg</string>
-    <string name="menu_field_available">Available to sell</string>
-    <string name="menu_error_sac">Use 4, 6 or 8 digits</string>
-    <string name="menu_error_recipe_needed">Add the ingredients to take out of stock</string>
-    <string name="menu_error_duplicate_ingredient">This ingredient is already in the recipe</string>
-    <string name="menu_delete">Remove dish</string>
-    <string name="menu_delete_title">Remove %1$s?</string>
-    <string name="menu_delete_body">The dish comes off the menu. Past bills keep it.</string>
 
     <!-- Reports -->
     <string name="reports_title">Reports</string>
@@ -917,14 +888,12 @@ in %2$s</string>
     <string name="accent_sunset">Sunset</string>
     <string name="accent_slate">Slate</string>
     <string name="more_section_stock">Stock and purchasing</string>
-    <string name="more_section_restaurant">Restaurant</string>
     <string name="more_section_records">Reports and records</string>
     <string name="more_receive_body">Record stock that arrived, with or without an order</string>
     <string name="more_purchases_body">Orders to suppliers and goods received</string>
     <string name="more_suppliers_body">Suppliers, purchase orders and receiving stock</string>
     <string name="more_alerts_body">Low stock, reorders, expiring batches and wastage</string>
     <string name="more_movements_body">Every stock change, with CSV export</string>
-    <string name="more_menu_body">Dishes and prices</string>
     <string name="more_reports_body">Sales, GST, stock, purchases and dues, with CSV export</string>
     <string name="home_alerts_open">Reorder and expiry</string>
     <string name="inventory_more_options">Stock and purchasing</string>
@@ -948,10 +917,6 @@ in %2$s</string>
     <plurals name="expiry_days_left">
         <item quantity="one">%1$d day left (%2$s)</item>
         <item quantity="other">%1$d days left (%2$s)</item>
-    </plurals>
-    <plurals name="menu_servings_left">
-        <item quantity="one">Stock for %d serving</item>
-        <item quantity="other">Stock for %d servings</item>
     </plurals>
     <plurals name="expiry_expired_value">
         <item quantity="one">Expired stock at cost (%d batch)</item>

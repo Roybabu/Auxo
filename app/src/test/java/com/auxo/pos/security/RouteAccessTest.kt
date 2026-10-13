@@ -27,7 +27,7 @@ class RouteAccessTest {
         CustomerRoutes.LIST, CustomerRoutes.DETAIL, CustomerRoutes.EDITOR, CustomerRoutes.PAYMENT, CustomerRoutes.HISTORY,
         StockRoutes.SUPPLIERS, StockRoutes.SUPPLIER_EDITOR, StockRoutes.PURCHASES, StockRoutes.ORDER, StockRoutes.ORDER_EDITOR,
         StockRoutes.RECEIVE, StockRoutes.RECEIPT, StockRoutes.MOVEMENTS, StockRoutes.ALERTS, StockRoutes.COUNT, StockRoutes.IMPORT,
-        MoreRoutes.HOME, MoreRoutes.MENU, MoreRoutes.MENU_EDITOR, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS, MoreRoutes.PRINTER,
+        MoreRoutes.HOME, MoreRoutes.REPORTS, MoreRoutes.BACKUP, MoreRoutes.SHOP_SETTINGS, MoreRoutes.PRINTER,
         MoreRoutes.STORE_DETAILS, MoreRoutes.APPEARANCE, MoreRoutes.USER_MANAGEMENT, MoreRoutes.ACTIVITY_LOG,
         MoreRoutes.DAY_END, MoreRoutes.DAY_CLOSING, MoreRoutes.GST_REPORT, MoreRoutes.LOYALTY, MoreRoutes.RECOVERY_CODE, MoreRoutes.QUICK_UNLOCK, TopLevelDestination.HOME.route,
     )
@@ -133,7 +133,7 @@ class RouteAccessTest {
 
     @Test
     fun oneOption_opensOnlyItsOwnPages() {
-        assertEquals(basics + MoreRoutes.MENU + MoreRoutes.MENU_EDITOR, openWith(Permission.MANAGE_MENU))
+        assertEquals(basics, openWith(Permission.MANAGE_MENU)) // no page is tied to the menu permission any more
         assertEquals(basics + BillingRoutes.RETURN, openWith(Permission.PROCESS_RETURN))
         assertEquals(basics + MoreRoutes.DAY_END + MoreRoutes.DAY_CLOSING, openWith(Permission.CLOSE_DAY))
         assertEquals(basics + MoreRoutes.SHOP_SETTINGS + MoreRoutes.PRINTER + MoreRoutes.STORE_DETAILS, openWith(Permission.MANAGE_SETTINGS))

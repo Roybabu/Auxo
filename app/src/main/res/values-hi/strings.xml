@@ -808,35 +808,6 @@
     <string name="movements_empty_body">इस अवधि की बिक्री, प्राप्त माल, वापसी, राइट-ऑफ़ और सुधार यहाँ दिखते हैं।</string>
 
     <!-- Restaurant menu -->
-    <string name="menu_title">रेस्टोरेंट मेन्यू</string>
-    <string name="menu_add">पकवान जोड़ें</string>
-    <string name="menu_search">पकवान या खंड खोजें</string>
-    <string name="menu_empty_title">अभी कोई पकवान नहीं</string>
-    <string name="menu_empty_body">बिल पर बेचने के लिए पकवान और पेय जोड़ें।</string>
-    <string name="menu_no_results">आपकी खोज से कोई पकवान नहीं मिला।</string>
-    <string name="menu_dishes">पकवान</string>
-    <string name="menu_unavailable_count">मेन्यू से बाहर</string>
-    <string name="menu_short_count">सामग्री की कमी</string>
-    <string name="menu_available_for">%1$s उपलब्ध</string>
-    <string name="menu_gst">GST %1$s%%</string>
-    <string name="menu_ingredients_short">सामग्री खत्म</string>
-    <string name="menu_editor_new">नया पकवान</string>
-    <string name="menu_editor_edit">पकवान बदलें</string>
-    <string name="menu_field_name">पकवान का नाम</string>
-    <string name="menu_field_section">खंड</string>
-    <string name="menu_field_section_hint">जैसे स्टार्टर, मुख्य भोजन या पेय</string>
-    <string name="menu_field_description">विवरण (ज़रूरी नहीं)</string>
-    <string name="menu_field_price">कीमत</string>
-    <string name="menu_field_gst">GST दर</string>
-    <string name="menu_field_sac">SAC कोड (ज़रूरी नहीं)</string>
-    <string name="menu_field_diet">शाकाहारी या मांसाहारी</string>
-    <string name="menu_field_available">बेचने के लिए उपलब्ध</string>
-    <string name="menu_error_sac">4, 6 या 8 अंक इस्तेमाल करें</string>
-    <string name="menu_error_recipe_needed">स्टॉक से निकलने वाली सामग्री जोड़ें</string>
-    <string name="menu_error_duplicate_ingredient">यह सामग्री रेसिपी में पहले से है</string>
-    <string name="menu_delete">पकवान हटाएँ</string>
-    <string name="menu_delete_title">%1$s हटाएँ?</string>
-    <string name="menu_delete_body">पकवान मेन्यू से हट जाएगा। पुराने बिलों में वह बना रहेगा।</string>
 
     <!-- Reports -->
     <string name="reports_title">रिपोर्ट</string>
@@ -916,14 +887,12 @@
     <string name="accent_sunset">सूर्यास्त</string>
     <string name="accent_slate">स्लेटी</string>
     <string name="more_section_stock">स्टॉक और खरीद</string>
-    <string name="more_section_restaurant">रेस्टोरेंट</string>
     <string name="more_section_records">रिपोर्ट और रिकॉर्ड</string>
     <string name="more_receive_body">जो स्टॉक आया उसे दर्ज करें, ऑर्डर के साथ या उसके बिना</string>
     <string name="more_purchases_body">सप्लायर को ऑर्डर और प्राप्त माल</string>
     <string name="more_suppliers_body">सप्लायर, खरीद ऑर्डर और स्टॉक प्राप्त करना</string>
     <string name="more_alerts_body">कम स्टॉक, दोबारा ऑर्डर, एक्सपायर होने वाले बैच और बर्बादी</string>
     <string name="more_movements_body">स्टॉक का हर बदलाव, CSV निर्यात के साथ</string>
-    <string name="more_menu_body">पकवान और कीमतें</string>
     <string name="more_reports_body">बिक्री, GST, स्टॉक, खरीद और बाकी राशि, CSV निर्यात के साथ</string>
     <string name="home_alerts_open">दोबारा ऑर्डर और एक्सपायरी</string>
     <string name="inventory_more_options">स्टॉक और खरीद</string>
@@ -947,10 +916,6 @@
     <plurals name="expiry_days_left">
         <item quantity="one">%1$d दिन बचा (%2$s)</item>
         <item quantity="other">%1$d दिन बचे (%2$s)</item>
-    </plurals>
-    <plurals name="menu_servings_left">
-        <item quantity="one">%d प्लेट का स्टॉक</item>
-        <item quantity="other">%d प्लेट का स्टॉक</item>
     </plurals>
     <plurals name="expiry_expired_value">
         <item quantity="one">एक्सपायर हुआ स्टॉक लागत पर (%d बैच)</item>

@@ -61,15 +61,11 @@ object StockRoutes {
     fun alerts(tab: AlertsTab = AlertsTab.LOW_STOCK): String = "$PREFIX/alerts?$ARG_ALERTS_TAB=${tab.name}"
 }
 
-/** Restaurant menu and reports, inside the More tab's graph. */
+/** Reports, settings and account pages, inside the More tab's graph. */
 object MoreRoutes {
     private const val PREFIX = "more"
 
-    const val ARG_MENU_ITEM_ID = com.auxo.pos.viewmodel.MenuEditorViewModel.ARG_MENU_ITEM_ID
-
     const val HOME = "$PREFIX/home"
-    const val MENU = "$PREFIX/menu"
-    const val MENU_EDITOR = "$PREFIX/menu-item?$ARG_MENU_ITEM_ID={$ARG_MENU_ITEM_ID}"
     const val REPORTS = "$PREFIX/reports"
     const val BACKUP = "$PREFIX/backup"
     const val SHOP_SETTINGS = "$PREFIX/shop-settings"
@@ -87,8 +83,4 @@ object MoreRoutes {
     const val DAY_CLOSING = "$PREFIX/day-end/{$ARG_CLOSING_ID}"
 
     fun dayClosing(closingId: Long): String = "$PREFIX/day-end/$closingId"
-
-    fun newMenuItem(): String = "$PREFIX/menu-item"
-
-    fun editMenuItem(menuItemId: Long): String = "$PREFIX/menu-item?$ARG_MENU_ITEM_ID=$menuItemId"
 }

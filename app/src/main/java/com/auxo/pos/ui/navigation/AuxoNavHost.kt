@@ -32,8 +32,6 @@ import com.auxo.pos.ui.screens.customers.CustomerDetailScreen
 import com.auxo.pos.ui.screens.customers.CustomerHistoryScreen
 import com.auxo.pos.ui.screens.customers.CustomerEditorScreen
 import com.auxo.pos.ui.screens.customers.CustomerListScreen
-import com.auxo.pos.ui.screens.menu.MenuEditorScreen
-import com.auxo.pos.ui.screens.menu.MenuListScreen
 import com.auxo.pos.ui.screens.more.ActivityLogScreen
 import com.auxo.pos.ui.screens.reports.GstReportScreen
 import com.auxo.pos.ui.screens.more.DayClosingScreen
@@ -313,7 +311,6 @@ fun AuxoNavHost(
                         override fun onOpenMovements() = navController.navigate(StockRoutes.movements())
                         override fun onOpenCount() = navController.navigate(StockRoutes.count())
                         override fun onOpenImport() = navController.navigate(StockRoutes.import())
-                        override fun onOpenMenu() = navController.navigate(MoreRoutes.MENU)
                         override fun onOpenReports() = navController.navigate(MoreRoutes.REPORTS)
                         override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
                         override fun onOpenAppearance() = navController.navigate(MoreRoutes.APPEARANCE)
@@ -329,13 +326,6 @@ fun AuxoNavHost(
                         override fun onOpenLoyalty() = navController.navigate(MoreRoutes.LOYALTY)
                         override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
-                )
-            }
-            guarded(navController, MoreRoutes.MENU) {
-                MenuListScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenDish = { navController.navigate(MoreRoutes.editMenuItem(it)) },
-                    onAddDish = { navController.navigate(MoreRoutes.newMenuItem()) },
                 )
             }
             guarded(navController, MoreRoutes.USER_MANAGEMENT) {
@@ -365,20 +355,6 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(MoreRoutes.ARG_CLOSING_ID) { type = NavType.LongType }),
             ) {
                 DayClosingScreen(onBack = { navController.popBackStack() })
-            }
-            guarded(navController,
-                route = MoreRoutes.MENU_EDITOR,
-                arguments = listOf(
-                    navArgument(MoreRoutes.ARG_MENU_ITEM_ID) {
-                        type = NavType.LongType
-                        defaultValue = 0L
-                    },
-                ),
-            ) {
-                MenuEditorScreen(
-                    onBack = { navController.popBackStack() },
-                    onDone = { navController.popBackStack() },
-                )
             }
             guarded(navController, MoreRoutes.SHOP_SETTINGS) {
                 ShopSettingsScreen(

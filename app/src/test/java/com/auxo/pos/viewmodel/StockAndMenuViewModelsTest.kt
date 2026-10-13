@@ -1,9 +1,7 @@
 package com.auxo.pos.viewmodel
 
-import com.auxo.pos.domain.model.MenuItem
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.ProductCategory
-import com.auxo.pos.domain.model.RecipeLine
 import com.auxo.pos.domain.model.StockBatch
 import com.auxo.pos.domain.model.StockChangeReason
 import com.auxo.pos.domain.model.StockMovement
@@ -13,7 +11,6 @@ import com.auxo.pos.domain.usecase.CreateReorderDraftsUseCase
 import com.auxo.pos.domain.usecase.RecordWastageUseCase
 import com.auxo.pos.domain.usecase.WastageError
 import com.auxo.pos.testutil.FakeInventoryRepository
-import com.auxo.pos.testutil.FakeMenuRepository
 import com.auxo.pos.testutil.FakePurchasingRepository
 import com.auxo.pos.testutil.MainDispatcherRule
 import com.auxo.pos.testutil.TestData
@@ -22,7 +19,6 @@ import com.auxo.pos.testutil.record
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -180,78 +176,5 @@ class StockMovementsViewModelTest {
         val lines = file.content.trimEnd().split("\r\n")
         assertEquals("When,Item,Variant,Reason,Change,Batch,Reference,Note", lines.first())
         assertEquals(3, lines.size)
-    }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-class MenuViewModelsTest {
-
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
-
-    private val flour = TestData.flour(grams = 500)
-    private val milk = TestData.milk(millilitres = 2_000)
-    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), flour, milk))
-    private val paratha = MenuItem(
-        id = 1, name = "Paratha", section = "Breakfast", price = Money(6_000), deductIngredients = true,
-        recipe = listOf(RecipeLine(flour.variants[0].id, 120), RecipeLine(milk.variants[0].id, 30)),
-    )
-    private val tea = MenuItem(id = 2, name = "Masala Tea", section = "Drinks", price = Money(2_000))
-    private val menu = FakeMenuRepository(listOf(paratha, tea))
-
-    @Test
-    fun menuList_showsSectionsAndServingsLeft() = runTest {
-        val viewModel = MenuListViewModel(menu, inventory, TestData.clock)
-        keepActive(viewModel.uiState)
-        val state = viewModel.uiState.value
-        assertEquals(listOf("Breakfast", "Drinks"), state.sections.map { it.name })
-        assertEquals(4, state.sections[0].dishes.single().servingsLeft) // 500 g flour / 120 g
-        assertNull(state.sections[1].dishes.single().servingsLeft)
-        assertEquals(0, state.shortCount)
-
-        viewModel.setAvailable(tea.id, false)
-        assertEquals(1, viewModel.uiState.value.unavailableCount)
-        viewModel.onQueryChange("tea")
-        assertEquals(listOf("Masala Tea"), viewModel.uiState.value.sections.flatMap { it.dishes }.map { it.item.name })
-
-        inventory.products.value = inventory.products.value.map { product ->
-            if (product.id == flour.id) product.copy(variants = listOf(product.variants[0].copy(stockQuantity = 100))) else product
-        }
-        viewModel.onQueryChange("")
-        assertEquals(1, viewModel.uiState.value.shortCount)
-    }
-
-    @Test
-    fun editor_savesADishWithoutARecipe() = runTest {
-        val viewModel = MenuEditorViewModel(0, menu, inventory)
-        val events = record(viewModel.events)
-        assertEquals(listOf("Breakfast", "Drinks"), viewModel.uiState.value.sections)
-
-        viewModel.onFormChange(viewModel.uiState.value.form.copy(name = "Puri", section = "Breakfast", price = "45"))
-        viewModel.save()
-        val id = (events.last() as MenuEditorEvent.Saved).menuItemId
-        val saved = menu.items.value.first { it.id == id }
-        assertTrue(saved.recipe.isEmpty())
-        assertEquals(Money(4_500), saved.price)
-    }
-
-    @Test
-    fun editor_loadsAnExistingDish_andDeletesIt() = runTest {
-        val viewModel = MenuEditorViewModel(paratha.id, menu, inventory)
-        val events = record(viewModel.events)
-        val form = viewModel.uiState.value.form
-        assertEquals("Paratha", form.name)
-        // Recipes are gone from the editor, even for a dish that had one.
-        assertTrue(form.recipe.isEmpty())
-        assertFalse(form.deductIngredients)
-
-        viewModel.onFormChange(form.copy(price = ""))
-        viewModel.save()
-        assertTrue(events.last() is MenuEditorEvent.Invalid)
-        assertEquals(Money(6_000), menu.items.value.first { it.id == paratha.id }.price)
-
-        viewModel.delete()
-        assertEquals(MenuEditorEvent.Deleted, events.last())
-        assertEquals(listOf(tea.id), menu.items.value.map { it.id })
     }
 }

@@ -34,7 +34,6 @@ import com.auxo.pos.domain.billing.taxModeFor
 import com.auxo.pos.domain.customers.Ledger
 import com.auxo.pos.domain.inventory.PickableItem
 import com.auxo.pos.domain.inventory.ReorderPlanner
-import com.auxo.pos.domain.menu.MenuItemForm
 import com.auxo.pos.domain.model.BatchWithProduct
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.CustomerAccount
@@ -47,7 +46,6 @@ import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.PurchaseOrder
 import com.auxo.pos.domain.model.PurchaseOrderLine
 import com.auxo.pos.domain.model.PurchaseOrderStatus
-import com.auxo.pos.domain.model.RecipeLine
 import com.auxo.pos.domain.model.StockBatch
 import com.auxo.pos.domain.model.StockChangeReason
 import com.auxo.pos.domain.model.StockMovement
@@ -67,9 +65,6 @@ import com.auxo.pos.ui.screens.billing.PaymentContent
 import com.auxo.pos.ui.screens.customers.AccountPaymentContent
 import com.auxo.pos.ui.screens.customers.CustomerDetailContent
 import com.auxo.pos.ui.screens.customers.CustomerListContent
-import com.auxo.pos.ui.screens.menu.MenuEditorActions
-import com.auxo.pos.ui.screens.menu.MenuEditorContent
-import com.auxo.pos.ui.screens.menu.MenuListContent
 import com.auxo.pos.ui.screens.more.MoreActions
 import com.auxo.pos.ui.screens.more.MoreScreen
 import com.auxo.pos.viewmodel.ShopUiState
@@ -93,10 +88,6 @@ import com.auxo.pos.viewmodel.BillingUiState
 import com.auxo.pos.viewmodel.CustomerDetailUiState
 import com.auxo.pos.viewmodel.CustomerListUiState
 import com.auxo.pos.viewmodel.ItemPickerState
-import com.auxo.pos.viewmodel.MenuDish
-import com.auxo.pos.viewmodel.MenuEditorUiState
-import com.auxo.pos.viewmodel.MenuListUiState
-import com.auxo.pos.viewmodel.MenuSection
 import com.auxo.pos.viewmodel.PurchaseOrderDetailUiState
 import com.auxo.pos.viewmodel.PurchaseOrderEditorUiState
 import com.auxo.pos.viewmodel.ReceiveGoodsUiState
@@ -479,43 +470,6 @@ class OperationsScreenTest {
         composeRule.onNodeWithText("-2").assertIsDisplayed()
         composeRule.onNodeWithTag("movement_list").performScrollToNode(hasText("Damaged"))
         screenshot("50_stock_movements")
-    }
-
-    @Test
-    fun menuList_showsServingsAndAvailability() {
-        val toggled = mutableListOf<Pair<Long, Boolean>>()
-        val paratha = MenuItem(id = 1, name = "Paratha", section = "Breakfast", price = Money(6_000), deductIngredients = true, recipe = listOf(RecipeLine(41, 120)))
-        val idli = MenuItem(id = 2, name = "Idli", section = "Breakfast", price = Money(5_000), available = false)
-        show {
-            MenuListContent(
-                state = MenuListUiState(isLoading = false, sections = listOf(MenuSection("Breakfast", listOf(MenuDish(paratha, 4), MenuDish(idli, null)))), dishCount = 2, unavailableCount = 1),
-                onQueryChange = {}, onAvailableChange = { id, on -> toggled += id to on }, onRetry = {}, onOpenDish = {}, onAddDish = {},
-            )
-        }
-        composeRule.onNodeWithText("Stock for 4 servings").assertIsDisplayed()
-        composeRule.onNodeWithText("Not available").assertIsDisplayed()
-        screenshot("51_menu")
-        composeRule.onNodeWithTag("dish_available_2").performClick()
-        assertEquals(listOf(2L to true), toggled)
-    }
-
-    @Test
-    fun menuEditor_hasNoRecipe() {
-        show {
-            MenuEditorContent(
-                state = MenuEditorUiState(
-                    isLoading = false,
-                    isNew = false,
-                    sections = listOf("Breakfast", "Drinks"),
-                    form = MenuItemForm(name = "Paratha", section = "Breakfast", price = "60"),
-                ),
-                actions = object : MenuEditorActions {},
-            )
-        }
-        composeRule.onNodeWithText("Drinks").assertIsDisplayed() // section suggestion
-        composeRule.onNodeWithText("Recipe (per serving)").assertDoesNotExist()
-        composeRule.onNodeWithTag("menu_deduct").assertDoesNotExist()
-        screenshot("52_menu_editor")
     }
 
     @Test

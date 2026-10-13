@@ -46,8 +46,6 @@ object RouteAccess {
         StockRoutes.COUNT to Permission.ADJUST_STOCK,
         StockRoutes.IMPORT to Permission.MANAGE_PRODUCTS,
 
-        MoreRoutes.MENU to Permission.MANAGE_MENU,
-        MoreRoutes.MENU_EDITOR to Permission.MANAGE_MENU,
         MoreRoutes.REPORTS to Permission.VIEW_REPORTS,
         MoreRoutes.BACKUP to Permission.BACKUP_AND_RESTORE,
         MoreRoutes.SHOP_SETTINGS to Permission.MANAGE_SETTINGS,

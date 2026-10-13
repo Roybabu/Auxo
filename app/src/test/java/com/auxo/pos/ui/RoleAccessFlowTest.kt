@@ -89,8 +89,6 @@ class RoleAccessFlowTest {
         "receive stock" to StockRoutes.receive(),
         "stock movements" to StockRoutes.movements(),
         "stock alerts" to StockRoutes.alerts(),
-        "menu" to MoreRoutes.MENU,
-        "new dish" to MoreRoutes.newMenuItem(),
         "reports" to MoreRoutes.REPORTS,
         "backup" to MoreRoutes.BACKUP,
         "shop settings" to MoreRoutes.SHOP_SETTINGS,

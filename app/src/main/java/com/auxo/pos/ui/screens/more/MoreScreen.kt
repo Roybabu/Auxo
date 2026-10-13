@@ -43,7 +43,6 @@ interface MoreActions {
     fun onOpenMovements() = Unit
     fun onOpenCount() = Unit
     fun onOpenImport() = Unit
-    fun onOpenMenu() = Unit
     fun onOpenReports() = Unit
     fun onOpenHistory() = Unit
     fun onOpenAppearance() = Unit
@@ -60,7 +59,7 @@ interface MoreActions {
     fun onSignOut() = Unit
 }
 
-/** Purchasing, stock records, the restaurant menu, reports, settings and how the app looks. */
+/** Purchasing, stock records, reports, settings and how the app looks. */
 @Composable
 fun MoreScreen(
     actions: MoreActions,
@@ -183,11 +182,6 @@ fun MoreScreen(
                 if (showImport) {
                     MoreItem(R.drawable.ic_download, stringResource(R.string.import_title), stringResource(R.string.more_import_body), actions::onOpenImport, modifier = Modifier.testTag("more_import_products"))
                 }
-            }
-
-            if (shop.restaurantMenu && can(Permission.MANAGE_MENU)) {
-                SectionHeader(stringResource(R.string.more_section_restaurant), modifier = Modifier.padding(top = Spacing.md))
-                MoreItem(R.drawable.ic_menu_book, stringResource(R.string.menu_title), stringResource(R.string.more_menu_body), actions::onOpenMenu)
             }
 
             SectionHeader(stringResource(R.string.more_section_records), modifier = Modifier.padding(top = Spacing.md))
