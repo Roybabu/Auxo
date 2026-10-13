@@ -1029,7 +1029,10 @@ in %2$s</string>
     <string name="recovery_not_now">Not now</string>
     <string name="recovery_show_title">Write this code down</string>
     <string name="recovery_show_body">Copy it onto paper exactly as shown. The dashes and spaces do not matter.</string>
-    <string name="recovery_show_warning">Do not photograph it or save it on this device. It cannot be shown again; a lost code can only be replaced.</string>
+    <string name="recovery_show_warning">Do not photograph it. It cannot be shown again; a lost code can only be replaced.</string>
+    <string name="recovery_copy">Copy code</string>
+    <string name="recovery_copied">Copied</string>
+    <string name="recovery_copy_note">Copied for one minute only. Paste it into a password manager or write it on paper; it is then cleared from the clipboard.</string>
     <string name="recovery_written">I have written it down</string>
     <string name="recovery_confirm_title">Type the code to confirm</string>
     <string name="recovery_confirm_body">Type the code from your paper copy. This checks that you copied it correctly.</string>

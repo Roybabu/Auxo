@@ -63,6 +63,34 @@ class RecoveryScreensTest {
         assertEquals("SEL9U-GD96A-LWYSH-M7VLV", layouts.single().layoutInput.text.text)
     }
 
+    // Copying the code
+
+    private fun clipboard() = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        .getSystemService(android.content.ClipboardManager::class.java)
+
+    private fun clipText() = clipboard().primaryClip?.getItemAt(0)?.text?.toString()
+
+    @Test
+    fun copyButton_putsTheCodeOnTheClipboard_andSaysSo() {
+        composeRule.setContent { AuxoTheme { com.auxo.pos.ui.screens.auth.RecoveryCodeCard(CODE) } }
+        composeRule.onNodeWithTag("recovery_copy_note").assertDoesNotExist()
+        composeRule.onNodeWithTag("recovery_copy").performClick()
+        assertEquals(CODE, clipText())
+        composeRule.onNodeWithText("Copied").assertIsDisplayed()
+        composeRule.onNodeWithTag("recovery_copy_note").assertIsDisplayed()
+    }
+
+    @Test
+    fun theCopy_isRemovedFromTheClipboardAfterAMinute() {
+        composeRule.setContent { AuxoTheme { com.auxo.pos.ui.screens.auth.RecoveryCodeCard(CODE) } }
+        composeRule.onNodeWithTag("recovery_copy").performClick()
+        assertEquals(CODE, clipText())
+        composeRule.mainClock.advanceTimeBy(61_000)
+        composeRule.waitForIdle()
+        assertEquals(null, clipText())
+        composeRule.onNodeWithText("Copy code").assertIsDisplayed()
+    }
+
     // The gate
 
     private fun gate(state: AuthState, prompt: RecoveryPrompt) {
@@ -177,6 +205,47 @@ class RecoveryScreensTest {
         composeRule.onNodeWithText("Write this code down").assertIsDisplayed()
         composeRule.onNodeWithTag("recovery_written").performClick()
         assertEquals(1, taps.written)
+    }
+
+    @Test
+    fun typingTheCode_showsDashesAsYouGo_inCapitals_andKeepsOnlyTheLetters() {
+        var typed = ""
+        composeRule.setContent {
+            AuxoTheme {
+                var value by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+                RecoveryCodeBody(
+                    state = RecoveryCodeUiState(step = RecoveryStep.CONFIRM, code = CODE, typed = value),
+                    onPasswordChange = {}, onStart = {}, onWrittenDown = {},
+                    onTypedChange = { value = it; typed = it },
+                    onConfirm = {}, onShowAgain = {}, onSkip = null, onDone = null,
+                )
+            }
+        }
+        composeRule.onNodeWithTag("recovery_typed").performTextInput("a8qzn7hv46w9")
+        assertEquals("A8QZN7HV46W9", typed)
+        composeRule.onNodeWithTag("recovery_typed").assert(
+            androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                androidx.compose.ui.semantics.SemanticsProperties.EditableText,
+                androidx.compose.ui.text.AnnotatedString("A8QZN-7HV46-W9"),
+            ),
+        )
+    }
+
+    @Test
+    fun aPastedCodeWithDashes_isCleanedAndCutToTheCodeLength() {
+        var typed = ""
+        composeRule.setContent {
+            AuxoTheme {
+                RecoveryCodeBody(
+                    state = RecoveryCodeUiState(step = RecoveryStep.CONFIRM, code = CODE, typed = typed),
+                    onPasswordChange = {}, onStart = {}, onWrittenDown = {},
+                    onTypedChange = { typed = it },
+                    onConfirm = {}, onShowAgain = {}, onSkip = null, onDone = null,
+                )
+            }
+        }
+        composeRule.onNodeWithTag("recovery_typed").performTextInput("abcde-fghjk-lmnpq-rstuv-extra")
+        assertEquals("ABCDEFGHJKLMNPQRSTUV", typed)
     }
 
     @Test

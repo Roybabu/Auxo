@@ -2,6 +2,7 @@ package com.auxo.pos.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
@@ -52,7 +53,6 @@ import com.auxo.pos.ui.components.AuthGradientBackground
 import com.auxo.pos.ui.components.AuthProgressBar
 import com.auxo.pos.ui.components.CircleNextButton
 import com.auxo.pos.ui.components.Illustration
-import com.auxo.pos.ui.components.PageDots
 import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
@@ -102,12 +102,12 @@ fun OnboardingContent(state: OnboardingUiState, onPageChanged: (Int) -> Unit, on
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // The splash shows a line, the pages after it show dots; the third dot stands for first-time setup.
-            if (page == 0) {
-                AuthProgressBar(fraction = 1f / OnboardingUiState.PAGE_COUNT, modifier = Modifier.width(120.dp).testTag("onboarding_progress"))
-            } else {
-                PageDots(count = OnboardingUiState.PAGE_COUNT, current = page - 1, modifier = Modifier.testTag("onboarding_dots"))
-            }
+            // One progress line on every page. The last step is first-time setup, so the line is never full while the intro is showing.
+            val progress by animateFloatAsState(
+                targetValue = (page + 1f) / (OnboardingUiState.PAGE_COUNT + 1),
+                label = "onboarding_progress",
+            )
+            AuthProgressBar(fraction = progress, modifier = Modifier.width(120.dp).testTag("onboarding_progress"))
             CircleNextButton(
                 onClick = { if (last) onFinish() else scope.launch { pager.animateScrollToPage(page + 1) } },
                 contentDescription = stringResource(R.string.onboarding_next),

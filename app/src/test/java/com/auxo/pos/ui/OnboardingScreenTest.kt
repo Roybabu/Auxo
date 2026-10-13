@@ -77,7 +77,7 @@ class OnboardingScreenTest {
         next()
         composeRule.onNodeWithTag("onboarding_intro").assertIsDisplayed()
         composeRule.onNodeWithText("All your business in one place").assertIsDisplayed()
-        composeRule.onNodeWithTag("onboarding_dots").assertIsDisplayed()
+        composeRule.onNodeWithTag("onboarding_progress").assertIsDisplayed()
         composeRule.onNodeWithTag("onboarding_skip").assertIsDisplayed()
         screenshot("onboarding_2_intro")
 

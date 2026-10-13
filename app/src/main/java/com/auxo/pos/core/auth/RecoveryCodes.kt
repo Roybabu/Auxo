@@ -11,7 +11,7 @@ import java.security.SecureRandom
 object RecoveryCodes {
     const val ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     const val LENGTH = 20
-    private const val GROUP = 5
+    const val GROUP = 5
 
     fun generate(random: SecureRandom = SecureRandom()): String =
         buildString(LENGTH) { repeat(LENGTH) { append(ALPHABET[random.nextInt(ALPHABET.length)]) } }

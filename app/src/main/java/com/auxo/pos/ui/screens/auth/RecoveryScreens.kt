@@ -1,8 +1,13 @@
 package com.auxo.pos.ui.screens.auth
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
+import android.os.PersistableBundle
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,8 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,7 +42,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
+import com.auxo.pos.core.auth.RecoveryCodes
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
@@ -82,35 +93,126 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 @Composable
 internal fun RecoveryCodeCard(code: String, modifier: Modifier = Modifier) {
     AuxoCard(modifier = modifier.fillMaxWidth()) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.lg)) {
-            // A fixed-width letter is about 0.62 of its size wide, so this is the biggest size that fits the whole code.
-            val fitted = with(LocalDensity.current) { (maxWidth / (code.length.coerceAtLeast(1) * 0.62f)).toSp() }
-            Text(
-                text = code,
-                style = MaterialTheme.typography.headlineSmall,
-                fontSize = fitted.value.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE).sp,
-                fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center,
-                softWrap = false,
-                maxLines = 1,
-                modifier = Modifier.fillMaxWidth().testTag("recovery_code"),
-            )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.lg)) {
+                // A fixed-width letter is about 0.62 of its size wide, so this is the biggest size that fits the whole code.
+                val fitted = with(LocalDensity.current) { (maxWidth / (code.length.coerceAtLeast(1) * 0.62f)).toSp() }
+                Text(
+                    text = code,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontSize = fitted.value.coerceIn(MIN_CODE_SIZE, MAX_CODE_SIZE).sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    softWrap = false,
+                    maxLines = 1,
+                    modifier = Modifier.fillMaxWidth().testTag("recovery_code"),
+                )
+            }
+            CopyCodeButton(code)
         }
+    }
+}
+
+private const val CLIP_LABEL = "Auxo recovery code"
+private const val CLIP_LIFETIME_MS = 60_000L
+
+/**
+ * Copies the code for one minute only. The copy is marked sensitive (Android 13 and newer then hide it in the "copied" preview)
+ * and is removed from the clipboard when the minute is up or the person leaves the screen, so it does not stay around for other apps.
+ */
+@Composable
+private fun CopyCodeButton(code: String) {
+    val context = LocalContext.current
+    var copied by rememberSaveable { mutableStateOf(false) }
+    if (copied) {
+        LaunchedEffect(Unit) {
+            delay(CLIP_LIFETIME_MS)
+            context.clearOwnClip()
+            copied = false
+        }
+        // Leaving the screen clears the copy too, but turning the phone sideways does not.
+        DisposableEffect(Unit) {
+            onDispose { if (context.findActivity()?.isChangingConfigurations != true) context.clearOwnClip() }
+        }
+    }
+    TextButton(
+        onClick = { if (context.copySensitive(code)) copied = true },
+        modifier = Modifier.testTag("recovery_copy"),
+    ) {
+        Text(stringResource(if (copied) R.string.recovery_copied else R.string.recovery_copy))
+    }
+    if (copied) {
+        Text(
+            stringResource(R.string.recovery_copy_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = Spacing.md).padding(bottom = Spacing.md).testTag("recovery_copy_note"),
+        )
+    }
+}
+
+private fun Context.copySensitive(code: String): Boolean {
+    val clipboard = getSystemService(ClipboardManager::class.java) ?: return false
+    val clip = ClipData.newPlainText(CLIP_LABEL, code)
+    if (Build.VERSION.SDK_INT >= 33) {
+        clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
+    }
+    return try {
+        clipboard.setPrimaryClip(clip)
+        true
+    } catch (_: RuntimeException) {
+        false
+    }
+}
+
+/** Empties the clipboard, but only when it still holds the code copied here, so something the person copied since is left alone. */
+private fun Context.clearOwnClip() {
+    val clipboard = getSystemService(ClipboardManager::class.java) ?: return
+    try {
+        if (clipboard.primaryClipDescription?.label != CLIP_LABEL) return
+        if (Build.VERSION.SDK_INT >= 28) clipboard.clearPrimaryClip() else clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+    } catch (_: RuntimeException) {
+        // Best effort: the system may refuse while the app is in the background.
     }
 }
 
 private const val MAX_CODE_SIZE = 24f
 private const val MIN_CODE_SIZE = 10f
 
+/**
+ * Shows what is typed in the groups the code is written in (`ABCDE-FGHJK-...`) while the field itself holds only the letters,
+ * so the dashes appear as the person types or pastes and never have to be typed.
+ */
+private object RecoveryCodeDashes : VisualTransformation {
+    private const val STEP = RecoveryCodes.GROUP + 1
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        val raw = text.text
+        val shown = raw.chunked(RecoveryCodes.GROUP).joinToString("-")
+        val mapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = offset + (offset - 1).coerceAtLeast(0) / RecoveryCodes.GROUP
+            override fun transformedToOriginal(offset: Int): Int = (offset - offset / STEP).coerceIn(0, raw.length)
+        }
+        return TransformedText(AnnotatedString(shown), mapping)
+    }
+}
+
+/** Keeps only letters and digits, in capitals, up to the length of a code: dashes and spaces from typing or pasting are dropped. */
+private fun cleanTypedCode(text: String): String = RecoveryCodes.normalize(text).take(RecoveryCodes.LENGTH)
+
 @Composable
 private fun TypeCodeField(value: String, onChange: (String) -> Unit, onDone: () -> Unit, error: String?, enabled: Boolean) {
     AuxoTextField(
         value = value,
-        onValueChange = onChange,
+        onValueChange = { onChange(cleanTypedCode(it)) },
         label = stringResource(R.string.recovery_field_code),
         error = error,
+        // The password kind of keyboard keeps the code out of the keyboard's suggestions and its memory.
+        keyboardType = KeyboardType.Password,
         capitalization = KeyboardCapitalization.Characters,
+        visualTransformation = RecoveryCodeDashes,
         imeAction = ImeAction.Done,
         keyboardActions = KeyboardActions(onDone = { onDone() }),
         enabled = enabled,
@@ -387,9 +489,11 @@ fun PasswordResetContent(
 private fun TypeCodeFieldWithTag(value: String, onChange: (String) -> Unit, enabled: Boolean) {
     AuxoTextField(
         value = value,
-        onValueChange = onChange,
+        onValueChange = { onChange(cleanTypedCode(it)) },
         label = stringResource(R.string.recovery_field_code),
+        keyboardType = KeyboardType.Password,
         capitalization = KeyboardCapitalization.Characters,
+        visualTransformation = RecoveryCodeDashes,
         enabled = enabled,
         modifier = Modifier.fillMaxWidth().testTag("reset_code"),
     )

@@ -1028,7 +1028,10 @@
     <string name="recovery_not_now">এখন নয়</string>
     <string name="recovery_show_title">এই কোডটি লিখে রাখুন</string>
     <string name="recovery_show_body">যেমন দেখানো হয়েছে ঠিক তেমন করে কাগজে টুকে নিন। ড্যাশ ও ফাঁকা জায়গা কোনো ব্যাপার নয়।</string>
-    <string name="recovery_show_warning">এর ছবি তুলবেন না বা এই ডিভাইসে সংরক্ষণ করবেন না। এটি আর দেখানো যাবে না; হারিয়ে গেলে শুধু বদলে নতুন নেওয়া যায়।</string>
+    <string name="recovery_show_warning">এর ছবি তুলবেন না। এটি আর দেখানো যাবে না; হারিয়ে গেলে শুধু বদলে নতুন নেওয়া যায়।</string>
+    <string name="recovery_copy">কোড কপি করুন</string>
+    <string name="recovery_copied">কপি হয়েছে</string>
+    <string name="recovery_copy_note">মাত্র এক মিনিটের জন্য কপি হয়েছে। এটি পাসওয়ার্ড ম্যানেজারে পেস্ট করুন বা কাগজে লিখে নিন; এরপর এটি ক্লিপবোর্ড থেকে মুছে যাবে।</string>
     <string name="recovery_written">আমি লিখে নিয়েছি</string>
     <string name="recovery_confirm_title">নিশ্চিত করতে কোডটি লিখুন</string>
     <string name="recovery_confirm_body">আপনার কাগজের কপি থেকে কোডটি লিখুন। এতে বোঝা যায় আপনি ঠিকমতো টুকেছেন।</string>

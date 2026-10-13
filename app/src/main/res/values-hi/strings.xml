@@ -1028,7 +1028,10 @@
     <string name="recovery_not_now">अभी नहीं</string>
     <string name="recovery_show_title">यह कोड लिख लें</string>
     <string name="recovery_show_body">इसे जैसा दिखता है वैसा ही कागज़ पर उतारें। डैश और खाली जगह मायने नहीं रखते।</string>
-    <string name="recovery_show_warning">इसकी तस्वीर न लें और इसे इस डिवाइस पर न सहेजें। यह दोबारा नहीं दिखाया जा सकता; खोया हुआ कोड केवल बदला जा सकता है।</string>
+    <string name="recovery_show_warning">इसकी तस्वीर न लें। यह दोबारा नहीं दिखाया जा सकता; खोया हुआ कोड केवल बदला जा सकता है।</string>
+    <string name="recovery_copy">कोड कॉपी करें</string>
+    <string name="recovery_copied">कॉपी हो गया</string>
+    <string name="recovery_copy_note">सिर्फ़ एक मिनट के लिए कॉपी हुआ है। इसे पासवर्ड मैनेजर में चिपकाएँ या कागज़ पर लिख लें; इसके बाद यह क्लिपबोर्ड से हट जाएगा।</string>
     <string name="recovery_written">मैंने इसे लिख लिया है</string>
     <string name="recovery_confirm_title">पुष्टि के लिए कोड लिखें</string>
     <string name="recovery_confirm_body">अपनी कागज़ की प्रति से कोड लिखें। इससे पता चलता है कि आपने उसे सही उतारा है।</string>
