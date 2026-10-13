@@ -47,11 +47,13 @@ class AuthScreensTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun gate(state: AuthState) {
+    private fun gate(state: AuthState, savedSessionName: String? = null) {
         composeRule.setContent {
             AuxoTheme {
                 AuthGate(
                     state = state,
+                    savedSessionName = savedSessionName,
+                    resume = { name, usePassword -> Text("RESUME $name", modifier = Modifier.testTag("fake_resume").clickable { usePassword() }) },
                     setup = { back -> Text("SETUP SCREEN", modifier = Modifier.testTag("fake_setup").clickable { back() }) },
                     login = { open -> Text("LOGIN SCREEN", modifier = Modifier.testTag("fake_login").clickable { open() }) },
                     businessExists = { back -> Text("EXISTS", modifier = Modifier.testTag("fake_exists").clickable { back() }) },
@@ -73,6 +75,23 @@ class AuthScreensTest {
         composeRule.onNodeWithTag("fake_setup").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_setup").performClick()
         composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+    }
+
+    @Test
+    fun aSavedSession_opensTheFingerprintScreen_first_andThePasswordIsOneTapAway() {
+        gate(AuthState.SignedOut, savedSessionName = "Roy")
+        composeRule.onNodeWithTag("fake_resume").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
+        composeRule.onNodeWithTag("fake_resume").performClick()
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_resume").assertDoesNotExist()
+    }
+
+    @Test
+    fun aSavedSession_isIgnored_beforeAnyBusinessExists_andWhenNothingWasSaved() {
+        gate(AuthState.NeedsSetup, savedSessionName = "Roy")
+        composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
+        composeRule.onNodeWithTag("fake_resume").assertDoesNotExist()
     }
 
     @Test
@@ -277,6 +296,37 @@ class AuthScreensTest {
         }
         composeRule.onNodeWithTag("login_error").assertIsDisplayed()
         composeRule.onNodeWithText("No account was found", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun resumeScreen_offersTheFingerprint_andThePassword() {
+        var fingerprints = 0
+        var passwords = 0
+        composeRule.setContent {
+            AuxoTheme {
+                com.auxo.pos.ui.screens.auth.ResumeContent(
+                    com.auxo.pos.viewmodel.ResumeUiState("Roy"),
+                    onUseFingerprint = { fingerprints++ },
+                    onUsePassword = { passwords++ },
+                )
+            }
+        }
+        composeRule.onNodeWithText("Welcome back, Roy").assertIsDisplayed()
+        composeRule.onNodeWithTag("resume_idle").assertIsDisplayed()
+        composeRule.onNodeWithTag("resume_fingerprint").performClick()
+        composeRule.onNodeWithTag("resume_password").performClick()
+        assertEquals(1, fingerprints)
+        assertEquals(1, passwords)
+    }
+
+    @Test
+    fun resumeScreen_saysSoWhenAFingerIsNotRecognised() {
+        composeRule.setContent {
+            AuxoTheme { com.auxo.pos.ui.screens.auth.ResumeContent(com.auxo.pos.viewmodel.ResumeUiState("Roy", failed = true), {}, {}) }
+        }
+        composeRule.onNodeWithTag("resume_failed").assertIsDisplayed()
+        composeRule.onNodeWithText("Fingerprint not recognised. Try again.").assertIsDisplayed()
+        composeRule.onNodeWithText("Try again").assertIsDisplayed()
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import javax.crypto.Cipher
 
 /**
  * The phone's own fingerprint check. The app never sees a fingerprint: it only learns that the check passed.
@@ -16,6 +17,12 @@ interface FingerprintCheck {
     fun isAvailable(): Boolean
 
     fun authenticate(title: String, cancelLabel: String, onSuccess: () -> Unit)
+
+    /**
+     * The same check, but it also releases [cipher] (a key that only a fingerprint can open). [onFailed] is called when a finger
+     * is not recognised; cancelling calls neither callback. Nothing happens where no check is offered.
+     */
+    fun authenticateWithCipher(title: String, cancelLabel: String, cipher: Cipher, onSuccess: (Cipher) -> Unit, onFailed: () -> Unit = {}) = Unit
 }
 
 /** Null where no check is offered (previews, tests, a screen that is not inside the activity). */
@@ -40,5 +47,25 @@ class BiometricFingerprintCheck(private val activity: FragmentActivity) : Finger
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
         prompt.authenticate(info)
+    }
+
+    override fun authenticateWithCipher(title: String, cancelLabel: String, cipher: Cipher, onSuccess: (Cipher) -> Unit, onFailed: () -> Unit) {
+        val prompt = BiometricPrompt(
+            activity,
+            ContextCompat.getMainExecutor(activity),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    result.cryptoObject?.cipher?.let(onSuccess) ?: onFailed()
+                }
+
+                override fun onAuthenticationFailed() = onFailed()
+            },
+        )
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setNegativeButtonText(cancelLabel)
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .build()
+        prompt.authenticate(info, BiometricPrompt.CryptoObject(cipher))
     }
 }

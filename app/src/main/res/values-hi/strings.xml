@@ -1744,4 +1744,9 @@
     <string name="auth_strength_fair">ठीक-ठाक</string>
     <string name="auth_strength_good">अच्छा</string>
     <string name="auth_strength_strong">मज़बूत</string>
+    <string name="resume_title">वापसी पर स्वागत है, %1$s</string>
+    <string name="resume_body">जारी रखने के लिए अपनी फ़िंगरप्रिंट का उपयोग करें।</string>
+    <string name="resume_failed">फ़िंगरप्रिंट पहचानी नहीं गई। फिर कोशिश करें।</string>
+    <string name="resume_try_again">फिर कोशिश करें</string>
+    <string name="resume_use_password">इसके बजाय पासवर्ड का उपयोग करें</string>
 </resources>

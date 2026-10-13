@@ -1744,4 +1744,9 @@
     <string name="auth_strength_fair">মোটামুটি</string>
     <string name="auth_strength_good">ভালো</string>
     <string name="auth_strength_strong">শক্তিশালী</string>
+    <string name="resume_title">আবার স্বাগতম, %1$s</string>
+    <string name="resume_body">চালিয়ে যেতে আপনার ফিঙ্গারপ্রিন্ট ব্যবহার করুন।</string>
+    <string name="resume_failed">ফিঙ্গারপ্রিন্ট চেনা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="resume_try_again">আবার চেষ্টা করুন</string>
+    <string name="resume_use_password">পরিবর্তে পাসওয়ার্ড ব্যবহার করুন</string>
 </resources>

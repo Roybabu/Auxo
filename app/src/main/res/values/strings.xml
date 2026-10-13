@@ -1744,4 +1744,9 @@ in %2$s</string>
     <string name="auth_strength_fair">Fair</string>
     <string name="auth_strength_good">Good</string>
     <string name="auth_strength_strong">Strong</string>
+    <string name="resume_title">Welcome back, %1$s</string>
+    <string name="resume_body">Use your fingerprint to continue.</string>
+    <string name="resume_failed">Fingerprint not recognised. Try again.</string>
+    <string name="resume_try_again">Try again</string>
+    <string name="resume_use_password">Use password instead</string>
 </resources>

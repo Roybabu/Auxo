@@ -120,6 +120,7 @@ class MainActivity : FragmentActivity() {
                         lock = lock,
                         categoryPrompt = mayChooseCategories && !categorySetupDone,
                         onboarding = !onboardingSeen,
+                        savedSessionName = remember(authState) { container.authRepository.savedSessionName() },
                     ) { AuxoApp() }
                 }
             }

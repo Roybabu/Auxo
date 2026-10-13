@@ -19,7 +19,9 @@ import com.auxo.pos.data.security.AuthorizedSettingsRepository
 import com.auxo.pos.data.security.AuthorizedShopPreferences
 import com.auxo.pos.data.security.AuthorizedStoreLogoRepository
 import com.auxo.pos.core.auth.FileAccountStore
+import com.auxo.pos.core.auth.KeystoreSessionVault
 import com.auxo.pos.core.auth.LocalAuthRepository
+import com.auxo.pos.core.auth.SavedSessionVault
 import com.auxo.pos.core.auth.SharedPrefsLockSettings
 import com.auxo.pos.core.auth.SharedPrefsLockoutStore
 import com.auxo.pos.core.shop.FileStoreLogoRepository
@@ -84,9 +86,13 @@ class AppContainer(context: Context) {
 
     private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /** The saved sign-in that only the phone's fingerprint can open (see [KeystoreSessionVault]). */
+    val sessionVault: SavedSessionVault by lazy { KeystoreSessionVault(appContext) }
+
     val authRepository: AuthRepository by lazy {
         LocalAuthRepository(
             FileAccountStore(appContext.filesDir),
+            sessions = sessionVault,
             clock = clock,
             lockSettings = SharedPrefsLockSettings(appContext),
             lockouts = SharedPrefsLockoutStore(appContext),

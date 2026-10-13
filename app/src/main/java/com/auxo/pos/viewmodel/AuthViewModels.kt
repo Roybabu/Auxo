@@ -9,6 +9,7 @@ import com.auxo.pos.core.auth.AdminSetupValidator
 import com.auxo.pos.core.auth.AuthRepository
 import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.auth.PasswordStrength
+import com.auxo.pos.core.auth.SavedSessionVault
 import com.auxo.pos.core.auth.UsernameSuggestions
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
@@ -173,6 +174,54 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer { LoginViewModel(appContainer().authRepository) }
+        }
+    }
+}
+
+data class ResumeUiState(
+    val name: String,
+    /** A finger was not recognised on the last try. */
+    val failed: Boolean = false,
+    /** The saved session can no longer be opened (the phone's fingerprints changed, or the account was turned off): sign in with the password. */
+    val unavailable: Boolean = false,
+)
+
+/**
+ * The screen shown when the app reopens and a fingerprint-protected session was saved. It never signs anyone in by itself:
+ * the phone's fingerprint check has to release the saved key first, and the account is checked again before the app opens.
+ */
+class ResumeViewModel(
+    private val auth: AuthRepository,
+    private val vault: SavedSessionVault,
+    name: String,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ResumeUiState(name))
+    val uiState: StateFlow<ResumeUiState> = _uiState.asStateFlow()
+
+    /** The key to hand to the fingerprint check, or null (and the screen falls back to the password) when it cannot be used. */
+    fun cipher(): javax.crypto.Cipher? {
+        val cipher = vault.unlockCipher()
+        if (cipher == null) _uiState.update { it.copy(unavailable = true) }
+        return cipher
+    }
+
+    fun fingerprintAccepted(cipher: javax.crypto.Cipher) {
+        val userId = vault.open(cipher)
+        if (userId == null || !auth.resumeSession(userId)) {
+            vault.clear()
+            _uiState.update { it.copy(unavailable = true) }
+        }
+    }
+
+    fun fingerprintRejected() = _uiState.update { it.copy(failed = true) }
+
+    companion object {
+        fun factory(name: String): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val container = appContainer()
+                ResumeViewModel(container.authRepository, container.sessionVault, name)
+            }
         }
     }
 }

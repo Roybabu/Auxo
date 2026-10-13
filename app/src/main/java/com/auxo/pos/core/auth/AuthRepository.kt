@@ -205,6 +205,12 @@ interface AuthRepository {
      */
     fun unlockWithFingerprint(): Boolean
 
+    /** The name for the unlock screen shown when the app reopens, or null when no session was saved (or the app is not signed out). */
+    fun savedSessionName(): String? = null
+
+    /** Picks a saved session back up once its fingerprint check has passed. False when that person's account is gone, off or no longer uses fingerprint. */
+    fun resumeSession(userId: Long): Boolean = false
+
     /** The signed-in person's own choices, or null when nobody is signed in. */
     suspend fun quickUnlockStatus(): QuickUnlockStatus?
 
@@ -228,6 +234,7 @@ class LocalAuthRepository(
     private val listener: AccountEventListener? = null,
     private val lockSettings: LockSettingsStore = InMemoryLockSettings(),
     private val lockouts: LockoutStore = InMemoryLockoutStore(),
+    private val sessions: SavedSessionVault = NoSavedSession,
 ) : AuthRepository {
 
     private val gate = Mutex()
@@ -354,6 +361,8 @@ class LocalAuthRepository(
             startSession()
             _recoveryPrompt.value = if (account.role == Role.SUPER_ADMIN && account.recovery == null) RecoveryPrompt.Offered else RecoveryPrompt.None
             tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
+            // Someone who uses the fingerprint is picked back up by it after an update or a restart.
+            if (account.fingerprint) keepSession(account) else sessions.clear()
             return@withLock SignInResult.Success
         }
         failures++
@@ -371,8 +380,30 @@ class LocalAuthRepository(
     override fun signOut() {
         val current = _state.value as? AuthState.SignedIn ?: return
         _state.value = AuthState.SignedOut
+        runCatching { sessions.clear() }
         forgetRecoveryPrompt()
         tell(AccountEvent(AccountEventKind.SIGNED_OUT, current.user))
+    }
+
+    private fun keepSession(account: UserAccount) {
+        runCatching { sessions.save(account.id, account.name) }
+    }
+
+    override fun savedSessionName(): String? = if (_state.value == AuthState.SignedOut) runCatching { sessions.savedName() }.getOrNull() else null
+
+    override fun resumeSession(userId: Long): Boolean {
+        if (_state.value != AuthState.SignedOut) return false
+        val account = (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == userId }
+        if (account == null || !account.active || !account.fingerprint) {
+            runCatching { sessions.clear() }
+            return false
+        }
+        _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
+        pendingCode = null
+        startSession()
+        _recoveryPrompt.value = RecoveryPrompt.None
+        tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
+        return true
     }
 
     private fun forgetRecoveryPrompt() {
@@ -400,6 +431,7 @@ class LocalAuthRepository(
                 val account = stored.accounts.firstOrNull { it.id == current.userId }
                 if (account == null || !account.active || account.role != current.role) {
                     _state.value = AuthState.SignedOut
+                    runCatching { sessions.clear() }
                     forgetRecoveryPrompt()
                 } else if (account.permissions != current.permissions) {
                     // What this person may do changed while they were signed in: apply it now, not at the next sign-in.
@@ -408,6 +440,7 @@ class LocalAuthRepository(
             }
             StoredAccounts.Missing, StoredAccounts.Unreadable -> {
                 _state.value = AuthState.SignedOut
+                runCatching { sessions.clear() }
                 forgetRecoveryPrompt()
             }
         }
@@ -699,6 +732,7 @@ class LocalAuthRepository(
         if (account.fingerprint == enabled) return@withLock QuickUnlockChange.Done
         if (enabled) checkPassword(account, password)?.let { return@withLock it }
         if (!changeOwn(account) { it.copy(fingerprint = enabled) }) return@withLock QuickUnlockChange.Failed
+        if (enabled) keepSession(account) else runCatching { sessions.clear() }
         tell(AccountEvent(if (enabled) AccountEventKind.FINGERPRINT_TURNED_ON else AccountEventKind.FINGERPRINT_TURNED_OFF, account.toSession()))
         QuickUnlockChange.Done
     }

@@ -30,11 +30,12 @@ import com.auxo.pos.ui.screens.auth.BusinessExistsScreen
 import com.auxo.pos.ui.screens.auth.CategorySetupScreen
 import com.auxo.pos.ui.screens.auth.LoginScreen
 import com.auxo.pos.ui.screens.auth.RecoveryCodeGate
+import com.auxo.pos.ui.screens.auth.ResumeScreen
 import com.auxo.pos.ui.screens.onboarding.OnboardingScreen
 import com.auxo.pos.ui.theme.Spacing
 
 /**
- * Decides what the app opens to: the introduction ([onboarding]) once on the very first launch, then Login on every launch (with Set up your business always on it),
+ * Decides what the app opens to: the introduction ([onboarding]) once on the very first launch, then Login on every launch (with Set up your business always on it), or the fingerprint unlock for a saved session,
  * and the app itself once someone has signed in. A Super Admin without a recovery code is shown the code
  * screen first: required after setup, offered (and skippable) for an install that predates recovery codes.
  * When the app is locked the same person's lock screen covers the app, which stays as it was underneath.
@@ -53,6 +54,8 @@ fun AuthGate(
     categorySetup: @Composable () -> Unit = { CategorySetupScreen() },
     onboarding: Boolean = false,
     onboardingScreen: @Composable () -> Unit = { OnboardingScreen() },
+    savedSessionName: String? = null,
+    resume: @Composable (name: String, onUsePassword: () -> Unit) -> Unit = { name, usePassword -> ResumeScreen(name, usePassword) },
     app: @Composable () -> Unit,
 ) {
     when (state) {
@@ -61,8 +64,12 @@ fun AuthGate(
         // with one already there it only explains, so an existing business can never be replaced from here.
         AuthState.NeedsSetup, AuthState.SignedOut -> {
             var settingUp by rememberSaveable { mutableStateOf(false) }
+            var usePassword by rememberSaveable { mutableStateOf(false) }
             when {
                 state == AuthState.NeedsSetup && onboarding -> onboardingScreen()
+                // The app was closed while someone who unlocks with a fingerprint was signed in: pick them back up.
+                state == AuthState.SignedOut && savedSessionName != null && !usePassword && !settingUp ->
+                    resume(savedSessionName) { usePassword = true }
                 settingUp -> if (state == AuthState.NeedsSetup) setup { settingUp = false } else businessExists { settingUp = false }
                 else -> login { settingUp = true }
             }
