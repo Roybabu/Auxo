@@ -1,5 +1,32 @@
 package com.auxo.pos.ui.screens.auth
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import com.auxo.pos.ui.components.AuthPillField
+import com.auxo.pos.ui.components.Illustration
+import com.auxo.pos.ui.components.LanguageChip
+import com.auxo.pos.ui.components.OrDivider
+import com.auxo.pos.ui.theme.AuthDotIdle
+import com.auxo.pos.ui.theme.AuthInkMuted
+import com.auxo.pos.ui.theme.AuthMint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
-import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.Spacing
@@ -55,6 +81,7 @@ fun LoginScreen(
             // Nothing to recover when this device has no business yet.
             onForgotPassword = if (hasBusiness) ({ resetting = true }) else null,
             onSetUpBusiness = onSetUpBusiness,
+            topEnd = { LanguageChip() },
         )
     }
 }
@@ -67,29 +94,47 @@ fun LoginContent(
     onSignIn: () -> Unit,
     onForgotPassword: (() -> Unit)? = null,
     onSetUpBusiness: (() -> Unit)? = null,
+    topEnd: (@Composable () -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AuthLayout {
+    AuthLayout(
+        backdropImage = R.drawable.auth_login_bg,
+        logoWidth = 300.dp,
+        decoration = { LoginLeaves() },
+        footer = { NewToAuxo() },
+        topEnd = topEnd,
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("login")) {
-            Text(stringResource(R.string.auth_login_welcome), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
+            Text(
+                stringResource(R.string.auth_login_welcome),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = AuthInk,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
             Text(
                 stringResource(R.string.auth_login_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
-            AuxoTextField(
+            AuthPillField(
                 value = state.identifier,
                 onValueChange = onIdentifierChange,
-                label = stringResource(R.string.auth_field_identifier),
+                placeholder = stringResource(R.string.auth_field_identifier),
+                icon = R.drawable.ic_mail,
                 error = if (state.identifierMissing) stringResource(R.string.auth_error_login_identifier_required) else null,
                 keyboardType = KeyboardType.Email,
                 enabled = !state.isSigningIn,
-                modifier = Modifier.fillMaxWidth().testTag("login_identifier"),
+                modifier = Modifier.testTag("login_identifier"),
             )
-            AuxoTextField(
+            AuthPillField(
                 value = state.password,
                 onValueChange = onPasswordChange,
-                label = stringResource(R.string.auth_field_password),
+                placeholder = stringResource(R.string.auth_field_password),
+                icon = R.drawable.ic_lock,
                 error = if (state.passwordMissing) stringResource(R.string.auth_error_login_password_required) else null,
                 keyboardType = KeyboardType.Password,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -97,8 +142,15 @@ fun LoginContent(
                 imeAction = ImeAction.Done,
                 keyboardActions = KeyboardActions(onDone = { onSignIn() }),
                 enabled = !state.isSigningIn,
-                modifier = Modifier.fillMaxWidth().testTag("login_password"),
+                modifier = Modifier.testTag("login_password"),
             )
+            if (onForgotPassword != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.testTag("login_forgot")) {
+                        Text(stringResource(R.string.auth_login_forgot), color = AuthEmerald, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
             val message = state.message
             if (message != null) {
                 Text(
@@ -117,26 +169,62 @@ fun LoginContent(
             Button(
                 onClick = onSignIn,
                 enabled = !state.isSigningIn,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(32.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AuthEmerald, contentColor = Color.White),
-                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_submit"),
+                modifier = Modifier.fillMaxWidth().height(56.dp).testTag("login_submit"),
             ) {
-                Text(stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action))
-            }
-            if (onForgotPassword != null) {
-                TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.fillMaxWidth().testTag("login_forgot")) {
-                    Text(stringResource(R.string.auth_login_forgot))
-                }
+                Text(stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action), fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.width(8.dp))
+                Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, modifier = Modifier.size(20.dp))
             }
             // Always present, whether or not a business exists yet: it is how a new business is started.
             if (onSetUpBusiness != null) {
+                OrDivider(stringResource(R.string.auth_login_or))
                 OutlinedButton(
                     onClick = onSetUpBusiness,
                     enabled = !state.isSigningIn,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_setup_business"),
-                ) { Text(stringResource(R.string.auth_login_setup_business)) }
+                    shape = RoundedCornerShape(32.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).testTag("login_setup_business"),
+                ) {
+                    Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AuthMint), contentAlignment = Alignment.Center) {
+                        Icon(painterResource(R.drawable.ic_store), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(stringResource(R.string.auth_login_setup_business), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.width(8.dp))
+                    Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(20.dp))
+                }
             }
         }
     }
+}
+
+/** The strip under the card: the shop, a thin line, and a line inviting a new business to start. */
+@Composable
+private fun NewToAuxo() {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+        Illustration(R.drawable.auth_storefront, Modifier.weight(1f).height(120.dp))
+        VerticalDivider(modifier = Modifier.padding(horizontal = Spacing.md).height(56.dp), color = AuthDotIdle)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.auth_login_new_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AuthInk)
+            Text(stringResource(R.string.auth_login_new_body), style = MaterialTheme.typography.bodyMedium, color = AuthInkMuted)
+        }
+    }
+}
+
+/** Loose leaves around the logo and the edges, placed by the screen's width and height and turned by hand. */
+@Composable
+private fun BoxWithConstraintsScope.LoginLeaves() {
+    val w = maxWidth
+    val h = maxHeight
+    @Composable
+    fun leaf(@DrawableRes picture: Int, at: Alignment, x: Dp, y: Dp, width: Dp, degrees: Float) =
+        Illustration(picture, Modifier.align(at).offset(x = x, y = y).width(width).rotate(degrees))
+    leaf(R.drawable.onb_leaf_9, Alignment.TopStart, w * 0.08f, h * 0.07f, w * 0.12f, -25f)
+    leaf(R.drawable.onb_leaf_2, Alignment.TopEnd, w * -0.06f, h * 0.15f, w * 0.11f, 30f)
+    leaf(R.drawable.onb_leaf_10, Alignment.TopStart, w * 0.02f, h * 0.21f, w * 0.10f, -50f)
+    leaf(R.drawable.onb_leaf_5, Alignment.CenterEnd, w * 0.01f, h * 0.10f, w * 0.08f, 120f)
+    leaf(R.drawable.onb_leaf_4, Alignment.BottomStart, w * -0.02f, h * -0.04f, w * 0.13f, 40f)
+    leaf(R.drawable.onb_leaf_8, Alignment.BottomEnd, w * -0.04f, h * -0.07f, w * 0.10f, -60f)
+    leaf(R.drawable.onb_leaf_6, Alignment.BottomEnd, w * 0.02f, h * -0.16f, w * 0.14f, 20f)
 }

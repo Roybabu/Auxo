@@ -53,6 +53,7 @@ import com.auxo.pos.ui.components.AuthGradientBackground
 import com.auxo.pos.ui.components.AuthProgressBar
 import com.auxo.pos.ui.components.CircleNextButton
 import com.auxo.pos.ui.components.Illustration
+import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
@@ -65,11 +66,17 @@ import kotlinx.coroutines.launch
 @Composable
 fun OnboardingScreen(viewModel: OnboardingViewModel = viewModel(factory = OnboardingViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    OnboardingContent(state = state, onPageChanged = viewModel::onPageChanged, onFinish = viewModel::finish)
+    OnboardingContent(state = state, onPageChanged = viewModel::onPageChanged, onFinish = viewModel::finish, languageChip = { LanguageChip() })
 }
 
 @Composable
-fun OnboardingContent(state: OnboardingUiState, onPageChanged: (Int) -> Unit, onFinish: () -> Unit) {
+fun OnboardingContent(
+    state: OnboardingUiState,
+    onPageChanged: (Int) -> Unit,
+    onFinish: () -> Unit,
+    /** The language button, pinned to the top right on every page. */
+    languageChip: @Composable () -> Unit = {},
+) {
     val pager = rememberPagerState(initialPage = state.page) { OnboardingUiState.PAGE_COUNT }
     val scope = rememberCoroutineScope()
     val latestPageChanged by rememberUpdatedState(onPageChanged)
@@ -85,12 +92,15 @@ fun OnboardingContent(state: OnboardingUiState, onPageChanged: (Int) -> Unit, on
                 else -> CategoriesPage()
             }
         }
-        if (page > 0) {
-            TextButton(
-                onClick = onFinish,
-                modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp).testTag("onboarding_skip"),
-            ) {
-                Text(stringResource(R.string.onboarding_skip), style = TextStyle(fontSize = 15.sp, color = AuthInkMuted))
+        Row(
+            modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            languageChip()
+            if (page > 0) {
+                TextButton(onClick = onFinish, modifier = Modifier.testTag("onboarding_skip")) {
+                    Text(stringResource(R.string.onboarding_skip), style = TextStyle(fontSize = 15.sp, color = AuthInkMuted))
+                }
             }
         }
         Row(
@@ -134,9 +144,9 @@ private fun SplashPage() {
             modifier = Modifier.fillMaxSize(),
         )
         // Leaves scattered by hand, behind the pictures: mostly small and sharp, a few soft (blurred in the file).
-        Leaf(R.drawable.onb_leaf_2, Alignment.TopCenter, w * -0.04f, h * 0.05f, w * 0.10f, 18f)
-        Leaf(R.drawable.onb_leaf_5, Alignment.TopStart, w * 0.30f, h * 0.13f, w * 0.09f, -35f)
-        Leaf(R.drawable.onb_leaf_9, Alignment.TopEnd, w * -0.30f, h * 0.20f, w * 0.08f, 62f)
+        Leaf(R.drawable.onb_leaf_2, Alignment.TopCenter, w * -0.10f, h * 0.10f, w * 0.10f, 18f)
+        Leaf(R.drawable.onb_leaf_5, Alignment.TopStart, w * 0.30f, h * 0.16f, w * 0.09f, -35f)
+        Leaf(R.drawable.onb_leaf_9, Alignment.TopEnd, w * -0.30f, h * 0.23f, w * 0.08f, 62f)
         Leaf(R.drawable.onb_leaf_4, Alignment.CenterStart, w * 0.18f, h * -0.12f, w * 0.09f, 25f)
         Leaf(R.drawable.onb_leaf_11, Alignment.CenterEnd, w * -0.18f, h * -0.22f, w * 0.08f, -50f)
         Leaf(R.drawable.onb_leaf_3, Alignment.BottomCenter, w * 0.12f, h * -0.22f, w * 0.10f, 70f)
@@ -146,8 +156,8 @@ private fun SplashPage() {
         Leaf(R.drawable.onb_leaf_2, Alignment.BottomEnd, w * -0.40f, h * -0.11f, w * 0.08f, -110f)
         Leaf(R.drawable.onb_leaf_4, Alignment.BottomCenter, w * -0.14f, h * -0.14f, w * 0.07f, -60f)
         // The pictures are smaller than before, each tilted a little and carrying a soft shadow that is part of the file.
-        Illustration(R.drawable.onb_s_bag, Modifier.align(Alignment.TopStart).offset(x = w * -0.02f, y = h * 0.07f).width(w * 0.32f).rotate(-8f))
-        Illustration(R.drawable.onb_s_apparel, Modifier.align(Alignment.TopEnd).offset(x = w * 0.06f, y = h * 0.05f).width(w * 0.41f).rotate(6f))
+        Illustration(R.drawable.onb_s_bag, Modifier.align(Alignment.TopStart).offset(x = w * -0.02f, y = h * 0.10f).width(w * 0.32f).rotate(-8f))
+        Illustration(R.drawable.onb_s_apparel, Modifier.align(Alignment.TopEnd).offset(x = w * 0.06f, y = h * 0.09f).width(w * 0.41f).rotate(6f))
         Illustration(R.drawable.onb_s_burger, Modifier.align(Alignment.CenterStart).offset(x = w * -0.08f, y = h * -0.07f).width(w * 0.33f).rotate(5f))
         Illustration(R.drawable.onb_s_coffee, Modifier.align(Alignment.CenterEnd).offset(x = w * 0.07f, y = h * -0.05f).width(w * 0.30f).rotate(-6f))
         Illustration(R.drawable.onb_s_sneakers, Modifier.align(Alignment.BottomStart).offset(x = w * -0.04f, y = h * -0.17f).width(w * 0.41f).rotate(-5f))

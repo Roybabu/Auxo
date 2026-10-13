@@ -3,13 +3,17 @@ package com.auxo.pos.ui.screens.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -20,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,11 +65,32 @@ private const val LOGO_ASPECT = 1050f / 342f
  * Narrow screens stack the brand above a centred form; wide screens put it in a green panel beside the form.
  */
 @Composable
-fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
+fun AuthLayout(
+    modifier: Modifier = Modifier,
+    /** A full-screen picture behind everything (not used in dark mode). */
+    @DrawableRes backdropImage: Int? = null,
+    logoWidth: Dp = 280.dp,
+    /** Loose pictures (leaves) drawn behind the logo and the card; placed by the screen's width and height. */
+    decoration: @Composable BoxWithConstraintsScope.() -> Unit = {},
+    /** Shown under the card. */
+    footer: (@Composable () -> Unit)? = null,
+    /** Pinned to the top right corner of the screen (the language button). */
+    topEnd: (@Composable () -> Unit)? = null,
+    form: @Composable () -> Unit,
+) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val backdrop = if (dark) Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.background))
     else Brush.verticalGradient(listOf(AuthGreenPage, AuthGreenPageDeep))
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(backdrop).testTag("auth_screen")) {
+        if (backdropImage != null && !dark) {
+            Image(
+                painter = painterResource(backdropImage),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        decoration()
         if (maxWidth >= WIDE_LAYOUT_FROM) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(
@@ -93,6 +119,10 @@ fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
                     verticalArrangement = Arrangement.Center,
                 ) {
                     FormCard { form() }
+                    if (footer != null) {
+                        Spacer(Modifier.height(Spacing.md))
+                        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
+                    }
                 }
             }
         } else {
@@ -105,9 +135,18 @@ fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
                     .padding(horizontal = Spacing.screen, vertical = Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BrandLogo(width = 280.dp, modifier = Modifier.padding(bottom = Spacing.xl))
+                // Leave room for the corner button so it never sits on the logo.
+                if (topEnd != null) Spacer(Modifier.height(40.dp))
+                BrandLogo(width = logoWidth, modifier = Modifier.padding(bottom = Spacing.xl))
                 FormCard { form() }
+                if (footer != null) {
+                    Spacer(Modifier.height(Spacing.md))
+                    Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
+                }
             }
+        }
+        if (topEnd != null) {
+            Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
         }
     }
 }

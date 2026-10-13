@@ -550,6 +550,7 @@
     <string name="store_details_body">Name, address, GST, UPI, receipts and logo</string>
     <string name="language_title">Language</string>
     <string name="language_body">The language of the app\'s screens on this phone. Bills are printed in the bill language set in Shop settings.</string>
+    <string name="language_chip_description">Change language</string>
     <string name="language_phone">Same as the phone</string>
     <string name="appearance_title">Appearance</string>
     <string name="appearance_row_body">Theme and app colors</string>
@@ -1018,6 +1019,9 @@ in %2$s</string>
         <item quantity="one">Too many attempts. Try again in %d second.</item>
         <item quantity="other">Too many attempts. Try again in %d seconds.</item>
     </plurals>
+    <string name="auth_login_or">or</string>
+    <string name="auth_login_new_title">New to Auxo?</string>
+    <string name="auth_login_new_body">Set up your business and get started in minutes.</string>
     <string name="auth_login_forgot">Forgot password?</string>
     <string name="recovery_screen_title">Recovery code</string>
     <string name="more_recovery_body">Make a code that lets you reset the Super Admin password</string>

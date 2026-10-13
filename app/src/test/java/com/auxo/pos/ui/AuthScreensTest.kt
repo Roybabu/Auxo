@@ -279,6 +279,12 @@ class AuthScreensTest {
     }
 
     @Test
+    fun loginScreen_showsTheNewToAuxoStrip() {
+        login()
+        composeRule.onNodeWithText("New to Auxo?").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun loginScreen_alwaysOffersSetUpYourBusiness() {
         var taps = 0
         composeRule.setContent {

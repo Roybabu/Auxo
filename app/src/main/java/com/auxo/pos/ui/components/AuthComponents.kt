@@ -1,5 +1,17 @@
 package com.auxo.pos.ui.components
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.HorizontalDivider
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
@@ -145,5 +157,70 @@ fun SuggestionRow(label: String, suggestions: List<String>, onPick: (String) -> 
                 AssistChip(onClick = { onPick(text) }, label = { Text(text) }, modifier = Modifier.testTag("suggestion_$index"))
             }
         }
+    }
+}
+
+/**
+ * A pill-shaped, pale-mint input with a round icon at the left, used on the sign-in page. The hint sits inside the pill until
+ * something is typed; an [error] replaces the line under it.
+ */
+@Composable
+fun AuthPillField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    error: String? = null,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Next,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.fillMaxWidth(),
+        enabled = enabled,
+        singleLine = true,
+        shape = RoundedCornerShape(32.dp),
+        placeholder = { Text(placeholder, color = AuthInkMuted) },
+        leadingIcon = {
+            Box(
+                modifier = Modifier.size(40.dp).clip(CircleShape).background(AuthMint),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(icon), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(22.dp))
+            }
+        },
+        trailingIcon = trailingIcon,
+        isError = error != null,
+        supportingText = if (error != null) {
+            { Text(error) }
+        } else {
+            null
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = keyboardActions,
+        visualTransformation = visualTransformation,
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = AuthMintLight,
+            focusedContainerColor = AuthMintLight,
+            disabledContainerColor = AuthMintLight,
+            unfocusedBorderColor = AuthMint,
+            focusedBorderColor = AuthEmerald,
+        ),
+    )
+}
+
+/** A thin line, a short word, a thin line: the "or" between sign in and set up. */
+@Composable
+fun OrDivider(text: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = AuthDotIdle)
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = AuthInkMuted)
+        HorizontalDivider(modifier = Modifier.weight(1f), color = AuthDotIdle)
     }
 }

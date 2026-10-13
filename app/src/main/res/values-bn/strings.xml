@@ -550,6 +550,7 @@
     <string name="store_details_body">নাম, ঠিকানা, GST, UPI, রসিদ ও লোগো</string>
     <string name="language_title">ভাষা</string>
     <string name="language_body">এই ফোনে অ্যাপের পর্দার ভাষা। বিল সেই ভাষায় ছাপা হয় যা দোকানের সেটিংসে ঠিক করা আছে।</string>
+    <string name="language_chip_description">ভাষা পরিবর্তন করুন</string>
     <string name="language_phone">ফোনের মতোই</string>
     <string name="appearance_title">চেহারা</string>
     <string name="appearance_row_body">থিম ও অ্যাপের রং</string>
@@ -1017,6 +1018,9 @@
         <item quantity="one">অনেকবার চেষ্টা করা হয়েছে। %d সেকেন্ড পরে আবার চেষ্টা করুন।</item>
         <item quantity="other">অনেকবার চেষ্টা করা হয়েছে। %d সেকেন্ড পরে আবার চেষ্টা করুন।</item>
     </plurals>
+    <string name="auth_login_or">অথবা</string>
+    <string name="auth_login_new_title">Auxo-তে নতুন?</string>
+    <string name="auth_login_new_body">আপনার ব্যবসা সেট আপ করুন এবং কয়েক মিনিটেই শুরু করুন।</string>
     <string name="auth_login_forgot">পাসওয়ার্ড ভুলে গেছেন?</string>
     <string name="recovery_screen_title">রিকভারি কোড</string>
     <string name="more_recovery_body">এমন একটি কোড বানান যা দিয়ে সুপার অ্যাডমিনের পাসওয়ার্ড রিসেট করা যায়</string>
