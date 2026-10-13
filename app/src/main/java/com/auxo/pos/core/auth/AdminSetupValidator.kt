@@ -2,9 +2,11 @@ package com.auxo.pos.core.auth
 
 import java.util.Locale
 
-enum class SetupField { NAME, IDENTIFIER, PASSWORD, CONFIRM }
+enum class SetupField { BUSINESS, NAME, IDENTIFIER, PASSWORD, CONFIRM }
 
 enum class SetupError {
+    BUSINESS_REQUIRED,
+    BUSINESS_TOO_LONG,
     NAME_REQUIRED,
     NAME_TOO_LONG,
     IDENTIFIER_REQUIRED,
@@ -25,6 +27,7 @@ object AdminSetupValidator {
     const val MIN_PASSWORD_LENGTH = 8
     const val MAX_PASSWORD_LENGTH = 128
     const val MAX_NAME_LENGTH = 60
+    const val MAX_BUSINESS_NAME_LENGTH = 70
     const val MAX_IDENTIFIER_LENGTH = 254
 
     private val USERNAME = Regex("^[a-z0-9._-]{3,32}$")
@@ -37,10 +40,24 @@ object AdminSetupValidator {
         "iloveyou1", "auxo1234", "auxo12345", "changeme1", "test1234", "india123", "asdf1234",
     )
 
+    internal fun isCommon(lowerCasePassword: String): Boolean = lowerCasePassword in COMMON
+
+    internal fun isUsername(candidate: String): Boolean = USERNAME.matches(candidate)
+
     fun normalizeName(name: String): String = name.trim().replace(Regex("\\s+"), " ")
 
     /** Usernames and email addresses are matched without regard to case. */
     fun normalizeIdentifier(identifier: String): String = identifier.trim().lowercase(Locale.ROOT)
+
+    /** The business name shown on bills and the Home screen. Checked on the setup form, apart from the account rules. */
+    fun businessNameError(businessName: String): SetupError? {
+        val clean = normalizeName(businessName)
+        return when {
+            clean.isEmpty() -> SetupError.BUSINESS_REQUIRED
+            clean.length > MAX_BUSINESS_NAME_LENGTH -> SetupError.BUSINESS_TOO_LONG
+            else -> null
+        }
+    }
 
     fun validate(name: String, identifier: String, password: String, confirm: String): Map<SetupField, SetupError> {
         val errors = linkedMapOf<SetupField, SetupError>()

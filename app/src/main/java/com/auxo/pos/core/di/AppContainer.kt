@@ -129,6 +129,16 @@ class AppContainer(context: Context) {
         com.auxo.pos.data.security.AuthorizedQuotationRepository(com.auxo.pos.data.repository.RoomQuotationRepository(database, clock), authorizer)
     }
 
+    /**
+     * Saves the business name typed on the setup form as the store name. It runs on the app's own scope, so it still finishes
+     * when the setup screen closes as soon as the account exists. A failure leaves the default name, which can be edited in settings.
+     */
+    fun rememberBusinessName(name: String) {
+        background.launch {
+            runCatching { settingsRepository.saveSettings(settingsRepository.getSettings().copy(storeName = name)) }
+        }
+    }
+
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
     val categoryRepository: com.auxo.pos.data.repository.CategoryRepository by lazy {

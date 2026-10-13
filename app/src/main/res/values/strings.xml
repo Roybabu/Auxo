@@ -979,8 +979,8 @@ in %2$s</string>
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_setup_title">Set up your administrator</string>
-    <string name="auth_setup_body">Create the one administrator account for this device. You will use it to sign in each time the app opens. It is stored only on this device.</string>
+    <string name="auth_setup_title">Set up your business</string>
+    <string name="auth_setup_body">Tell us about your business and create the owner account. Everything is kept on this device.</string>
     <string name="auth_field_name">Your name</string>
     <string name="auth_field_identifier">Username or email</string>
     <string name="auth_field_identifier_hint">Letters, numbers, dot, dash or underscore, or an email address</string>
@@ -989,7 +989,7 @@ in %2$s</string>
     <string name="auth_field_confirm">Confirm password</string>
     <string name="auth_show_password">Show password</string>
     <string name="auth_hide_password">Hide password</string>
-    <string name="auth_setup_action">Create administrator</string>
+    <string name="auth_setup_action">Create &amp; Get Started</string>
     <string name="auth_setup_working">Creating…</string>
     <string name="auth_setup_failed">The account could not be saved. Check that the device has free storage and try again.</string>
     <string name="auth_setup_notice">Next you will be given a recovery code. If you forget this password, that code is the only way back in; there is no other recovery.</string>
@@ -1006,7 +1006,7 @@ in %2$s</string>
     <string name="auth_error_password_identifier">The password must not contain your username or email name.</string>
     <string name="auth_error_confirm_required">Enter the password again.</string>
     <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
-    <string name="auth_login_welcome">Welcome back</string>
+    <string name="auth_login_welcome">Welcome back!</string>
     <string name="auth_login_action">Sign in</string>
     <string name="auth_login_working">Signing in…</string>
     <string name="auth_error_login_identifier_required">Enter your username or email.</string>
@@ -1735,4 +1735,13 @@ in %2$s</string>
     <string name="auth_back_to_login">Back to sign in</string>
     <string name="auth_exists_title">This device already has a business</string>
     <string name="auth_exists_body">A business is already set up here, so it cannot be set up again. Sign in with your username and password. If you forgot your password, use “Forgot password?” on the sign-in screen with your recovery code.</string>
+    <string name="auth_login_subtitle">Sign in to continue to your business.</string>
+    <string name="auth_field_business">Business name</string>
+    <string name="auth_error_business_required">Enter your business name.</string>
+    <string name="auth_error_business_too_long">Business name can be at most 70 characters.</string>
+    <string name="auth_suggestions">Username ideas</string>
+    <string name="auth_strength_weak">Weak</string>
+    <string name="auth_strength_fair">Fair</string>
+    <string name="auth_strength_good">Good</string>
+    <string name="auth_strength_strong">Strong</string>
 </resources>

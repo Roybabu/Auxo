@@ -978,8 +978,8 @@
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_setup_title">আপনার অ্যাডমিন তৈরি করুন</string>
-    <string name="auth_setup_body">এই ডিভাইসের জন্য একমাত্র অ্যাডমিন অ্যাকাউন্ট তৈরি করুন। অ্যাপ খুললেই প্রতিবার আপনি এটি দিয়ে সাইন ইন করবেন। এটি শুধু এই ডিভাইসেই থাকে।</string>
+    <string name="auth_setup_title">আপনার ব্যবসা সেট আপ করুন</string>
+    <string name="auth_setup_body">আপনার ব্যবসার কথা জানান এবং মালিকের অ্যাকাউন্ট তৈরি করুন। সবকিছু এই ডিভাইসেই থাকে।</string>
     <string name="auth_field_name">আপনার নাম</string>
     <string name="auth_field_identifier">ইউজারনেম বা ইমেল</string>
     <string name="auth_field_identifier_hint">অক্ষর, সংখ্যা, ডট, ড্যাশ বা আন্ডারস্কোর, অথবা ইমেল ঠিকানা</string>
@@ -988,7 +988,7 @@
     <string name="auth_field_confirm">পাসওয়ার্ড নিশ্চিত করুন</string>
     <string name="auth_show_password">পাসওয়ার্ড দেখান</string>
     <string name="auth_hide_password">পাসওয়ার্ড লুকান</string>
-    <string name="auth_setup_action">অ্যাডমিন তৈরি করুন</string>
+    <string name="auth_setup_action">তৈরি করুন ও শুরু করুন</string>
     <string name="auth_setup_working">তৈরি হচ্ছে…</string>
     <string name="auth_setup_failed">অ্যাকাউন্ট সংরক্ষণ করা যায়নি। ডিভাইসে জায়গা আছে কি না দেখে আবার চেষ্টা করুন।</string>
     <string name="auth_setup_notice">এরপর আপনাকে একটি রিকভারি কোড দেওয়া হবে। এই পাসওয়ার্ড ভুলে গেলে ওই কোডই ফেরার একমাত্র উপায়; আর কোনো উপায় নেই।</string>
@@ -1005,7 +1005,7 @@
     <string name="auth_error_password_identifier">পাসওয়ার্ডে আপনার ইউজারনেম বা ইমেলের নাম থাকা চলবে না।</string>
     <string name="auth_error_confirm_required">পাসওয়ার্ড আবার লিখুন।</string>
     <string name="auth_error_confirm_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
-    <string name="auth_login_welcome">আবার স্বাগতম</string>
+    <string name="auth_login_welcome">আবার স্বাগতম!</string>
     <string name="auth_login_action">সাইন ইন করুন</string>
     <string name="auth_login_working">সাইন ইন হচ্ছে…</string>
     <string name="auth_error_login_identifier_required">আপনার ইউজারনেম বা ইমেল লিখুন।</string>
@@ -1735,4 +1735,13 @@
     <string name="auth_back_to_login">সাইন ইনে ফিরে যান</string>
     <string name="auth_exists_title">এই ডিভাইসে আগে থেকেই ব্যবসা আছে</string>
     <string name="auth_exists_body">এখানে ব্যবসা আগেই সেট আপ করা আছে, তাই আবার সেট আপ করা যাবে না। আপনার ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন। পাসওয়ার্ড ভুলে গেলে সাইন ইন স্ক্রিনে রিকভারি কোড দিয়ে “পাসওয়ার্ড ভুলে গেছেন?” ব্যবহার করুন।</string>
+    <string name="auth_login_subtitle">আপনার ব্যবসায় যেতে সাইন ইন করুন।</string>
+    <string name="auth_field_business">ব্যবসার নাম</string>
+    <string name="auth_error_business_required">আপনার ব্যবসার নাম লিখুন।</string>
+    <string name="auth_error_business_too_long">ব্যবসার নাম সর্বোচ্চ ৭০ অক্ষরের হতে পারে।</string>
+    <string name="auth_suggestions">ইউজারনেমের পরামর্শ</string>
+    <string name="auth_strength_weak">দুর্বল</string>
+    <string name="auth_strength_fair">মোটামুটি</string>
+    <string name="auth_strength_good">ভালো</string>
+    <string name="auth_strength_strong">শক্তিশালী</string>
 </resources>

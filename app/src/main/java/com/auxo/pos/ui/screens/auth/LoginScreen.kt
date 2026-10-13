@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -16,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.theme.AuthEmerald
+import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.LoginMessage
 import com.auxo.pos.viewmodel.LoginUiState
@@ -66,7 +71,12 @@ fun LoginContent(
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("login")) {
-            Text(stringResource(R.string.auth_login_welcome), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.auth_login_welcome), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
+            Text(
+                stringResource(R.string.auth_login_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             AuxoTextField(
                 value = state.identifier,
                 onValueChange = onIdentifierChange,
@@ -107,6 +117,8 @@ fun LoginContent(
             Button(
                 onClick = onSignIn,
                 enabled = !state.isSigningIn,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AuthEmerald, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_submit"),
             ) {
                 Text(stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action))
@@ -121,6 +133,7 @@ fun LoginContent(
                 OutlinedButton(
                     onClick = onSetUpBusiness,
                     enabled = !state.isSigningIn,
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().height(52.dp).testTag("login_setup_business"),
                 ) { Text(stringResource(R.string.auth_login_setup_business)) }
             }

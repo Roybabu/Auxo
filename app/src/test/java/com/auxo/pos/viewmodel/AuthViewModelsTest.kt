@@ -62,6 +62,7 @@ class AuthViewModelsTest {
         pw: String = "Green-Leaf-42",
         confirm: String = pw,
     ) {
+        onBusinessChange("Roy Stores")
         onNameChange(name)
         onIdentifierChange(identifier)
         onPasswordChange(pw)
@@ -84,7 +85,7 @@ class AuthViewModelsTest {
         viewModel.submit()
         val state = viewModel.uiState.value
         assertTrue(state.submitted)
-        assertEquals(setOf(SetupField.NAME, SetupField.IDENTIFIER, SetupField.PASSWORD, SetupField.CONFIRM), state.errors.keys)
+        assertEquals(setOf(SetupField.BUSINESS, SetupField.NAME, SetupField.IDENTIFIER, SetupField.PASSWORD, SetupField.CONFIRM), state.errors.keys)
         assertEquals(0, auth.setups)
         assertEquals(StoredAccounts.Missing, store.read())
     }
@@ -119,6 +120,47 @@ class AuthViewModelsTest {
         assertTrue(store.read() is StoredAccounts.Present)
         assertEquals("", viewModel.uiState.value.password)
         assertEquals("", viewModel.uiState.value.confirm)
+    }
+
+    @Test
+    fun theBusinessName_isSavedOnce_afterTheAccountExists() {
+        val saved = mutableListOf<String>()
+        val viewModel = AdminSetupViewModel(auth) { saved += it }
+        viewModel.fill()
+        viewModel.onBusinessChange("  Roy   Stores ")
+        viewModel.submit()
+        waitUntil { viewModel.uiState.first { !it.isSubmitting } }
+        assertEquals(listOf("Roy Stores"), saved)
+    }
+
+    @Test
+    fun theBusinessName_isNotSaved_whenTheFormIsInvalid() {
+        val saved = mutableListOf<String>()
+        val viewModel = AdminSetupViewModel(auth) { saved += it }
+        viewModel.fill(confirm = "nope")
+        viewModel.submit()
+        assertTrue(saved.isEmpty())
+        assertEquals(StoredAccounts.Missing, store.read())
+    }
+
+    @Test
+    fun aBlankBusinessName_isRefused() {
+        val viewModel = AdminSetupViewModel(auth)
+        viewModel.fill()
+        viewModel.onBusinessChange("   ")
+        viewModel.submit()
+        assertEquals(SetupError.BUSINESS_REQUIRED, viewModel.uiState.value.errors[SetupField.BUSINESS])
+        assertEquals(0, auth.setups)
+    }
+
+    @Test
+    fun usernameIdeas_followTheName_untilAUsernameIsTyped_andFillTheField() {
+        val viewModel = AdminSetupViewModel(auth)
+        viewModel.onNameChange("Roy Babu")
+        assertTrue("roy.babu" in viewModel.uiState.value.suggestions)
+        viewModel.useSuggestion("roy.babu")
+        assertEquals("roy.babu", viewModel.uiState.value.identifier)
+        assertTrue(viewModel.uiState.value.suggestions.isEmpty())
     }
 
     @Test

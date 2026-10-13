@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,12 +37,19 @@ import com.auxo.pos.R
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.components.Illustration
+import com.auxo.pos.ui.components.StrengthMeter
+import com.auxo.pos.ui.components.SuggestionRow
+import com.auxo.pos.ui.theme.AuthEmerald
+import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.AdminSetupUiState
 import com.auxo.pos.viewmodel.AdminSetupViewModel
 
 @StringRes
 internal fun SetupError.messageRes(): Int = when (this) {
+    SetupError.BUSINESS_REQUIRED -> R.string.auth_error_business_required
+    SetupError.BUSINESS_TOO_LONG -> R.string.auth_error_business_too_long
     SetupError.NAME_REQUIRED -> R.string.auth_error_name_required
     SetupError.NAME_TOO_LONG -> R.string.auth_error_name_too_long
     SetupError.IDENTIFIER_REQUIRED -> R.string.auth_error_identifier_required
@@ -67,6 +77,8 @@ fun AdminSetupScreen(onBack: (() -> Unit)? = null, viewModel: AdminSetupViewMode
         onConfirmChange = viewModel::onConfirmChange,
         onSubmit = viewModel::submit,
         onBack = onBack,
+        onBusinessChange = viewModel::onBusinessChange,
+        onSuggestionPick = viewModel::useSuggestion,
     )
 }
 
@@ -79,15 +91,27 @@ fun AdminSetupContent(
     onConfirmChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onBack: (() -> Unit)? = null,
+    onBusinessChange: (String) -> Unit = {},
+    onSuggestionPick: (String) -> Unit = {},
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("admin_setup")) {
-            Text(stringResource(R.string.auth_setup_title), style = MaterialTheme.typography.headlineSmall)
+            Illustration(R.drawable.auth_storefront, modifier = Modifier.fillMaxWidth().height(110.dp))
+            Text(stringResource(R.string.auth_setup_title), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
             Text(
                 stringResource(R.string.auth_setup_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuxoTextField(
+                value = state.businessName,
+                onValueChange = onBusinessChange,
+                label = stringResource(R.string.auth_field_business),
+                error = state.errors[SetupField.BUSINESS]?.let { stringResource(it.messageRes()) },
+                capitalization = KeyboardCapitalization.Words,
+                enabled = !state.isSubmitting,
+                modifier = Modifier.fillMaxWidth().testTag("setup_business"),
             )
             AuxoTextField(
                 value = state.name,
@@ -108,6 +132,7 @@ fun AdminSetupContent(
                 enabled = !state.isSubmitting,
                 modifier = Modifier.fillMaxWidth().testTag("setup_identifier"),
             )
+            SuggestionRow(stringResource(R.string.auth_suggestions), state.suggestions, onSuggestionPick)
             AuxoTextField(
                 value = state.password,
                 onValueChange = onPasswordChange,
@@ -119,6 +144,17 @@ fun AdminSetupContent(
                 trailingIcon = { PasswordToggle(showPassword) { showPassword = !showPassword } },
                 enabled = !state.isSubmitting,
                 modifier = Modifier.fillMaxWidth().testTag("setup_password"),
+            )
+            StrengthMeter(
+                filled = state.strength,
+                label = stringResource(
+                    when (state.strength) {
+                        1 -> R.string.auth_strength_weak
+                        2 -> R.string.auth_strength_fair
+                        3 -> R.string.auth_strength_good
+                        else -> R.string.auth_strength_strong
+                    },
+                ),
             )
             AuxoTextField(
                 value = state.confirm,
@@ -143,6 +179,8 @@ fun AdminSetupContent(
             Button(
                 onClick = onSubmit,
                 enabled = !state.isSubmitting,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AuthEmerald, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(52.dp).testTag("setup_submit"),
             ) {
                 Text(stringResource(if (state.isSubmitting) R.string.auth_setup_working else R.string.auth_setup_action))

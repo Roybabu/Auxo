@@ -978,8 +978,8 @@
     </plurals>
 
     <!-- Administrator setup and sign-in -->
-    <string name="auth_setup_title">अपना एडमिन तैयार करें</string>
-    <string name="auth_setup_body">इस डिवाइस के लिए एकमात्र एडमिन खाता बनाएँ। हर बार ऐप खुलने पर आप इसी से साइन इन करेंगे। यह केवल इसी डिवाइस पर रहता है।</string>
+    <string name="auth_setup_title">अपना बिज़नेस सेट अप करें</string>
+    <string name="auth_setup_body">अपने बिज़नेस के बारे में बताएँ और मालिक का खाता बनाएँ। सब कुछ इसी डिवाइस पर रहता है।</string>
     <string name="auth_field_name">आपका नाम</string>
     <string name="auth_field_identifier">यूज़रनेम या ईमेल</string>
     <string name="auth_field_identifier_hint">अक्षर, अंक, बिंदु, डैश या अंडरस्कोर, या ईमेल पता</string>
@@ -988,7 +988,7 @@
     <string name="auth_field_confirm">पासवर्ड की पुष्टि करें</string>
     <string name="auth_show_password">पासवर्ड दिखाएँ</string>
     <string name="auth_hide_password">पासवर्ड छिपाएँ</string>
-    <string name="auth_setup_action">एडमिन बनाएँ</string>
+    <string name="auth_setup_action">बनाएँ और शुरू करें</string>
     <string name="auth_setup_working">बन रहा है…</string>
     <string name="auth_setup_failed">खाता सहेजा नहीं जा सका। देखें कि डिवाइस में जगह है, फिर कोशिश करें।</string>
     <string name="auth_setup_notice">इसके बाद आपको एक रिकवरी कोड दिया जाएगा। अगर आप यह पासवर्ड भूल गए तो वही कोड वापस आने का एकमात्र रास्ता है; और कोई तरीका नहीं है।</string>
@@ -1005,7 +1005,7 @@
     <string name="auth_error_password_identifier">पासवर्ड में आपका यूज़रनेम या ईमेल का नाम नहीं होना चाहिए।</string>
     <string name="auth_error_confirm_required">पासवर्ड फिर से लिखें।</string>
     <string name="auth_error_confirm_mismatch">पासवर्ड मेल नहीं खाते।</string>
-    <string name="auth_login_welcome">वापसी पर स्वागत है</string>
+    <string name="auth_login_welcome">वापसी पर स्वागत है!</string>
     <string name="auth_login_action">साइन इन करें</string>
     <string name="auth_login_working">साइन इन हो रहा है…</string>
     <string name="auth_error_login_identifier_required">अपना यूज़रनेम या ईमेल लिखें।</string>
@@ -1735,4 +1735,13 @@
     <string name="auth_back_to_login">साइन इन पर वापस जाएँ</string>
     <string name="auth_exists_title">इस डिवाइस पर पहले से बिज़नेस है</string>
     <string name="auth_exists_body">यहाँ बिज़नेस पहले से सेट अप है, इसलिए दोबारा सेट अप नहीं हो सकता। अपने यूज़रनेम और पासवर्ड से साइन इन करें। पासवर्ड भूल गए हों तो साइन इन स्क्रीन पर रिकवरी कोड के साथ “पासवर्ड भूल गए?” का उपयोग करें।</string>
+    <string name="auth_login_subtitle">अपने बिज़नेस पर जाने के लिए साइन इन करें।</string>
+    <string name="auth_field_business">बिज़नेस का नाम</string>
+    <string name="auth_error_business_required">अपने बिज़नेस का नाम लिखें।</string>
+    <string name="auth_error_business_too_long">बिज़नेस का नाम अधिकतम 70 अक्षरों का हो सकता है।</string>
+    <string name="auth_suggestions">यूज़रनेम के सुझाव</string>
+    <string name="auth_strength_weak">कमज़ोर</string>
+    <string name="auth_strength_fair">ठीक-ठाक</string>
+    <string name="auth_strength_good">अच्छा</string>
+    <string name="auth_strength_strong">मज़बूत</string>
 </resources>

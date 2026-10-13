@@ -198,6 +198,39 @@ class AuthScreensTest {
     }
 
     @Test
+    fun setupScreen_asksForTheBusinessName_andShowsItsError() {
+        setup(AdminSetupUiState(submitted = true, errors = mapOf(SetupField.BUSINESS to SetupError.BUSINESS_REQUIRED)))
+        composeRule.onNodeWithTag("setup_business").assertExists()
+        composeRule.onNodeWithText("Enter your business name.").assertIsDisplayed()
+        composeRule.onNodeWithText("Create & Get Started").assertExists()
+    }
+
+    @Test
+    fun strengthMeter_isHidden_untilAPasswordIsTyped() {
+        setup(AdminSetupUiState())
+        composeRule.onNodeWithTag("strength_meter").assertDoesNotExist()
+    }
+
+    @Test
+    fun strengthMeter_namesItsLevel() {
+        composeRule.setContent { AuxoTheme { com.auxo.pos.ui.components.StrengthMeter(filled = 3, label = "Good") } }
+        composeRule.onNodeWithTag("strength_meter").assertIsDisplayed()
+        composeRule.onNodeWithText("Good").assertIsDisplayed()
+    }
+
+    @Test
+    fun usernameIdeas_areShown_andTappingOneReportsIt() {
+        var picked: String? = null
+        composeRule.setContent {
+            AuxoTheme {
+                AdminSetupContent(AdminSetupUiState(name = "Roy Babu"), {}, {}, {}, {}, {}, onSuggestionPick = { picked = it })
+            }
+        }
+        composeRule.onNodeWithTag("suggestion_0").performScrollTo().performClick()
+        assertEquals("roy.babu", picked)
+    }
+
+    @Test
     fun setup_offersNoOnlineSignIn() {
         setup()
         for (text in listOf("Sign in with", "Google", "server", "Server", "Cloud")) {

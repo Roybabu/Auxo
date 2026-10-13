@@ -4,24 +4,31 @@ import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -29,7 +36,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
+import com.auxo.pos.ui.theme.AuthAmber
 import com.auxo.pos.ui.theme.AuthDotIdle
+import com.auxo.pos.ui.theme.AuthEmeraldBright
+import com.auxo.pos.ui.theme.AuthInkMuted
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.AuthMintLight
@@ -92,5 +102,48 @@ fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
 fun AuthProgressBar(fraction: Float, modifier: Modifier = Modifier) {
     Box(modifier = modifier.height(4.dp).clip(CircleShape).background(AuthDotIdle)) {
         Box(modifier = Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(4.dp).clip(CircleShape).background(AuthEmerald))
+    }
+}
+
+/** The four-segment password strength bar. [filled] is 0 to 4; it is hidden while the password is empty. */
+@Composable
+fun StrengthMeter(filled: Int, label: String, modifier: Modifier = Modifier) {
+    if (filled <= 0) return
+    val colour = when (filled) {
+        1 -> MaterialTheme.colorScheme.error
+        2 -> AuthAmber
+        3 -> AuthEmeraldBright
+        else -> AuthEmerald
+    }
+    Column(modifier = modifier.testTag("strength_meter"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+            repeat(4) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(5.dp)
+                        .clip(CircleShape)
+                        .background(if (index < filled) colour else AuthDotIdle),
+                )
+            }
+        }
+        Text(label, style = MaterialTheme.typography.labelMedium, color = colour, modifier = Modifier.testTag("strength_label"))
+    }
+}
+
+/** A row of tappable ideas (for example usernames); scrolls sideways rather than wrapping. */
+@Composable
+fun SuggestionRow(label: String, suggestions: List<String>, onPick: (String) -> Unit, modifier: Modifier = Modifier) {
+    if (suggestions.isEmpty()) return
+    Column(modifier = modifier.testTag("suggestions"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = AuthInkMuted)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            suggestions.forEachIndexed { index, text ->
+                AssistChip(onClick = { onPick(text) }, label = { Text(text) }, modifier = Modifier.testTag("suggestion_$index"))
+            }
+        }
     }
 }

@@ -19,11 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -31,6 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
+import com.auxo.pos.ui.theme.AuthMint
+import com.auxo.pos.ui.theme.AuthMintLight
 import com.auxo.pos.ui.theme.Spacing
 
 /** Width from which the brand sits beside the form instead of above it (tablets, phones on their side). */
@@ -56,7 +61,10 @@ private const val LOGO_ASPECT = 1050f / 342f
  */
 @Composable
 fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).testTag("auth_screen")) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val backdrop = if (dark) Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.background))
+    else Brush.verticalGradient(listOf(Color.White, AuthMintLight, AuthMint))
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(backdrop).testTag("auth_screen")) {
         if (maxWidth >= WIDE_LAYOUT_FROM) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(
@@ -84,7 +92,7 @@ fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { form() }
+                    FormCard { form() }
                 }
             }
         } else {
@@ -98,8 +106,21 @@ fun AuthLayout(modifier: Modifier = Modifier, form: @Composable () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BrandLogo(width = 280.dp, modifier = Modifier.padding(bottom = Spacing.xl))
-                Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { form() }
+                FormCard { form() }
             }
         }
+    }
+}
+
+/** The white rounded card the sign-in and setup forms sit on, over the mint backdrop. */
+@Composable
+private fun FormCard(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 6.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) { content() }
     }
 }

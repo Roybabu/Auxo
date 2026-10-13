@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.auth.AdminSetupValidator
 import com.auxo.pos.core.auth.AuthRepository
 import com.auxo.pos.core.auth.AuthState
+import com.auxo.pos.core.auth.PasswordStrength
+import com.auxo.pos.core.auth.UsernameSuggestions
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.core.auth.SetupResult
@@ -28,12 +30,30 @@ data class AdminSetupUiState(
     val submitted: Boolean = false,
     val isSubmitting: Boolean = false,
     val saveFailed: Boolean = false,
-)
+    val businessName: String = "",
+) {
+    /** Username ideas from the typed name, offered only while the username is still empty. */
+    val suggestions: List<String> get() = if (identifier.isBlank()) UsernameSuggestions.from(name) else emptyList()
 
-class AdminSetupViewModel(private val auth: AuthRepository) : ViewModel() {
+    /** 0 to 4 filled segments for the strength meter. */
+    val strength: Int get() = PasswordStrength.segments(password, identifier)
+}
+
+/**
+ * [saveBusinessName] stores the business name once the account exists. The app wires it to the store settings and runs it
+ * outside this screen, so it still completes when setup closes the moment the account is created.
+ */
+class AdminSetupViewModel(
+    private val auth: AuthRepository,
+    private val saveBusinessName: (String) -> Unit = {},
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminSetupUiState())
     val uiState: StateFlow<AdminSetupUiState> = _uiState.asStateFlow()
+
+    fun onBusinessChange(value: String) = edit { it.copy(businessName = value.take(AdminSetupValidator.MAX_BUSINESS_NAME_LENGTH + 20)) }
+
+    fun useSuggestion(username: String) = edit { it.copy(identifier = username) }
 
     fun onNameChange(value: String) = edit { it.copy(name = value.take(AdminSetupValidator.MAX_NAME_LENGTH + 20)) }
 
@@ -48,8 +68,12 @@ class AdminSetupViewModel(private val auth: AuthRepository) : ViewModel() {
         if (next.submitted) next.copy(errors = validate(next)) else next
     }
 
-    private fun validate(state: AdminSetupUiState) =
-        AdminSetupValidator.validate(state.name, state.identifier, state.password, state.confirm)
+    private fun validate(state: AdminSetupUiState): Map<SetupField, SetupError> {
+        val errors = LinkedHashMap<SetupField, SetupError>()
+        AdminSetupValidator.businessNameError(state.businessName)?.let { errors[SetupField.BUSINESS] = it }
+        errors.putAll(AdminSetupValidator.validate(state.name, state.identifier, state.password, state.confirm))
+        return errors
+    }
 
     fun submit() {
         val current = _uiState.value
@@ -66,7 +90,11 @@ class AdminSetupViewModel(private val auth: AuthRepository) : ViewModel() {
             _uiState.update { state ->
                 when (result) {
                     // The app moves on by itself once the account exists; do not keep the password around.
-                    SetupResult.Created, SetupResult.AlreadyInitialized -> state.copy(isSubmitting = false, password = "", confirm = "")
+                    SetupResult.Created -> {
+                        saveBusinessName(AdminSetupValidator.normalizeName(current.businessName))
+                        state.copy(isSubmitting = false, password = "", confirm = "")
+                    }
+                    SetupResult.AlreadyInitialized -> state.copy(isSubmitting = false, password = "", confirm = "")
                     is SetupResult.Invalid -> state.copy(isSubmitting = false, errors = result.errors)
                     SetupResult.Failed -> state.copy(isSubmitting = false, saveFailed = true)
                 }
@@ -76,7 +104,10 @@ class AdminSetupViewModel(private val auth: AuthRepository) : ViewModel() {
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { AdminSetupViewModel(appContainer().authRepository) }
+            initializer {
+                val container = appContainer()
+                AdminSetupViewModel(container.authRepository, container::rememberBusinessName)
+            }
         }
     }
 }
