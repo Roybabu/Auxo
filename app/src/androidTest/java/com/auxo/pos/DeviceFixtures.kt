@@ -98,6 +98,8 @@ class SignedInRule : org.junit.rules.ExternalResource() {
             }
             auth.dismissRecoveryOffer()
         }
+        // First-time setup asks the admin which categories the shop sells in; answer it so the test reaches the app.
+        if (auth.state.value is com.auxo.pos.core.auth.AuthState.SignedIn) app.container.shopPreferences.setCategorySetupDone(true)
         check(auth.state.value is com.auxo.pos.core.auth.AuthState.SignedIn) { "Could not sign in for the device test" }
     }
 

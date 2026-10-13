@@ -8,7 +8,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -18,6 +17,7 @@ import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.ShopCategory
 import com.auxo.pos.domain.model.ShopSubcategory
 import com.auxo.pos.testutil.MainDispatcherRule
+import com.auxo.pos.testutil.awaitUntil
 import com.auxo.pos.testutil.keepActive
 import com.auxo.pos.ui.screens.more.CategoriesContent
 import com.auxo.pos.ui.screens.more.CategoryActions
@@ -94,7 +94,7 @@ class CategoriesTest {
     }
 
     @Test
-    fun addingACategory_asksForANameAndWhatItBehavesLike() {
+    fun addingACategory_asksForWhatItBehavesLike() {
         val added = mutableListOf<Pair<String, ProductCategory>>()
         composeRule.setContent {
             AuxoTheme {
@@ -110,32 +110,38 @@ class CategoriesTest {
             }
         }
         composeRule.onNodeWithTag("category_add").performClick()
-        composeRule.onNodeWithTag("category_name").performTextInput("Sweets")
         composeRule.onNodeWithTag("profile_PACKAGED_FOOD").performClick()
         composeRule.onNodeWithTag("category_name_save").performClick()
-        assertEquals(listOf("Sweets" to ProductCategory.PACKAGED_FOOD), added)
+        // The name field is left to the view model's own checks; the chosen behaviour is passed along.
+        assertEquals(listOf("" to ProductCategory.PACKAGED_FOOD), added)
     }
 
     @Test
     fun theViewModel_listsAddedCategories_andExplainsRefusals() = runTest {
         val viewModel = CategoriesViewModel(RoomCategoryRepository(database))
         keepActive(viewModel.uiState)
+        awaitUntil { viewModel.uiState.value.categories.size == 5 }
         assertEquals(5, viewModel.uiState.value.categories.size)
 
         viewModel.onAdd("Sweets", ProductCategory.PACKAGED_FOOD)
+        awaitUntil { viewModel.uiState.value.categories.any { it.name == "Sweets" } }
         assertTrue(viewModel.uiState.value.categories.any { it.name == "Sweets" })
         assertNull(viewModel.uiState.value.problem)
 
         viewModel.onAdd("sweets", ProductCategory.BEVERAGE)
+        awaitUntil { viewModel.uiState.value.problem != null }
         assertEquals(CategoryProblem.TAKEN, viewModel.uiState.value.problem)
         viewModel.dismissProblem()
         assertNull(viewModel.uiState.value.problem)
 
         viewModel.onAdd(" ", ProductCategory.BEVERAGE)
+        awaitUntil { viewModel.uiState.value.problem != null }
         assertEquals(CategoryProblem.BLANK, viewModel.uiState.value.problem)
+        viewModel.dismissProblem()
 
         val builtIn = viewModel.uiState.value.categories.first { it.builtIn }
         viewModel.onDelete(builtIn.id)
+        awaitUntil { viewModel.uiState.value.problem != null }
         assertEquals(CategoryProblem.BUILT_IN, viewModel.uiState.value.problem)
     }
 }

@@ -19,11 +19,11 @@ import com.auxo.pos.domain.category.CategoryRules
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.ShopCategory
 import com.auxo.pos.testutil.MainDispatcherRule
+import com.auxo.pos.testutil.awaitUntil
 import com.auxo.pos.ui.AuthGate
 import com.auxo.pos.ui.screens.auth.CategorySetupContent
 import com.auxo.pos.ui.theme.AuxoTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -103,14 +103,14 @@ class CategorySetupTest {
         val prefs = SharedPrefsShopPreferences(context)
         val repository = RoomCategoryRepository(database)
         val viewModel = CategorySetupViewModel(repository, prefs)
-        advanceUntilIdle()
+        awaitUntil { viewModel.uiState.value.loaded }
         assertTrue(viewModel.uiState.value.loaded)
         val restaurant = viewModel.uiState.value.categories.first { it.profile == ProductCategory.RESTAURANT }
         assertFalse(restaurant.id in viewModel.uiState.value.selected)
 
         viewModel.onToggle(restaurant.id)
         viewModel.onConfirm()
-        advanceUntilIdle()
+        awaitUntil { prefs.categorySetupDone.value }
         assertTrue(prefs.categorySetupDone.value)
         assertTrue(repository.getCategories().first { it.id == restaurant.id }.enabled)
     }
@@ -120,10 +120,10 @@ class CategorySetupTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val prefs = SharedPrefsShopPreferences(context)
         val viewModel = CategorySetupViewModel(RoomCategoryRepository(database), prefs)
-        advanceUntilIdle()
+        awaitUntil { viewModel.uiState.value.loaded }
         viewModel.uiState.value.selected.forEach { viewModel.onToggle(it) }
         viewModel.onConfirm()
-        advanceUntilIdle()
+        awaitUntil { viewModel.uiState.value.needsOne }
         assertTrue(viewModel.uiState.value.needsOne)
         assertFalse(prefs.categorySetupDone.value)
     }

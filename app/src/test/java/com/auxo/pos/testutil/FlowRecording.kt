@@ -20,3 +20,14 @@ fun <T> TestScope.record(flow: Flow<T>): List<T> {
 fun TestScope.keepActive(flow: Flow<*>) {
     backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { flow.collect() }
 }
+
+/**
+ * Waits in real time (not the test clock) until [condition] holds. For code that works on database threads, which
+ * the test scheduler cannot wait for.
+ */
+suspend fun awaitUntil(timeoutMillis: Long = 5_000, condition: () -> Boolean) {
+    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (!condition() && System.currentTimeMillis() < deadline) kotlinx.coroutines.delay(20)
+    }
+}
