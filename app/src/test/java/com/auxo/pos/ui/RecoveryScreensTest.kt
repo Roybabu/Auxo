@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -212,11 +213,11 @@ class RecoveryScreensTest {
         var typed = ""
         composeRule.setContent {
             AuxoTheme {
-                var value by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+                val value = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
                 RecoveryCodeBody(
-                    state = RecoveryCodeUiState(step = RecoveryStep.CONFIRM, code = CODE, typed = value),
+                    state = RecoveryCodeUiState(step = RecoveryStep.CONFIRM, code = CODE, typed = value.value),
                     onPasswordChange = {}, onStart = {}, onWrittenDown = {},
-                    onTypedChange = { value = it; typed = it },
+                    onTypedChange = { value.value = it; typed = it },
                     onConfirm = {}, onShowAgain = {}, onSkip = null, onDone = null,
                 )
             }
