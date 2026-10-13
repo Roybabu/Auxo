@@ -330,7 +330,8 @@ class PermissionEnforcementTest {
         assertFalse(everything.can(Permission.GST_REPORT))
         assertFalse(everything.can(Permission.MANAGE_LOYALTY))
         assertFalse(everything.can(Permission.UNLIMITED_DISCOUNT))
-        assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT), Permission.entries.filterNot { everything.can(it) }.toSet())
+        assertFalse(everything.can(Permission.MANAGE_MENU)) // retired: it can no longer be granted
+        assertEquals(setOf(Permission.MANAGE_USERS, Permission.BACKUP_AND_RESTORE, Permission.GST_REPORT, Permission.MANAGE_LOYALTY, Permission.UNLIMITED_DISCOUNT, Permission.MANAGE_MENU), Permission.entries.filterNot { everything.can(it) }.toSet())
     }
 
     // Held bills belong to billing
