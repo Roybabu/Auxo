@@ -113,7 +113,14 @@ class MainActivity : FragmentActivity() {
                     }
                     val categorySetupDone by shop.categorySetupDone.collectAsStateWithLifecycle()
                     val mayChooseCategories = (authState as? AuthState.SignedIn)?.permissions?.contains(com.auxo.pos.core.auth.Permission.MANAGE_SETTINGS) == true
-                    AuthGate(authState, recoveryPrompt = recoveryPrompt, lock = lock, categoryPrompt = mayChooseCategories && !categorySetupDone) { AuxoApp() }
+                    val onboardingSeen by shop.onboardingSeen.collectAsStateWithLifecycle()
+                    AuthGate(
+                        authState,
+                        recoveryPrompt = recoveryPrompt,
+                        lock = lock,
+                        categoryPrompt = mayChooseCategories && !categorySetupDone,
+                        onboarding = !onboardingSeen,
+                    ) { AuxoApp() }
                 }
             }
         }

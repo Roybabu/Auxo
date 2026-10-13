@@ -1712,4 +1712,22 @@ in %2$s</string>
     <string name="category_setup_body">Choose every category you sell in. Products you add will be listed under these.</string>
     <string name="category_setup_action">Continue</string>
     <string name="category_setup_notice">You can change this any time in Shop settings, under Product categories.</string>
+
+    <!-- First-launch introduction -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_splash_title">Your Business Made Simple</string>
+    <string name="onboarding_splash_inventory">Inventory</string>
+    <string name="onboarding_splash_billing">Billing</string>
+    <string name="onboarding_splash_growth">Growth</string>
+    <string name="onboarding_intro_title">All your business in one place</string>
+    <string name="onboarding_intro_body">Manage products, sales, inventory and customers — easily.</string>
+    <string name="onboarding_cats_title">Works for any business</string>
+    <string name="onboarding_cats_body">From fashion to food, grocery to general store — Auxo adapts to you.</string>
+    <string name="onboarding_cat_apparel">Apparel &amp; Garments</string>
+    <string name="onboarding_cat_food">Food &amp; Beverages</string>
+    <string name="onboarding_cat_grocery">Grocery &amp; Essentials</string>
+    <string name="onboarding_cat_electronics">Electronics</string>
+    <string name="onboarding_cat_beauty">Beauty &amp; Personal Care</string>
+    <string name="onboarding_cat_general">General Store</string>
 </resources>

@@ -25,6 +25,14 @@ interface ShopPreferences {
     val categorySetupDone: StateFlow<Boolean>
 
     fun setCategorySetupDone(done: Boolean)
+
+    /**
+     * True once the first-launch introduction (splash and onboarding) has been shown, so it never appears again. Read and
+     * written before anyone has signed in, so it is not a business setting and needs no permission.
+     */
+    val onboardingSeen: StateFlow<Boolean>
+
+    fun setOnboardingSeen(seen: Boolean)
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -56,8 +64,17 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         categorySetupState.value = done
     }
 
+    private val onboardingState = MutableStateFlow(prefs.getBoolean(KEY_ONBOARDING_SEEN, false))
+    override val onboardingSeen: StateFlow<Boolean> = onboardingState.asStateFlow()
+
+    override fun setOnboardingSeen(seen: Boolean) {
+        prefs.edit().putBoolean(KEY_ONBOARDING_SEEN, seen).apply()
+        onboardingState.value = seen
+    }
+
     companion object {
         const val FILE = "shop"
+        const val KEY_ONBOARDING_SEEN = "onboarding_seen"
         const val KEY_CATEGORY_SETUP = "category_setup_done"
         const val KEY_RESTAURANT_MENU = "restaurant_menu"
         const val KEY_SUPPLIERS = "suppliers"

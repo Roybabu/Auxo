@@ -1712,4 +1712,22 @@
     <string name="category_setup_body">যেসব বিভাগে বিক্রি করেন সেগুলো বেছে নিন। আপনি যে পণ্য যোগ করবেন তা এগুলোর অধীনে থাকবে।</string>
     <string name="category_setup_action">এগিয়ে যান</string>
     <string name="category_setup_notice">দোকান সেটিংসে ‘পণ্যের বিভাগ’ থেকে যেকোনো সময় এটি বদলাতে পারবেন।</string>
+
+    <!-- First-launch introduction -->
+    <string name="onboarding_skip">এড়িয়ে যান</string>
+    <string name="onboarding_next">পরবর্তী</string>
+    <string name="onboarding_splash_title">আপনার ব্যবসা, এখন সহজ</string>
+    <string name="onboarding_splash_inventory">স্টক</string>
+    <string name="onboarding_splash_billing">বিলিং</string>
+    <string name="onboarding_splash_growth">প্রবৃদ্ধি</string>
+    <string name="onboarding_intro_title">আপনার পুরো ব্যবসা, এক জায়গায়</string>
+    <string name="onboarding_intro_body">পণ্য, বিক্রি, স্টক ও ক্রেতা — সবকিছু সহজে সামলান।</string>
+    <string name="onboarding_cats_title">যেকোনো ব্যবসার জন্য</string>
+    <string name="onboarding_cats_body">ফ্যাশন থেকে খাবার, মুদি থেকে জেনারেল স্টোর — Auxo আপনার মতো করে নেয়।</string>
+    <string name="onboarding_cat_apparel">পোশাক ও গার্মেন্টস</string>
+    <string name="onboarding_cat_food">খাবার ও পানীয়</string>
+    <string name="onboarding_cat_grocery">মুদি ও প্রয়োজনীয় সামগ্রী</string>
+    <string name="onboarding_cat_electronics">ইলেকট্রনিক্স</string>
+    <string name="onboarding_cat_beauty">বিউটি ও পারসোনাল কেয়ার</string>
+    <string name="onboarding_cat_general">জেনারেল স্টোর</string>
 </resources>

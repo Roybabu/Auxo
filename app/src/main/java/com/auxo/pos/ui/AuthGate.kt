@@ -25,10 +25,11 @@ import com.auxo.pos.ui.screens.auth.AuthLayout
 import com.auxo.pos.ui.screens.auth.CategorySetupScreen
 import com.auxo.pos.ui.screens.auth.LoginScreen
 import com.auxo.pos.ui.screens.auth.RecoveryCodeGate
+import com.auxo.pos.ui.screens.onboarding.OnboardingScreen
 import com.auxo.pos.ui.theme.Spacing
 
 /**
- * Decides what the app opens to: Admin Setup on the very first launch, Login on every launch after that,
+ * Decides what the app opens to: the introduction ([onboarding]) and then Admin Setup on the very first launch, Login on every launch after that,
  * and the app itself once someone has signed in. A Super Admin without a recovery code is shown the code
  * screen first: required after setup, offered (and skippable) for an install that predates recovery codes.
  * When the app is locked the same person's lock screen covers the app, which stays as it was underneath.
@@ -44,10 +45,13 @@ fun AuthGate(
     lockScreen: @Composable () -> Unit = { LockScreen() },
     categoryPrompt: Boolean = false,
     categorySetup: @Composable () -> Unit = { CategorySetupScreen() },
+    onboarding: Boolean = false,
+    onboardingScreen: @Composable () -> Unit = { OnboardingScreen() },
     app: @Composable () -> Unit,
 ) {
     when (state) {
-        AuthState.NeedsSetup -> setup()
+        // Only before the first administrator exists, and only until the introduction has been seen once.
+        AuthState.NeedsSetup -> if (onboarding) onboardingScreen() else setup()
         AuthState.SignedOut -> login()
         is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name, state.permissions)) {
             // A different person signing in gets a fresh app, never the previous person's screens.

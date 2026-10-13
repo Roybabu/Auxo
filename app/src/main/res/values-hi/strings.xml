@@ -1712,4 +1712,22 @@
     <string name="category_setup_body">वे सभी श्रेणियाँ चुनें जिनमें आप बेचते हैं। आप जो उत्पाद जोड़ेंगे वे इन्हीं के अंतर्गत दिखेंगे।</string>
     <string name="category_setup_action">आगे बढ़ें</string>
     <string name="category_setup_notice">आप इसे कभी भी दुकान सेटिंग्स में ‘उत्पाद श्रेणियाँ’ से बदल सकते हैं।</string>
+
+    <!-- First-launch introduction -->
+    <string name="onboarding_skip">छोड़ें</string>
+    <string name="onboarding_next">आगे</string>
+    <string name="onboarding_splash_title">आपका कारोबार, अब आसान</string>
+    <string name="onboarding_splash_inventory">स्टॉक</string>
+    <string name="onboarding_splash_billing">बिलिंग</string>
+    <string name="onboarding_splash_growth">तरक्की</string>
+    <string name="onboarding_intro_title">आपका पूरा कारोबार, एक ही जगह</string>
+    <string name="onboarding_intro_body">सामान, बिक्री, स्टॉक और ग्राहक — सब आसानी से सँभालें।</string>
+    <string name="onboarding_cats_title">हर तरह के कारोबार के लिए</string>
+    <string name="onboarding_cats_body">फ़ैशन से खाने तक, किराने से जनरल स्टोर तक — Auxo आपके हिसाब से ढल जाता है।</string>
+    <string name="onboarding_cat_apparel">कपड़े और परिधान</string>
+    <string name="onboarding_cat_food">खाना और पेय</string>
+    <string name="onboarding_cat_grocery">किराना और ज़रूरी सामान</string>
+    <string name="onboarding_cat_electronics">इलेक्ट्रॉनिक्स</string>
+    <string name="onboarding_cat_beauty">ब्यूटी और पर्सनल केयर</string>
+    <string name="onboarding_cat_general">जनरल स्टोर</string>
 </resources>

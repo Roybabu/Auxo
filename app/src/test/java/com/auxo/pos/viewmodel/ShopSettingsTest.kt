@@ -41,7 +41,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-private class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean = true) : ShopPreferences {
+internal class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean = true) : ShopPreferences {
     private val state = MutableStateFlow(initial)
     override val restaurantMenu: StateFlow<Boolean> = state
     override fun setRestaurantMenu(enabled: Boolean) {
@@ -58,6 +58,12 @@ private class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean
     override val categorySetupDone: StateFlow<Boolean> = setupState
     override fun setCategorySetupDone(done: Boolean) {
         setupState.value = done
+    }
+
+    private val onboardingState = MutableStateFlow(false)
+    override val onboardingSeen: StateFlow<Boolean> = onboardingState
+    override fun setOnboardingSeen(seen: Boolean) {
+        onboardingState.value = seen
     }
 }
 
@@ -87,6 +93,18 @@ class ShopSettingsTest {
         assertTrue(prefs.restaurantMenu.value)
         // It is still on after the app is opened again.
         assertTrue(SharedPrefsShopPreferences(context).restaurantMenu.value)
+    }
+
+    @Test
+    fun theIntroduction_isUnseenUntilFinished_andStaysSeenAfterARestart() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences(SharedPrefsShopPreferences.FILE, Context.MODE_PRIVATE).edit().clear().commit()
+        val prefs = SharedPrefsShopPreferences(context)
+        assertFalse(prefs.onboardingSeen.value)
+
+        prefs.setOnboardingSeen(true)
+        assertTrue(prefs.onboardingSeen.value)
+        assertTrue(SharedPrefsShopPreferences(context).onboardingSeen.value)
     }
 
     @Test
