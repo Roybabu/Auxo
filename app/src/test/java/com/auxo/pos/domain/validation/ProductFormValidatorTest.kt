@@ -189,10 +189,11 @@ class ProductFormValidatorTest {
     }
 
     @Test
-    fun otherCategories_alwaysCountStock_andHaveNoSubcategory() {
-        val product = (ProductFormValidator.validate(garmentForm().copy(tracksStock = false, subcategory = "Tops")) as ProductValidation.Valid).product
+    fun otherCategories_alwaysCountStock_andCanHaveASubcategory() {
+        val product = (ProductFormValidator.validate(garmentForm().copy(tracksStock = false, subcategory = "Tops", categoryId = 3)) as ProductValidation.Valid).product
         assertEquals(true, product.tracksStock)
-        assertNull(product.subcategory)
+        assertEquals("Tops", product.subcategory)
+        assertEquals(3L, product.categoryId)
     }
 }
 

@@ -89,8 +89,18 @@ class MainActivity : FragmentActivity() {
                     }
                 }
             }.collectAsStateWithLifecycle(com.auxo.pos.domain.model.ExpiryWarning.DEFAULT_DAYS)
+            // Categories may only be read by someone signed in, like the other shop data.
+            val categories by remember {
+                container.authRepository.state.flatMapLatest { auth ->
+                    if (auth is AuthState.SignedIn) {
+                        container.categoryRepository.observeCategories().catch { emit(emptyList()) }
+                    } else {
+                        flowOf(emptyList())
+                    }
+                }
+            }.collectAsStateWithLifecycle(emptyList())
             AuxoTheme(accent = settings.accent, darkTheme = settings.darkMode) {
-                CompositionLocalProvider(LocalSuppliersEnabled provides suppliers, com.auxo.pos.ui.LocalRestaurantEnabled provides restaurant, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.auxo.pos.ui.LocalProductPhotos provides container.productPhotos, com.auxo.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
+                CompositionLocalProvider(com.auxo.pos.ui.LocalCategories provides categories, LocalSuppliersEnabled provides suppliers, com.auxo.pos.ui.LocalRestaurantEnabled provides restaurant, LocalExpiryWarningDays provides expiryDays, LocalStoreLogo provides logo, LocalFingerprint provides fingerprint, com.auxo.pos.ui.LocalProductPhotos provides container.productPhotos, com.auxo.pos.ui.LocalReceiptPrinting provides container.receiptPrinting) {
                     val authState by container.authRepository.state.collectAsStateWithLifecycle()
                     val recoveryPrompt by container.authRepository.recoveryPrompt.collectAsStateWithLifecycle()
                     val lock by container.authRepository.lock.collectAsStateWithLifecycle()

@@ -69,8 +69,10 @@ class RoomInventoryRepository(
             dao.getProduct(product.id)?.variants.orEmpty().map { it.variant.id }.filterNot { it in keptIds }
         }
 
+        // A product saved without a category (an import, an older caller) goes under the built-in one for its kind.
+        val categoryId = product.categoryId ?: database.categoryDao().builtInFor(product.category.name)
         val productId = dao.saveProduct(
-            product = product.toEntity(now),
+            product = product.copy(categoryId = categoryId).toEntity(now),
             variants = product.variants.map { it.toEntity(product.id) },
             removedVariantIds = removedIds,
             nowMillis = now,

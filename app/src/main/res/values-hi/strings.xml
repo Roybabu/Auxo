@@ -193,7 +193,7 @@
     <string name="editor_price_and_cost">कीमत और लागत</string>
     <string name="editor_restaurant">रेस्टोरेंट आइटम</string>
     <string name="editor_subcategory">मेन्यू सेक्शन</string>
-    <string name="editor_subcategory_hint">वैकल्पिक। बिलिंग पेज पर आइटम को समूह में दिखाता है, जैसे स्टार्टर या ड्रिंक्स।</string>
+    <string name="editor_subcategory_hint">वैकल्पिक। श्रेणी के भीतर एक समूह, जैसे स्टार्टर या टॉप्स। रेस्टोरेंट आइटम बिलिंग पेज पर इसी तरह समूह में दिखते हैं।</string>
     <string name="editor_available">बिलिंग के लिए उपलब्ध</string>
     <string name="editor_available_hint">बंद करने पर यह बिल में नहीं जुड़ेगा, पर हटेगा नहीं।</string>
     <string name="editor_track_stock">स्टॉक की गिनती रखें</string>

@@ -19,6 +19,12 @@ import com.auxo.pos.domain.validation.FieldError
 import com.auxo.pos.ui.theme.AuxoThemeExtras
 import com.auxo.pos.ui.theme.ToneColors
 
+/** The shop's name for the product's category, or the standard name for its kind when the list is not available. */
+@Composable
+fun com.auxo.pos.domain.model.Product.categoryLabel(): String =
+    com.auxo.pos.ui.LocalCategories.current.firstOrNull { it.id == categoryId }?.name
+        ?: androidx.compose.ui.res.stringResource(category.labelRes())
+
 @StringRes
 fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.string.category_garment

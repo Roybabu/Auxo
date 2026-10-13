@@ -108,6 +108,8 @@ class InventoryViewModel(
 
     fun onCategorySelected(category: ProductCategory?) = query.update { it.copy(category = category) }
 
+    fun onCategoryIdSelected(categoryId: Long?) = query.update { it.copy(categoryId = categoryId, category = null) }
+
     fun onStockFilterSelected(filter: StockFilter) = query.update { it.copy(stockFilter = filter) }
 
     fun clearFilters() = query.update { InventoryQuery() }

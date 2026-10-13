@@ -10,10 +10,12 @@ enum class StockFilter { ALL, LOW_STOCK, OUT_OF_STOCK, EXPIRING_SOON }
 data class InventoryQuery(
     val text: String = "",
     val category: ProductCategory? = null,
+    /** A shop category row; two categories can share a kind, so lists filter on this. */
+    val categoryId: Long? = null,
     val stockFilter: StockFilter = StockFilter.ALL,
 ) {
     val isFiltered: Boolean
-        get() = text.isNotBlank() || category != null || stockFilter != StockFilter.ALL
+        get() = text.isNotBlank() || category != null || categoryId != null || stockFilter != StockFilter.ALL
 }
 
 object InventoryFilter {
@@ -31,6 +33,7 @@ object InventoryFilter {
         return products
             .asSequence()
             .filter { query.category == null || it.category == query.category }
+            .filter { query.categoryId == null || it.categoryId == query.categoryId }
             .filter { text.isEmpty() || matchesText(it, text) }
             .filter { matchesStockFilter(it, query.stockFilter, today, warningDays.toLong()) }
             .sortedBy { it.name.lowercase() }

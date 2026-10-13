@@ -242,7 +242,7 @@ private fun ProductHeader(product: Product) {
             ) {}
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 StatusChip(
-                    text = stringResource(product.category.labelRes()),
+                    text = product.categoryLabel(),
                     tone = AuxoThemeExtras.statusColors.neutral,
                 )
                 if (product.tracksStock) {

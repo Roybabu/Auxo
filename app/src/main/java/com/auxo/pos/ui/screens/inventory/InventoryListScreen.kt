@@ -51,10 +51,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.domain.inventory.StockFilter
 import com.auxo.pos.domain.model.Product
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockStatus
 import com.auxo.pos.ui.components.ActionIcon
-import com.auxo.pos.ui.visibleCategories
+import com.auxo.pos.ui.screens.more.label
+import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.LocalExpiryWarningDays
 import com.auxo.pos.ui.LocalSuppliersEnabled
 import com.auxo.pos.ui.components.EmptyState
@@ -175,7 +175,7 @@ fun InventoryListScreen(
             uiState = uiState,
             onSearchTextChange = viewModel::onSearchTextChange,
             onSearchSubmitted = viewModel::onSearchSubmitted,
-            onCategorySelected = viewModel::onCategorySelected,
+            onCategorySelected = viewModel::onCategoryIdSelected,
             onStockFilterSelected = viewModel::onStockFilterSelected,
             onClearFilters = viewModel::clearFilters,
             onRetry = viewModel::retry,
@@ -191,7 +191,7 @@ fun InventoryListContent(
     uiState: InventoryUiState,
     onSearchTextChange: (String) -> Unit,
     onSearchSubmitted: () -> Unit,
-    onCategorySelected: (ProductCategory?) -> Unit,
+    onCategorySelected: (Long?) -> Unit,
     onStockFilterSelected: (StockFilter) -> Unit,
     onClearFilters: () -> Unit,
     onRetry: () -> Unit,
@@ -257,7 +257,7 @@ private fun InventoryFilters(
     uiState: InventoryUiState,
     onSearchTextChange: (String) -> Unit,
     onSearchSubmitted: () -> Unit,
-    onCategorySelected: (ProductCategory?) -> Unit,
+    onCategorySelected: (Long?) -> Unit,
     onStockFilterSelected: (StockFilter) -> Unit,
 ) {
     Column(
@@ -289,18 +289,20 @@ private fun InventoryFilters(
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             FilterChip(
-                selected = uiState.query.category == null,
+                selected = uiState.query.category == null && uiState.query.categoryId == null,
                 onClick = { onCategorySelected(null) },
                 label = { Text(stringResource(R.string.filter_all)) },
             )
-            visibleCategories().forEach { category ->
+            val rows = selectableCategories()
+            rows.forEach { row ->
                 FilterChip(
-                    selected = uiState.query.category == category,
-                    onClick = { onCategorySelected(category) },
-                    label = { Text(stringResource(category.filterLabelRes())) },
+                    selected = uiState.query.categoryId == row.id,
+                    onClick = { onCategorySelected(row.id) },
+                    label = { Text(row.label()) },
                     leadingIcon = {
-                        Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(row.profile.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
                     },
+                    modifier = Modifier.testTag("filter_category_${row.id}"),
                 )
             }
         }
@@ -364,7 +366,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                     Icon(
                         painter = painterResource(product.category.iconRes()),
-                        contentDescription = stringResource(product.category.labelRes()),
+                        contentDescription = product.categoryLabel(),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
                             .padding(Spacing.sm)

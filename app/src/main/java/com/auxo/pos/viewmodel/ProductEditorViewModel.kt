@@ -149,7 +149,7 @@ class ProductEditorViewModel(
             category = category,
             variants = variants,
             dietType = base.dietType.takeIf { category.usesDietType },
-            subcategory = if (category == ProductCategory.RESTAURANT) base.subcategory else "",
+            subcategory = base.subcategory,
             available = true,
             // A restaurant item starts without a stock count; everything else always keeps one.
             tracksStock = !category.canSkipStock,
@@ -175,6 +175,13 @@ class ProductEditorViewModel(
         val form = _uiState.value.form
         if (!form.isNew || form.category == category) return
         setForm(newForm(category, form))
+    }
+
+    /** Picks a shop category: its row is remembered and the form follows the kind of goods the category behaves like. */
+    fun onShopCategoryChange(id: Long, profile: ProductCategory) {
+        val form = _uiState.value.form
+        if (!form.isNew || form.categoryId == id) return
+        setForm((if (form.category == profile) form else newForm(profile, form)).copy(categoryId = id))
     }
 
     fun onNameChange(value: String) = editForm { it.copy(name = value.take(ProductFormValidator.NAME_MAX + 20)) }

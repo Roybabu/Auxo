@@ -12,6 +12,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import com.auxo.pos.ui.components.ProductPhoto
+import com.auxo.pos.ui.LocalCategories
+import com.auxo.pos.ui.screens.more.label
+import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.visibleCategories
 import java.io.File
 import java.io.IOException
@@ -96,6 +99,7 @@ import com.auxo.pos.viewmodel.ProductEditorViewModel
 /** Callbacks from the editor UI, so the content can be previewed and tested without a ViewModel. */
 interface ProductEditorActions {
     fun onCategoryChange(category: ProductCategory)
+    fun onShopCategoryChange(id: Long, profile: ProductCategory) = Unit
     fun onNameChange(value: String)
     fun onBrandChange(value: String)
     fun onDescriptionChange(value: String)
@@ -176,6 +180,7 @@ fun ProductEditorScreen(
     val actions = remember(viewModel) {
         object : ProductEditorActions {
             override fun onCategoryChange(category: ProductCategory) = viewModel.onCategoryChange(category)
+            override fun onShopCategoryChange(id: Long, profile: ProductCategory) = viewModel.onShopCategoryChange(id, profile)
             override fun onNameChange(value: String) = viewModel.onNameChange(value)
             override fun onBrandChange(value: String) = viewModel.onBrandChange(value)
             override fun onDescriptionChange(value: String) = viewModel.onDescriptionChange(value)
@@ -281,6 +286,14 @@ fun ProductEditorContent(
     val form = uiState.form
     val errors = uiState.visibleErrors
     val suppliersEnabled = LocalSuppliersEnabled.current
+    val shopCategories = selectableCategories(form.categoryId)
+    // A new product starts in the first category the shop sells in that fits the kind already chosen.
+    LaunchedEffect(form.isNew, form.categoryId, shopCategories.size) {
+        if (form.isNew && form.categoryId == null && shopCategories.isNotEmpty()) {
+            val pick = shopCategories.firstOrNull { it.profile == form.category } ?: shopCategories.first()
+            actions.onShopCategoryChange(pick.id, pick.profile)
+        }
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -293,15 +306,29 @@ fun ProductEditorContent(
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     SectionHeader(stringResource(R.string.editor_category))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                        visibleCategories().forEach { category ->
-                            FilterChip(
-                                selected = form.category == category,
-                                onClick = { actions.onCategoryChange(category) },
-                                label = { Text(stringResource(category.labelRes())) },
-                                leadingIcon = {
-                                    Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
-                                },
-                            )
+                        if (shopCategories.isEmpty()) {
+                            visibleCategories().forEach { category ->
+                                FilterChip(
+                                    selected = form.category == category,
+                                    onClick = { actions.onCategoryChange(category) },
+                                    label = { Text(stringResource(category.labelRes())) },
+                                    leadingIcon = {
+                                        Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                )
+                            }
+                        } else {
+                            shopCategories.forEach { row ->
+                                FilterChip(
+                                    selected = form.categoryId == row.id,
+                                    onClick = { actions.onShopCategoryChange(row.id, row.profile) },
+                                    label = { Text(row.label()) },
+                                    leadingIcon = {
+                                        Icon(painterResource(row.profile.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    modifier = Modifier.testTag("category_chip_${row.id}"),
+                                )
+                            }
                         }
                     }
                 }
@@ -310,6 +337,10 @@ fun ProductEditorContent(
 
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
+
+        if (form.category.isSold) {
+            item(key = "subcategory") { SubcategorySection(form, errors, actions) }
+        }
 
         if (form.category.canSkipStock) {
             item(key = "restaurant") { RestaurantSection(form, errors, actions) }
@@ -495,11 +526,13 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
 }
 
 /** Menu section, whether the item can be billed, and whether it keeps a stock count. Restaurant items only. */
+/** A free-text grouping inside the category, with the subcategories the admin listed offered as one-tap choices. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
-    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_restaurant")) {
+private fun SubcategorySection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+    val listed = LocalCategories.current.firstOrNull { it.id == form.categoryId }?.subcategories.orEmpty()
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_subcategory_card")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            SectionHeader(stringResource(R.string.editor_restaurant))
             AuxoTextField(
                 value = form.subcategory,
                 onValueChange = actions::onSubcategoryChange,
@@ -511,6 +544,27 @@ private fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, acti
                     .fillMaxWidth()
                     .testTag("editor_subcategory"),
             )
+            if (listed.isNotEmpty()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    listed.forEach { sub ->
+                        FilterChip(
+                            selected = form.subcategory.trim().equals(sub.name, ignoreCase = true),
+                            onClick = { actions.onSubcategoryChange(sub.name) },
+                            label = { Text(sub.name) },
+                            modifier = Modifier.testTag("subcategory_choice_${sub.id}"),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_restaurant")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            SectionHeader(stringResource(R.string.editor_restaurant))
             SwitchRow(
                 title = stringResource(R.string.editor_available),
                 body = stringResource(R.string.editor_available_hint),

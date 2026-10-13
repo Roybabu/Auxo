@@ -27,6 +27,10 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM shop_categories")
     suspend fun categoryCount(): Int
 
+    /** The built-in category of a kind, used when a product is saved without choosing one. */
+    @Query("SELECT id FROM shop_categories WHERE profile = :profile AND built_in = 1 ORDER BY sort_order LIMIT 1")
+    suspend fun builtInFor(profile: String): Long?
+
     @Query("SELECT COALESCE(MAX(sort_order), -1) FROM shop_categories")
     suspend fun maxSortOrder(): Int
 

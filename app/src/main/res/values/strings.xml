@@ -193,7 +193,7 @@
     <string name="editor_price_and_cost">Price and cost</string>
     <string name="editor_restaurant">Restaurant item</string>
     <string name="editor_subcategory">Menu section</string>
-    <string name="editor_subcategory_hint">Optional. Groups items on the billing page, such as Starters or Drinks.</string>
+    <string name="editor_subcategory_hint">Optional. A group inside the category, such as Starters or Tops. Restaurant items are grouped this way on the billing page.</string>
     <string name="editor_available">Available for billing</string>
     <string name="editor_available_hint">Switch off to keep it off bills without deleting it.</string>
     <string name="editor_track_stock">Keep a stock count</string>

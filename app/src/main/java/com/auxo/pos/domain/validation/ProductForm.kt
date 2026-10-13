@@ -80,6 +80,8 @@ data class ProductForm(
     val dietType: DietType? = null,
     /** Grouping inside the category, such as a menu section; restaurant items only. */
     val subcategory: String = "",
+    /** The shop category row this product is listed under; null until one is chosen. */
+    val categoryId: Long? = null,
     /** Whether the item can be added to a bill; restaurant items only. */
     val available: Boolean = true,
     /** False sells the item without a stock count; only restaurant items can turn it off. */
@@ -111,6 +113,7 @@ data class ProductForm(
             material = product.material.orEmpty(),
             dietType = product.dietType,
             subcategory = product.subcategory.orEmpty(),
+            categoryId = product.categoryId,
             available = product.available,
             tracksStock = product.tracksStock,
             gst = GstChoice.from(product.gstRate),

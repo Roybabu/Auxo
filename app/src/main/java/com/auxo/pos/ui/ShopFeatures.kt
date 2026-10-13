@@ -15,12 +15,28 @@ val LocalSuppliersEnabled = staticCompositionLocalOf { true }
  */
 val LocalRestaurantEnabled = staticCompositionLocalOf { true }
 
-/** The categories to offer in pickers and filters: Restaurant only while the shop has it switched on. */
+/**
+ * The shop's categories, as set up in Shop settings. Empty in previews and tests that do not provide them; screens
+ * then fall back to the built-in kinds.
+ */
+val LocalCategories = staticCompositionLocalOf<List<com.auxo.pos.domain.model.ShopCategory>> { emptyList() }
+
+/** The kinds of goods to offer in report and stock filters: those of the categories that are switched on. */
 @androidx.compose.runtime.Composable
 fun visibleCategories(): List<com.auxo.pos.domain.model.ProductCategory> {
+    val rows = LocalCategories.current
+    if (rows.isNotEmpty()) return rows.filter { it.enabled }.map { it.profile }.distinct()
     val restaurant = LocalRestaurantEnabled.current
     return com.auxo.pos.domain.model.ProductCategory.entries.filter { restaurant || it != com.auxo.pos.domain.model.ProductCategory.RESTAURANT }
 }
+
+/**
+ * The categories to offer for a new product or a list filter: the ones switched on, plus [alsoShow] (the category a
+ * product already has, even if it was switched off since).
+ */
+@androidx.compose.runtime.Composable
+fun selectableCategories(alsoShow: Long? = null): List<com.auxo.pos.domain.model.ShopCategory> =
+    LocalCategories.current.filter { it.enabled || it.id == alsoShow }
 
 /** The shop's logo picture, or null when none was added. Home and the receipts use it. */
 val LocalStoreLogo = staticCompositionLocalOf<android.graphics.Bitmap?> { null }
