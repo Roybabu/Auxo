@@ -45,8 +45,6 @@ class ReportsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
-    private val idli = TestData.dish(id = 6, name = "Idli", price = Money(6_000), available = false)
     private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.biscuits()))
     private val billing = FakeBillingRepository(inventory)
     private val purchasing = FakePurchasingRepository(inventory)
@@ -237,6 +235,8 @@ class BillingAccountsAndMenuTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
+    private val idli = TestData.dish(id = 6, name = "Idli", price = Money(6_000), available = false)
     private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.flour(), dosa, idli))
     private val billing = FakeBillingRepository(inventory)
     private val settings = FakeSettingsRepository()

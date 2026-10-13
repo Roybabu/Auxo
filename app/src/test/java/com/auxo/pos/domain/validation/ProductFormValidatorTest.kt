@@ -151,47 +151,6 @@ class ProductFormValidatorTest {
         val errors = (ProductFormValidator.validate(withoutL, saved.variants) as ProductValidation.Invalid).errors
         assertEquals(FieldError.REMOVED_VARIANT_HAS_STOCK, errors.fields[FormField.VARIANTS])
     }
-}
-
-class GarmentVariantsTest {
-
-    private var keys = 0
-    private fun key() = "k${keys++}"
-
-    @Test
-    fun sync_createsMatrixGroupedByColour() {
-        val rows = GarmentVariants.sync(listOf("S", "M"), listOf("Red", "Blue"), emptyList(), VariantDefaults(sellingPrice = "299"), ::key)
-        assertEquals(
-            listOf("S|Red", "M|Red", "S|Blue", "M|Blue"),
-            rows.map { "${it.size}|${it.colour}" },
-        )
-        assertTrue(rows.all { it.sellingPrice == "299" })
-    }
-
-    @Test
-    fun sync_keepsEditedRowsAndDropsRemovedOnes() {
-        val first = GarmentVariants.sync(listOf("S", "M"), listOf("Red"), emptyList(), VariantDefaults(), ::key)
-        val edited = first.map { if (it.size == "M") it.copy(sellingPrice = "350", barcode = "M-RED") else it }
-
-        val next = GarmentVariants.sync(listOf("M", "L"), listOf("Red"), edited, VariantDefaults(sellingPrice = "300"), ::key)
-        assertEquals(listOf("M", "L"), next.map { it.size })
-        assertEquals("350", next[0].sellingPrice)
-        assertEquals("M-RED", next[0].barcode)
-        assertEquals("300", next[1].sellingPrice)
-    }
-
-    @Test
-    fun applyDefaults_setsPricesAndOnlyNewRowsOpeningStock() {
-        val rows = listOf(
-            VariantForm(key = "new", size = "S", colour = "Red"),
-            VariantForm(key = "old", id = 5, size = "M", colour = "Red", openingStock = "", currentStock = 3),
-        )
-        val defaults = VariantDefaults(sellingPrice = "199", mrp = "249", costPrice = "90", openingStock = "4", lowStockThreshold = "1")
-        val updated = GarmentVariants.applyDefaults(rows, defaults)
-        assertTrue(updated.all { it.sellingPrice == "199" && it.mrp == "249" && it.lowStockThreshold == "1" })
-        assertEquals("4", updated[0].openingStock)
-        assertEquals("", updated[1].openingStock)
-    }
 
     private fun dishForm(vararg rows: VariantForm) = ProductForm(
         category = ProductCategory.RESTAURANT,
@@ -234,5 +193,46 @@ class GarmentVariantsTest {
         val product = (ProductFormValidator.validate(garmentForm().copy(tracksStock = false, subcategory = "Tops")) as ProductValidation.Valid).product
         assertEquals(true, product.tracksStock)
         assertNull(product.subcategory)
+    }
+}
+
+class GarmentVariantsTest {
+
+    private var keys = 0
+    private fun key() = "k${keys++}"
+
+    @Test
+    fun sync_createsMatrixGroupedByColour() {
+        val rows = GarmentVariants.sync(listOf("S", "M"), listOf("Red", "Blue"), emptyList(), VariantDefaults(sellingPrice = "299"), ::key)
+        assertEquals(
+            listOf("S|Red", "M|Red", "S|Blue", "M|Blue"),
+            rows.map { "${it.size}|${it.colour}" },
+        )
+        assertTrue(rows.all { it.sellingPrice == "299" })
+    }
+
+    @Test
+    fun sync_keepsEditedRowsAndDropsRemovedOnes() {
+        val first = GarmentVariants.sync(listOf("S", "M"), listOf("Red"), emptyList(), VariantDefaults(), ::key)
+        val edited = first.map { if (it.size == "M") it.copy(sellingPrice = "350", barcode = "M-RED") else it }
+
+        val next = GarmentVariants.sync(listOf("M", "L"), listOf("Red"), edited, VariantDefaults(sellingPrice = "300"), ::key)
+        assertEquals(listOf("M", "L"), next.map { it.size })
+        assertEquals("350", next[0].sellingPrice)
+        assertEquals("M-RED", next[0].barcode)
+        assertEquals("300", next[1].sellingPrice)
+    }
+
+    @Test
+    fun applyDefaults_setsPricesAndOnlyNewRowsOpeningStock() {
+        val rows = listOf(
+            VariantForm(key = "new", size = "S", colour = "Red"),
+            VariantForm(key = "old", id = 5, size = "M", colour = "Red", openingStock = "", currentStock = 3),
+        )
+        val defaults = VariantDefaults(sellingPrice = "199", mrp = "249", costPrice = "90", openingStock = "4", lowStockThreshold = "1")
+        val updated = GarmentVariants.applyDefaults(rows, defaults)
+        assertTrue(updated.all { it.sellingPrice == "199" && it.mrp == "249" && it.lowStockThreshold == "1" })
+        assertEquals("4", updated[0].openingStock)
+        assertEquals("", updated[1].openingStock)
     }
 }
