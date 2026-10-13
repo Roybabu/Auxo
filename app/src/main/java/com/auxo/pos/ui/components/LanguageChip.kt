@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -50,8 +51,9 @@ import com.auxo.pos.viewmodel.AppearanceViewModel
 fun LanguageChip(modifier: Modifier = Modifier, viewModel: AppearanceViewModel = viewModel(factory = AppearanceViewModel.Factory)) {
     val chosen by viewModel.appLanguage.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     // The language the screens are in now: the chosen one, or what the phone gives when the person follows the phone.
-    val current = chosen ?: Language.fromTag(context.resources.configuration.locales[0].language) ?: Language.DEFAULT
+    val current = chosen ?: Language.fromTag(configuration.locales[0].language) ?: Language.DEFAULT
     LanguageChipContent(
         current = current,
         followsPhone = chosen == null,
