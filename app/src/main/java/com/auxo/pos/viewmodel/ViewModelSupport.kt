@@ -30,7 +30,7 @@ internal fun HistoryRange.bounds(clock: Clock): Pair<Long, Long> {
     return startDate.atStartOfDay(clock.zone).toInstant().toEpochMilli() to end
 }
 
-/** A search box for adding stock items to an order, receipt or recipe. */
+/** A search box for adding stock items to an order or receipt. */
 data class ItemPickerState(
     val query: String = "",
     val results: List<PickableItem> = emptyList(),

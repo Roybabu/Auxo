@@ -34,9 +34,6 @@ interface CategoryDao {
     @Query("SELECT COALESCE(MAX(sort_order), -1) FROM shop_categories")
     suspend fun maxSortOrder(): Int
 
-    @Query("SELECT COUNT(*) FROM shop_categories WHERE enabled = 1")
-    suspend fun enabledCount(): Int
-
     @Query("SELECT COUNT(*) FROM products WHERE category_id = :id")
     suspend fun productCount(id: Long): Int
 

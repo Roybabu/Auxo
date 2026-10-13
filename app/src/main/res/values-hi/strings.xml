@@ -130,7 +130,7 @@
     <string name="detail_reorder_quantity">एक बार में %1$s ऑर्डर करें</string>
     <string name="detail_cost_per">लागत %1$s प्रति %2$s</string>
     <string name="detail_cost_unknown">लागत तय नहीं है</string>
-    <string name="detail_ingredient_note">रसोई की सामग्री: मेन्यू की रेसिपी में इस्तेमाल होती है, काउंटर पर नहीं बिकती</string>
+    <string name="detail_ingredient_note">रसोई की सामग्री: रसोई में इस्तेमाल होती है, काउंटर पर नहीं बिकती</string>
     <string name="detail_batches">बैच</string>
     <string name="detail_batch_none">कोई बैच नंबर नहीं</string>
     <string name="detail_expired_stock">%1$s एक्सपायर हो चुका है और बेचा नहीं जा सकता। इसे एक्सपायरी और बर्बादी में राइट-ऑफ़ करें।</string>
@@ -814,8 +814,6 @@
     <string name="movements_empty_title">स्टॉक की कोई आवाजाही नहीं</string>
     <string name="movements_empty_body">इस अवधि की बिक्री, प्राप्त माल, वापसी, राइट-ऑफ़ और सुधार यहाँ दिखते हैं।</string>
 
-    <!-- Restaurant menu -->
-
     <!-- Reports -->
     <string name="reports_title">रिपोर्ट</string>
     <string name="report_type">रिपोर्ट</string>
@@ -855,7 +853,7 @@
     <string name="more_backup_body">सब कुछ एक फ़ाइल में सहेजें, या दूसरे फ़ोन पर ले जाएँ</string>
     <string name="backup_title">बैकअप और रिस्टोर</string>
     <string name="backup_make_title">इस फ़ोन का बैकअप लें</string>
-    <string name="backup_make_body">आपने जो कुछ दर्ज किया है वह एक फ़ाइल में सहेजता है: उत्पाद और स्टॉक, बिल और वापसी, ग्राहक और बाकी राशि, सप्लायर और खरीद, मेन्यू, दुकान की सेटिंग और ऐप का रंग। फ़ाइल इस फ़ोन में Documents के Auxo फ़ोल्डर में जाती है।</string>
+    <string name="backup_make_body">आपने जो कुछ दर्ज किया है वह एक फ़ाइल में सहेजता है: उत्पाद और स्टॉक, बिल और वापसी, ग्राहक और बाकी राशि, सप्लायर और खरीद, दुकान की सेटिंग और ऐप का रंग। फ़ाइल इस फ़ोन में Documents के Auxo फ़ोल्डर में जाती है।</string>
     <string name="backup_now">अभी बैकअप लें</string>
     <string name="backup_working">काम चल रहा है…</string>
     <string name="backup_last">आखिरी बैकअप: %1$s</string>

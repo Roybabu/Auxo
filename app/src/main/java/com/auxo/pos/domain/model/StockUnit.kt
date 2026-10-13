@@ -5,7 +5,7 @@ import kotlin.math.abs
 
 /**
  * How a product's stock is counted. Shop products count units (pieces or packs).
- * Kitchen ingredients count grams or millilitres, so a recipe can use part of a pack.
+ * Kitchen ingredients count grams or millilitres, so part of a pack can be used.
  *
  * Quantities are always whole numbers of the base unit. People type quantities and
  * see prices in the entry unit: kilograms for grams, litres for millilitres.

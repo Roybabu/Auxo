@@ -34,10 +34,6 @@ object CategoryRules {
         }
     }
 
-    /** True when switching [target] off would leave nothing for the shop to sell in. */
-    fun wouldLeaveNoneEnabled(all: List<ShopCategory>, target: ShopCategory): Boolean =
-        target.enabled && all.count { it.enabled && it.profile.isSold } <= 1 && target.profile.isSold
-
     /** Restaurant service (dine-in, tables, kitchen tickets) is offered while any Restaurant category is on. */
     fun restaurantModeOn(all: List<ShopCategory>): Boolean = all.any { it.enabled && it.profile == ProductCategory.RESTAURANT }
 }

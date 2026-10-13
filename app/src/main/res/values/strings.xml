@@ -130,7 +130,7 @@
     <string name="detail_reorder_quantity">Order %1$s at a time</string>
     <string name="detail_cost_per">Cost %1$s per %2$s</string>
     <string name="detail_cost_unknown">Cost not set</string>
-    <string name="detail_ingredient_note">Kitchen ingredient: used by menu recipes, not sold at the counter</string>
+    <string name="detail_ingredient_note">Kitchen ingredient: used in the kitchen, not sold at the counter</string>
     <string name="detail_batches">Batches</string>
     <string name="detail_batch_none">No batch number</string>
     <string name="detail_expired_stock">%1$s has expired and can\'t be sold. Write it off in Expiry and wastage.</string>
@@ -814,8 +814,6 @@
     <string name="movements_empty_title">No stock movements</string>
     <string name="movements_empty_body">Sales, goods received, returns, write-offs and corrections for this period appear here.</string>
 
-    <!-- Restaurant menu -->
-
     <!-- Reports -->
     <string name="reports_title">Reports</string>
     <string name="report_type">Report</string>
@@ -855,7 +853,7 @@
     <string name="more_backup_body">Save everything to a file, or move it to another phone</string>
     <string name="backup_title">Backup and restore</string>
     <string name="backup_make_title">Back up this phone</string>
-    <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, the menu, your store settings and your app colour. The file goes into the Auxo folder in Documents on this phone.</string>
+    <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, your store settings and your app colour. The file goes into the Auxo folder in Documents on this phone.</string>
     <string name="backup_now">Back up now</string>
     <string name="backup_working">Working…</string>
     <string name="backup_last">Last backup: %1$s</string>

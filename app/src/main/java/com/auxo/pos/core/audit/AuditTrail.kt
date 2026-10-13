@@ -37,9 +37,6 @@ enum class AuditAction {
     ORDER_SAVED,
     ORDER_STATUS_CHANGED,
     GOODS_RECEIVED,
-    MENU_ITEM_SAVED,
-    MENU_ITEM_AVAILABILITY_CHANGED,
-    MENU_ITEM_DELETED,
     SETTINGS_SAVED,
     CATEGORIES_CHANGED,
     BACKUP_CREATED,
@@ -68,7 +65,6 @@ object AuditEntity {
     const val SUPPLIER = "supplier"
     const val PURCHASE_ORDER = "purchase_order"
     const val PURCHASE_RECEIPT = "purchase_receipt"
-    const val MENU_ITEM = "menu_item"
     const val SETTINGS = "settings"
     const val CATEGORY = "category"
     const val BACKUP = "backup"

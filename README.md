@@ -9,7 +9,7 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 - **Bill fast.** Scan with the camera or a hardware scanner, split payments across cash, UPI, card and customer accounts, hold a bill and come back to it, send quotations on WhatsApp.
 - **GST done right.** CGST/SGST/IGST, HSN codes, the apparel rate rule, invoices numbered per financial year, credit notes for returns.
 - **Know your stock.** Sizes and colours, batches with expiry, reorder suggestions, purchase orders, stock counts, CSV import, product photos.
-- **Run a restaurant too.** A separate menu with recipes that use up ingredient stock.
+- **Run a restaurant too.** Dishes sit beside your other products, with or without a stock count.
 - **See the numbers.** Twelve reports, day-end cash closing, a GST report, CSV export.
 - **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, activity log, backup and restore.
 - **Print anywhere.** PDF, Android printing, or straight to a Bluetooth receipt printer (58, 76 or 80 mm).
