@@ -1,6 +1,7 @@
 package com.auxo.pos.ui.screens.more
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -24,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -255,7 +258,6 @@ private fun NameDialog(title: String, initial: String, hint: String?, tag: Strin
 }
 
 /** Name plus how the new category behaves (it follows one of the built-in kinds). */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun AddCategoryDialog(onDismiss: () -> Unit, onAdd: (String, ProductCategory) -> Unit) {
     var text by remember { mutableStateOf("") }
@@ -267,14 +269,16 @@ private fun AddCategoryDialog(onDismiss: () -> Unit, onAdd: (String, ProductCate
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 AuxoTextField(value = text, onValueChange = { text = it }, label = stringResource(R.string.categories_name), modifier = Modifier.fillMaxWidth().testTag("category_name"))
                 Text(stringResource(R.string.categories_behaves_like), style = MaterialTheme.typography.labelLarge)
-                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    CategoryRules.builtInOrder.forEach { option ->
-                        FilterChip(
-                            selected = option == profile,
-                            onClick = { profile = option },
-                            label = { Text(stringResource(option.labelRes())) },
-                            modifier = Modifier.testTag("profile_${option.name}"),
-                        )
+                CategoryRules.builtInOrder.forEach { option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = option == profile, onClick = { profile = option }, role = Role.RadioButton)
+                            .testTag("profile_${option.name}"),
+                    ) {
+                        RadioButton(selected = option == profile, onClick = null)
+                        Text(stringResource(option.labelRes()), modifier = Modifier.padding(start = Spacing.sm))
                     }
                 }
                 Text(
