@@ -62,7 +62,7 @@ class OnboardingScreenTest {
         show()
         composeRule.onNodeWithTag("onboarding_splash").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
-        composeRule.onNodeWithText("Your Business Made Simple").assertIsDisplayed()
+        composeRule.onNodeWithText("Your Business\nMade Simple").assertIsDisplayed()
         composeRule.onNodeWithText("Inventory").assertIsDisplayed()
         composeRule.onNodeWithText("Billing").assertIsDisplayed()
         composeRule.onNodeWithText("Growth").assertIsDisplayed()

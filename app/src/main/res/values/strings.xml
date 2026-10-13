@@ -1716,7 +1716,7 @@ in %2$s</string>
     <!-- First-launch introduction -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_splash_title">Your Business Made Simple</string>
+    <string name="onboarding_splash_title">Your Business\nMade Simple</string>
     <string name="onboarding_splash_inventory">Inventory</string>
     <string name="onboarding_splash_billing">Billing</string>
     <string name="onboarding_splash_growth">Growth</string>

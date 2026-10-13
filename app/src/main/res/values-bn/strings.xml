@@ -1716,7 +1716,7 @@
     <!-- First-launch introduction -->
     <string name="onboarding_skip">এড়িয়ে যান</string>
     <string name="onboarding_next">পরবর্তী</string>
-    <string name="onboarding_splash_title">আপনার ব্যবসা, এখন সহজ</string>
+    <string name="onboarding_splash_title">আপনার ব্যবসা,\nএখন সহজ</string>
     <string name="onboarding_splash_inventory">স্টক</string>
     <string name="onboarding_splash_billing">বিলিং</string>
     <string name="onboarding_splash_growth">প্রবৃদ্ধি</string>
