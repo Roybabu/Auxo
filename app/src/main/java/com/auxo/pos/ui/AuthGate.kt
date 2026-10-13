@@ -22,6 +22,7 @@ import com.auxo.pos.ui.lock.LockOverlay
 import com.auxo.pos.ui.lock.LockScreen
 import com.auxo.pos.ui.screens.auth.AdminSetupScreen
 import com.auxo.pos.ui.screens.auth.AuthLayout
+import com.auxo.pos.ui.screens.auth.CategorySetupScreen
 import com.auxo.pos.ui.screens.auth.LoginScreen
 import com.auxo.pos.ui.screens.auth.RecoveryCodeGate
 import com.auxo.pos.ui.theme.Spacing
@@ -41,6 +42,8 @@ fun AuthGate(
     recovery: @Composable (canSkip: Boolean) -> Unit = { canSkip -> RecoveryCodeGate(canSkip) },
     lock: LockInfo = LockInfo(),
     lockScreen: @Composable () -> Unit = { LockScreen() },
+    categoryPrompt: Boolean = false,
+    categorySetup: @Composable () -> Unit = { CategorySetupScreen() },
     app: @Composable () -> Unit,
 ) {
     when (state) {
@@ -53,7 +56,8 @@ fun AuthGate(
                     // Straight after setup the code must be written down and confirmed before the app opens.
                     RecoveryPrompt.Required -> recovery(false)
                     RecoveryPrompt.Offered -> recovery(true)
-                    RecoveryPrompt.None -> Box {
+                    // Then the admin says which categories the shop sells in; it is asked once.
+                    RecoveryPrompt.None -> if (categoryPrompt) categorySetup() else Box {
                         // Locking never closes the app, so a half-made bill is still there after unlocking. While locked
                         // it is hidden from sight and from screen readers, and the lock screen covers all touches.
                         Box(

@@ -63,7 +63,6 @@ class StoreDetailsAndLogoTest {
                 ShopSettingsContent(
                     state = ShopUiState(shopName = "Das Sweets"),
                     onBack = {},
-                    onRestaurantMenuChange = {},
                     onOpenStoreDetails = { opened++ },
                 )
             }

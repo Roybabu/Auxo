@@ -39,8 +39,6 @@ class ShopViewModel(
             ShopUiState(restaurantMenu = shop.restaurantMenu.value, suppliers = shop.suppliers.value),
         )
 
-    fun onRestaurantMenuChange(enabled: Boolean) = shop.setRestaurantMenu(enabled)
-
     fun onSuppliersChange(enabled: Boolean) = shop.setSuppliers(enabled)
 
     companion object {

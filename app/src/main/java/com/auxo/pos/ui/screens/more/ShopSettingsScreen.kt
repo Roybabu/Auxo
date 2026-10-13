@@ -38,14 +38,13 @@ fun ShopSettingsScreen(
     viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onRestaurantMenuChange, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories)
+    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories)
 }
 
 @Composable
 fun ShopSettingsContent(
     state: ShopUiState,
     onBack: () -> Unit,
-    onRestaurantMenuChange: (Boolean) -> Unit,
     onSuppliersChange: (Boolean) -> Unit = {},
     onOpenStoreDetails: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
@@ -90,23 +89,6 @@ fun ShopSettingsContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                }
-            }
-            AuxoCard(modifier = Modifier.fillMaxWidth()) {
-                Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.shop_restaurant_menu), style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            stringResource(R.string.shop_restaurant_menu_body),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked = state.restaurantMenu,
-                        onCheckedChange = onRestaurantMenuChange,
-                        modifier = Modifier.testTag("restaurant_menu_switch"),
-                    )
                 }
             }
             AuxoCard(modifier = Modifier.fillMaxWidth()) {

@@ -551,8 +551,6 @@
     <string name="shop_settings_title">Shop settings</string>
     <string name="shop_suppliers">Suppliers and purchasing</string>
     <string name="shop_suppliers_body">Turn this off to hide everything about suppliers: Suppliers, Purchase orders, Receive stock, supplier fields and purchase figures. Nothing is deleted, and it all comes back when you turn this on.</string>
-    <string name="shop_restaurant_menu">Restaurant</string>
-    <string name="shop_restaurant_menu_body">Turn this on if you sell dishes. Add them as products in the Restaurant category, and use dine-in, takeaway, tables and kitchen tickets when billing.</string>
     <string name="store_details_title">Store details</string>
     <string name="store_details_body">Name, address, GST, UPI, receipts and logo</string>
     <string name="language_title">Language</string>
@@ -1717,4 +1715,8 @@ in %2$s</string>
     <string name="categories_error_built_in">Built-in categories can be switched off or renamed, but not deleted.</string>
     <string name="categories_error_failed">That change could not be saved. Please try again.</string>
     <string name="shop_categories_body">Choose the categories you sell in, rename them, add your own and list subcategories.</string>
+    <string name="category_setup_title">What does your shop sell?</string>
+    <string name="category_setup_body">Choose every category you sell in. Products you add will be listed under these.</string>
+    <string name="category_setup_action">Continue</string>
+    <string name="category_setup_notice">You can change this any time in Shop settings, under Product categories.</string>
 </resources>

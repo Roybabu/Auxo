@@ -206,6 +206,26 @@ class AppContainer(context: Context) {
         background.launch { runCatching { autoBackupRunner.runIfDue() } }
     }
 
+    /**
+     * Restaurant service (dine-in, tables, kitchen tickets, the quick-add card) is on while a Restaurant category is
+     * switched on. This keeps that flag in step with the category list, whoever changes it and whether or not anyone
+     * is signed in.
+     */
+    @Volatile private var restaurantSyncStarted = false
+
+    fun startRestaurantModeSync() {
+        if (restaurantSyncStarted) return
+        restaurantSyncStarted = true
+        background.launch {
+            runCatching {
+                com.auxo.pos.data.repository.RoomCategoryRepository(database).observeCategories().collect { categories ->
+                    val on = com.auxo.pos.domain.category.CategoryRules.restaurantModeOn(categories)
+                    if (rawShopPreferences.restaurantMenu.value != on) rawShopPreferences.setRestaurantMenu(on)
+                }
+            }
+        }
+    }
+
     val observeStoreOverview: ObserveStoreOverviewUseCase by lazy {
         ObserveStoreOverviewUseCase(settingsRepository, billingRepository, clock)
     }

@@ -53,6 +53,12 @@ private class FakeShopPreferences(initial: Boolean = false, suppliersOn: Boolean
     override fun setSuppliers(enabled: Boolean) {
         suppliersState.value = enabled
     }
+
+    private val setupState = MutableStateFlow(false)
+    override val categorySetupDone: StateFlow<Boolean> = setupState
+    override fun setCategorySetupDone(done: Boolean) {
+        setupState.value = done
+    }
 }
 
 /** The restaurant menu starts off, and turning it on or off changes what the shop is offered. */
@@ -98,14 +104,14 @@ class ShopSettingsTest {
     }
 
     @Test
-    fun shopViewModel_showsTheShopName_andTheSwitch() = runTest {
+    fun shopViewModel_showsTheShopName_andFollowsRestaurantMode() = runTest {
         val prefs = FakeShopPreferences()
         val viewModel = ShopViewModel(FakeSettingsRepository(TestData.settings.copy(storeName = "Das Sweets")), prefs)
         val seen = record(viewModel.uiState)
         assertEquals("Das Sweets", viewModel.uiState.value.shopName)
         assertFalse(viewModel.uiState.value.restaurantMenu)
 
-        viewModel.onRestaurantMenuChange(true)
+        prefs.setRestaurantMenu(true)
         assertTrue(viewModel.uiState.value.restaurantMenu)
         assertTrue(seen.isNotEmpty())
     }
@@ -212,21 +218,20 @@ class ShopSettingsTest {
     }
 
     @Test
-    fun shopSettings_switchTurnsTheMenuOn() {
-        val prefs = FakeShopPreferences()
+    fun shopSettings_opensProductCategories_andHasNoRestaurantSwitch() {
+        var opened = 0
         composeRule.setContent {
             AuxoTheme {
-                val on by prefs.restaurantMenu.collectAsState()
                 ShopSettingsContent(
-                    state = ShopUiState(shopName = "Das Sweets", restaurantMenu = on),
+                    state = ShopUiState(shopName = "Das Sweets"),
                     onBack = {},
-                    onRestaurantMenuChange = prefs::setRestaurantMenu,
+                    onOpenCategories = { opened++ },
                 )
             }
         }
-        composeRule.onNodeWithTag("restaurant_menu_switch").assertIsOff()
-        composeRule.onNodeWithTag("restaurant_menu_switch").performClick()
-        composeRule.onNodeWithTag("restaurant_menu_switch").assertIsOn()
-        assertTrue(prefs.restaurantMenu.value)
+        composeRule.onNodeWithTag("shop_categories").assertIsDisplayed()
+        composeRule.onNodeWithTag("shop_categories").performClick()
+        assertEquals(1, opened)
+        composeRule.onNodeWithTag("restaurant_menu_switch").assertDoesNotExist()
     }
 }

@@ -20,6 +20,11 @@ interface ShopPreferences {
     val suppliers: StateFlow<Boolean>
 
     fun setSuppliers(enabled: Boolean)
+
+    /** False until the admin has confirmed which categories the shop sells in (first-time setup). */
+    val categorySetupDone: StateFlow<Boolean>
+
+    fun setCategorySetupDone(done: Boolean)
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -43,8 +48,17 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         suppliersState.value = enabled
     }
 
+    private val categorySetupState = MutableStateFlow(prefs.getBoolean(KEY_CATEGORY_SETUP, false))
+    override val categorySetupDone: StateFlow<Boolean> = categorySetupState.asStateFlow()
+
+    override fun setCategorySetupDone(done: Boolean) {
+        prefs.edit().putBoolean(KEY_CATEGORY_SETUP, done).apply()
+        categorySetupState.value = done
+    }
+
     companion object {
         const val FILE = "shop"
+        const val KEY_CATEGORY_SETUP = "category_setup_done"
         const val KEY_RESTAURANT_MENU = "restaurant_menu"
         const val KEY_SUPPLIERS = "suppliers"
     }

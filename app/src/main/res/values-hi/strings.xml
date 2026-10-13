@@ -551,8 +551,6 @@
     <string name="shop_settings_title">दुकान की सेटिंग</string>
     <string name="shop_suppliers">सप्लायर और खरीद</string>
     <string name="shop_suppliers_body">सप्लायर से जुड़ी हर चीज़ छिपाने के लिए इसे बंद करें: सप्लायर, खरीद ऑर्डर, स्टॉक प्राप्त करें, सप्लायर के खाने और खरीद के आँकड़े। कुछ भी हटाया नहीं जाता, और इसे चालू करते ही सब वापस आ जाता है।</string>
-    <string name="shop_restaurant_menu">रेस्टोरेंट</string>
-    <string name="shop_restaurant_menu_body">अगर आप पकवान बेचते हैं तो इसे चालू करें। उन्हें ‘रेस्टोरेंट’ श्रेणी में प्रोडक्ट की तरह जोड़ें, और बिलिंग में डाइन-इन, टेकअवे, टेबल और किचन टिकट इस्तेमाल करें।</string>
     <string name="store_details_title">दुकान का विवरण</string>
     <string name="store_details_body">नाम, पता, GST, UPI, रसीदें और लोगो</string>
     <string name="language_title">भाषा</string>
@@ -1717,4 +1715,8 @@
     <string name="categories_error_built_in">बिल्ट-इन श्रेणियाँ बंद या नाम बदली जा सकती हैं, हटाई नहीं जा सकतीं।</string>
     <string name="categories_error_failed">यह बदलाव सहेजा नहीं जा सका। कृपया फिर कोशिश करें।</string>
     <string name="shop_categories_body">चुनें कि किन श्रेणियों में बेचते हैं, नाम बदलें, अपनी श्रेणी जोड़ें और उप-श्रेणियाँ बनाएँ।</string>
+    <string name="category_setup_title">आपकी दुकान क्या बेचती है?</string>
+    <string name="category_setup_body">वे सभी श्रेणियाँ चुनें जिनमें आप बेचते हैं। आप जो उत्पाद जोड़ेंगे वे इन्हीं के अंतर्गत दिखेंगे।</string>
+    <string name="category_setup_action">आगे बढ़ें</string>
+    <string name="category_setup_notice">आप इसे कभी भी दुकान सेटिंग्स में ‘उत्पाद श्रेणियाँ’ से बदल सकते हैं।</string>
 </resources>

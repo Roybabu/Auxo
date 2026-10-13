@@ -60,6 +60,7 @@ class MainActivity : FragmentActivity() {
         )
         super.onCreate(savedInstanceState)
         val container = (application as AuxoApplication).container
+        container.startRestaurantModeSync()
         val appearance = container.appearanceRepository
         val shop = container.shopPreferences
         setContent {
@@ -100,7 +101,9 @@ class MainActivity : FragmentActivity() {
                             container.authRepository.checkIdle()
                         }
                     }
-                    AuthGate(authState, recoveryPrompt = recoveryPrompt, lock = lock) { AuxoApp() }
+                    val categorySetupDone by shop.categorySetupDone.collectAsStateWithLifecycle()
+                    val mayChooseCategories = (authState as? AuthState.SignedIn)?.permissions?.contains(com.auxo.pos.core.auth.Permission.MANAGE_SETTINGS) == true
+                    AuthGate(authState, recoveryPrompt = recoveryPrompt, lock = lock, categoryPrompt = mayChooseCategories && !categorySetupDone) { AuxoApp() }
                 }
             }
         }

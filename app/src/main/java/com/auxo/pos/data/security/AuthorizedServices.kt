@@ -25,6 +25,11 @@ class AuthorizedShopPreferences(private val inner: ShopPreferences, private val 
         auth.require(Permission.MANAGE_SETTINGS)
         inner.setSuppliers(enabled)
     }
+
+    override fun setCategorySetupDone(done: Boolean) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setCategorySetupDone(done)
+    }
 }
 
 /** The logo is shown to everyone; only the Super Admin can change it. */

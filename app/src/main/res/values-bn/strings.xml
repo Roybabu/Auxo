@@ -551,8 +551,6 @@
     <string name="shop_settings_title">দোকানের সেটিংস</string>
     <string name="shop_suppliers">সরবরাহকারী ও ক্রয়</string>
     <string name="shop_suppliers_body">সরবরাহকারী সংক্রান্ত সবকিছু লুকাতে এটি বন্ধ করুন: সরবরাহকারী, ক্রয়ের অর্ডার, স্টক গ্রহণ, সরবরাহকারীর ঘর ও ক্রয়ের হিসাব। কিছুই মোছা হয় না, আর এটি চালু করলেই সব ফিরে আসে।</string>
-    <string name="shop_restaurant_menu">রেস্তোরাঁ</string>
-    <string name="shop_restaurant_menu_body">আপনি খাবার বিক্রি করলে এটি চালু করুন। খাবারগুলো ‘রেস্তোরাঁ’ বিভাগে পণ্য হিসেবে যোগ করুন, আর বিলিংয়ে ডাইন-ইন, টেকঅ্যাওয়ে, টেবিল ও কিচেন টিকিট ব্যবহার করুন।</string>
     <string name="store_details_title">দোকানের বিবরণ</string>
     <string name="store_details_body">নাম, ঠিকানা, GST, UPI, রসিদ ও লোগো</string>
     <string name="language_title">ভাষা</string>
@@ -1717,4 +1715,8 @@
     <string name="categories_error_built_in">তৈরি করা বিভাগ বন্ধ বা নাম বদলানো যায়, মোছা যায় না।</string>
     <string name="categories_error_failed">পরিবর্তনটি সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="shop_categories_body">কোন বিভাগে বিক্রি করেন তা বেছে নিন, নাম বদলান, নিজের বিভাগ ও উপবিভাগ যোগ করুন।</string>
+    <string name="category_setup_title">আপনার দোকান কী বিক্রি করে?</string>
+    <string name="category_setup_body">যেসব বিভাগে বিক্রি করেন সেগুলো বেছে নিন। আপনি যে পণ্য যোগ করবেন তা এগুলোর অধীনে থাকবে।</string>
+    <string name="category_setup_action">এগিয়ে যান</string>
+    <string name="category_setup_notice">দোকান সেটিংসে ‘পণ্যের বিভাগ’ থেকে যেকোনো সময় এটি বদলাতে পারবেন।</string>
 </resources>
