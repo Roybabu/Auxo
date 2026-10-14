@@ -35,6 +35,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -57,6 +58,7 @@ import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
+import com.auxo.pos.ui.theme.AuthMintLight
 import com.auxo.pos.viewmodel.OnboardingUiState
 import com.auxo.pos.viewmodel.OnboardingViewModel
 import kotlinx.coroutines.launch
@@ -83,7 +85,7 @@ fun OnboardingContent(
     val page = pager.currentPage
     val last = page == OnboardingUiState.PAGE_COUNT - 1
 
-    AuthGradientBackground(modifier = Modifier.testTag("onboarding")) {
+    AuthGradientBackground(modifier = Modifier.testTag("onboarding"), colors = listOf(Color.White, Color.White, AuthMintLight)) {
         HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { index ->
             when (index) {
                 0 -> SplashPage()
@@ -126,8 +128,8 @@ fun OnboardingContent(
     }
 }
 
-private val TitleStyle = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = AuthInk, textAlign = TextAlign.Center)
-private val BodyStyle = TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = AuthInkMuted, textAlign = TextAlign.Center)
+private val TitleStyle = TextStyle(fontSize = 26.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold, color = AuthInk, textAlign = TextAlign.Center)
+private val BodyStyle = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = AuthInkMuted, textAlign = TextAlign.Center)
 
 /** The picture that sits behind the text on the splash, placed by fractions of the screen so it fits any size. */
 @Composable
@@ -214,15 +216,21 @@ private fun SplashWord(@StringRes id: Int) {
 @Composable
 private fun IntroPage() {
     Column(
-        modifier = Modifier.fillMaxSize().testTag("onboarding_intro").statusBarsPadding().padding(start = 36.dp, end = 36.dp, top = 84.dp),
+        modifier = Modifier.fillMaxSize().testTag("onboarding_intro").statusBarsPadding().padding(top = 84.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.onboarding_intro_title), style = TitleStyle, modifier = Modifier.widthIn(max = 300.dp))
+        Text(stringResource(R.string.onboarding_intro_title), style = TitleStyle, modifier = Modifier.padding(horizontal = 36.dp).widthIn(max = 270.dp))
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.onboarding_intro_body), style = BodyStyle, modifier = Modifier.widthIn(max = 320.dp))
-        Spacer(Modifier.weight(1f))
-        Illustration(R.drawable.onb_pos, Modifier.fillMaxWidth())
-        Spacer(Modifier.weight(0.6f))
+        Text(stringResource(R.string.onboarding_intro_body), style = BodyStyle, modifier = Modifier.padding(horizontal = 18.dp).widthIn(max = 250.dp))
+        Spacer(Modifier.height(20.dp))
+        // The picture sits right under the text and fills the width; on a short screen it shrinks, never stretches.
+        Image(
+            painter = painterResource(R.drawable.onb_pos),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.TopCenter,
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp),
+        )
         Spacer(Modifier.height(96.dp))
     }
 }
@@ -245,9 +253,9 @@ private fun CategoriesPage() {
         modifier = Modifier.fillMaxSize().testTag("onboarding_categories").statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 84.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.onboarding_cats_title), style = TitleStyle, modifier = Modifier.widthIn(max = 320.dp))
+        Text(stringResource(R.string.onboarding_cats_title), style = TitleStyle, modifier = Modifier.widthIn(max = 250.dp))
         Spacer(Modifier.height(10.dp))
-        Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 320.dp))
+        Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 280.dp))
         Spacer(Modifier.height(20.dp))
         Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 108.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CATEGORY_CARDS.chunked(2).forEachIndexed { row, cards ->

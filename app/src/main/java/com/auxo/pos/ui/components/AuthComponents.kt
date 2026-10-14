@@ -58,11 +58,15 @@ import com.auxo.pos.ui.theme.AuthMintLight
 
 /** The white-to-mint backdrop of the splash, onboarding, sign-in and setup screens. */
 @Composable
-fun AuthGradientBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+fun AuthGradientBackground(
+    modifier: Modifier = Modifier,
+    colors: List<Color> = listOf(Color.White, AuthMintLight, AuthMint),
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color.White, AuthMintLight, AuthMint))),
+            .background(Brush.verticalGradient(colors)),
         content = content,
     )
 }
