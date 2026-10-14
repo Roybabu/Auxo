@@ -1750,14 +1750,6 @@ in %2$s</string>
     <!-- First-launch introduction -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_progress_title">Setup progress</string>
-    <string name="onboarding_progress_step">Step %1$d of %2$d</string>
-    <string name="onboarding_step1_heading">Welcome to Auxo</string>
-    <string name="onboarding_step1_body">Let’s get your shop ready.</string>
-    <string name="onboarding_step2_heading">See what Auxo does</string>
-    <string name="onboarding_step2_body">Billing, stock and reports in one app.</string>
-    <string name="onboarding_step3_heading">Set up your business</string>
-    <string name="onboarding_step3_body">Tell us about your business type.</string>
     <string name="onboarding_splash_title">Your Business\nMade Simple</string>
     <string name="onboarding_splash_inventory">Inventory</string>
     <string name="onboarding_splash_billing">Billing</string>

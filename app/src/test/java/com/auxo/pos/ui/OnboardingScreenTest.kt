@@ -5,11 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -97,33 +93,6 @@ class OnboardingScreenTest {
         next() // on the last page the arrow leads on to first-time setup
         assertEquals(1, finished)
         assertEquals(listOf(0, 1, 2), pages.distinct())
-    }
-
-    @Test
-    fun progressCard_followsEveryPage_forwardAndBack() {
-        show()
-        fun assertStep(n: Int, heading: String, sprout: Int) {
-            composeRule.onNodeWithTag("onboarding_progress").assertIsDisplayed()
-            fun textOf(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().config
-                .getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
-            assertEquals("counter at step $n", "Step $n of 3", textOf("onboarding_step_counter"))
-            assertEquals("badge at step $n", n.toString(), textOf("onboarding_step_badge"))
-            assertEquals("heading at step $n", heading, textOf("onboarding_step_heading"))
-            for (s in 0..2) {
-                if (s == sprout) composeRule.onNodeWithTag("onboarding_sprout_$s", useUnmergedTree = true).assertExists()
-                else composeRule.onNodeWithTag("onboarding_sprout_$s", useUnmergedTree = true).assertDoesNotExist()
-            }
-        }
-        assertStep(1, "Welcome to Auxo", 0)
-        next()
-        assertStep(2, "See what Auxo does", 1)
-        next()
-        assertStep(3, "Set up your business", 2)
-        screenshot("onboarding_progress_step3")
-        composeRule.onNodeWithTag("onboarding").performTouchInput { swipeRight() }
-        composeRule.waitForIdle()
-        assertStep(2, "See what Auxo does", 1)
-        assertEquals(listOf(0, 1, 2, 1), pages)
     }
 
     @Test
