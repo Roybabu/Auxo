@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, tech, next-work]
   pull_request:
   workflow_dispatch:
     inputs:
