@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.SavedBackup
@@ -34,6 +35,11 @@ class BackupScreenTest {
         composeRule.setContent {
             AuxoTheme {
                 BackupContent(
+                    onChoosePassphrase = { log += "choose passphrase" },
+                    onPassphraseSet = { log += "set $it" },
+                    onAskTurnOff = { log += "ask turn off" },
+                    onTurnOffConfirmed = { log += "turn off" },
+                    onPassphraseForRestore = { log += "unlock $it" },
                     state = state,
                     onBack = {},
                     onBackUp = { log += "backup" },
@@ -96,5 +102,63 @@ class BackupScreenTest {
     fun afterRestoring_showsAProgressMessage() {
         show(BackupUiState(restored = true))
         composeRule.onNodeWithTag("backup_restoring").assertIsDisplayed()
+    }
+
+    @Test
+    fun lockingIsOffByDefault_andTheCardSaysSo() {
+        show(BackupUiState())
+        composeRule.onNodeWithText("Lock backups with a passphrase").assertIsDisplayed()
+        composeRule.onNodeWithText("Backups are not locked.", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_protect_set").performClick()
+        assertEquals(listOf("choose passphrase"), log)
+    }
+
+    @Test
+    fun whenLocked_theCardOffersChangeAndTurnOff() {
+        show(BackupUiState(isProtected = true))
+        composeRule.onNodeWithText("New backups are locked.", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Change passphrase").assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_protect_off").performClick()
+        assertEquals(listOf("ask turn off"), log)
+    }
+
+    @Test
+    fun choosingAPassphrase_needsEightCharacters_andTwoMatchingEntries() {
+        show(BackupUiState(choosingPassphrase = true))
+        composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
+        composeRule.onNodeWithTag("backup_pass_first").performTextInput("short")
+        composeRule.onNodeWithTag("backup_pass_second").performTextInput("short")
+        composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
+        composeRule.onNodeWithText("Use at least 8 characters.").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("backup_pass_first").performTextInput("er passphrase")
+        composeRule.onNodeWithTag("backup_pass_second").performTextInput("x")
+        composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
+        composeRule.onNodeWithText("The two passphrases are not the same.").assertIsDisplayed()
+    }
+
+    @Test
+    fun matchingEntries_turnLockingOn() {
+        show(BackupUiState(choosingPassphrase = true))
+        composeRule.onNodeWithTag("backup_pass_first").performTextInput("a good passphrase")
+        composeRule.onNodeWithTag("backup_pass_second").performTextInput("a good passphrase")
+        composeRule.onNodeWithTag("backup_pass_save").performClick()
+        assertEquals(listOf("set a good passphrase"), log)
+    }
+
+    @Test
+    fun aLockedBackup_asksForItsPassphrase() {
+        show(BackupUiState(unlocking = Uri.parse("content://x/old.auxobak")))
+        composeRule.onNodeWithText("This backup is locked").assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_unlock_action").assertIsNotEnabled()
+        composeRule.onNodeWithTag("backup_unlock_field").performTextInput("correct horse")
+        composeRule.onNodeWithTag("backup_unlock_action").performClick()
+        assertEquals(listOf("unlock correct horse"), log)
+    }
+
+    @Test
+    fun aWrongPassphrase_isExplained() {
+        show(BackupUiState(problem = BackupProblem.WRONG_PASSPHRASE))
+        composeRule.onNodeWithText("That passphrase did not open the backup", substring = true).assertIsDisplayed()
     }
 }

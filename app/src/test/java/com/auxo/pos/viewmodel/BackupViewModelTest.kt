@@ -28,6 +28,10 @@ class BackupViewModelTest {
         var failBackup: BackupException? = null
         var failRestore: BackupException? = null
         var restoredFrom: Uri? = null
+        var restoredWith: String? = null
+        var passphrase: String? = null
+        /** The passphrase the pretend locked file needs; null means the file is not locked. */
+        var lockedWith: String? = null
 
         override suspend fun backUp(): SavedBackup {
             failBackup?.let { throw it }
@@ -35,9 +39,24 @@ class BackupViewModelTest {
             return SavedBackup("b.zip", "Documents/Auxo", Uri.parse("content://test/b.zip"))
         }
 
-        override suspend fun restore(source: Uri) {
+        override suspend fun restore(source: Uri, passphrase: String?) {
             failRestore?.let { throw it }
+            lockedWith?.let { needed ->
+                if (passphrase == null) throw BackupException(BackupProblem.PASSPHRASE_NEEDED)
+                if (passphrase != needed) throw BackupException(BackupProblem.WRONG_PASSPHRASE)
+            }
             restoredFrom = source
+            restoredWith = passphrase
+        }
+
+        override fun isProtected() = passphrase != null
+
+        override fun setPassphrase(passphrase: String) {
+            this.passphrase = passphrase
+        }
+
+        override fun clearPassphrase() {
+            passphrase = null
         }
 
         override fun lastBackupMillis() = last
@@ -113,5 +132,68 @@ class BackupViewModelTest {
         viewModel.onRestoreConfirmed()
         assertNull(service.restoredFrom)
         assertFalse(viewModel.uiState.value.restored)
+    }
+
+    @Test
+    fun aLockedBackup_asksForItsPassphrase_thenRestores() {
+        service.lockedWith = "correct horse"
+        val viewModel = BackupViewModel(service)
+        viewModel.onRestoreFilePicked(file)
+        viewModel.onRestoreConfirmed()
+
+        assertEquals(file, viewModel.uiState.value.unlocking)
+        assertNull(viewModel.uiState.value.problem)
+        assertFalse(viewModel.uiState.value.restored)
+
+        viewModel.onPassphraseForRestore("correct horse")
+        assertNull(viewModel.uiState.value.unlocking)
+        assertTrue(viewModel.uiState.value.restored)
+        assertEquals("correct horse", service.restoredWith)
+    }
+
+    @Test
+    fun aWrongPassphrase_saysSo_andAsksAgain() {
+        service.lockedWith = "correct horse"
+        val viewModel = BackupViewModel(service)
+        viewModel.onRestoreFilePicked(file)
+        viewModel.onRestoreConfirmed()
+        viewModel.onPassphraseForRestore("wrong one")
+
+        assertEquals(BackupProblem.WRONG_PASSPHRASE, viewModel.uiState.value.problem)
+        assertEquals(file, viewModel.uiState.value.unlocking)
+        assertFalse(viewModel.uiState.value.restored)
+        assertNull(service.restoredFrom)
+    }
+
+    @Test
+    fun cancellingThePassphraseBox_restoresNothing() {
+        service.lockedWith = "correct horse"
+        val viewModel = BackupViewModel(service)
+        viewModel.onRestoreFilePicked(file)
+        viewModel.onRestoreConfirmed()
+        viewModel.onUnlockCancelled()
+
+        assertNull(viewModel.uiState.value.unlocking)
+        assertNull(service.restoredFrom)
+    }
+
+    @Test
+    fun settingAndClearingThePassphrase_switchesLockingOnAndOff() {
+        val viewModel = BackupViewModel(service)
+        assertFalse(viewModel.uiState.value.isProtected)
+
+        viewModel.onChoosePassphrase()
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+        viewModel.onPassphraseSet("a long passphrase")
+        assertTrue(viewModel.uiState.value.isProtected)
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals("a long passphrase", service.passphrase)
+
+        viewModel.onAskTurnOff()
+        assertTrue(viewModel.uiState.value.confirmingTurnOff)
+        viewModel.onTurnOffConfirmed()
+        assertFalse(viewModel.uiState.value.isProtected)
+        assertFalse(viewModel.uiState.value.confirmingTurnOff)
+        assertNull(service.passphrase)
     }
 }

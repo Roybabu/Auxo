@@ -127,6 +127,7 @@ dependencies {
     // Reads the camera orientation of product photos (replaces android.media.ExifInterface).
     implementation(libs.androidx.exifinterface)
 
+    implementation(libs.tink.android)
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)
 

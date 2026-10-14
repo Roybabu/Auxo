@@ -3,6 +3,7 @@ package com.auxo.pos.core.backup.auto
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import com.auxo.pos.core.backup.BackupCrypto
 import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupStorage
@@ -76,13 +77,14 @@ class FolderBackupStorage(private val folder: BackupFolder) : BackupStorage {
     }
 
     companion object {
-        /** [wanted], or "name (1).zip", "name (2).zip" … when a file by that name is already there. */
+        /** [wanted], or "name (1).zip", "name (2).zip" … (or .auxobak for a locked backup) when a file by that name is already there. */
         fun uniqueName(wanted: String, existing: Set<String>): String {
             if (wanted !in existing) return wanted
-            val base = wanted.removeSuffix(".zip")
+            val extension = if (wanted.endsWith(BackupCrypto.FILE_EXTENSION)) BackupCrypto.FILE_EXTENSION else ".zip"
+            val base = wanted.removeSuffix(extension)
             var n = 1
-            while ("$base ($n).zip" in existing) n++
-            return "$base ($n).zip"
+            while ("$base ($n)$extension" in existing) n++
+            return "$base ($n)$extension"
         }
     }
 }
@@ -134,7 +136,7 @@ class DocumentTreeFolder(private val context: Context, private val tree: Uri) : 
 
     override fun create(fileName: String, write: (OutputStream) -> Unit): SavedBackup {
         val made: Uri? = try {
-            DocumentsContract.createDocument(resolver, rootDocument, DocumentsBackupStorage.MIME_TYPE, fileName)
+            DocumentsContract.createDocument(resolver, rootDocument, DocumentsBackupStorage.mimeTypeFor(fileName), fileName)
         } catch (e: Exception) {
             throw FolderUnavailableException(cause = e)
         }

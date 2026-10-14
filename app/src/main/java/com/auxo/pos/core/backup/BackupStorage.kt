@@ -37,7 +37,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
         val resolver = context.contentResolver
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-            put(MediaStore.MediaColumns.MIME_TYPE, MIME_TYPE)
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeTypeFor(fileName))
             put(MediaStore.MediaColumns.RELATIVE_PATH, "$DOCUMENTS/$FOLDER")
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
@@ -74,6 +74,10 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
         /** The folder named after the app. */
         const val FOLDER = "Auxo"
         const val MIME_TYPE = "application/zip"
+
+        /** A locked backup is not a zip file, so it is not labelled as one. */
+        fun mimeTypeFor(fileName: String): String =
+            if (fileName.endsWith(BackupCrypto.FILE_EXTENSION)) "application/octet-stream" else MIME_TYPE
         private const val DOCUMENTS = "Documents"
     }
 }

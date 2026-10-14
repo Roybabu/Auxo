@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -21,23 +22,31 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
+import com.auxo.pos.core.backup.BackupCrypto
 import com.auxo.pos.core.backup.BackupProblem
+import com.auxo.pos.core.backup.DocumentsBackupStorage
 import com.auxo.pos.core.backup.RestartApp
 import com.auxo.pos.core.backup.SavedBackup
 import com.auxo.pos.ui.components.AuxoCard
@@ -68,6 +77,14 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
         onConfirmRestore = viewModel::onRestoreConfirmed,
         onCancelRestore = viewModel::onRestoreCancelled,
         onDismissProblem = viewModel::onProblemDismissed,
+        onChoosePassphrase = viewModel::onChoosePassphrase,
+        onPassphraseSet = viewModel::onPassphraseSet,
+        onChoosePassphraseCancelled = viewModel::onChoosePassphraseCancelled,
+        onAskTurnOff = viewModel::onAskTurnOff,
+        onTurnOffConfirmed = viewModel::onTurnOffConfirmed,
+        onTurnOffCancelled = viewModel::onTurnOffCancelled,
+        onPassphraseForRestore = viewModel::onPassphraseForRestore,
+        onUnlockCancelled = viewModel::onUnlockCancelled,
         extra = { AutoBackupSection() },
     )
 }
@@ -82,6 +99,14 @@ fun BackupContent(
     onConfirmRestore: () -> Unit,
     onCancelRestore: () -> Unit,
     onDismissProblem: () -> Unit,
+    onChoosePassphrase: () -> Unit = {},
+    onPassphraseSet: (String) -> Unit = {},
+    onChoosePassphraseCancelled: () -> Unit = {},
+    onAskTurnOff: () -> Unit = {},
+    onTurnOffConfirmed: () -> Unit = {},
+    onTurnOffCancelled: () -> Unit = {},
+    onPassphraseForRestore: (String) -> Unit = {},
+    onUnlockCancelled: () -> Unit = {},
     /** More cards shown between making a backup and restoring one. */
     extra: @Composable () -> Unit = {},
 ) {
@@ -137,6 +162,8 @@ fun BackupContent(
                 }
             }
 
+            ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
+
             extra()
 
             state.saved?.let { saved ->
@@ -165,13 +192,31 @@ fun BackupContent(
                 }
             }
 
-            Text(
-                text = stringResource(R.string.backup_privacy),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (!state.isProtected) {
+                Text(
+                    text = stringResource(R.string.backup_privacy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+
+    if (state.choosingPassphrase) ChoosePassphraseDialog(onSave = onPassphraseSet, onCancel = onChoosePassphraseCancelled)
+    if (state.confirmingTurnOff) {
+        AlertDialog(
+            onDismissRequest = onTurnOffCancelled,
+            title = { Text(stringResource(R.string.backup_turn_off_title)) },
+            text = { Text(stringResource(R.string.backup_turn_off_body)) },
+            confirmButton = {
+                TextButton(onClick = onTurnOffConfirmed, modifier = Modifier.testTag("backup_turn_off_confirm")) {
+                    Text(stringResource(R.string.backup_protect_turn_off), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = onTurnOffCancelled) { Text(stringResource(R.string.action_cancel)) } },
+        )
+    }
+    if (state.unlocking != null) UnlockDialog(onUnlock = onPassphraseForRestore, onCancel = onUnlockCancelled)
 
     if (state.pendingRestore != null) {
         AlertDialog(
@@ -188,6 +233,105 @@ fun BackupContent(
     }
 }
 
+/** Whether new backups are locked, with the buttons to change that. */
+@Composable
+private fun ProtectionCard(isProtected: Boolean, onChoose: () -> Unit, onTurnOff: () -> Unit) {
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("backup_protection")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            Text(stringResource(R.string.backup_protect_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(if (isProtected) R.string.backup_protect_on_body else R.string.backup_protect_off_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onChoose, modifier = Modifier.fillMaxWidth().testTag("backup_protect_set")) {
+                Text(stringResource(if (isProtected) R.string.backup_protect_change else R.string.backup_protect_set))
+            }
+            if (isProtected) {
+                TextButton(onClick = onTurnOff, modifier = Modifier.fillMaxWidth().testTag("backup_protect_off")) {
+                    Text(stringResource(R.string.backup_protect_turn_off), color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+    }
+}
+
+/** Asks for a new passphrase twice, with a plain warning that it cannot be recovered. */
+@Composable
+private fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
+    var first by remember { mutableStateOf("") }
+    var second by remember { mutableStateOf("") }
+    val tooShort = first.length < BackupCrypto.MIN_PASSPHRASE_LENGTH
+    val differs = first != second
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.backup_pass_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                Text(stringResource(R.string.backup_pass_warning), style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = first,
+                    onValueChange = { first = it },
+                    label = { Text(stringResource(R.string.backup_pass_field)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    supportingText = { if (first.isNotEmpty() && tooShort) Text(stringResource(R.string.backup_pass_short, BackupCrypto.MIN_PASSPHRASE_LENGTH)) },
+                    isError = first.isNotEmpty() && tooShort,
+                    modifier = Modifier.fillMaxWidth().testTag("backup_pass_first"),
+                )
+                OutlinedTextField(
+                    value = second,
+                    onValueChange = { second = it },
+                    label = { Text(stringResource(R.string.backup_pass_repeat)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    supportingText = { if (second.isNotEmpty() && differs) Text(stringResource(R.string.backup_pass_mismatch)) },
+                    isError = second.isNotEmpty() && differs,
+                    modifier = Modifier.fillMaxWidth().testTag("backup_pass_second"),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(first) }, enabled = !tooShort && !differs, modifier = Modifier.testTag("backup_pass_save")) {
+                Text(stringResource(R.string.backup_pass_save))
+            }
+        },
+        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
+/** Asks for the passphrase of a locked backup that is being restored. */
+@Composable
+private fun UnlockDialog(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
+    var passphrase by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.backup_unlock_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                Text(stringResource(R.string.backup_unlock_body), style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = passphrase,
+                    onValueChange = { passphrase = it },
+                    label = { Text(stringResource(R.string.backup_pass_field)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth().testTag("backup_unlock_field"),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onUnlock(passphrase) }, enabled = passphrase.isNotEmpty(), modifier = Modifier.testTag("backup_unlock_action")) {
+                Text(stringResource(R.string.backup_unlock_action))
+            }
+        },
+        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
 @Composable
 private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
     val message = when (problem) {
@@ -198,6 +342,8 @@ private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
         BackupProblem.UNREADABLE -> R.string.backup_error_unreadable
         BackupProblem.SAVE_FAILED -> R.string.backup_error_save
         BackupProblem.RESTORE_FAILED -> R.string.backup_error_restore
+        BackupProblem.PASSPHRASE_NEEDED, BackupProblem.WRONG_PASSPHRASE -> R.string.backup_error_wrong_passphrase
+        BackupProblem.PASSPHRASE_UNAVAILABLE -> R.string.backup_error_passphrase_unavailable
     }
     androidx.compose.material3.Surface(
         shape = MaterialTheme.shapes.large,
@@ -218,7 +364,7 @@ private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
 
 private fun shareBackup(context: Context, saved: SavedBackup) {
     val send = Intent(Intent.ACTION_SEND).apply {
-        type = "application/zip"
+        type = DocumentsBackupStorage.mimeTypeFor(saved.fileName)
         putExtra(Intent.EXTRA_STREAM, saved.uri)
         putExtra(Intent.EXTRA_SUBJECT, saved.fileName)
         clipData = ClipData.newRawUri(saved.fileName, saved.uri)

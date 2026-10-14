@@ -33,6 +33,14 @@ private class MemoryStorage : BackupStorage {
     }
 }
 
+/** A passphrase kept in memory, standing in for the Keystore-backed store. */
+private class MemoryPassphrase(private var value: String? = null, var unreadable: Boolean = false) : BackupPassphraseStore {
+    override fun isSet() = value != null
+    override fun get() = if (unreadable) null else value
+    override fun set(passphrase: String) { value = passphrase }
+    override fun clear() { value = null }
+}
+
 /**
  * The whole backup and restore, against a real database file: back up, change things, restore,
  * and the original data is back. A backup of one database restores into a fresh one too, which
@@ -178,5 +186,97 @@ class BackupManagerTest {
         // The database was not closed, and still has its data.
         assertEquals(listOf("Cotton T-Shirt"), names(database))
         assertEquals(AppAccent.DEFAULT, appearance.settings.value.accent)
+    }
+
+    private fun lockedManager(db: AuxoDatabase, store: BackupPassphraseStore) =
+        BackupManager(context, db, appearance, storage, TestData.clock, passphrases = store)
+
+    private fun problemOf(block: () -> Unit): BackupProblem? = try {
+        block()
+        null
+    } catch (e: BackupException) {
+        e.problem
+    }
+
+    @Test
+    fun withAPassphrase_theBackupIsLocked_andRestoresOnlyWithIt() = runBlocking {
+        saveNew(database, TestData.tShirt())
+        val saved = lockedManager(database, MemoryPassphrase("correct horse")).backUp()
+        val backup = storage.files.getValue(saved.fileName)
+
+        assertEquals("Auxo-backup-2026-10-10_1000.auxobak", saved.fileName)
+        assertTrue(BackupCrypto.looksEncrypted(backup))
+
+        // No passphrase, and a wrong one, change nothing.
+        assertEquals(BackupProblem.PASSPHRASE_NEEDED, problemOf { manager(database).restoreFrom(ByteArrayInputStream(backup)) })
+        assertEquals(BackupProblem.WRONG_PASSPHRASE, problemOf { manager(database).restoreFrom(ByteArrayInputStream(backup), "wrong one") })
+        assertEquals(listOf("Cotton T-Shirt"), names(database))
+
+        saveNew(database, TestData.biscuits())
+        manager(database).restoreFrom(ByteArrayInputStream(backup), "correct horse")
+        val reopened = open()
+        try {
+            assertEquals(listOf("Cotton T-Shirt"), names(reopened))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    @Test
+    fun aLockedBackup_restoresOnAnotherPhone_thatHasNoPassphraseStored() = runBlocking {
+        saveNew(database, TestData.tShirt())
+        val backup = storage.files.getValue(lockedManager(database, MemoryPassphrase("correct horse")).backUp().fileName)
+        database.close()
+        context.deleteDatabase(AuxoDatabase.NAME)
+
+        val fresh = open()
+        fresh.openHelper.writableDatabase
+        lockedManager(fresh, MemoryPassphrase()).restoreFrom(ByteArrayInputStream(backup), "correct horse")
+        val reopened = open()
+        try {
+            assertEquals(listOf("Cotton T-Shirt"), names(reopened))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    @Test
+    fun anOldUnlockedBackup_stillRestores_evenWhenAPassphraseIsGiven() = runBlocking {
+        saveNew(database, TestData.tShirt())
+        val plain = storage.files.getValue(manager(database).backUp().fileName)
+        saveNew(database, TestData.biscuits())
+
+        manager(database).restoreFrom(ByteArrayInputStream(plain), "not needed")
+
+        val reopened = open()
+        try {
+            assertEquals(listOf("Cotton T-Shirt"), names(reopened))
+        } finally {
+            reopened.close()
+        }
+    }
+
+    @Test
+    fun ifLockingIsOnButThePassphraseCannotBeRead_noUnlockedBackupIsMade() = runBlocking {
+        val store = MemoryPassphrase("correct horse", unreadable = true)
+        val problem = try {
+            lockedManager(database, store).backUp()
+            null
+        } catch (e: BackupException) {
+            e.problem
+        }
+
+        assertEquals(BackupProblem.PASSPHRASE_UNAVAILABLE, problem)
+        assertTrue(storage.files.isEmpty())
+    }
+
+    @Test
+    fun turningLockingOff_makesPlainBackupsAgain() = runBlocking {
+        val store = MemoryPassphrase("correct horse")
+        val manager = lockedManager(database, store)
+        assertTrue(manager.isProtected())
+        manager.clearPassphrase()
+        assertTrue(!manager.isProtected())
+        assertTrue(manager.backUp().fileName.endsWith(".zip"))
     }
 }

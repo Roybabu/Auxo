@@ -28,12 +28,20 @@ data class BackupUiState(
     val pendingRestore: Uri? = null,
     /** The restore finished; the screen restarts the app. */
     val restored: Boolean = false,
+    /** New backups are locked with a passphrase. */
+    val isProtected: Boolean = false,
+    /** The box for choosing a passphrase is open. */
+    val choosingPassphrase: Boolean = false,
+    /** The question "stop locking backups?" is open. */
+    val confirmingTurnOff: Boolean = false,
+    /** The chosen file is locked, so its passphrase is being asked for. */
+    val unlocking: Uri? = null,
 )
 
 /** Backing up and restoring from the More page. */
 class BackupViewModel(private val service: BackupService) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BackupUiState(lastBackupMillis = service.lastBackupMillis()))
+    private val _uiState = MutableStateFlow(BackupUiState(lastBackupMillis = service.lastBackupMillis(), isProtected = service.isProtected()))
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
 
     fun onBackUp() {
@@ -58,18 +66,60 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
 
     fun onRestoreConfirmed() {
         val uri = _uiState.value.pendingRestore ?: return
+        _uiState.update { it.copy(pendingRestore = null) }
+        restore(uri, passphrase = null)
+    }
+
+    /** The passphrase for a locked backup was typed. */
+    fun onPassphraseForRestore(passphrase: String) {
+        val uri = _uiState.value.unlocking ?: return
+        _uiState.update { it.copy(unlocking = null) }
+        restore(uri, passphrase)
+    }
+
+    fun onUnlockCancelled() = _uiState.update { it.copy(unlocking = null) }
+
+    private fun restore(uri: Uri, passphrase: String?) {
         if (_uiState.value.isWorking) return
-        _uiState.update { it.copy(isWorking = true, pendingRestore = null, problem = null, saved = null) }
+        _uiState.update { it.copy(isWorking = true, problem = null, saved = null) }
         viewModelScope.launch {
             try {
-                service.restore(uri)
+                service.restore(uri, passphrase)
                 _uiState.update { it.copy(isWorking = false, restored = true) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _uiState.update { it.copy(isWorking = false, problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED) }
+                val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
+                when (problem) {
+                    // A locked file: ask for the passphrase (again, after a wrong one) instead of failing.
+                    BackupProblem.PASSPHRASE_NEEDED -> _uiState.update { it.copy(isWorking = false, unlocking = uri) }
+                    BackupProblem.WRONG_PASSPHRASE -> _uiState.update { it.copy(isWorking = false, unlocking = uri, problem = problem) }
+                    else -> _uiState.update { it.copy(isWorking = false, problem = problem) }
+                }
             }
         }
+    }
+
+    fun onChoosePassphrase() = _uiState.update { it.copy(choosingPassphrase = true) }
+
+    fun onChoosePassphraseCancelled() = _uiState.update { it.copy(choosingPassphrase = false) }
+
+    fun onPassphraseSet(passphrase: String) {
+        try {
+            service.setPassphrase(passphrase)
+            _uiState.update { it.copy(choosingPassphrase = false, isProtected = service.isProtected(), problem = null) }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(choosingPassphrase = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
+        }
+    }
+
+    fun onAskTurnOff() = _uiState.update { it.copy(confirmingTurnOff = true) }
+
+    fun onTurnOffCancelled() = _uiState.update { it.copy(confirmingTurnOff = false) }
+
+    fun onTurnOffConfirmed() {
+        service.clearPassphrase()
+        _uiState.update { it.copy(confirmingTurnOff = false, isProtected = service.isProtected()) }
     }
 
     fun onProblemDismissed() = _uiState.update { it.copy(problem = null) }

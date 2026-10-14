@@ -64,9 +64,24 @@ class AuthorizedBackupService(
         return saved
     }
 
-    override suspend fun restore(source: Uri) {
+    override suspend fun restore(source: Uri, passphrase: String?) {
         auth.require(Permission.BACKUP_AND_RESTORE)
-        inner.restore(source)
+        inner.restore(source, passphrase)
+    }
+
+    override fun isProtected(): Boolean {
+        auth.require(Permission.BACKUP_AND_RESTORE)
+        return inner.isProtected()
+    }
+
+    override fun setPassphrase(passphrase: String) {
+        auth.require(Permission.BACKUP_AND_RESTORE)
+        inner.setPassphrase(passphrase)
+    }
+
+    override fun clearPassphrase() {
+        auth.require(Permission.BACKUP_AND_RESTORE)
+        inner.clearPassphrase()
     }
 
     override fun lastBackupMillis(): Long? {

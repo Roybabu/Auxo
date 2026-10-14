@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 import java.time.Clock
@@ -22,9 +23,19 @@ interface BackupService {
 
     /**
      * Replaces everything on this phone with the backup in [source]. The app must be restarted
-     * afterwards. Nothing is changed if the file is not a sound Auxo backup.
+     * afterwards. Nothing is changed if the file is not a sound Auxo backup. A locked backup needs its
+     * [passphrase]; without it this throws [BackupProblem.PASSPHRASE_NEEDED].
      */
-    suspend fun restore(source: Uri)
+    suspend fun restore(source: Uri, passphrase: String? = null)
+
+    /** Whether new backups are locked with a passphrase. */
+    fun isProtected(): Boolean
+
+    /** Locks new backups with [passphrase]. Older backups keep the way they were made. */
+    fun setPassphrase(passphrase: String)
+
+    /** Stops locking new backups. */
+    fun clearPassphrase()
 
     /** When the last backup was made on this phone, or null if none has been. */
     fun lastBackupMillis(): Long?
@@ -38,6 +49,7 @@ class BackupManager(
     private val clock: Clock,
     private val shop: com.auxo.pos.core.shop.ShopPreferences? = null,
     private val photos: com.auxo.pos.core.photos.ProductPhotoStore? = null,
+    private val passphrases: BackupPassphraseStore? = null,
 ) : BackupService {
 
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -49,7 +61,25 @@ class BackupManager(
         BACKUP_LOCK.withLock { makeBackup() }
     }
 
+    override fun isProtected(): Boolean = passphrases?.isSet() == true
+
+    override fun setPassphrase(passphrase: String) {
+        val store = passphrases ?: throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
+        store.set(passphrase)
+    }
+
+    override fun clearPassphrase() {
+        passphrases?.clear()
+    }
+
     private fun makeBackup(): SavedBackup {
+        // When locking is switched on but the passphrase cannot be read, stop: saving an unlocked backup instead
+        // would quietly break the promise the person was given.
+        val passphrase = if (passphrases?.isSet() == true) {
+            passphrases.get() ?: throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
+        } else {
+            null
+        }
         val work = workDir()
         try {
             val snapshot = File(work, BackupArchive.DATABASE_ENTRY)
@@ -61,9 +91,9 @@ class BackupManager(
                 appVersion = appVersion(),
             )
             val settings = appearance.settings.value
-            val saved = storage.save(fileName(now)) { out ->
+            val saved = storage.save(fileName(now, locked = passphrase != null)) { out ->
                 BackupArchive.write(
-                    out = out,
+                    out = passphrase?.let { BackupCrypto.encrypt(out, it) } ?: out,
                     manifest = manifest,
                     database = snapshot,
                     photos = photos?.files().orEmpty(),
@@ -82,18 +112,18 @@ class BackupManager(
         }
     }
 
-    override suspend fun restore(source: Uri) = withContext(Dispatchers.IO) {
+    override suspend fun restore(source: Uri, passphrase: String?) = withContext(Dispatchers.IO) {
         val input = runCatching { context.contentResolver.openInputStream(source) }
             .getOrElse { throw BackupException(BackupProblem.UNREADABLE, cause = it) }
             ?: throw BackupException(BackupProblem.UNREADABLE)
-        input.use { restoreFrom(it) }
+        input.use { restoreFrom(it, passphrase) }
     }
 
     /** The restore itself, from any stream; [restore] opens the chosen file and calls this. */
-    fun restoreFrom(input: InputStream) {
+    fun restoreFrom(input: InputStream, passphrase: String? = null) {
         val work = workDir()
         try {
-            val backup = BackupArchive.read(input, work)
+            val backup = BackupArchive.read(unlocked(input, passphrase), work)
             DatabaseCheck.verify(backup.database, AuxoDatabase.VERSION)
 
             // Keep what is on the phone now until the new data is in place.
@@ -129,6 +159,23 @@ class BackupManager(
         }
     }
 
+    /** [input] as a plain backup: opened with [passphrase] if the file is locked, passed through if it is not. */
+    private fun unlocked(input: InputStream, passphrase: String?): InputStream {
+        val buffered = if (input.markSupported()) input else BufferedInputStream(input)
+        val head = ByteArray(BackupCrypto.SIGNATURE_BYTES)
+        buffered.mark(head.size)
+        var filled = 0
+        while (filled < head.size) {
+            val read = buffered.read(head, filled, head.size - filled)
+            if (read < 0) break
+            filled += read
+        }
+        buffered.reset()
+        if (!BackupCrypto.looksEncrypted(head, filled)) return buffered
+        if (passphrase.isNullOrEmpty()) throw BackupException(BackupProblem.PASSPHRASE_NEEDED)
+        return BackupCrypto.decrypt(buffered, passphrase)
+    }
+
     /** Writes everything still waiting in the database's log into the main file, then copies it. */
     private fun snapshotDatabase(target: File) {
         checkpoint()
@@ -151,9 +198,9 @@ class BackupManager(
     private fun appVersion(): String =
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
 
-    private fun fileName(epochMillis: Long): String {
+    private fun fileName(epochMillis: Long, locked: Boolean): String {
         val time = Instant.ofEpochMilli(epochMillis).atZone(clock.zone)
-        return "Auxo-backup-${FILE_TIME.format(time)}.zip"
+        return "Auxo-backup-${FILE_TIME.format(time)}${if (locked) BackupCrypto.FILE_EXTENSION else ".zip"}"
     }
 
     companion object {

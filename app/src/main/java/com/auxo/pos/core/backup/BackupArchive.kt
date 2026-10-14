@@ -34,6 +34,15 @@ enum class BackupProblem {
 
     /** The data on this phone could not be replaced (it is put back as it was). */
     RESTORE_FAILED,
+
+    /** The backup is locked with a passphrase and none was given. */
+    PASSPHRASE_NEEDED,
+
+    /** The passphrase did not open the backup, or the file is damaged at its start. */
+    WRONG_PASSPHRASE,
+
+    /** Backups are set to be locked, but the passphrase cannot be read on this phone any more. */
+    PASSPHRASE_UNAVAILABLE,
 }
 
 class BackupException(val problem: BackupProblem, message: String? = null, cause: Throwable? = null) :

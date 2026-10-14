@@ -49,7 +49,7 @@ object AutoBackupPolicy {
 object BackupRetention {
 
     /** Only files the app named itself are ever considered; anything else in the folder is left alone. */
-    private val OWN_FILE = Regex("""Auxo-backup-\d{4}-\d{2}-\d{2}_\d{4}(?: \(\d+\))?\.zip""")
+    private val OWN_FILE = Regex("""Auxo-backup-\d{4}-\d{2}-\d{2}_\d{4}(?: \(\d+\))?\.(?:zip|auxobak)""")
 
     fun isOwnBackup(fileName: String): Boolean = OWN_FILE.matches(fileName)
 

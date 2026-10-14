@@ -187,9 +187,14 @@ class AppContainer(context: Context) {
 
     val storeLogoRepository: StoreLogoRepository by lazy { AuthorizedStoreLogoRepository(FileStoreLogoRepository(appContext), authorizer) }
 
+    /** Holds the passphrase that locks backups, when the owner has set one. */
+    private val backupPassphrase: com.auxo.pos.core.backup.BackupPassphraseStore by lazy {
+        com.auxo.pos.core.backup.KeystoreBackupPassphraseStore(appContext)
+    }
+
     val backupService: BackupService by lazy {
         AuthorizedBackupService(
-            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos),
+            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase),
             authorizer,
             auditTrail,
         )
@@ -205,7 +210,7 @@ class AppContainer(context: Context) {
         AutoBackupRunner(
             store = autoBackupSettings,
             folderFor = { uri -> DocumentTreeFolder(appContext, Uri.parse(uri)) },
-            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos).backUp() },
+            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },
         )

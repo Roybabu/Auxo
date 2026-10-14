@@ -21,6 +21,9 @@ exifinterface = "1.3.7"
 # Kotlin libraries
 coroutines = "1.11.0"
 
+# Locks backup files with a passphrase (streaming AES-256-GCM)
+tink = "1.17.0"
+
 # Barcodes
 zxing = "3.5.4"
 codeScanner = "16.1.0"
@@ -62,6 +65,7 @@ androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx"
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
+tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "codeScanner" }
 
