@@ -29,7 +29,7 @@ class BackupViewModelTest {
         var failRestore: BackupException? = null
         var restoredFrom: Uri? = null
         var restoredWith: String? = null
-        var passphrase: String? = null
+        var storedPassphrase: String? = null
         /** The passphrase the pretend locked file needs; null means the file is not locked. */
         var lockedWith: String? = null
 
@@ -49,14 +49,14 @@ class BackupViewModelTest {
             restoredWith = passphrase
         }
 
-        override fun isProtected() = passphrase != null
+        override fun isProtected() = storedPassphrase != null
 
         override fun setPassphrase(passphrase: String) {
-            this.passphrase = passphrase
+            storedPassphrase = passphrase
         }
 
         override fun clearPassphrase() {
-            passphrase = null
+            storedPassphrase = null
         }
 
         override fun lastBackupMillis() = last
@@ -187,13 +187,13 @@ class BackupViewModelTest {
         viewModel.onPassphraseSet("a long passphrase")
         assertTrue(viewModel.uiState.value.isProtected)
         assertFalse(viewModel.uiState.value.choosingPassphrase)
-        assertEquals("a long passphrase", service.passphrase)
+        assertEquals("a long passphrase", service.storedPassphrase)
 
         viewModel.onAskTurnOff()
         assertTrue(viewModel.uiState.value.confirmingTurnOff)
         viewModel.onTurnOffConfirmed()
         assertFalse(viewModel.uiState.value.isProtected)
         assertFalse(viewModel.uiState.value.confirmingTurnOff)
-        assertNull(service.passphrase)
+        assertNull(service.storedPassphrase)
     }
 }
