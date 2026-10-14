@@ -116,12 +116,13 @@ fun OnboardingProgressCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(40.dp).background(AuthMint, CircleShape).testTag("onboarding_step_badge"),
+                    modifier = Modifier.size(40.dp).background(AuthMint, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         (step + 1).toString(),
                         style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = AuthEmerald),
+                        modifier = Modifier.testTag("onboarding_step_badge"),
                     )
                 }
                 Spacer(Modifier.width(12.dp))
