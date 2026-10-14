@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.captureToImage
@@ -103,9 +102,11 @@ class OnboardingScreenTest {
         show()
         fun assertStep(n: Int, heading: String, sprout: Int) {
             composeRule.onNodeWithTag("onboarding_progress").assertIsDisplayed()
-            composeRule.onNodeWithTag("onboarding_step_counter").assertTextEquals("Step $n of 3")
-            composeRule.onNodeWithTag("onboarding_step_badge").assertTextEquals(n.toString())
-            composeRule.onNodeWithTag("onboarding_step_heading").assertTextEquals(heading)
+            fun textOf(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().config
+                .getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString { it.text }
+            assertEquals("counter at step $n", "Step $n of 3", textOf("onboarding_step_counter"))
+            assertEquals("badge at step $n", n.toString(), textOf("onboarding_step_badge"))
+            assertEquals("heading at step $n", heading, textOf("onboarding_step_heading"))
             for (s in 0..2) {
                 if (s == sprout) composeRule.onNodeWithTag("onboarding_sprout_$s").assertExists()
                 else composeRule.onNodeWithTag("onboarding_sprout_$s").assertDoesNotExist()
