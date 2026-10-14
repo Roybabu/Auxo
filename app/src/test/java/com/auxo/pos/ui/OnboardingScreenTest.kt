@@ -110,8 +110,8 @@ class OnboardingScreenTest {
             assertEquals("badge at step $n", n.toString(), textOf("onboarding_step_badge"))
             assertEquals("heading at step $n", heading, textOf("onboarding_step_heading"))
             for (s in 0..2) {
-                if (s == sprout) composeRule.onNodeWithTag("onboarding_sprout_$s").assertExists()
-                else composeRule.onNodeWithTag("onboarding_sprout_$s").assertDoesNotExist()
+                if (s == sprout) composeRule.onNodeWithTag("onboarding_sprout_$s", useUnmergedTree = true).assertExists()
+                else composeRule.onNodeWithTag("onboarding_sprout_$s", useUnmergedTree = true).assertDoesNotExist()
             }
         }
         assertStep(1, "Welcome to Auxo", 0)
