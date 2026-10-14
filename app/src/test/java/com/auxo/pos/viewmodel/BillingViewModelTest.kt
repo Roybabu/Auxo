@@ -475,7 +475,7 @@ class BillingSettingsViewModelTest {
 
     @Test
     fun fssai_isSavedAsDigitsOnly_andBadLengthIsRefused() = runTest {
-        val repository = FakeSettingsRepository(StoreSettings())
+        val repository = FakeSettingsRepository(StoreSettings(gstRegistered = false))
         val viewModel = BillingSettingsViewModel(repository)
         viewModel.update { it.copy(fssai = "1234 5678 9012 34") }
         viewModel.save()
