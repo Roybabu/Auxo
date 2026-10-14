@@ -2,8 +2,10 @@ package com.auxo.pos.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -58,6 +60,7 @@ import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
+import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.AuthMintLight
 import com.auxo.pos.viewmodel.OnboardingUiState
 import com.auxo.pos.viewmodel.OnboardingViewModel
@@ -104,25 +107,23 @@ fun OnboardingContent(
                 }
             }
         }
-        Row(
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 28.dp, vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // The same indicator on every page: a green line that moves along, with a grey dot for each other page.
+            // The same indicator on every page, in the middle: a green line that moves along, with a grey dot for each other page.
             PageDots(
                 count = OnboardingUiState.PAGE_COUNT,
                 current = page,
-                modifier = Modifier.padding(start = 4.dp).testTag("onboarding_progress"),
+                modifier = Modifier.align(Alignment.Center).testTag("onboarding_progress"),
             )
             CircleNextButton(
                 onClick = { if (last) onFinish() else scope.launch { pager.animateScrollToPage(page + 1) } },
                 contentDescription = stringResource(R.string.onboarding_next),
-                modifier = Modifier.testTag("onboarding_next"),
+                modifier = Modifier.align(Alignment.CenterEnd).testTag("onboarding_next"),
             )
         }
     }
@@ -219,9 +220,9 @@ private fun IntroPage() {
         modifier = Modifier.fillMaxSize().testTag("onboarding_intro").statusBarsPadding().padding(top = 84.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.onboarding_intro_title), style = TitleStyle, modifier = Modifier.padding(horizontal = 36.dp).widthIn(max = 270.dp))
+        Text(stringResource(R.string.onboarding_intro_title), style = TitleStyle, modifier = Modifier.padding(horizontal = 36.dp).widthIn(max = 225.dp))
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.onboarding_intro_body), style = BodyStyle, modifier = Modifier.padding(horizontal = 18.dp).widthIn(max = 250.dp))
+        Text(stringResource(R.string.onboarding_intro_body), style = BodyStyle, modifier = Modifier.padding(horizontal = 18.dp).widthIn(max = 205.dp))
         Spacer(Modifier.height(20.dp))
         // The picture sits right under the text and fills the width; on a short screen it shrinks, never stretches.
         Image(
@@ -250,17 +251,20 @@ private val CATEGORY_CARDS = listOf(
 @Composable
 private fun CategoriesPage() {
     Column(
-        modifier = Modifier.fillMaxSize().testTag("onboarding_categories").statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 84.dp),
+        modifier = Modifier.fillMaxSize().testTag("onboarding_categories").statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(R.string.onboarding_cats_title), style = TitleStyle, modifier = Modifier.widthIn(max = 250.dp))
         Spacer(Modifier.height(10.dp))
-        Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 280.dp))
+        Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 216.dp))
         Spacer(Modifier.height(20.dp))
-        Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 108.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Short, wide tiles like the mock-up, one row after another from the top.
+        Column(modifier = Modifier.widthIn(max = 460.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CATEGORY_CARDS.chunked(2).forEachIndexed { row, cards ->
-                Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    cards.forEachIndexed { column, card -> CategoryTile(card, Modifier.weight(1f).testTag("onboarding_category_${row * 2 + column}")) }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    cards.forEachIndexed { column, card ->
+                        CategoryTile(card, Modifier.weight(1f).aspectRatio(1.45f).testTag("onboarding_category_${row * 2 + column}"))
+                    }
                 }
             }
         }
@@ -269,14 +273,20 @@ private fun CategoriesPage() {
 
 @Composable
 private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxHeight(), shape = RoundedCornerShape(18.dp), color = AuthCard, shadowElevation = 3.dp) {
+    // A pale tile with a thin outline and no shadow, a small centred picture and a small label at the bottom.
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = AuthCard,
+        border = BorderStroke(1.dp, AuthMint),
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 8.dp))
+            Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(start = 26.dp, end = 26.dp, top = 10.dp))
             Text(
                 stringResource(card.label),
-                style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = AuthInk, textAlign = TextAlign.Center),
+                style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, color = AuthInk, textAlign = TextAlign.Center),
                 maxLines = 2,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 7.dp),
             )
         }
     }
