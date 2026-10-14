@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
@@ -259,77 +261,89 @@ private fun ProtectionCard(isProtected: Boolean, onChoose: () -> Unit, onTurnOff
 /** Asks for a new passphrase twice, with a plain warning that it cannot be recovered. */
 @Composable
 private fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
+    Dialog(onDismissRequest = onCancel) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) { ChoosePassphraseForm(onSave, onCancel) }
+    }
+}
+
+/** The contents of the box above, on its own so it can be tested without a dialog window. */
+@Composable
+internal fun ChoosePassphraseForm(onSave: (String) -> Unit, onCancel: () -> Unit) {
     var first by remember { mutableStateOf("") }
     var second by remember { mutableStateOf("") }
     val tooShort = first.length < BackupCrypto.MIN_PASSPHRASE_LENGTH
     val differs = first != second
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.backup_pass_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(R.string.backup_pass_warning), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = first,
-                    onValueChange = { first = it },
-                    label = { Text(stringResource(R.string.backup_pass_field)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    supportingText = { if (first.isNotEmpty() && tooShort) Text(stringResource(R.string.backup_pass_short, BackupCrypto.MIN_PASSPHRASE_LENGTH)) },
-                    isError = first.isNotEmpty() && tooShort,
-                    modifier = Modifier.fillMaxWidth().testTag("backup_pass_first"),
-                )
-                OutlinedTextField(
-                    value = second,
-                    onValueChange = { second = it },
-                    label = { Text(stringResource(R.string.backup_pass_repeat)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    supportingText = { if (second.isNotEmpty() && differs) Text(stringResource(R.string.backup_pass_mismatch)) },
-                    isError = second.isNotEmpty() && differs,
-                    modifier = Modifier.fillMaxWidth().testTag("backup_pass_second"),
-                )
-            }
-        },
-        confirmButton = {
+    Column(
+        modifier = Modifier.padding(Spacing.xl).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        Text(stringResource(R.string.backup_pass_title), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.backup_pass_warning), style = MaterialTheme.typography.bodyMedium)
+        OutlinedTextField(
+            value = first,
+            onValueChange = { first = it },
+            label = { Text(stringResource(R.string.backup_pass_field)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            supportingText = { if (first.isNotEmpty() && tooShort) Text(stringResource(R.string.backup_pass_short, BackupCrypto.MIN_PASSPHRASE_LENGTH)) },
+            isError = first.isNotEmpty() && tooShort,
+            modifier = Modifier.fillMaxWidth().testTag("backup_pass_first"),
+        )
+        OutlinedTextField(
+            value = second,
+            onValueChange = { second = it },
+            label = { Text(stringResource(R.string.backup_pass_repeat)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            supportingText = { if (second.isNotEmpty() && differs) Text(stringResource(R.string.backup_pass_mismatch)) },
+            isError = second.isNotEmpty() && differs,
+            modifier = Modifier.fillMaxWidth().testTag("backup_pass_second"),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
             TextButton(onClick = { onSave(first) }, enabled = !tooShort && !differs, modifier = Modifier.testTag("backup_pass_save")) {
                 Text(stringResource(R.string.backup_pass_save))
             }
-        },
-        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
-    )
+        }
+    }
 }
 
 /** Asks for the passphrase of a locked backup that is being restored. */
 @Composable
 private fun UnlockDialog(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
+    Dialog(onDismissRequest = onCancel) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) { UnlockForm(onUnlock, onCancel) }
+    }
+}
+
+/** The contents of the box above, on its own so it can be tested without a dialog window. */
+@Composable
+internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
     var passphrase by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.backup_unlock_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(R.string.backup_unlock_body), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = passphrase,
-                    onValueChange = { passphrase = it },
-                    label = { Text(stringResource(R.string.backup_pass_field)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth().testTag("backup_unlock_field"),
-                )
-            }
-        },
-        confirmButton = {
+    Column(
+        modifier = Modifier.padding(Spacing.xl).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        Text(stringResource(R.string.backup_unlock_title), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.backup_unlock_body), style = MaterialTheme.typography.bodyMedium)
+        OutlinedTextField(
+            value = passphrase,
+            onValueChange = { passphrase = it },
+            label = { Text(stringResource(R.string.backup_pass_field)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth().testTag("backup_unlock_field"),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
             TextButton(onClick = { onUnlock(passphrase) }, enabled = passphrase.isNotEmpty(), modifier = Modifier.testTag("backup_unlock_action")) {
                 Text(stringResource(R.string.backup_unlock_action))
             }
-        },
-        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) } },
-    )
+        }
+    }
 }
 
 @Composable

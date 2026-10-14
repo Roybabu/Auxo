@@ -12,6 +12,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.SavedBackup
 import com.auxo.pos.ui.screens.more.BackupContent
+import com.auxo.pos.ui.screens.more.ChoosePassphraseForm
+import com.auxo.pos.ui.screens.more.UnlockForm
 import com.auxo.pos.ui.theme.AuxoTheme
 import com.auxo.pos.viewmodel.BackupUiState
 import org.junit.Assert.assertEquals
@@ -122,9 +124,15 @@ class BackupScreenTest {
         assertEquals(listOf("ask turn off"), log)
     }
 
+    // The boxes are tested without their dialog window: typing into a text field inside a window never lets Robolectric's
+    // Compose clock go idle.
+    private fun showForm(content: @androidx.compose.runtime.Composable () -> Unit) {
+        composeRule.setContent { AuxoTheme { content() } }
+    }
+
     @Test
     fun choosingAPassphrase_needsEightCharacters_andTwoMatchingEntries() {
-        show(BackupUiState(choosingPassphrase = true))
+        showForm { ChoosePassphraseForm(onSave = { log += "set $it" }, onCancel = {}) }
         composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
         composeRule.onNodeWithTag("backup_pass_first").performTextInput("short")
         composeRule.onNodeWithTag("backup_pass_second").performTextInput("short")
@@ -139,7 +147,7 @@ class BackupScreenTest {
 
     @Test
     fun matchingEntries_turnLockingOn() {
-        show(BackupUiState(choosingPassphrase = true))
+        showForm { ChoosePassphraseForm(onSave = { log += "set $it" }, onCancel = {}) }
         composeRule.onNodeWithTag("backup_pass_first").performTextInput("a good passphrase")
         composeRule.onNodeWithTag("backup_pass_second").performTextInput("a good passphrase")
         composeRule.onNodeWithTag("backup_pass_save").performClick()
@@ -147,9 +155,23 @@ class BackupScreenTest {
     }
 
     @Test
+    fun theChoosePassphraseBox_opensWithTheWarning() {
+        show(BackupUiState(choosingPassphrase = true))
+        composeRule.onNodeWithText("Choose a passphrase").assertIsDisplayed()
+        composeRule.onNodeWithText("Auxo cannot recover it", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
+    }
+
+    @Test
     fun aLockedBackup_asksForItsPassphrase() {
         show(BackupUiState(unlocking = Uri.parse("content://x/old.auxobak")))
         composeRule.onNodeWithText("This backup is locked").assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_unlock_action").assertIsNotEnabled()
+    }
+
+    @Test
+    fun theUnlockBox_passesOnWhatWasTyped() {
+        showForm { UnlockForm(onUnlock = { log += "unlock $it" }, onCancel = {}) }
         composeRule.onNodeWithTag("backup_unlock_action").assertIsNotEnabled()
         composeRule.onNodeWithTag("backup_unlock_field").performTextInput("correct horse")
         composeRule.onNodeWithTag("backup_unlock_action").performClick()
