@@ -1,3 +1,5 @@
+import java.util.Base64
+import java.util.Properties
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 
 plugins {
@@ -25,9 +27,9 @@ android {
     val debugKeystore = layout.buildDirectory.get().asFile.resolve("debug-signing/debug.p12")
     debugKeystore.parentFile.mkdirs()
     debugKeystore.writeBytes(
-        java.util.Base64.getMimeDecoder().decode(debugSigning.resolve("debug-keystore.b64").readText()),
+        Base64.getMimeDecoder().decode(debugSigning.resolve("debug-keystore.b64").readText()),
     )
-    val debugProps = java.util.Properties().apply { debugSigning.resolve("debug-signing.properties").inputStream().use { load(it) } }
+    val debugProps = Properties().apply { debugSigning.resolve("debug-signing.properties").inputStream().use { load(it) } }
 
     signingConfigs {
         getByName("debug") {
