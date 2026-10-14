@@ -20,6 +20,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // One shared key for debug builds so a new debug APK installs over an older one (CI used to make a fresh key each run).
+    val debugSigning = layout.projectDirectory.dir("debug-signing").asFile
+    val debugKeystore = layout.buildDirectory.get().asFile.resolve("debug-signing/debug.p12")
+    debugKeystore.parentFile.mkdirs()
+    debugKeystore.writeBytes(
+        java.util.Base64.getMimeDecoder().decode(debugSigning.resolve("debug-keystore.b64").readText()),
+    )
+    val debugProps = java.util.Properties().apply { debugSigning.resolve("debug-signing.properties").inputStream().use { load(it) } }
+
+    signingConfigs {
+        getByName("debug") {
+            storeFile = debugKeystore
+            storePassword = debugProps.getProperty("storePassword")
+            keyAlias = debugProps.getProperty("keyAlias")
+            keyPassword = debugProps.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         debug {
             // Off by default (it slows the tests). CI's coverage job turns it on with -Pcoverage.
