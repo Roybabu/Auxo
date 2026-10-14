@@ -2,7 +2,6 @@ package com.auxo.pos.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
@@ -50,7 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuthGradientBackground
-import com.auxo.pos.ui.components.AuthProgressBar
 import com.auxo.pos.ui.components.CircleNextButton
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.LanguageChip
@@ -113,15 +111,12 @@ fun OnboardingContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // The splash shows a short green line; the two pages after it show page dots, so the last page never
-            // shows another page ahead of it.
-            Crossfade(targetState = page == 0, label = "onboarding_indicator", modifier = Modifier.testTag("onboarding_progress")) { splash ->
-                if (splash) {
-                    AuthProgressBar(fraction = 1f / OnboardingUiState.PAGE_COUNT, modifier = Modifier.width(150.dp))
-                } else {
-                    PageDots(count = OnboardingUiState.PAGE_COUNT, current = page, modifier = Modifier.padding(start = 4.dp))
-                }
-            }
+            // The same indicator on every page: a green line that moves along, with a grey dot for each other page.
+            PageDots(
+                count = OnboardingUiState.PAGE_COUNT,
+                current = page,
+                modifier = Modifier.padding(start = 4.dp).testTag("onboarding_progress"),
+            )
             CircleNextButton(
                 onClick = { if (last) onFinish() else scope.launch { pager.animateScrollToPage(page + 1) } },
                 contentDescription = stringResource(R.string.onboarding_next),

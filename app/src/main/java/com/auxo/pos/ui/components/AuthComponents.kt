@@ -92,7 +92,7 @@ fun CircleNextButton(onClick: () -> Unit, contentDescription: String, modifier: 
     }
 }
 
-/** Page dots: the current one is a long green pill, pages already seen are a soft green, the rest small grey dots. */
+/** Page dots: the current one is a long green line, the others small grey dots. */
 @Composable
 fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -103,7 +103,7 @@ fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(width = width, height = 6.dp)
                     .clip(CircleShape)
-                    .background(if (active) AuthEmerald else if (index < current) AuthEmerald.copy(alpha = 0.35f) else AuthDotIdle),
+                    .background(if (active) AuthEmerald else AuthDotIdle),
             )
         }
     }
