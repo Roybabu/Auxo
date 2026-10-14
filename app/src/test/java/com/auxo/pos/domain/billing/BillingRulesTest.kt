@@ -294,6 +294,22 @@ class SettingsValidatorTest {
     }
 
     @Test
+    fun fssaiIsOptional_butWhenGivenItMustBe14Digits() {
+        val base = TestData.settings
+        assertNull(SettingsValidator.check(base.copy(fssai = ""))[SettingsField.FSSAI])
+        assertNull(SettingsValidator.check(base.copy(fssai = "12345678901234"))[SettingsField.FSSAI])
+        assertEquals(SettingsError.INVALID_FSSAI, SettingsValidator.check(base.copy(fssai = "1234567890123"))[SettingsField.FSSAI])
+        assertEquals(SettingsError.INVALID_FSSAI, SettingsValidator.check(base.copy(fssai = "123456789012345"))[SettingsField.FSSAI])
+    }
+
+    @Test
+    fun fssaiNormalize_dropsEverythingButDigits() {
+        assertEquals("12345678901234", Fssai.normalize(" 1234-5678 9012 34 "))
+        assertTrue(Fssai.isValid("1234 5678 9012 34"))
+        assertFalse(Fssai.isValid("ABCDEFGHIJKLMN"))
+    }
+
+    @Test
     fun registeredStoreNeedsState_unregisteredDoesNot() {
         assertEquals(SettingsError.REQUIRED, SettingsValidator.check(StoreSettings())[SettingsField.STATE])
         assertNull(SettingsValidator.check(StoreSettings(gstRegistered = false))[SettingsField.STATE])

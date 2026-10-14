@@ -76,6 +76,8 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  * 17. Shop categories the admin can edit: the shop_categories and shop_subcategories tables and products.category_id.
  *     Existing categories become rows, all on (Restaurant only if the shop already has dishes). Written by hand
  *     ([MIGRATION_16_17]).
+ * 18. FSSAI number: store_settings.fssai and invoices.seller_fssai (empty for existing shops and bills). Written by
+ *     hand ([MIGRATION_17_18]).
  */
 @Database(
     entities = [
@@ -158,7 +160,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 17
+        const val VERSION = 18
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -296,13 +298,21 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 18: the shop's FSSAI number, and the copy printed on each bill. Both start empty. */
+        val MIGRATION_17_18: Migration = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE store_settings ADD COLUMN fssai TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE invoices ADD COLUMN seller_fssai TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         // Upgrades are guaranteed only from version 15 (nothing was released before it). Versions 6 to 14 have no
         // exported schema and are tested only through the 4 to 15 chain; see "Database upgrades" in the README.
 
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }

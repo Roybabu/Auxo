@@ -74,6 +74,7 @@ object SheetInvoiceLayout {
             if (seller.address.isNotBlank()) addAll(seller.address.lines().filter { it.isNotBlank() })
             if (seller.phone.isNotBlank()) add(fillIn(labels.phone, seller.phone))
             if (seller.gstin.isNotBlank()) add(fillIn(labels.gstin, seller.gstin))
+            if (seller.fssai.isNotBlank()) add(fillIn(labels.fssai, seller.fssai))
         }
         val details = buildList {
             add((if (invoice.isQuotation) labels.quotationNo else if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)

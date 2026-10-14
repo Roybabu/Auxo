@@ -145,6 +145,9 @@ class AppContainer(context: Context) {
         }
     }
 
+    /** Whether the owner closed the "add your FSSAI number" reminder on Home. */
+    val fssaiHintStore: com.auxo.pos.viewmodel.FssaiHintStore by lazy { com.auxo.pos.viewmodel.SharedPrefsFssaiHintStore(appContext) }
+
     val settingsRepository: SettingsRepository by lazy { AuthorizedSettingsRepository(RoomSettingsRepository(database), authorizer, auditTrail) }
 
     val categoryRepository: com.auxo.pos.data.repository.CategoryRepository by lazy {

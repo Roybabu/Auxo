@@ -43,6 +43,8 @@ data class StoreSettings(
     val address: String = "",
     val phone: String = "",
     val gstin: String = "",
+    /** FSSAI licence or registration number (14 digits), printed on bills. Optional; empty when not set. */
+    val fssai: String = "",
     /** GST state code of the store, e.g. "19" for West Bengal. Empty until set. */
     val stateCode: String = "",
     val gstRegistered: Boolean = true,
@@ -73,6 +75,7 @@ data class StoreSettings(
         phone = phone,
         gstin = if (gstRegistered) gstin else "",
         stateCode = stateCode,
+        fssai = fssai,
     )
 }
 

@@ -153,11 +153,13 @@ class AuthorizedSettingsRepository(private val inner: SettingsRepository, privat
         val before = inner.getSettings().employeeDiscountLimitBp
         val limitChanged = before != settings.employeeDiscountLimitBp
         val daysBefore = inner.getSettings().expiryWarningDays
+        val fssaiBefore = inner.getSettings().fssai
         if (limitChanged) auth.require(Permission.UNLIMITED_DISCOUNT)
         audit.recording({ inner.saveSettings(settings) }) {
             val limit = if (limitChanged) ", employee discount limit ${before / 100.0}% to ${settings.employeeDiscountLimitBp / 100.0}%" else ""
             val expiry = if (daysBefore != settings.expiryWarningDays) ", expiry warning $daysBefore to ${settings.expiryWarningDays} days" else ""
-            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}$limit$expiry")
+            val fssai = if (fssaiBefore != settings.fssai) ", FSSAI number ${if (settings.fssai.isBlank()) "removed" else "set to ${settings.fssai}"}" else ""
+            AuditDraft(AuditAction.SETTINGS_SAVED, AuditEntity.SETTINGS, 1L, "Store settings saved for ${settings.storeName}$limit$expiry$fssai")
         }
     }
 }

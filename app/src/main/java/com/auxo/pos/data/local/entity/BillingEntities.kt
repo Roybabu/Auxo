@@ -29,6 +29,8 @@ data class InvoiceEntity(
     @ColumnInfo(name = "seller_phone") val sellerPhone: String,
     @ColumnInfo(name = "seller_gstin") val sellerGstin: String,
     @ColumnInfo(name = "seller_state_code") val sellerStateCode: String,
+    /** FSSAI number printed on the bill. Added in version 18; older invoices have none. */
+    @ColumnInfo(name = "seller_fssai") val sellerFssai: String = "",
     @ColumnInfo(name = "buyer_name") val buyerName: String?,
     @ColumnInfo(name = "buyer_phone") val buyerPhone: String?,
     @ColumnInfo(name = "buyer_gstin") val buyerGstin: String?,
@@ -160,6 +162,8 @@ data class StoreSettingsEntity(
     @ColumnInfo(name = "employee_discount_limit_bp") val employeeDiscountLimitBp: Int = 0,
     /** Days before expiry that stock counts as expiring soon. Added in version 13; existing shops get 30. */
     @ColumnInfo(name = "expiry_warning_days") val expiryWarningDays: Int = 30,
+    /** FSSAI licence or registration number. Added in version 18; empty until set. */
+    @ColumnInfo(name = "fssai") val fssai: String = "",
 ) {
     companion object {
         const val SINGLE_ROW_ID = 1

@@ -474,6 +474,21 @@ class BillingSettingsViewModelTest {
     }
 
     @Test
+    fun fssai_isSavedAsDigitsOnly_andBadLengthIsRefused() = runTest {
+        val repository = FakeSettingsRepository(StoreSettings())
+        val viewModel = BillingSettingsViewModel(repository)
+        viewModel.update { it.copy(fssai = "1234 5678 9012 34") }
+        viewModel.save()
+        assertEquals(SettingsEvent.Saved, viewModel.events.first())
+        assertEquals("12345678901234", repository.settings.value.fssai)
+
+        viewModel.update { it.copy(fssai = "123") }
+        viewModel.save()
+        assertTrue(viewModel.events.first() is SettingsEvent.Invalid)
+        assertEquals("12345678901234", repository.settings.value.fssai)
+    }
+
+    @Test
     fun invalidSettings_areNotSaved() = runTest {
         val repository = FakeSettingsRepository(StoreSettings())
         val viewModel = BillingSettingsViewModel(repository)

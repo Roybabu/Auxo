@@ -586,4 +586,27 @@ class DatabaseMigrationTest {
             categories.map { it.enabled },
         )
     }
+
+    @Test
+    fun migrate17To18_addsEmptyFssaiNumbers_andKeepsTheShopsSettings() = runTest {
+        createFromSchema(17).also {
+            it.execSQL(
+                "INSERT INTO store_settings (id, store_name, address, phone, gstin, state_code, gst_registered, prices_include_tax, round_off, " +
+                    "invoice_prefix, credit_note_prefix, upi_id, upi_payee_name, receipt_paper, receipt_footer, receipt_show_hsn, " +
+                    "receipt_show_tax_breakup, receipt_show_savings, receipt_show_customer, receipt_show_barcode, receipt_language, " +
+                    "receipt_show_upi_qr, employee_discount_limit_bp, expiry_warning_days) " +
+                    "VALUES (1, 'Old Shop', 'Addr', '9831000000', '', '19', 1, 1, 1, 'INV', 'CN', '', '', 'THERMAL_80', '', 1, 1, 1, 1, 0, NULL, 1, 0, 30)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
+        val settings = RoomSettingsRepository(db).getSettings()
+        assertEquals("Old Shop", settings.storeName)
+        assertEquals("", settings.fssai)
+        val saved = settings.copy(fssai = "12345678901234")
+        RoomSettingsRepository(db).saveSettings(saved)
+        assertEquals("12345678901234", RoomSettingsRepository(db).getSettings().fssai)
+    }
 }

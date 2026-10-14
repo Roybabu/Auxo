@@ -498,6 +498,8 @@
     <string name="settings_gst_registered">GST-पंजीकृत दुकान</string>
     <string name="settings_gst_registered_off">बिल GST के बिना “आपूर्ति बिल” के रूप में बनते हैं।</string>
     <string name="settings_gstin">GSTIN</string>
+    <string name="settings_fssai">FSSAI लाइसेंस / पंजीकरण नंबर (वैकल्पिक)</string>
+    <string name="settings_fssai_hint">14 अंक। बिल पर छपेगा। न हो तो खाली छोड़ें।</string>
     <string name="settings_state">राज्य (कारोबार का स्थान)</string>
     <string name="settings_state_pick">राज्य चुनें</string>
     <string name="settings_prices_include_tax">बिक्री मूल्य में GST शामिल है</string>
@@ -531,6 +533,7 @@
     <string name="settings_error_too_long">बहुत लंबा है</string>
     <string name="settings_error_phone">सही फ़ोन नंबर लिखें</string>
     <string name="settings_error_gstin">GSTIN सही नहीं है। 15 अक्षर जाँचें।</string>
+    <string name="settings_error_fssai">FSSAI नंबर सही नहीं है। इसमें 14 अंक होते हैं।</string>
     <string name="settings_error_gstin_state">GSTIN किसी दूसरे राज्य का है</string>
     <string name="settings_error_prefix">1 से 4 बड़े अक्षर या अंक</string>
     <string name="settings_error_same_prefix">बिल के उपसर्ग से अलग होना चाहिए</string>
@@ -1251,6 +1254,9 @@
     <string name="auto_backup_failed_save">बैकअप सहेजा नहीं जा सका। देखें कि फ़ोल्डर में जगह है।</string>
     <string name="home_backup_off_title">अपने आप बैकअप लें</string>
     <string name="home_backup_off_body">अपने आप बैकअप बंद है। इसे चालू करने के लिए टैप करें, ताकि फ़ोन खोने पर आपके रिकॉर्ड न खोएँ।</string>
+    <string name="home_fssai_title">अपना FSSAI नंबर जोड़ें</string>
+    <string name="home_fssai_body">आप खाने-पीने का सामान बेचते हैं। अपना FSSAI लाइसेंस नंबर जोड़ें ताकि वह बिल पर छपे। चाहें तो छोड़ सकते हैं।</string>
+    <string name="home_fssai_dismiss">अभी नहीं</string>
     <string name="home_backup_ok_title">बैकअप ठीक चल रहे हैं</string>
     <string name="home_backup_failed_title">अपने आप बैकअप नहीं हो रहा</string>
     <string name="home_backup_overdue_title">बैकअप का समय निकल गया</string>
@@ -1349,6 +1355,7 @@
     <string name="receipt_scan_to_pay">%1$s का भुगतान करने के लिए स्कैन करें</string>
     <string name="receipt_phone">फ़ोन: %1$s</string>
     <string name="receipt_gstin">GSTIN: %1$s</string>
+    <string name="receipt_fssai">FSSAI लाइसेंस नं: %1$s</string>
     <string name="receipt_inv_no">बिल सं.: %1$s</string>
     <string name="receipt_cn_no">क्रेडिट नोट सं.: %1$s</string>
     <string name="receipt_date">दिनांक: %1$s</string>

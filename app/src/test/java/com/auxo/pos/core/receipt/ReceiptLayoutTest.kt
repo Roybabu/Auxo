@@ -34,6 +34,18 @@ class ThermalReceiptTest {
     }
 
     @Test
+    fun fssaiLine_isPrintedOnlyWhenTheShopHasANumber() {
+        assertFalse(text(ThermalReceiptBuilder.build(sale, ReceiptOptions(), 48, ZoneOffset.UTC)).any { it.contains("FSSAI") })
+        val withNumber = sale.copy(seller = sale.seller.copy(fssai = "12345678901234"))
+        val thermal = text(ThermalReceiptBuilder.build(withNumber, ReceiptOptions(), 48, ZoneOffset.UTC))
+        assertTrue(thermal.any { it.contains("FSSAI Lic. No: 12345678901234") })
+        val sheet = SheetInvoiceLayout.build(withNumber, ReceiptOptions(), ReceiptPaper.A4, ZoneOffset.UTC)
+        assertTrue(sheet.sellerLines.contains("FSSAI Lic. No: 12345678901234"))
+        val without = SheetInvoiceLayout.build(sale, ReceiptOptions(), ReceiptPaper.A4, ZoneOffset.UTC)
+        assertFalse(without.sellerLines.any { it.contains("FSSAI") })
+    }
+
+    @Test
     fun containsInvoiceEssentials() {
         val lines = text(ThermalReceiptBuilder.build(sale, ReceiptOptions(), 48, ZoneOffset.UTC))
         assertTrue(lines.contains("TAX INVOICE"))

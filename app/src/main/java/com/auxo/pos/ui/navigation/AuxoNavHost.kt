@@ -86,6 +86,7 @@ fun AuxoNavHost(
                     onOpenInventory = { filter -> navController.navigateToInventory(filter) },
                     onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
                     onOpenBackup = { navController.navigate(MoreRoutes.BACKUP) },
+                    onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
                 )
             } else {
                 EmployeeHomeScreen(

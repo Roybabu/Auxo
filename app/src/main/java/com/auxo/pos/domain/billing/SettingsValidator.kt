@@ -3,7 +3,7 @@ package com.auxo.pos.domain.billing
 import com.auxo.pos.domain.model.StoreSettings
 
 enum class SettingsField {
-    STORE_NAME, ADDRESS, PHONE, GSTIN, STATE, INVOICE_PREFIX, CREDIT_NOTE_PREFIX, UPI_ID, UPI_PAYEE, FOOTER,
+    STORE_NAME, ADDRESS, PHONE, GSTIN, FSSAI, STATE, INVOICE_PREFIX, CREDIT_NOTE_PREFIX, UPI_ID, UPI_PAYEE, FOOTER,
 }
 
 enum class SettingsError {
@@ -11,6 +11,7 @@ enum class SettingsError {
     TOO_LONG,
     INVALID_PHONE,
     INVALID_GSTIN,
+    INVALID_FSSAI,
     GSTIN_STATE_MISMATCH,
     INVALID_PREFIX,
     SAME_PREFIX,
@@ -40,6 +41,7 @@ object SettingsValidator {
                     put(SettingsField.GSTIN, SettingsError.GSTIN_STATE_MISMATCH)
             }
         }
+        if (settings.fssai.isNotBlank() && !Fssai.isValid(settings.fssai)) put(SettingsField.FSSAI, SettingsError.INVALID_FSSAI)
         if (settings.gstRegistered && settings.stateCode.isEmpty()) put(SettingsField.STATE, SettingsError.REQUIRED)
         if (!InvoiceNumbers.isValidPrefix(settings.invoicePrefix)) put(SettingsField.INVOICE_PREFIX, SettingsError.INVALID_PREFIX)
         when {

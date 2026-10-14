@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.data.repository.SettingsRepository
+import com.auxo.pos.domain.billing.Fssai
 import com.auxo.pos.domain.billing.Gstin
 import com.auxo.pos.domain.billing.SettingsError
 import com.auxo.pos.domain.billing.SettingsField
@@ -100,6 +101,7 @@ class BillingSettingsViewModel(private val repository: SettingsRepository) : Vie
         address = address.trim(),
         phone = phone.trim(),
         gstin = Gstin.normalize(gstin),
+        fssai = Fssai.normalize(fssai),
         invoicePrefix = invoicePrefix.trim().uppercase(),
         creditNotePrefix = creditNotePrefix.trim().uppercase(),
         upiId = upiId.trim(),

@@ -82,6 +82,7 @@ object ThermalReceiptBuilder {
         if (seller.address.isNotBlank()) center(seller.address)
         if (seller.phone.isNotBlank()) center(fillIn(labels.phone, seller.phone))
         if (seller.gstin.isNotBlank()) center(fillIn(labels.gstin, seller.gstin))
+        if (seller.fssai.isNotBlank()) center(fillIn(labels.fssai, seller.fssai))
         out += ThermalElement.Divider()
 
         // Invoice details

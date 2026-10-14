@@ -58,6 +58,8 @@ data class SellerDetails(
     val phone: String,
     val gstin: String,
     val stateCode: String,
+    /** FSSAI licence or registration number at the time of sale; empty when the shop has none. */
+    val fssai: String = "",
 )
 
 /** Buyer details as printed on the invoice. A null name prints as "Walk-in Customer". */

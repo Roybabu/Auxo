@@ -81,6 +81,7 @@ fun SettingsError.messageRes(): Int = when (this) {
     SettingsError.TOO_LONG -> R.string.settings_error_too_long
     SettingsError.INVALID_PHONE -> R.string.settings_error_phone
     SettingsError.INVALID_GSTIN -> R.string.settings_error_gstin
+    SettingsError.INVALID_FSSAI -> R.string.settings_error_fssai
     SettingsError.GSTIN_STATE_MISMATCH -> R.string.settings_error_gstin_state
     SettingsError.INVALID_PREFIX -> R.string.settings_error_prefix
     SettingsError.SAME_PREFIX -> R.string.settings_error_same_prefix

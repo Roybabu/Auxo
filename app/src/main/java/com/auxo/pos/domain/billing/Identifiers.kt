@@ -5,6 +5,19 @@ import java.nio.charset.StandardCharsets
 import com.auxo.pos.domain.model.Money
 
 /** GST identification numbers (GSTIN): 15 characters ending in a mod-36 check character. */
+/**
+ * FSSAI licence or registration number: 14 digits. There is no public check digit, so only the shape can be
+ * checked; the app cannot confirm the number with FSSAI.
+ */
+object Fssai {
+    const val LENGTH = 14
+
+    /** Digits only: spaces, dashes and letters typed or pasted with the number are dropped. */
+    fun normalize(text: String): String = text.filter { it in '0'..'9' }
+
+    fun isValid(text: String): Boolean = normalize(text).length == LENGTH
+}
+
 object Gstin {
     private const val CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     private val PATTERN = Regex("""[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]""")

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import com.auxo.pos.ui.can
 import com.auxo.pos.domain.billing.DiscountPolicy
+import com.auxo.pos.domain.billing.Fssai
 import com.auxo.pos.domain.billing.DiscountLimits
 import com.auxo.pos.core.auth.Permission
 import androidx.compose.foundation.layout.PaddingValues
@@ -195,6 +196,17 @@ fun BillingSettingsContent(
                             .testTag("settings_gstin"),
                     )
                 }
+                AuxoTextField(
+                    value = settings.fssai,
+                    onValueChange = { v -> onChange { it.copy(fssai = Fssai.normalize(v).take(Fssai.LENGTH)) } },
+                    label = stringResource(R.string.settings_fssai),
+                    error = errorOf(SettingsField.FSSAI),
+                    supportingText = stringResource(R.string.settings_fssai_hint),
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("settings_fssai"),
+                )
                 StatePicker(
                     label = stringResource(R.string.settings_state),
                     selectedCode = settings.stateCode,

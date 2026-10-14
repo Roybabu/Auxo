@@ -498,6 +498,8 @@
     <string name="settings_gst_registered">GST-registered store</string>
     <string name="settings_gst_registered_off">Bills are issued as “Bill of Supply” without GST.</string>
     <string name="settings_gstin">GSTIN</string>
+    <string name="settings_fssai">FSSAI licence / registration number (optional)</string>
+    <string name="settings_fssai_hint">14 digits. Printed on bills. Leave empty if you have none.</string>
     <string name="settings_state">State (place of business)</string>
     <string name="settings_state_pick">Choose state</string>
     <string name="settings_prices_include_tax">Selling prices include GST</string>
@@ -531,6 +533,7 @@
     <string name="settings_error_too_long">Too long</string>
     <string name="settings_error_phone">Enter a valid phone number</string>
     <string name="settings_error_gstin">GSTIN is not valid. Check the 15 characters.</string>
+    <string name="settings_error_fssai">FSSAI number is not valid. It has 14 digits.</string>
     <string name="settings_error_gstin_state">GSTIN belongs to a different state</string>
     <string name="settings_error_prefix">1 to 4 capital letters or digits</string>
     <string name="settings_error_same_prefix">Must differ from the invoice prefix</string>
@@ -1252,6 +1255,9 @@ in %2$s</string>
     <string name="auto_backup_failed_save">The backup could not be saved. Check there is space in the folder.</string>
     <string name="home_backup_off_title">Back up automatically</string>
     <string name="home_backup_off_body">Automatic backup is off. Tap to set it up so a lost phone does not lose your records.</string>
+    <string name="home_fssai_title">Add your FSSAI number</string>
+    <string name="home_fssai_body">You sell food or drink. Add your FSSAI licence number so it prints on your bills. You can skip this.</string>
+    <string name="home_fssai_dismiss">Not now</string>
     <string name="home_backup_ok_title">Backups are working</string>
     <string name="home_backup_failed_title">Automatic backup is failing</string>
     <string name="home_backup_overdue_title">A backup is overdue</string>
@@ -1349,6 +1355,7 @@ in %2$s</string>
     <string name="receipt_scan_to_pay">Scan to pay %1$s</string>
     <string name="receipt_phone">Phone: %1$s</string>
     <string name="receipt_gstin">GSTIN: %1$s</string>
+    <string name="receipt_fssai">FSSAI Lic. No: %1$s</string>
     <string name="receipt_inv_no">Inv No: %1$s</string>
     <string name="receipt_cn_no">CN No: %1$s</string>
     <string name="receipt_date">Date: %1$s</string>

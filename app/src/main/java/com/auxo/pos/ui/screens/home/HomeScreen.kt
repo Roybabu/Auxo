@@ -99,6 +99,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
     onOpenBackup: () -> Unit = {},
+    onOpenStoreDetails: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
     insightsViewModel: HomeInsightsViewModel = viewModel(factory = HomeInsightsViewModel.Factory),
 ) {
@@ -116,7 +117,12 @@ fun HomeScreen(
         insights = insights,
         onInsightsPeriodChange = insightsViewModel::onPeriodChange,
         onInsightsRetry = insightsViewModel::retry,
-        notice = { BackupStatusNotice(onOpenBackup) },
+        notice = {
+            androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(com.auxo.pos.ui.theme.Spacing.sm)) {
+                BackupStatusNotice(onOpenBackup)
+                FssaiHintNotice(onOpenStoreDetails)
+            }
+        },
     )
 }
 
