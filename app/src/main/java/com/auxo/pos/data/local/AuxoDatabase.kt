@@ -296,6 +296,9 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        // Upgrades are guaranteed only from version 15 (nothing was released before it). Versions 6 to 14 have no
+        // exported schema and are tested only through the 4 to 15 chain; see "Database upgrades" in the README.
+
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)

@@ -64,6 +64,10 @@ app/src/main/java/com/auxo/pos/
 └── ui/         Compose screens and navigation
 ```
 
+## Database upgrades
+
+No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 17). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
+
 ## Honest status
 
 Version 0.4.0. The logic is well tested, but the app has only run on an emulator.
