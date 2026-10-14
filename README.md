@@ -77,6 +77,6 @@ Version 0.4.0. The logic is well tested, but the app has only run on an emulator
 - ❌ The database and backup files aren't encrypted. Keep backups somewhere other than the phone.
 - ⚠️ No supplier balances, and a bill that totals zero can't be completed.
 - ⚠️ A refund isn't tied to the original payment method, and a cash refund on an account sale doesn't change the customer's ledger.
-- ⚠️ The release build isn't minified or signed.
+- ⚠️ The release build isn't minified or signed. Turning on minification (R8) is planned for after release signing is set up, because it has to be tested on a signed release on a real phone: sign in, sale, receipt print, barcode scan, backup and restore, fingerprint. Until then the release file is larger and its code is easy to read.
 
 Everything stays on the device. The app makes no network calls, and its only permission is Bluetooth (for the printer).

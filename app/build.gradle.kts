@@ -46,6 +46,8 @@ android {
             enableUnitTestCoverage = providers.gradleProperty("coverage").isPresent
         }
         release {
+            // Deliberately off for now. Enable R8 only after release signing exists and a signed release has been
+            // checked on a real phone (see "Honest status" in the README).
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
