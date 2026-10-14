@@ -6,6 +6,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -93,6 +96,31 @@ class OnboardingScreenTest {
         next() // on the last page the arrow leads on to first-time setup
         assertEquals(1, finished)
         assertEquals(listOf(0, 1, 2), pages.distinct())
+    }
+
+    @Test
+    fun progressCard_followsEveryPage_forwardAndBack() {
+        show()
+        fun assertStep(n: Int, heading: String, sprout: Int) {
+            composeRule.onNodeWithTag("onboarding_progress").assertIsDisplayed()
+            composeRule.onNodeWithTag("onboarding_step_counter").assertTextEquals("Step $n of 3")
+            composeRule.onNodeWithTag("onboarding_step_badge").assertTextEquals(n.toString())
+            composeRule.onNodeWithTag("onboarding_step_heading").assertTextEquals(heading)
+            for (s in 0..2) {
+                if (s == sprout) composeRule.onNodeWithTag("onboarding_sprout_$s").assertExists()
+                else composeRule.onNodeWithTag("onboarding_sprout_$s").assertDoesNotExist()
+            }
+        }
+        assertStep(1, "Welcome to Auxo", 0)
+        next()
+        assertStep(2, "See what Auxo does", 1)
+        next()
+        assertStep(3, "Set up your business", 2)
+        screenshot("onboarding_progress_step3")
+        composeRule.onNodeWithTag("onboarding").performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        assertStep(2, "See what Auxo does", 1)
+        assertEquals(listOf(0, 1, 2, 1), pages)
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.auxo.pos.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
@@ -50,8 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuthGradientBackground
-import com.auxo.pos.ui.components.AuthProgressBar
-import com.auxo.pos.ui.components.CircleNextButton
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.theme.AuthCard
@@ -103,29 +100,32 @@ fun OnboardingContent(
                 }
             }
         }
-        Row(
+        // The illustrated progress card follows the page, whether it changes by Next, a swipe or the pager's own scroll.
+        val heading = stringResource(STEP_HEADINGS[page.coerceIn(0, STEP_HEADINGS.lastIndex)])
+        val body = stringResource(STEP_BODIES[page.coerceIn(0, STEP_BODIES.lastIndex)])
+        OnboardingProgressCard(
+            step = page,
+            stepCount = OnboardingUiState.PAGE_COUNT,
+            title = stringResource(R.string.onboarding_progress_title),
+            counter = stringResource(R.string.onboarding_progress_step, page + 1, OnboardingUiState.PAGE_COUNT),
+            heading = heading,
+            body = body,
+            nextDescription = stringResource(R.string.onboarding_next),
+            onNext = { if (last) onFinish() else scope.launch { pager.animateScrollToPage(page + 1) } },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 28.dp, vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            // One progress line on every page, full on the last one.
-            val progress by animateFloatAsState(
-                targetValue = (page + 1f) / OnboardingUiState.PAGE_COUNT,
-                label = "onboarding_progress",
-            )
-            AuthProgressBar(fraction = progress, modifier = Modifier.width(120.dp).testTag("onboarding_progress"))
-            CircleNextButton(
-                onClick = { if (last) onFinish() else scope.launch { pager.animateScrollToPage(page + 1) } },
-                contentDescription = stringResource(R.string.onboarding_next),
-                modifier = Modifier.testTag("onboarding_next"),
-            )
-        }
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+        )
     }
 }
+
+/** What the progress card says on each page: a short heading and one supporting line. */
+private val STEP_HEADINGS = listOf(R.string.onboarding_step1_heading, R.string.onboarding_step2_heading, R.string.onboarding_step3_heading)
+private val STEP_BODIES = listOf(R.string.onboarding_step1_body, R.string.onboarding_step2_body, R.string.onboarding_step3_body)
+
+/** Room the pages leave at the bottom for the progress card and its shadow. */
+private val CardRoom = 236.dp
 
 private val TitleStyle = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = AuthInk, textAlign = TextAlign.Center)
 private val BodyStyle = TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = AuthInkMuted, textAlign = TextAlign.Center)
@@ -193,7 +193,7 @@ private fun SplashPage() {
                 SplashWord(R.string.onboarding_splash_growth)
             }
             Spacer(Modifier.weight(1.35f))
-            Spacer(Modifier.height(96.dp))
+            Spacer(Modifier.height(CardRoom))
         }
     }
 }
@@ -224,7 +224,7 @@ private fun IntroPage() {
         Spacer(Modifier.weight(1f))
         Illustration(R.drawable.onb_pos, Modifier.fillMaxWidth())
         Spacer(Modifier.weight(0.6f))
-        Spacer(Modifier.height(96.dp))
+        Spacer(Modifier.height(CardRoom))
     }
 }
 
@@ -250,7 +250,7 @@ private fun CategoriesPage() {
         Spacer(Modifier.height(10.dp))
         Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 320.dp))
         Spacer(Modifier.height(20.dp))
-        Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 108.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = CardRoom), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CATEGORY_CARDS.chunked(2).forEachIndexed { row, cards ->
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     cards.forEachIndexed { column, card -> CategoryTile(card, Modifier.weight(1f).testTag("onboarding_category_${row * 2 + column}")) }

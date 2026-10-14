@@ -1750,6 +1750,14 @@
     <!-- First-launch introduction -->
     <string name="onboarding_skip">এড়িয়ে যান</string>
     <string name="onboarding_next">পরবর্তী</string>
+    <string name="onboarding_progress_title">সেটআপের অগ্রগতি</string>
+    <string name="onboarding_progress_step">ধাপ %1$d / %2$d</string>
+    <string name="onboarding_step1_heading">Auxo-তে স্বাগতম</string>
+    <string name="onboarding_step1_body">চলুন আপনার দোকান প্রস্তুত করি।</string>
+    <string name="onboarding_step2_heading">দেখুন Auxo কী করে</string>
+    <string name="onboarding_step2_body">বিলিং, স্টক ও রিপোর্ট একটি অ্যাপে।</string>
+    <string name="onboarding_step3_heading">আপনার ব্যবসা সেট করুন</string>
+    <string name="onboarding_step3_body">আপনার ব্যবসার ধরন জানান।</string>
     <string name="onboarding_splash_title">আপনার ব্যবসা,\nএখন সহজ</string>
     <string name="onboarding_splash_inventory">স্টক</string>
     <string name="onboarding_splash_billing">বিলিং</string>
