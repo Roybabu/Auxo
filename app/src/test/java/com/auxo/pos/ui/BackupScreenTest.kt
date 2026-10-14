@@ -124,8 +124,8 @@ class BackupScreenTest {
         assertEquals(listOf("ask turn off"), log)
     }
 
-    // The boxes are tested without their dialog window: typing into a text field inside a window never lets Robolectric's
-    // Compose clock go idle.
+    // The boxes are tested without their dialog window: a text field inside a dialog window never lets Robolectric's
+    // Compose clock go idle, whether or not anything is typed.
     private fun showForm(content: @androidx.compose.runtime.Composable () -> Unit) {
         composeRule.setContent { AuxoTheme { content() } }
     }
@@ -156,7 +156,7 @@ class BackupScreenTest {
 
     @Test
     fun theChoosePassphraseBox_opensWithTheWarning() {
-        show(BackupUiState(choosingPassphrase = true))
+        showForm { ChoosePassphraseForm(onSave = {}, onCancel = {}) }
         composeRule.onNodeWithText("Choose a passphrase").assertIsDisplayed()
         composeRule.onNodeWithText("Auxo cannot recover it", substring = true).assertIsDisplayed()
         composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
@@ -164,7 +164,7 @@ class BackupScreenTest {
 
     @Test
     fun aLockedBackup_asksForItsPassphrase() {
-        show(BackupUiState(unlocking = Uri.parse("content://x/old.auxobak")))
+        showForm { UnlockForm(onUnlock = {}, onCancel = {}) }
         composeRule.onNodeWithText("This backup is locked").assertIsDisplayed()
         composeRule.onNodeWithTag("backup_unlock_action").assertIsNotEnabled()
     }
