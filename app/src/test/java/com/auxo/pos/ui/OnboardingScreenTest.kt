@@ -5,6 +5,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
@@ -103,7 +105,7 @@ class OnboardingScreenTest {
         fun assertStep(n: Int, heading: String, sprout: Int) {
             composeRule.onNodeWithTag("onboarding_progress").assertIsDisplayed()
             fun textOf(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().config
-                .getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString { it.text }
+                .getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
             assertEquals("counter at step $n", "Step $n of 3", textOf("onboarding_step_counter"))
             assertEquals("badge at step $n", n.toString(), textOf("onboarding_step_badge"))
             assertEquals("heading at step $n", heading, textOf("onboarding_step_heading"))
