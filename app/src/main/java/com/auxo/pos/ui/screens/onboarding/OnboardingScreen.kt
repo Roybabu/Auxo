@@ -112,9 +112,9 @@ fun OnboardingContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // One progress line on every page. The last step is first-time setup, so the line is never full while the intro is showing.
+            // One progress line on every page, full on the last one.
             val progress by animateFloatAsState(
-                targetValue = (page + 1f) / OnboardingUiState.PAGE_COUNT, // full on the last page
+                targetValue = (page + 1f) / OnboardingUiState.PAGE_COUNT,
                 label = "onboarding_progress",
             )
             AuthProgressBar(fraction = progress, modifier = Modifier.width(120.dp).testTag("onboarding_progress"))
