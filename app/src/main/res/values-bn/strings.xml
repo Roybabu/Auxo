@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Auxo</string>
+    <string name="app_tagline">বৃদ্ধির জন্য তৈরি।</string>
 
     <!-- Main navigation -->
     <string name="nav_home">হোম</string>
@@ -1029,7 +1030,7 @@
     <string name="auth_error_password_identifier">পাসওয়ার্ডে আপনার ইউজারনেম বা ইমেলের নাম থাকা চলবে না।</string>
     <string name="auth_error_confirm_required">পাসওয়ার্ড আবার লিখুন।</string>
     <string name="auth_error_confirm_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
-    <string name="auth_login_welcome">আবার স্বাগতম!</string>
+    <string name="auth_login_welcome">Auxo-তে স্বাগতম</string>
     <string name="auth_login_action">সাইন ইন করুন</string>
     <string name="auth_login_working">সাইন ইন হচ্ছে…</string>
     <string name="auth_error_login_identifier_required">আপনার ইউজারনেম বা ইমেল লিখুন।</string>
@@ -1041,10 +1042,11 @@
         <item quantity="one">অনেকবার চেষ্টা করা হয়েছে। %d সেকেন্ড পরে আবার চেষ্টা করুন।</item>
         <item quantity="other">অনেকবার চেষ্টা করা হয়েছে। %d সেকেন্ড পরে আবার চেষ্টা করুন।</item>
     </plurals>
-    <string name="auth_login_or">অথবা</string>
-    <string name="auth_login_new_title">Auxo-তে নতুন?</string>
-    <string name="auth_login_new_body">আপনার ব্যবসা সেট আপ করুন এবং কয়েক মিনিটেই শুরু করুন।</string>
     <string name="auth_login_forgot">পাসওয়ার্ড ভুলে গেছেন?</string>
+    <string name="auth_login_hero_headline">পরিচালনা করুন\nবিক্রি করুন\nবৃদ্ধি করুন</string>
+    <string name="auth_login_hero_body">আপনার ব্যবসার সব প্রয়োজন, এক জায়গায়।</string>
+    <string name="auth_login_remember_me">আমাকে মনে রাখুন</string>
+    <string name="auth_login_setup_business_action">শুরু করুন</string>
     <string name="recovery_screen_title">রিকভারি কোড</string>
     <string name="more_recovery_body">এমন একটি কোড বানান যা দিয়ে সুপার অ্যাডমিনের পাসওয়ার্ড রিসেট করা যায়</string>
     <string name="recovery_title">আপনার রিকভারি কোড বানান</string>
@@ -1770,7 +1772,7 @@
     <string name="auth_back_to_login">সাইন ইনে ফিরে যান</string>
     <string name="auth_exists_title">এই ডিভাইসে আগে থেকেই ব্যবসা আছে</string>
     <string name="auth_exists_body">এখানে ব্যবসা আগেই সেট আপ করা আছে, তাই আবার সেট আপ করা যাবে না। আপনার ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন। পাসওয়ার্ড ভুলে গেলে সাইন ইন স্ক্রিনে রিকভারি কোড দিয়ে “পাসওয়ার্ড ভুলে গেছেন?” ব্যবহার করুন।</string>
-    <string name="auth_login_subtitle">আপনার ব্যবসায় যেতে সাইন ইন করুন।</string>
+    <string name="auth_login_subtitle">চালিয়ে যেতে সাইন ইন করুন</string>
     <string name="auth_field_business">ব্যবসার নাম</string>
     <string name="auth_error_business_required">আপনার ব্যবসার নাম লিখুন।</string>
     <string name="auth_error_business_too_long">ব্যবসার নাম সর্বোচ্চ ৭০ অক্ষরের হতে পারে।</string>
