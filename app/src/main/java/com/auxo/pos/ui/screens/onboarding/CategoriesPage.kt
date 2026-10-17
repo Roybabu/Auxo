@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -113,6 +114,13 @@ private val IconBack = Color(0xFFE2F4EB)
 internal fun CategoriesPage() {
     BoxWithConstraints(modifier = Modifier.fillMaxSize().testTag("onboarding_categories")) {
         val scale = minOf(maxWidth / FRAME_WIDTH.dp, maxHeight / FRAME_HEIGHT.dp)
+        // The same wave background as the second page, filling the whole screen behind the scaled frame.
+        Image(
+            painter = painterResource(R.drawable.onb_intro_bg),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
         val outer = LocalDensity.current
         CompositionLocalProvider(LocalDensity provides Density(outer.density * scale, outer.fontScale)) {
             Box(modifier = Modifier.align(Alignment.TopCenter).requiredSize(FRAME_WIDTH.dp, FRAME_HEIGHT.dp)) {
