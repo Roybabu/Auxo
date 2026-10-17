@@ -48,7 +48,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -370,9 +369,7 @@ private fun LoginForm(
                     .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
                     .testTag("login_setup_business"),
             ) {
-                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AuthMint), contentAlignment = Alignment.Center) {
-                    AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
-                }
+                AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact)
                 Spacer(Modifier.width(12.dp))
                 Text(stringResource(R.string.auth_login_setup_business_action), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(8.dp))
@@ -491,7 +488,7 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                     .background(Brush.verticalGradient(listOf(Color.White, AuthMint))),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(22.dp))
+                AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Medium, style = AuxoIconStyle.Flat)
             }
         }
     }

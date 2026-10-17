@@ -77,10 +77,10 @@ fun LanguageChipContent(current: Language, followsPhone: Boolean, onChange: (Lan
             modifier = Modifier.testTag("language_chip").semantics { contentDescription = "$description: ${current.nativeName}" },
         ) {
             Row(
-                modifier = Modifier.clickable { open = true }.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.clickable { open = true }.padding(start = 8.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AuxoIcon(R.drawable.ic_language, contentDescription = null, size = AuxoIconSize.Nav, style = AuxoIconStyle.Flat)
+                AuxoIcon(R.drawable.ic_language, contentDescription = null, size = AuxoIconSize.Mini)
                 Spacer(Modifier.width(6.dp))
                 Text(current.nativeName, style = MaterialTheme.typography.labelLarge, color = AuthInk)
                 Spacer(Modifier.width(2.dp))

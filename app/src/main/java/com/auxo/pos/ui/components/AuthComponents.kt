@@ -195,11 +195,8 @@ fun AuthPillField(
         shape = RoundedCornerShape(32.dp),
         placeholder = { Text(placeholder, color = AuthInkMuted) },
         leadingIcon = {
-            Box(
-                modifier = Modifier.size(40.dp).clip(CircleShape).background(AuthMint),
-                contentAlignment = Alignment.Center,
-            ) {
-                AuxoIcon(icon, contentDescription = null, size = AuxoIconSize.Medium, style = AuxoIconStyle.Flat)
+            Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                AuxoIcon(icon, contentDescription = null, size = AuxoIconSize.Compact)
             }
         },
         trailingIcon = trailingIcon,
