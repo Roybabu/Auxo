@@ -227,9 +227,13 @@ fun AuxoArtwork(
     modifier: Modifier = Modifier,
     size: Dp = 52.dp,
     disc: Boolean = true,
+    /** A clear crystal-glass disc instead of the solid mint one, for use over a picture or a coloured page. */
+    glass: Boolean = false,
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val discModifier = if (disc) {
+    val discModifier = if (disc && glass) {
+        Modifier.crystalGlass(CircleShape, elevation = 2.dp)
+    } else if (disc) {
         Modifier.background(
             Brush.verticalGradient(
                 if (dark) listOf(Color(0xFF14503E), Color(0xFF0B3B2D)) else listOf(AuxoIconColors.MintLight, AuxoIconColors.Mint),

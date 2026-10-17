@@ -2,7 +2,6 @@ package com.auxo.pos.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -48,7 +46,8 @@ import androidx.compose.ui.unit.sp
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuxoArtwork
 import com.auxo.pos.ui.components.Illustration
-import com.auxo.pos.ui.theme.AuthCard
+import com.auxo.pos.ui.components.crystalGlass
+import com.auxo.pos.ui.components.featheredEdges
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
@@ -66,7 +65,7 @@ import com.auxo.pos.ui.theme.AuthInkMuted
  * the ones in the mock-up; when a design export arrives, replace the Art(...) lines in DecorationArt().
  *
  * What is native code, not a picture: the headline (with its green part), the line below it,
- * the six cards (white card, round icon button, label, arrow button). The six category
+ * the six cards (glass card, round icon button, label, arrow button). The six category
  * icons are soft-render emerald vector artwork (res/drawable/ic_cat_*.xml, drawn by tools/gen_category_icons.py), so they stay sharp at any size.
  */
 
@@ -107,8 +106,6 @@ private val CATEGORY_CARDS = listOf(
 private const val FRAME_WIDTH = 440
 private const val FRAME_HEIGHT = 978
 
-private val CardEdge = Color(0xFFE4F3EB)
-private val IconBack = Color(0xFFE2F4EB)
 
 @Composable
 internal fun CategoriesPage() {
@@ -198,39 +195,37 @@ private fun CardGrid() {
     }
 }
 
+/**
+ * One category as a thin panel of crystal glass (see [crystalGlass]): the page shows through it, the picture is
+ * drawn sharp on top with only its outer edge softened, and the icon and arrow sit in small glass badges.
+ * There is no selection on these cards yet; when there is, pass it to crystalGlass(selected = ...).
+ */
 @Composable
 private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        color = AuthCard,
-        shadowElevation = 1.dp,
-        border = BorderStroke(1.dp, CardEdge),
-    ) {
-        Column {
-            Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                card.icon?.let { AuxoArtwork(it, contentDescription = null, size = 42.dp) }
-                    ?: Box(Modifier.size(42.dp).background(IconBack, CircleShape))
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    stringResource(card.label),
-                    style = TextStyle(fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = AuthInk),
-                    maxLines = 2,
-                    modifier = Modifier.weight(1f),
-                )
-                Box(Modifier.size(22.dp).background(IconBack, CircleShape), contentAlignment = Alignment.Center) {
-                    Canvas(Modifier.size(8.dp)) {
-                        val path = Path().apply {
-                            moveTo(size.width * 0.3f, size.height * 0.1f)
-                            lineTo(size.width * 0.8f, size.height * 0.5f)
-                            lineTo(size.width * 0.3f, size.height * 0.9f)
-                        }
-                        drawPath(path, AuthEmerald, style = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round))
+    val shape = RoundedCornerShape(22.dp)
+    Column(modifier = modifier.crystalGlass(shape)) {
+        Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp).featheredEdges())
+        Row(
+            modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            card.icon?.let { AuxoArtwork(it, contentDescription = null, size = 42.dp, glass = true) }
+                ?: Box(Modifier.size(42.dp).crystalGlass(CircleShape, elevation = 2.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                stringResource(card.label),
+                style = TextStyle(fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = AuthInk),
+                maxLines = 2,
+                modifier = Modifier.weight(1f),
+            )
+            Box(Modifier.size(24.dp).crystalGlass(CircleShape, elevation = 2.dp), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(8.dp)) {
+                    val path = Path().apply {
+                        moveTo(size.width * 0.3f, size.height * 0.1f)
+                        lineTo(size.width * 0.8f, size.height * 0.5f)
+                        lineTo(size.width * 0.3f, size.height * 0.9f)
                     }
+                    drawPath(path, AuthEmerald, style = Stroke(width = 1.7.dp.toPx(), cap = StrokeCap.Round))
                 }
             }
         }
