@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Auxo</string>
+    <string name="app_tagline">Built to grow.</string>
 
     <!-- Main navigation -->
     <string name="nav_home">Home</string>
@@ -1030,7 +1031,7 @@ in %2$s</string>
     <string name="auth_error_password_identifier">The password must not contain your username or email name.</string>
     <string name="auth_error_confirm_required">Enter the password again.</string>
     <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
-    <string name="auth_login_welcome">Welcome back!</string>
+    <string name="auth_login_welcome">Welcome to Auxo</string>
     <string name="auth_login_action">Sign in</string>
     <string name="auth_login_working">Signing in…</string>
     <string name="auth_error_login_identifier_required">Enter your username or email.</string>
@@ -1042,10 +1043,11 @@ in %2$s</string>
         <item quantity="one">Too many attempts. Try again in %d second.</item>
         <item quantity="other">Too many attempts. Try again in %d seconds.</item>
     </plurals>
-    <string name="auth_login_or">or</string>
-    <string name="auth_login_new_title">New to Auxo?</string>
-    <string name="auth_login_new_body">Set up your business and get started in minutes.</string>
     <string name="auth_login_forgot">Forgot password?</string>
+    <string name="auth_login_hero_headline">Manage\nSell\nGrow</string>
+    <string name="auth_login_hero_body">Everything your business needs in one place.</string>
+    <string name="auth_login_remember_me">Remember me</string>
+    <string name="auth_login_setup_business_action">Get started</string>
     <string name="recovery_screen_title">Recovery code</string>
     <string name="more_recovery_body">Make a code that lets you reset the Super Admin password</string>
     <string name="recovery_title">Make your recovery code</string>
@@ -1756,8 +1758,9 @@ in %2$s</string>
     <string name="onboarding_splash_growth">Growth</string>
     <string name="onboarding_intro_title">All your business in one place</string>
     <string name="onboarding_intro_body">Manage products, sales, inventory and customers easily.</string>
-    <string name="onboarding_cats_title">Works for any business</string>
-    <string name="onboarding_cats_body">From fashion to food, grocery to general store — Auxo adapts to you.</string>
+    <string name="onboarding_cats_title">You choose what you do</string>
+    <string name="onboarding_cats_title_accent">what you do</string>
+    <string name="onboarding_cats_body">You can select your business category to get a personalized experience.</string>
     <string name="onboarding_cat_apparel">Apparel &amp; Garments</string>
     <string name="onboarding_cat_food">Food &amp; Beverages</string>
     <string name="onboarding_cat_grocery">Grocery &amp; Essentials</string>
@@ -1769,7 +1772,7 @@ in %2$s</string>
     <string name="auth_back_to_login">Back to sign in</string>
     <string name="auth_exists_title">This device already has a business</string>
     <string name="auth_exists_body">A business is already set up here, so it cannot be set up again. Sign in with your username and password. If you forgot your password, use “Forgot password?” on the sign-in screen with your recovery code.</string>
-    <string name="auth_login_subtitle">Sign in to continue to your business.</string>
+    <string name="auth_login_subtitle">Sign in to continue</string>
     <string name="auth_field_business">Business name</string>
     <string name="auth_error_business_required">Enter your business name.</string>
     <string name="auth_error_business_too_long">Business name can be at most 70 characters.</string>

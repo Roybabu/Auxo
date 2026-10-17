@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Auxo</string>
+    <string name="app_tagline">बढ़ने के लिए बना।</string>
 
     <!-- Main navigation -->
     <string name="nav_home">होम</string>
@@ -1029,7 +1030,7 @@
     <string name="auth_error_password_identifier">पासवर्ड में आपका यूज़रनेम या ईमेल का नाम नहीं होना चाहिए।</string>
     <string name="auth_error_confirm_required">पासवर्ड फिर से लिखें।</string>
     <string name="auth_error_confirm_mismatch">पासवर्ड मेल नहीं खाते।</string>
-    <string name="auth_login_welcome">वापसी पर स्वागत है!</string>
+    <string name="auth_login_welcome">Auxo में आपका स्वागत है</string>
     <string name="auth_login_action">साइन इन करें</string>
     <string name="auth_login_working">साइन इन हो रहा है…</string>
     <string name="auth_error_login_identifier_required">अपना यूज़रनेम या ईमेल लिखें।</string>
@@ -1041,10 +1042,11 @@
         <item quantity="one">बहुत ज़्यादा कोशिशें। %d सेकंड में फिर कोशिश करें।</item>
         <item quantity="other">बहुत ज़्यादा कोशिशें। %d सेकंड में फिर कोशिश करें।</item>
     </plurals>
-    <string name="auth_login_or">या</string>
-    <string name="auth_login_new_title">Auxo में नए हैं?</string>
-    <string name="auth_login_new_body">अपना व्यवसाय सेट करें और कुछ ही मिनटों में शुरू करें।</string>
     <string name="auth_login_forgot">पासवर्ड भूल गए?</string>
+    <string name="auth_login_hero_headline">मैनेज करें\nबेचें\nबढ़ाएं</string>
+    <string name="auth_login_hero_body">आपके बिज़नेस की हर ज़रूरत, एक ही जगह।</string>
+    <string name="auth_login_remember_me">मुझे याद रखें</string>
+    <string name="auth_login_setup_business_action">शुरू करें</string>
     <string name="recovery_screen_title">रिकवरी कोड</string>
     <string name="more_recovery_body">ऐसा कोड बनाएँ जिससे सुपर एडमिन का पासवर्ड रीसेट हो सके</string>
     <string name="recovery_title">अपना रिकवरी कोड बनाएँ</string>
@@ -1756,8 +1758,9 @@
     <string name="onboarding_splash_growth">तरक्की</string>
     <string name="onboarding_intro_title">आपका पूरा कारोबार, एक ही जगह</string>
     <string name="onboarding_intro_body">सामान, बिक्री, स्टॉक और ग्राहक — सब आसानी से सँभालें।</string>
-    <string name="onboarding_cats_title">हर तरह के कारोबार के लिए</string>
-    <string name="onboarding_cats_body">फ़ैशन से खाने तक, किराने से जनरल स्टोर तक — Auxo आपके हिसाब से ढल जाता है।</string>
+    <string name="onboarding_cats_title">आप चुनें कि आप क्या करते हैं</string>
+    <string name="onboarding_cats_title_accent">आप क्या करते हैं</string>
+    <string name="onboarding_cats_body">आप अपने कारोबार की श्रेणी चुन सकते हैं और अपने हिसाब का अनुभव पा सकते हैं।</string>
     <string name="onboarding_cat_apparel">कपड़े और परिधान</string>
     <string name="onboarding_cat_food">खाना और पेय</string>
     <string name="onboarding_cat_grocery">किराना और ज़रूरी सामान</string>
@@ -1769,7 +1772,7 @@
     <string name="auth_back_to_login">साइन इन पर वापस जाएँ</string>
     <string name="auth_exists_title">इस डिवाइस पर पहले से बिज़नेस है</string>
     <string name="auth_exists_body">यहाँ बिज़नेस पहले से सेट अप है, इसलिए दोबारा सेट अप नहीं हो सकता। अपने यूज़रनेम और पासवर्ड से साइन इन करें। पासवर्ड भूल गए हों तो साइन इन स्क्रीन पर रिकवरी कोड के साथ “पासवर्ड भूल गए?” का उपयोग करें।</string>
-    <string name="auth_login_subtitle">अपने बिज़नेस पर जाने के लिए साइन इन करें।</string>
+    <string name="auth_login_subtitle">जारी रखने के लिए साइन इन करें</string>
     <string name="auth_field_business">बिज़नेस का नाम</string>
     <string name="auth_error_business_required">अपने बिज़नेस का नाम लिखें।</string>
     <string name="auth_error_business_too_long">बिज़नेस का नाम अधिकतम 70 अक्षरों का हो सकता है।</string>

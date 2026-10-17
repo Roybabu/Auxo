@@ -53,12 +53,7 @@ fun StatTile(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 if (iconRes != null) {
-                    Icon(
-                        painter = painterResource(iconRes),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = tone?.accent ?: MaterialTheme.colorScheme.primary,
-                    )
+                    AuxoIcon(iconRes, contentDescription = null, size = AuxoIconSize.Mini, accent = tone?.accent)
                 }
                 Text(
                     text = label,

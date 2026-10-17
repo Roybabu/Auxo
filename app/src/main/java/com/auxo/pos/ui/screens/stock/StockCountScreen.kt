@@ -47,6 +47,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.domain.inventory.CountReason
 import com.auxo.pos.domain.inventory.CountReviewRow
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.AuxoCard
@@ -263,7 +265,7 @@ private fun CountingStage(state: StockCountUiState, actions: StockCountActions, 
                     leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
                 )
                 IconButton(onClick = actions::onScan, modifier = Modifier.testTag("count_scan")) {
-                    Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.count_scan))
+                    AuxoIcon(R.drawable.ic_scan, stringResource(R.string.count_scan), size = AuxoIconSize.Compact)
                 }
             }
         }

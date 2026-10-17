@@ -1,8 +1,6 @@
 package com.auxo.pos.ui.screens.onboarding
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,11 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,11 +49,9 @@ import com.auxo.pos.ui.components.CircleNextButton
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.components.PageDots
-import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
-import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.AuthMintLight
 import com.auxo.pos.viewmodel.OnboardingUiState
 import com.auxo.pos.viewmodel.OnboardingViewModel
@@ -188,60 +181,4 @@ private const val LOGO_ASPECT = 345f / 364f
 @Composable
 private fun SplashWord(@StringRes id: Int) {
     Text(stringResource(id), style = TextStyle(fontSize = 15.sp, color = AuthEmerald, fontWeight = FontWeight.Medium))
-}
-
-private class CategoryCard(@DrawableRes val picture: Int, @StringRes val label: Int)
-
-/** Examples only: the shop's real categories are chosen after setup. */
-private val CATEGORY_CARDS = listOf(
-    CategoryCard(R.drawable.onb_apparel, R.string.onboarding_cat_apparel),
-    CategoryCard(R.drawable.onb_burger, R.string.onboarding_cat_food),
-    CategoryCard(R.drawable.onb_cat_grocery, R.string.onboarding_cat_grocery),
-    CategoryCard(R.drawable.onb_cat_electronics, R.string.onboarding_cat_electronics),
-    CategoryCard(R.drawable.onb_cat_beauty, R.string.onboarding_cat_beauty),
-    CategoryCard(R.drawable.onb_cat_general, R.string.onboarding_cat_general),
-)
-
-@Composable
-private fun CategoriesPage() {
-    Column(
-        modifier = Modifier.fillMaxSize().testTag("onboarding_categories").statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 56.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(stringResource(R.string.onboarding_cats_title), style = TitleStyle, modifier = Modifier.widthIn(max = 250.dp))
-        Spacer(Modifier.height(10.dp))
-        Text(stringResource(R.string.onboarding_cats_body), style = BodyStyle, modifier = Modifier.widthIn(max = 216.dp))
-        Spacer(Modifier.height(20.dp))
-        // Short, wide tiles like the mock-up, one row after another from the top.
-        Column(modifier = Modifier.widthIn(max = 460.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CATEGORY_CARDS.chunked(2).forEachIndexed { row, cards ->
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    cards.forEachIndexed { column, card ->
-                        CategoryTile(card, Modifier.weight(1f).aspectRatio(1.45f).testTag("onboarding_category_${row * 2 + column}"))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
-    // A pale tile with a thin outline and no shadow, a small centred picture and a small label at the bottom.
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = AuthCard,
-        border = BorderStroke(1.dp, AuthMint),
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(start = 26.dp, end = 26.dp, top = 10.dp))
-            Text(
-                stringResource(card.label),
-                style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, color = AuthInk, textAlign = TextAlign.Center),
-                maxLines = 2,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 7.dp),
-            )
-        }
-    }
 }

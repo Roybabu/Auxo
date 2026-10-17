@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.ProductPhoto
 import com.auxo.pos.ui.screens.inventory.iconRes
 import androidx.compose.foundation.layout.height
@@ -56,7 +58,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -109,6 +110,7 @@ import com.auxo.pos.ui.theme.AuxoThemeExtras
 import com.auxo.pos.ui.theme.Spacing
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.auxo.pos.core.receipt.KitchenTicketOutput
 import com.auxo.pos.core.receipt.ReceiptOutput
 import com.auxo.pos.core.receipt.KotLabels
@@ -703,12 +705,7 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
                     .clip(RoundedCornerShape(8.dp)),
                 maxSidePx = 120,
             ) {
-                Icon(
-                    painter = painterResource(result.product.category.iconRes()),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(44.dp).padding(Spacing.sm),
-                )
+                AuxoIcon(result.product.category.iconRes(), contentDescription = null, size = AuxoIconSize.Medium)
             }
             Spacer(Modifier.width(Spacing.md))
         }
@@ -818,16 +815,16 @@ private fun CartLineCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onDecrement, enabled = quantity > 1) {
-                    Icon(painterResource(R.drawable.ic_remove), contentDescription = stringResource(R.string.action_decrease))
+                    AuxoIcon(R.drawable.ic_remove, stringResource(R.string.action_decrease), size = AuxoIconSize.Compact)
                 }
                 Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
                 IconButton(onClick = onIncrement, enabled = canIncrease, modifier = Modifier.testTag("line_increase")) {
-                    Icon(painterResource(R.drawable.ic_add), contentDescription = stringResource(R.string.action_increase))
+                    AuxoIcon(R.drawable.ic_add, stringResource(R.string.action_increase), size = AuxoIconSize.Compact)
                 }
                 TextButton(onClick = onToggleDiscount) { Text(stringResource(R.string.billing_line_discount)) }
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
                     IconButton(onClick = onRemove) {
-                        Icon(painterResource(R.drawable.ic_delete), contentDescription = stringResource(R.string.billing_remove_item))
+                        AuxoIcon(R.drawable.ic_delete, stringResource(R.string.billing_remove_item), size = AuxoIconSize.Compact)
                     }
                 }
             }
@@ -994,7 +991,7 @@ private fun CustomerCard(state: BillingUiState, actions: BillingActions) {
                     .clickable(onClick = actions::onToggleCustomer),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(painterResource(R.drawable.ic_person), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                AuxoIcon(R.drawable.ic_person, contentDescription = null, size = AuxoIconSize.Medium)
                 Column(modifier = Modifier
                     .weight(1f)
                     .padding(start = Spacing.md)) {

@@ -279,9 +279,11 @@ class AuthScreensTest {
     }
 
     @Test
-    fun loginScreen_showsTheNewToAuxoStrip() {
-        login()
-        composeRule.onNodeWithText("New to Auxo?").performScrollTo().assertIsDisplayed()
+    fun loginScreen_showsTheSetUpBusinessDivider() {
+        composeRule.setContent {
+            AuxoTheme { LoginContent(LoginUiState(), {}, {}, {}, onSetUpBusiness = {}) }
+        }
+        composeRule.onNodeWithText("Set up your business").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -290,8 +292,7 @@ class AuthScreensTest {
         composeRule.setContent {
             AuxoTheme { LoginContent(LoginUiState(), {}, {}, {}, onSetUpBusiness = { taps++ }) }
         }
-        composeRule.onNodeWithTag("login_setup_business").assertIsDisplayed()
-        composeRule.onNodeWithText("Set up your business").performClick()
+        composeRule.onNodeWithTag("login_setup_business").assertIsDisplayed().performClick()
         assertEquals(1, taps)
     }
 

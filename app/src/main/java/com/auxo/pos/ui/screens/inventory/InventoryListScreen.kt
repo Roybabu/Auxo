@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,7 +26,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +55,8 @@ import com.auxo.pos.ui.screens.more.label
 import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.LocalExpiryWarningDays
 import com.auxo.pos.ui.LocalSuppliersEnabled
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -363,16 +363,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
                     .clip(RoundedCornerShape(10.dp)),
                 maxSidePx = 160,
             ) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                    Icon(
-                        painter = painterResource(product.category.iconRes()),
-                        contentDescription = product.categoryLabel(),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier
-                            .padding(Spacing.sm)
-                            .size(24.dp),
-                    )
-                }
+                AuxoIcon(product.category.iconRes(), product.categoryLabel(), size = AuxoIconSize.Medium)
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(

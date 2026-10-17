@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.ProductPhoto
 import com.auxo.pos.ui.LocalCategories
 import com.auxo.pos.ui.screens.more.label
@@ -438,12 +440,7 @@ private fun PhotoSection(form: ProductForm, busy: Boolean, actions: ProductEdito
                     modifier = Modifier.fillMaxSize(),
                     maxSidePx = 400,
                 ) {
-                    Icon(
-                        painter = painterResource(form.category.iconRes()),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(36.dp),
-                    )
+                    AuxoIcon(form.category.iconRes(), contentDescription = null, size = AuxoIconSize.Large)
                 }
                 if (busy) CircularProgressIndicator(modifier = Modifier.size(28.dp).testTag("editor_photo_busy"))
             }
@@ -904,7 +901,7 @@ private fun VariantEditorCard(
                 Text(text = title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 if (canRemove) {
                     IconButton(onClick = { actions.onRemoveVariant(key) }) {
-                        Icon(painterResource(R.drawable.ic_delete), contentDescription = stringResource(R.string.editor_remove_variant))
+                        AuxoIcon(R.drawable.ic_delete, stringResource(R.string.editor_remove_variant), size = AuxoIconSize.Compact)
                     }
                 }
             }
@@ -1037,13 +1034,10 @@ private fun VariantEditorCard(
                     trailingIcon = {
                         Row {
                             IconButton(onClick = { actions.onScanBarcode(key) }) {
-                                Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.action_scan))
+                                AuxoIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), size = AuxoIconSize.Compact)
                             }
                             IconButton(onClick = { actions.onGenerateBarcode(key) }) {
-                                Icon(
-                                    painterResource(R.drawable.ic_autorenew),
-                                    contentDescription = stringResource(R.string.action_generate_barcode),
-                                )
+                                AuxoIcon(R.drawable.ic_autorenew, stringResource(R.string.action_generate_barcode), size = AuxoIconSize.Compact)
                             }
                         }
                     },

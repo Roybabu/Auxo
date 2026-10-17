@@ -7,23 +7,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
 import com.auxo.pos.ui.theme.Spacing
 
@@ -93,15 +88,13 @@ private fun MessageState(
         verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Surface(shape = CircleShape, color = iconBackground, contentColor = iconTint) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(Spacing.lg)
-                    .size(32.dp),
-            )
-        }
+        // The error state is red; every other state uses the brand emerald.
+        AuxoIcon(
+            iconRes,
+            contentDescription = null,
+            size = AuxoIconSize.Hero,
+            accent = iconTint.takeIf { it == MaterialTheme.colorScheme.error },
+        )
         Text(text = title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         Text(
             text = message,
