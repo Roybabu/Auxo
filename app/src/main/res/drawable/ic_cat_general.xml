@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Outline icon for the "general" category card on the third onboarding page. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M5,8 H19 L20,20 H4 Z M9,8 V6.5 C9,4.8 10.3,3.5 12,3.5 C13.7,3.5 15,4.8 15,6.5 V8"
+        android:strokeColor="#0B7A55"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

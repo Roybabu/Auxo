@@ -64,7 +64,8 @@ import com.auxo.pos.ui.theme.AuthInkMuted
  * the ones in the mock-up; when a design export arrives, replace the Art(...) lines in DecorationArt().
  *
  * What is native code, not a picture: the headline (with its green part and the curl under it), the line below it,
- * the six cards (white card, round icon button, label, arrow button) and the dash above the headline.
+ * the six cards (white card, round icon button, label, arrow button) and the dash above the headline. The six outline
+ * icons are small vector files (res/drawable/ic_cat_*.xml), so they stay sharp at any size.
  */
 
 // ---------------------------------------------- PICTURES ----------------------------------------------
@@ -82,7 +83,7 @@ private val LeavesBottomLeft: Int? = null
 private val LeafBottomMiddle: Int? = null
 private val LeafBottomRight: Int? = null
 
-/** The six card pictures. The round icon beside each label is a picture too: [icon] stays null until you add one. */
+/** The six card pictures, each with the green outline icon (res/drawable/ic_cat_*.xml) shown in the round button beside its label. */
 private class CategoryCard(
     @DrawableRes val picture: Int,
     @StringRes val label: Int,
@@ -91,12 +92,12 @@ private class CategoryCard(
 
 /** Examples only: the shop's real categories are chosen after setup. */
 private val CATEGORY_CARDS = listOf(
-    CategoryCard(R.drawable.onb_apparel, R.string.onboarding_cat_apparel),
-    CategoryCard(R.drawable.onb_burger, R.string.onboarding_cat_food),
-    CategoryCard(R.drawable.onb_cat_grocery, R.string.onboarding_cat_grocery),
-    CategoryCard(R.drawable.onb_cat_electronics, R.string.onboarding_cat_electronics),
-    CategoryCard(R.drawable.onb_cat_beauty, R.string.onboarding_cat_beauty),
-    CategoryCard(R.drawable.onb_cat_general, R.string.onboarding_cat_general),
+    CategoryCard(R.drawable.onb_apparel, R.string.onboarding_cat_apparel, R.drawable.ic_cat_apparel),
+    CategoryCard(R.drawable.onb_burger, R.string.onboarding_cat_food, R.drawable.ic_cat_food),
+    CategoryCard(R.drawable.onb_cat_grocery, R.string.onboarding_cat_grocery, R.drawable.ic_cat_grocery),
+    CategoryCard(R.drawable.onb_cat_electronics, R.string.onboarding_cat_electronics, R.drawable.ic_cat_electronics),
+    CategoryCard(R.drawable.onb_cat_beauty, R.string.onboarding_cat_beauty, R.drawable.ic_cat_beauty),
+    CategoryCard(R.drawable.onb_cat_general, R.string.onboarding_cat_general, R.drawable.ic_cat_general),
 )
 // -----------------------------------------------------------------------------------------------------
 

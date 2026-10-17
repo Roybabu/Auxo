@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Outline icon for the "grocery" category card on the third onboarding page. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M3,4 H5.4 L7.6,15 H18.2 L20.2,7 H6 M8.1,19.5 C8.1,18.7 8.7,18.1 9.5,18.1 C10.3,18.1 10.9,18.7 10.9,19.5 C10.9,20.3 10.3,20.9 9.5,20.9 C8.7,20.9 8.1,20.3 8.1,19.5 Z M15.6,19.5 C15.6,18.7 16.2,18.1 17,18.1 C17.8,18.1 18.4,18.7 18.4,19.5 C18.4,20.3 17.8,20.9 17,20.9 C16.2,20.9 15.6,20.3 15.6,19.5 Z"
+        android:strokeColor="#0B7A55"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

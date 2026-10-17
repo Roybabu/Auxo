@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Outline icon for the "apparel" category card on the third onboarding page. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M8,3 L3,6.5 L5.2,10 L8,8.6 V20 H16 V8.6 L18.8,10 L21,6.5 L16,3 C15.5,4.5 13.9,5.4 12,5.4 C10.1,5.4 8.5,4.5 8,3 Z"
+        android:strokeColor="#0B7A55"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
