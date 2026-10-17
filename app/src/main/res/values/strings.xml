@@ -1033,6 +1033,7 @@ in %2$s</string>
     <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
     <string name="auth_login_welcome">Welcome to Auxo</string>
     <string name="auth_login_action">Sign in</string>
+    <string name="auth_login_slide">Slide to sign in</string>
     <string name="auth_login_working">Signing in…</string>
     <string name="auth_error_login_identifier_required">Enter your username or email.</string>
     <string name="auth_error_login_password_required">Enter your password.</string>

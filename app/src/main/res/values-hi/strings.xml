@@ -1032,6 +1032,7 @@
     <string name="auth_error_confirm_mismatch">पासवर्ड मेल नहीं खाते।</string>
     <string name="auth_login_welcome">Auxo में आपका स्वागत है</string>
     <string name="auth_login_action">साइन इन करें</string>
+    <string name="auth_login_slide">साइन इन करने के लिए स्लाइड करें</string>
     <string name="auth_login_working">साइन इन हो रहा है…</string>
     <string name="auth_error_login_identifier_required">अपना यूज़रनेम या ईमेल लिखें।</string>
     <string name="auth_error_login_password_required">अपना पासवर्ड लिखें।</string>

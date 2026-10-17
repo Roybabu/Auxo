@@ -19,6 +19,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.auth.SetupError
@@ -352,8 +354,10 @@ class AuthScreensTest {
         login(LoginUiState(identifier = "", password = "", identifierMissing = true, passwordMissing = true), onSignIn = { signIns++ })
         composeRule.onNodeWithTag("login_submit").assertIsEnabled()
         composeRule.onNodeWithText("Enter your username or email.").assertIsDisplayed()
-        composeRule.onNodeWithText("Enter your password.").assertIsDisplayed()
-        composeRule.onNodeWithTag("login_submit").performClick()
+        // One shared line: the username message wins when both fields are empty.
+        composeRule.onNodeWithText("Enter your password.").assertDoesNotExist()
+        composeRule.onNodeWithTag("login_submit").performTouchInput { swipeRight(startX = width * 0.1f, endX = width * 0.95f, durationMillis = 400) }
+        composeRule.waitForIdle()
         assertEquals(1, signIns)
     }
 
@@ -371,7 +375,8 @@ class AuthScreensTest {
     fun loginButton_isEnabledWithBothFields_andSignsIn() {
         var signIns = 0
         login(LoginUiState(identifier = "roy", password = "x"), onSignIn = { signIns++ })
-        composeRule.onNodeWithTag("login_submit").assertIsEnabled().performClick()
+        composeRule.onNodeWithTag("login_submit").assertIsEnabled().performTouchInput { swipeRight(startX = width * 0.1f, endX = width * 0.95f, durationMillis = 400) }
+        composeRule.waitForIdle()
         assertEquals(1, signIns)
     }
 

@@ -182,11 +182,14 @@ fun AuthPillField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
+    fieldHeight: Dp? = null,
+    highlightError: Boolean = false,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
+        // A fixed height would clip the error line, so it only applies while there is none.
+        modifier = modifier.fillMaxWidth().then(if (fieldHeight != null && error == null) Modifier.height(fieldHeight) else Modifier),
         enabled = enabled,
         singleLine = true,
         shape = RoundedCornerShape(32.dp),
@@ -200,7 +203,7 @@ fun AuthPillField(
             }
         },
         trailingIcon = trailingIcon,
-        isError = error != null,
+        isError = error != null || highlightError,
         supportingText = if (error != null) {
             { Text(error) }
         } else {

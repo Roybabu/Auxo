@@ -5,7 +5,31 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,10 +47,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -98,7 +118,8 @@ fun LoginScreen(
             state, viewModel::onIdentifierChange, viewModel::onPasswordChange, viewModel::signIn,
             // Nothing to recover when this device has no business yet.
             onForgotPassword = if (hasBusiness) ({ resetting = true }) else null,
-            onSetUpBusiness = onSetUpBusiness,
+            // Once a business exists on this device, "Get started" is hidden.
+            onSetUpBusiness = if (hasBusiness) null else onSetUpBusiness,
             topEnd = { LanguageChip() },
         )
     }
@@ -125,6 +146,9 @@ private const val FORM_TOP = 0.585f
 /** How much of the picture's height the pitch text may use, so it stays on the dark part. */
 private const val PITCH_BOTTOM = 0.50f
 
+/** The sign-in fields' height: 5 dp under the 56 dp Material default. */
+private val LOGIN_FIELD_HEIGHT = 51.dp
+
 /** The widest the page is drawn; on a tablet it is a centred phone-shaped column. */
 private val MAX_LOGIN_WIDTH = 480.dp
 
@@ -139,7 +163,6 @@ fun LoginContent(
     topEnd: (@Composable () -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    var rememberMe by rememberSaveable { mutableStateOf(true) }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.White).testTag("auth_screen")) {
         // The picture sets the page's shape. On a wide or short window the column narrows so the whole picture still fits its height.
@@ -174,8 +197,6 @@ fun LoginContent(
                     onSetUpBusiness = onSetUpBusiness,
                     showPassword = showPassword,
                     onTogglePassword = { showPassword = !showPassword },
-                    rememberMe = rememberMe,
-                    onToggleRememberMe = { rememberMe = it },
                 )
             }
         }
@@ -240,8 +261,6 @@ private fun LoginForm(
     onSetUpBusiness: (() -> Unit)?,
     showPassword: Boolean,
     onTogglePassword: () -> Unit,
-    rememberMe: Boolean,
-    onToggleRememberMe: (Boolean) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
@@ -272,9 +291,10 @@ private fun LoginForm(
             onValueChange = onIdentifierChange,
             placeholder = stringResource(R.string.auth_field_identifier),
             icon = R.drawable.ic_mail,
-            error = if (state.identifierMissing) stringResource(R.string.auth_error_login_identifier_required) else null,
+            highlightError = state.identifierMissing || state.message == LoginMessage.Rejected,
             keyboardType = KeyboardType.Email,
             enabled = !state.isSigningIn,
+            fieldHeight = LOGIN_FIELD_HEIGHT,
             modifier = Modifier.testTag("login_identifier"),
         )
         AuthPillField(
@@ -282,91 +302,51 @@ private fun LoginForm(
             onValueChange = onPasswordChange,
             placeholder = stringResource(R.string.auth_field_password),
             icon = R.drawable.ic_lock,
-            error = if (state.passwordMissing) stringResource(R.string.auth_error_login_password_required) else null,
+            highlightError = state.passwordMissing || state.message == LoginMessage.Rejected,
             keyboardType = KeyboardType.Password,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = { PasswordToggle(showPassword, onTogglePassword) },
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { onSignIn() }),
             enabled = !state.isSigningIn,
+            fieldHeight = LOGIN_FIELD_HEIGHT,
             modifier = Modifier.testTag("login_password"),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = onToggleRememberMe,
-                    colors = CheckboxDefaults.colors(checkedColor = AuthEmerald),
-                    modifier = Modifier.testTag("login_remember_me"),
-                )
-                Text(stringResource(R.string.auth_login_remember_me), style = MaterialTheme.typography.bodyMedium, color = AuthInkMuted)
-            }
             if (onForgotPassword != null) {
                 TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.testTag("login_forgot")) {
                     Text(stringResource(R.string.auth_login_forgot), color = AuthEmerald, fontWeight = FontWeight.Medium)
                 }
             }
         }
+        // One shared line under the password for every sign-in problem, to save space.
         val message = state.message
-        if (message != null) {
+        val errorText = when {
+            state.identifierMissing -> stringResource(R.string.auth_error_login_identifier_required)
+            state.passwordMissing -> stringResource(R.string.auth_error_login_password_required)
+            message == null -> null
+            else -> when (message) {
+                LoginMessage.Rejected -> stringResource(R.string.auth_login_rejected)
+                LoginMessage.Deactivated -> stringResource(R.string.auth_login_deactivated)
+                is LoginMessage.LockedOut -> pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds)
+                LoginMessage.NoAccount -> stringResource(R.string.auth_login_no_account)
+                LoginMessage.Unavailable -> stringResource(R.string.auth_login_unavailable)
+            }
+        }
+        if (errorText != null) {
             Text(
-                text = when (message) {
-                    LoginMessage.Rejected -> stringResource(R.string.auth_login_rejected)
-                    LoginMessage.Deactivated -> stringResource(R.string.auth_login_deactivated)
-                    is LoginMessage.LockedOut -> pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds)
-                    LoginMessage.NoAccount -> stringResource(R.string.auth_login_no_account)
-                    LoginMessage.Unavailable -> stringResource(R.string.auth_login_unavailable)
-                },
+                text = errorText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.testTag("login_error"),
             )
         }
-        Button(
-            onClick = onSignIn,
-            enabled = !state.isSigningIn,
-            shape = RoundedCornerShape(32.dp),
-            contentPadding = PaddingValues(horizontal = 6.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                disabledContainerColor = Color.Transparent,
-                disabledContentColor = Color.White.copy(alpha = 0.7f),
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .background(Brush.horizontalGradient(listOf(AuthEmerald, AuthEmeraldBright)), RoundedCornerShape(32.dp))
-                .testTag("login_submit"),
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    stringResource(if (state.isSigningIn) R.string.auth_login_working else R.string.auth_login_action),
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.22f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_arrow_forward),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        }
-        // Always present, whether or not a business exists yet: it is how a new business is started.
+        SlideToSignIn(isSigningIn = state.isSigningIn, onSignIn = onSignIn, modifier = Modifier.testTag("login_submit"))
+        // Only offered until a business has been set up on this device.
         if (onSetUpBusiness != null) {
             OrDivider(stringResource(R.string.auth_login_setup_business))
             OutlinedButton(
@@ -385,5 +365,109 @@ private fun LoginForm(
             }
         }
         Spacer(Modifier.height(bottomClearance))
+    }
+}
+
+private val SLIDER_HEIGHT = 56.dp
+private val SLIDER_DEPTH = 6.dp
+private val THUMB_SIZE = 44.dp
+private val THUMB_INSET = 6.dp
+
+/** How far along the track (0..1) a release still counts as a sign-in. */
+private const val SLIDE_THRESHOLD = 0.75f
+
+/**
+ * The sign-in control: a raised, 3D pill with a thumb to slide to the end. Letting go early springs the thumb back
+ * with a bounce; a tap nudges it as a hint. Accessibility services get a plain click that signs in.
+ */
+@Composable
+private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    val offset = remember { Animatable(0f) }
+    val bounce = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    val signIn by rememberUpdatedState(onSignIn)
+    val signingIn by rememberUpdatedState(isSigningIn)
+    // When a sign-in finishes without leaving the screen, the thumb bounces back to the start.
+    LaunchedEffect(isSigningIn) { if (!isSigningIn) offset.animateTo(0f, bounce) }
+
+    val density = LocalDensity.current
+    val depthColor = lerp(AuthEmerald, Color.Black, 0.4f)
+    val shape = RoundedCornerShape(32.dp)
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(SLIDER_HEIGHT + SLIDER_DEPTH)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                if (isSigningIn) disabled()
+                onClick { if (!signingIn) signIn(); true }
+            },
+    ) {
+        val travel = with(density) { (maxWidth - THUMB_SIZE - THUMB_INSET * 2).toPx() }.coerceAtLeast(1f)
+        val progress = (offset.value / travel).coerceIn(0f, 1f)
+
+        // The darker slab under the track is what makes it look raised.
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(SLIDER_HEIGHT).background(depthColor, shape))
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(SLIDER_HEIGHT)
+                .clip(shape)
+                .background(Brush.horizontalGradient(listOf(AuthEmerald, AuthEmeraldBright)))
+                .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent, Color.Black.copy(alpha = 0.10f))))
+                .pointerInput(travel, isSigningIn) {
+                    if (isSigningIn) return@pointerInput
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            scope.launch {
+                                if (offset.value >= travel * SLIDE_THRESHOLD) {
+                                    offset.animateTo(travel, bounce)
+                                    signIn()
+                                    delay(400)
+                                    if (!signingIn) offset.animateTo(0f, bounce)
+                                } else {
+                                    offset.animateTo(0f, bounce)
+                                }
+                            }
+                        },
+                        onDragCancel = { scope.launch { offset.animateTo(0f, bounce) } },
+                        onHorizontalDrag = { change, dx ->
+                            change.consume()
+                            scope.launch { offset.snapTo((offset.value + dx).coerceIn(0f, travel)) }
+                        },
+                    )
+                }
+                .pointerInput(travel, isSigningIn) {
+                    if (isSigningIn) return@pointerInput
+                    detectTapGestures(onTap = {
+                        scope.launch {
+                            offset.animateTo(travel * 0.25f, tween(120))
+                            offset.animateTo(0f, bounce)
+                        }
+                    })
+                },
+        ) {
+            Text(
+                stringResource(if (isSigningIn) R.string.auth_login_working else R.string.auth_login_slide),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.Center).alpha(1f - progress),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = THUMB_INSET)
+                    .offset { IntOffset(offset.value.roundToInt(), 0) }
+                    .shadow(6.dp, CircleShape)
+                    .size(THUMB_SIZE)
+                    .clip(CircleShape)
+                    .background(Brush.verticalGradient(listOf(Color.White, AuthMint))),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(22.dp))
+            }
+        }
     }
 }

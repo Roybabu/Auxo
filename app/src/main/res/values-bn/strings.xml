@@ -1032,6 +1032,7 @@
     <string name="auth_error_confirm_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
     <string name="auth_login_welcome">Auxo-তে স্বাগতম</string>
     <string name="auth_login_action">সাইন ইন করুন</string>
+    <string name="auth_login_slide">সাইন ইন করতে স্লাইড করুন</string>
     <string name="auth_login_working">সাইন ইন হচ্ছে…</string>
     <string name="auth_error_login_identifier_required">আপনার ইউজারনেম বা ইমেল লিখুন।</string>
     <string name="auth_error_login_password_required">আপনার পাসওয়ার্ড লিখুন।</string>
