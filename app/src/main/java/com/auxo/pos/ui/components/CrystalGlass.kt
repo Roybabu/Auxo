@@ -32,9 +32,10 @@ private val GlassEmerald = Color(0xFF0B7A55)
 /**
  * Draws [shape] as a crystal-glass panel. Put it on a node that has no background of its own; whatever is placed
  * inside is drawn on top, sharp and unaffected. [selected] only strengthens the emerald edge and the highlights;
- * the glass stays clear. [elevation] is the depth of the soft shadow underneath.
+ * the glass stays clear. [elevation] is the depth of the soft shadow underneath. [rgb] tints the body and the rim with
+ * a faint red, green and blue sweep, like light split by the glass.
  */
-fun Modifier.crystalGlass(shape: Shape, selected: Boolean = false, elevation: Dp = 6.dp): Modifier =
+fun Modifier.crystalGlass(shape: Shape, selected: Boolean = false, elevation: Dp = 6.dp, rgb: Boolean = false): Modifier =
     this
         .shadow(
             elevation = elevation,
@@ -62,6 +63,10 @@ fun Modifier.crystalGlass(shape: Shape, selected: Boolean = false, elevation: Dp
                 start = Offset(0f, 0f),
                 end = Offset(w, h),
             )
+            // Red, green and blue sweeping across the width: a faint tint through the body, a brighter rim.
+            val rgbSweep = listOf(Color(0xFFFF3B5C), Color(0xFF2BE38B), Color(0xFF3B82FF))
+            val rgbBody = Brush.horizontalGradient(rgbSweep.map { it.copy(alpha = 0.16f) })
+            val rgbRim = Brush.horizontalGradient(rgbSweep.map { it.copy(alpha = 0.90f) })
             // A soft glow where the light lands, top left.
             val glow = Brush.radialGradient(
                 colors = listOf(GlassWhite.copy(alpha = 0.30f * boost), Color.Transparent),
@@ -103,9 +108,11 @@ fun Modifier.crystalGlass(shape: Shape, selected: Boolean = false, elevation: Dp
 
             onDrawWithContent {
                 drawOutline(outline, brush = body)
+                if (rgb) drawOutline(outline, brush = rgbBody)
                 drawOutline(outline, brush = glow)
                 drawOutline(outline, brush = sheen)
                 drawContent()
+                if (rgb) drawOutline(outline, brush = rgbRim, style = Stroke(width = line * 2f))
                 drawOutline(outline, brush = outerEdge, style = Stroke(width = line))
                 inset(line) { drawOutline(innerOutline, brush = innerEdge, style = Stroke(width = 0.75.dp.toPx())) }
                 drawOutline(outline, brush = topEdge, style = Stroke(width = line * 1.4f))

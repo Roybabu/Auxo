@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -82,6 +83,7 @@ import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuthPillField
 import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.components.OrDivider
+import com.auxo.pos.ui.components.crystalGlass
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthEmeraldBright
 import com.auxo.pos.ui.theme.AuthInk
@@ -312,17 +314,6 @@ private fun LoginForm(
             fieldHeight = LOGIN_FIELD_HEIGHT,
             modifier = Modifier.testTag("login_password"),
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-        ) {
-            if (onForgotPassword != null) {
-                TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.testTag("login_forgot")) {
-                    Text(stringResource(R.string.auth_login_forgot), color = AuthEmerald, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
         // One shared line under the password for every sign-in problem, to save space.
         val message = state.message
         val errorText = when {
@@ -337,13 +328,27 @@ private fun LoginForm(
                 LoginMessage.Unavailable -> stringResource(R.string.auth_login_unavailable)
             }
         }
-        if (errorText != null) {
-            Text(
-                text = errorText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.testTag("login_error"),
-            )
+        // The error shares the row with "Forgot password?" so it costs no extra height.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            if (errorText != null) {
+                Text(
+                    text = errorText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f).testTag("login_error"),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            if (onForgotPassword != null) {
+                TextButton(onClick = onForgotPassword, enabled = !state.isSigningIn, modifier = Modifier.testTag("login_forgot")) {
+                    Text(stringResource(R.string.auth_login_forgot), color = AuthEmerald, fontWeight = FontWeight.Medium)
+                }
+            }
         }
         SlideToSignIn(isSigningIn = state.isSigningIn, onSignIn = onSignIn, modifier = Modifier.testTag("login_submit"))
         // Only offered until a business has been set up on this device.
@@ -353,7 +358,17 @@ private fun LoginForm(
                 onClick = onSetUpBusiness,
                 enabled = !state.isSigningIn,
                 shape = RoundedCornerShape(32.dp),
-                modifier = Modifier.fillMaxWidth().height(56.dp).testTag("login_setup_business"),
+                // Half the form's width, centred; the padding is trimmed so the icon, label and arrow still fit.
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                // The glass draws its own rim, so the button's outline is switched off.
+                border = null,
+                // As tall as the sign-in slider including its raised edge.
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.5f)
+                    .height(SLIDER_HEIGHT + SLIDER_DEPTH)
+                    .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
+                    .testTag("login_setup_business"),
             ) {
                 Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AuthMint), contentAlignment = Alignment.Center) {
                     AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
@@ -419,23 +434,33 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                 .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent, Color.Black.copy(alpha = 0.10f))))
                 .pointerInput(travel, isSigningIn) {
                     if (isSigningIn) return@pointerInput
+                    // The sign-in fires the moment the thumb reaches the end (or is released past the threshold), not after the settle animation.
+                    var fired = false
+                    var position = offset.value
+                    fun fire() {
+                        if (fired) return
+                        fired = true
+                        signIn()
+                        scope.launch {
+                            offset.animateTo(travel, tween(80))
+                            delay(400)
+                            if (!signingIn) offset.animateTo(0f, bounce)
+                        }
+                    }
                     detectHorizontalDragGestures(
+                        onDragStart = {
+                            fired = false
+                            position = offset.value
+                        },
                         onDragEnd = {
-                            scope.launch {
-                                if (offset.value >= travel * SLIDE_THRESHOLD) {
-                                    offset.animateTo(travel, bounce)
-                                    signIn()
-                                    delay(400)
-                                    if (!signingIn) offset.animateTo(0f, bounce)
-                                } else {
-                                    offset.animateTo(0f, bounce)
-                                }
-                            }
+                            if (position >= travel * SLIDE_THRESHOLD) fire() else scope.launch { offset.animateTo(0f, bounce) }
                         },
                         onDragCancel = { scope.launch { offset.animateTo(0f, bounce) } },
                         onHorizontalDrag = { change, dx ->
                             change.consume()
-                            scope.launch { offset.snapTo((offset.value + dx).coerceIn(0f, travel)) }
+                            position = (position + dx).coerceIn(0f, travel)
+                            scope.launch { offset.snapTo(position) }
+                            if (position >= travel) fire()
                         },
                     )
                 }
