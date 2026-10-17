@@ -37,17 +37,13 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -202,7 +198,7 @@ fun LoginContent(
             }
         }
         if (topEnd != null) {
-            Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
+            Box(modifier = Modifier.align(Alignment.TopEnd).fixedInsetsPadding().padding(12.dp)) { topEnd() }
         }
     }
 }
@@ -217,7 +213,7 @@ private fun LoginPitch(modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(R.drawable.auxo_mark),
             contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.width(56.dp).aspectRatio(MARK_ASPECT),
+            modifier = Modifier.width(84.dp).aspectRatio(MARK_ASPECT),
         )
         Text(
             stringResource(R.string.app_name),
@@ -235,15 +231,16 @@ private fun LoginPitch(modifier: Modifier = Modifier) {
         Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
             Text(
                 stringResource(R.string.auth_login_hero_headline),
-                style = MaterialTheme.typography.headlineSmall.copy(lineHeight = 26.sp),
+                // Larger than before, with a little air between Manage, Sell and Grow.
+                style = MaterialTheme.typography.headlineMedium.copy(lineHeight = 36.sp),
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
             )
             Text(
                 stringResource(R.string.auth_login_hero_body),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.85f),
-                modifier = Modifier.padding(top = Spacing.xs).widthIn(max = 200.dp),
+                modifier = Modifier.padding(top = Spacing.xs).widthIn(max = 260.dp),
             )
         }
         Spacer(Modifier.weight(0.6f))
@@ -267,8 +264,6 @@ private fun LoginForm(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
             .padding(horizontal = Spacing.xl, vertical = Spacing.lg)
             .testTag("login"),
     ) {
@@ -278,7 +273,8 @@ private fun LoginForm(
             fontWeight = FontWeight.ExtraBold,
             color = AuthInk,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+            // Nudged 2 dp down without moving anything below it.
+            modifier = Modifier.fillMaxWidth().offset(y = 2.dp),
         )
         Text(
             stringResource(R.string.auth_login_subtitle),
@@ -349,7 +345,7 @@ private fun LoginForm(
                 }
             }
         }
-        SlideToSignIn(isSigningIn = state.isSigningIn, onSignIn = onSignIn, modifier = Modifier.testTag("login_submit"))
+        SlideToSignIn(isSigningIn = state.isSigningIn, onSignIn = onSignIn, modifier = Modifier.padding(horizontal = 2.dp).testTag("login_submit"))
         // Only offered until a business has been set up on this device.
         if (onSetUpBusiness != null) {
             OrDivider(stringResource(R.string.auth_login_setup_business))
@@ -365,6 +361,7 @@ private fun LoginForm(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .fillMaxWidth(0.5f)
+                    .padding(horizontal = 1.dp) // 2 dp narrower overall, still centred
                     .height(SLIDER_HEIGHT + SLIDER_DEPTH)
                     .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
                     .testTag("login_setup_business"),

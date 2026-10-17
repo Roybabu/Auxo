@@ -144,7 +144,7 @@ class LockScreensTest {
         composeRule.onNodeWithTag("lock_pin").performTextInput("2")
         composeRule.onNodeWithTag("lock_pin_unlock").performClick()
         composeRule.onNodeWithTag("lock_password").performTextInput("pw")
-        composeRule.onNodeWithTag("lock_sign_out").performScrollTo().performClick()
+        composeRule.onNodeWithTag("lock_sign_out").performClick()
         assertTrue("the typed digit reaches the screen: ${taps.pin}", taps.pin?.contains("2") == true)
         assertEquals(1, taps.pinUnlock)
         assertEquals("pw", taps.password)
@@ -172,7 +172,7 @@ class LockScreensTest {
         val taps = Taps()
         lockScreen(LockInfo(locked = true, hasPin = true), LockUiState(pin = "4829", password = "x"), taps = taps)
         composeRule.onNodeWithTag("lock_pin_unlock").assertIsEnabled()
-        composeRule.onNodeWithTag("lock_password_unlock").performScrollTo().performClick()
+        composeRule.onNodeWithTag("lock_password_unlock").performClick()
         assertEquals(1, taps.passwordUnlock)
     }
 
@@ -279,8 +279,8 @@ class LockScreensTest {
         composeRule.onNodeWithTag("quick_password").performTextInput("pw")
         composeRule.onNodeWithTag("quick_pin").performTextInput("4829")
         composeRule.onNodeWithTag("quick_confirm_pin").performTextInput("4829")
-        composeRule.onNodeWithTag("quick_pin_save").performScrollTo().performClick()
-        composeRule.onNodeWithTag("quick_cancel").performScrollTo().performClick()
+        composeRule.onNodeWithTag("quick_pin_save").performClick()
+        composeRule.onNodeWithTag("quick_cancel").performClick()
         assertEquals("pw", taps.password)
         assertEquals("4829", taps.pin)
         assertEquals("4829", taps.confirm)
@@ -336,7 +336,7 @@ class LockScreensTest {
         val taps = PageTaps()
         page(QuickUnlockUiState(form = QuickUnlockForm.FINGERPRINT), taps = taps)
         composeRule.onNodeWithTag("quick_password").performTextInput("pw")
-        composeRule.onNodeWithTag("quick_fingerprint_confirm").performScrollTo().performClick()
+        composeRule.onNodeWithTag("quick_fingerprint_confirm").performClick()
         assertEquals("pw", taps.password)
         assertEquals(1, taps.fingerprintOn)
     }
@@ -360,10 +360,10 @@ class LockScreensTest {
     fun theSuperAdmin_picksTheIdleTime() {
         val taps = PageTaps()
         page(QuickUnlockUiState(canChooseIdleTime = true, idleTimeout = IdleTimeout.MINUTES_2), taps = taps)
-        composeRule.onNodeWithText("Lock automatically").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("After 1 minute").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Never").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithTag("quick_idle_MINUTES_10").performScrollTo().performClick()
+        composeRule.onNodeWithText("Lock automatically").assertIsDisplayed()
+        composeRule.onNodeWithText("After 1 minute").assertIsDisplayed()
+        composeRule.onNodeWithText("Never").assertIsDisplayed()
+        composeRule.onNodeWithTag("quick_idle_MINUTES_10").performClick()
         assertEquals(IdleTimeout.MINUTES_10, taps.idle)
     }
 }

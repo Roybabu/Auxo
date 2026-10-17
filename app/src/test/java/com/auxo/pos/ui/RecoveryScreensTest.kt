@@ -316,8 +316,8 @@ class RecoveryScreensTest {
         composeRule.onNodeWithTag("reset_code").performTextInput("ABC")
         composeRule.onNodeWithTag("reset_password").performTextInput("pw")
         composeRule.onNodeWithTag("reset_confirm").performTextInput("pw")
-        composeRule.onNodeWithTag("reset_submit").performScrollTo().performClick()
-        composeRule.onNodeWithTag("reset_back").performScrollTo().performClick()
+        composeRule.onNodeWithTag("reset_submit").performClick()
+        composeRule.onNodeWithTag("reset_back").performClick()
         assertEquals("ABC", taps.code)
         assertEquals("pw", taps.password)
         assertEquals("pw", taps.confirm)
@@ -376,7 +376,7 @@ class RecoveryScreensTest {
         composeRule.setContent {
             AuxoTheme { LoginContent(LoginUiState(), {}, {}, {}, onForgotPassword = { forgot++ }) }
         }
-        composeRule.onNodeWithTag("login_forgot").performScrollTo().performClick()
+        composeRule.onNodeWithTag("login_forgot").performClick()
         assertEquals(1, forgot)
     }
 

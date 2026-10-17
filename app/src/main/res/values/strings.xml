@@ -1046,7 +1046,7 @@ in %2$s</string>
     </plurals>
     <string name="auth_login_forgot">Forgot password?</string>
     <string name="auth_login_hero_headline">Manage\nSell\nGrow</string>
-    <string name="auth_login_hero_body">Everything your business needs in one place.</string>
+    <string name="auth_login_hero_body">Everything your business needs\nin one place.</string>
     <string name="auth_login_remember_me">Remember me</string>
     <string name="auth_login_setup_business_action">Get started</string>
     <string name="recovery_screen_title">Recovery code</string>

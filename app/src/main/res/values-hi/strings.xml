@@ -1045,7 +1045,7 @@
     </plurals>
     <string name="auth_login_forgot">पासवर्ड भूल गए?</string>
     <string name="auth_login_hero_headline">मैनेज करें\nबेचें\nबढ़ाएं</string>
-    <string name="auth_login_hero_body">आपके बिज़नेस की हर ज़रूरत, एक ही जगह।</string>
+    <string name="auth_login_hero_body">आपके बिज़नेस की हर ज़रूरत,\nएक ही जगह।</string>
     <string name="auth_login_remember_me">मुझे याद रखें</string>
     <string name="auth_login_setup_business_action">शुरू करें</string>
     <string name="recovery_screen_title">रिकवरी कोड</string>
