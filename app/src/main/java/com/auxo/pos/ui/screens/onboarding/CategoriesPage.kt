@@ -63,8 +63,8 @@ import com.auxo.pos.ui.theme.AuthInkMuted
  * A picture that is still null is simply not drawn, so the page works with none of them. The places and sizes are
  * the ones in the mock-up; when a design export arrives, replace the Art(...) lines in DecorationArt().
  *
- * What is native code, not a picture: the headline (with its green part and the curl under it), the line below it,
- * the six cards (white card, round icon button, label, arrow button) and the dash above the headline. The six outline
+ * What is native code, not a picture: the headline (with its green part), the line below it,
+ * the six cards (white card, round icon button, label, arrow button). The six outline
  * icons are small vector files (res/drawable/ic_cat_*.xml), so they stay sharp at any size.
  */
 
@@ -151,9 +151,6 @@ private fun DecorationArt() {
 
 @Composable
 private fun Header() {
-    // The short green dash above the headline.
-    Box(Modifier.offset(207.dp, 120.dp).size(26.dp, 3.dp).background(AuthEmerald, RoundedCornerShape(2.dp)))
-
     // "Choose what you do": the part named by onboarding_cats_title_accent is green.
     val title = stringResource(R.string.onboarding_cats_title)
     val accent = stringResource(R.string.onboarding_cats_title_accent)
@@ -168,16 +165,6 @@ private fun Header() {
             style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.ExtraBold, color = AuthInk, textAlign = TextAlign.Center),
             modifier = Modifier.widthIn(max = 260.dp),
         )
-    }
-
-    // The green curl under the second line of the headline.
-    Canvas(Modifier.offset(188.dp, 262.dp).size(112.dp, 18.dp)) {
-        val path = Path().apply {
-            moveTo(0f, size.height * 0.75f)
-            cubicTo(size.width * 0.25f, size.height * 0.05f, size.width * 0.45f, size.height * 0.95f, size.width * 0.62f, size.height * 0.55f)
-            cubicTo(size.width * 0.72f, size.height * 0.3f, size.width * 0.9f, size.height * 0.35f, size.width, size.height * 0.2f)
-        }
-        drawPath(path, AuthEmerald, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
     }
 
     Box(Modifier.fillMaxWidth().offset(y = 286.dp), contentAlignment = Alignment.TopCenter) {
