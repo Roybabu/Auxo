@@ -72,13 +72,11 @@ import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.LoginMessage
 import com.auxo.pos.viewmodel.LoginUiState
 import com.auxo.pos.viewmodel.LoginViewModel
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.unit.Dp
 
 /** Width over height of auxo_mark.png (the icon glyph alone, cropped from the approved vertical lockup). */
 private const val MARK_ASPECT = 261f / 191f
 
-/** The least height of the illustrated top of the sign-in page, on a short screen. */
+/** Fixed height of the illustrated panel at the top of the sign-in page, whatever the screen's own height. */
 private val HERO_HEIGHT = 300.dp
 
 /** The sign-in screen: the first screen on every launch. [hasBusiness] is false until a business has been set up on this device. */
@@ -117,30 +115,18 @@ fun LoginContent(
     var rememberMe by rememberSaveable { mutableStateOf(true) }
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    // The green picture fills the whole screen behind everything and stays put. Its own white sheet is where the
-    // form sits, so the form needs no white card of its own.
-    BoxWithConstraints(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(if (dark) MaterialTheme.colorScheme.background else Color.White)
             .testTag("auth_screen"),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (!dark) {
-            Image(
-                painter = painterResource(R.drawable.auth_login_bg),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        // The picture's white sheet starts a little past the middle of a tall screen; never less than the old fixed panel.
-        val heroHeight = maxOf(HERO_HEIGHT, maxHeight * 0.52f)
-        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxSize().align(Alignment.TopCenter)) {
-            LoginHero(dark = dark, topEnd = topEnd, height = heroHeight)
+        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().fillMaxSize()) {
+            LoginHero(dark = dark, topEnd = topEnd)
             Surface(
                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                color = if (dark) MaterialTheme.colorScheme.surface else Color.Transparent,
+                color = if (dark) MaterialTheme.colorScheme.surface else Color.White,
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) {
                 LoginForm(
@@ -162,9 +148,18 @@ fun LoginContent(
 
 /** The illustrated panel: the Auxo mark and the "Manage / Sell / Grow" pitch, over the growth artwork. */
 @Composable
-private fun LoginHero(dark: Boolean, topEnd: (@Composable () -> Unit)?, height: Dp) {
-    Box(modifier = Modifier.fillMaxWidth().height(height)) {
-        if (dark) Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary))
+private fun LoginHero(dark: Boolean, topEnd: (@Composable () -> Unit)?) {
+    Box(modifier = Modifier.fillMaxWidth().height(HERO_HEIGHT)) {
+        if (dark) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary))
+        } else {
+            Image(
+                painter = painterResource(R.drawable.auth_login_bg),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
