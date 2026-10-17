@@ -1756,9 +1756,9 @@
     <string name="onboarding_splash_growth">तरक्की</string>
     <string name="onboarding_intro_title">आपका पूरा कारोबार, एक ही जगह</string>
     <string name="onboarding_intro_body">सामान, बिक्री, स्टॉक और ग्राहक — सब आसानी से सँभालें।</string>
-    <string name="onboarding_cats_title">आप क्या करते हैं, चुनें</string>
+    <string name="onboarding_cats_title">आप चुनें कि आप क्या करते हैं</string>
     <string name="onboarding_cats_title_accent">आप क्या करते हैं</string>
-    <string name="onboarding_cats_body">अपने कारोबार की श्रेणी चुनें और अपने हिसाब का अनुभव पाएँ।</string>
+    <string name="onboarding_cats_body">आप अपने कारोबार की श्रेणी चुन सकते हैं और अपने हिसाब का अनुभव पा सकते हैं।</string>
     <string name="onboarding_cat_apparel">कपड़े और परिधान</string>
     <string name="onboarding_cat_food">खाना और पेय</string>
     <string name="onboarding_cat_grocery">किराना और ज़रूरी सामान</string>
