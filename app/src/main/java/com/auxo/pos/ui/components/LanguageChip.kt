@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -82,11 +80,11 @@ fun LanguageChipContent(current: Language, followsPhone: Boolean, onChange: (Lan
                 modifier = Modifier.clickable { open = true }.padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(painterResource(R.drawable.ic_language), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(18.dp))
+                AuxoIcon(R.drawable.ic_language, contentDescription = null, size = AuxoIconSize.Nav, style = AuxoIconStyle.Flat)
                 Spacer(Modifier.width(6.dp))
                 Text(current.nativeName, style = MaterialTheme.typography.labelLarge, color = AuthInk)
                 Spacer(Modifier.width(2.dp))
-                Icon(painterResource(R.drawable.ic_chevron_down), contentDescription = null, tint = AuthInk, modifier = Modifier.size(18.dp))
+                AuxoIcon(R.drawable.ic_chevron_down, contentDescription = null, size = AuxoIconSize.Nav, style = AuxoIconStyle.Flat)
             }
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {

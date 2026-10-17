@@ -71,6 +71,9 @@ import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.LoginMessage
 import com.auxo.pos.viewmodel.LoginUiState
 import com.auxo.pos.viewmodel.LoginViewModel
+import com.auxo.pos.ui.components.AuxoIconStyle
+import com.auxo.pos.ui.components.AuxoIconSize
+import com.auxo.pos.ui.components.AuxoIcon
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.requiredHeight
@@ -373,12 +376,12 @@ private fun LoginForm(
                 modifier = Modifier.fillMaxWidth().height(56.dp).testTag("login_setup_business"),
             ) {
                 Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AuthMint), contentAlignment = Alignment.Center) {
-                    Icon(painterResource(R.drawable.ic_store), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(20.dp))
+                    AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
                 }
                 Spacer(Modifier.width(12.dp))
                 Text(stringResource(R.string.auth_login_setup_business_action), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(8.dp))
-                Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(20.dp))
+                AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
             }
         }
         Spacer(Modifier.height(bottomClearance))

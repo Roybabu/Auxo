@@ -196,7 +196,7 @@ fun AuthPillField(
                 modifier = Modifier.size(40.dp).clip(CircleShape).background(AuthMint),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(icon), contentDescription = null, tint = AuthEmerald, modifier = Modifier.size(22.dp))
+                AuxoIcon(icon, contentDescription = null, size = AuxoIconSize.Medium, style = AuxoIconStyle.Flat)
             }
         },
         trailingIcon = trailingIcon,
