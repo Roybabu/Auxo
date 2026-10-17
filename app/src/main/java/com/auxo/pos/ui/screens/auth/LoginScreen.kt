@@ -1,12 +1,9 @@
 package com.auxo.pos.ui.screens.auth
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,11 +12,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import com.auxo.pos.ui.components.AuthPillField
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.LanguageChip
@@ -100,7 +95,6 @@ fun LoginContent(
     AuthLayout(
         backdropImage = R.drawable.auth_login_bg,
         logoWidth = 300.dp,
-        decoration = { LoginLeaves() },
         footer = { NewToAuxo() },
         topEnd = topEnd,
     ) {
@@ -210,21 +204,4 @@ private fun NewToAuxo() {
             Text(stringResource(R.string.auth_login_new_body), style = MaterialTheme.typography.bodyMedium, color = AuthInkMuted)
         }
     }
-}
-
-/** Loose leaves around the logo and the edges, placed by the screen's width and height and turned by hand. */
-@Composable
-private fun BoxWithConstraintsScope.LoginLeaves() {
-    val w = maxWidth
-    val h = maxHeight
-    @Composable
-    fun Leaf(@DrawableRes picture: Int, at: Alignment, x: Dp, y: Dp, width: Dp, degrees: Float) =
-        Illustration(picture, Modifier.align(at).offset(x = x, y = y).width(width).rotate(degrees))
-    Leaf(R.drawable.onb_leaf_9, Alignment.TopStart, w * 0.08f, h * 0.07f, w * 0.12f, -25f)
-    Leaf(R.drawable.onb_leaf_2, Alignment.TopEnd, w * -0.06f, h * 0.15f, w * 0.11f, 30f)
-    Leaf(R.drawable.onb_leaf_10, Alignment.TopStart, w * 0.02f, h * 0.21f, w * 0.10f, -50f)
-    Leaf(R.drawable.onb_leaf_5, Alignment.CenterEnd, w * 0.01f, h * 0.10f, w * 0.08f, 120f)
-    Leaf(R.drawable.onb_leaf_4, Alignment.BottomStart, w * -0.02f, h * -0.04f, w * 0.13f, 40f)
-    Leaf(R.drawable.onb_leaf_8, Alignment.BottomEnd, w * -0.04f, h * -0.07f, w * 0.10f, -60f)
-    Leaf(R.drawable.onb_leaf_6, Alignment.BottomEnd, w * 0.02f, h * -0.16f, w * 0.14f, 20f)
 }
