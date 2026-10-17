@@ -164,7 +164,9 @@ fun BackupContent(
                 }
             }
 
-            ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
+            // Choosing a passphrase is no longer offered. The card only appears on a phone that already locks its
+            // backups, so the lock can still be changed or turned off there.
+            if (state.isProtected) ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
 
             extra()
 

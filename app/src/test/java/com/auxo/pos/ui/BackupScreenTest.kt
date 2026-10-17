@@ -1,6 +1,7 @@
 package com.auxo.pos.ui
 
 import android.net.Uri
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -107,12 +108,10 @@ class BackupScreenTest {
     }
 
     @Test
-    fun lockingIsOffByDefault_andTheCardSaysSo() {
+    fun lockingIsNotOffered_whenBackupsAreNotLocked() {
         show(BackupUiState())
-        composeRule.onNodeWithText("Lock backups with a passphrase").assertIsDisplayed()
-        composeRule.onNodeWithText("Backups are not locked.", substring = true).assertIsDisplayed()
-        composeRule.onNodeWithTag("backup_protect_set").performClick()
-        assertEquals(listOf("choose passphrase"), log)
+        composeRule.onNodeWithTag("backup_protection").assertDoesNotExist()
+        composeRule.onNodeWithText("Lock backups with a passphrase").assertDoesNotExist()
     }
 
     @Test
