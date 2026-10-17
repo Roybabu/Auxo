@@ -46,7 +46,6 @@ import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuxoArtwork
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.crystalGlass
-import com.auxo.pos.ui.components.featheredEdges
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
@@ -195,15 +194,15 @@ private fun CardGrid() {
 }
 
 /**
- * One category as a thin panel of crystal glass (see [crystalGlass]): the page shows through it, the picture is
- * drawn sharp on top with only its outer edge softened, and the icon and arrow sit in small glass badges.
+ * One category as a thin panel of crystal glass (see [crystalGlass]): the page shows through it, the picture (a cut-out with a
+ * transparent background) is drawn sharp on top, and the icon and arrow sit in small glass badges.
  * There is no selection on these cards yet; when there is, pass it to crystalGlass(selected = ...).
  */
 @Composable
 private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(22.dp)
     Column(modifier = modifier.crystalGlass(shape)) {
-        Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp).featheredEdges())
+        Illustration(card.picture, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp))
         Row(
             modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,

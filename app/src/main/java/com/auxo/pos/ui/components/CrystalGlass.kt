@@ -5,15 +5,12 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -114,28 +111,5 @@ fun Modifier.crystalGlass(shape: Shape, selected: Boolean = false, elevation: Dp
                 drawOutline(outline, brush = topEdge, style = Stroke(width = line * 1.4f))
                 drawOutline(outline, brush = cornerLit, style = Stroke(width = line * 1.6f))
                 drawOutline(outline, brush = cornerFar, style = Stroke(width = line * 1.4f))
-            }
-        }
-
-/**
- * Softens the edges of a picture so a product shot with a pale backdrop melts into the glass and the page instead
- * of showing as a rectangle. The picture itself is not touched: only its outermost [feather] is faded out, so the
- * product stays sharp and fully visible.
- */
-fun Modifier.featheredEdges(feather: Dp = 14.dp): Modifier =
-    this
-        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-        .drawWithCache {
-            val f = feather.toPx().coerceAtMost(minOf(size.width, size.height) / 2f)
-            val across = Brush.horizontalGradient(
-                0f to Color.Transparent, f / size.width to Color.Black, 1f - f / size.width to Color.Black, 1f to Color.Transparent,
-            )
-            val down = Brush.verticalGradient(
-                0f to Color.Transparent, f / size.height to Color.Black, 1f - f / size.height to Color.Black, 1f to Color.Transparent,
-            )
-            onDrawWithContent {
-                drawContent()
-                drawRect(across, blendMode = BlendMode.DstIn)
-                drawRect(down, blendMode = BlendMode.DstIn)
             }
         }
