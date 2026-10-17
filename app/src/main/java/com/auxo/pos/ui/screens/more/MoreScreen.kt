@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -17,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +26,8 @@ import com.auxo.pos.core.auth.Permission
 import com.auxo.pos.core.auth.Role
 import com.auxo.pos.ui.LocalCapabilities
 import com.auxo.pos.ui.can
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.ConfirmDialog
 import com.auxo.pos.ui.LocalSuppliersEnabled
 import com.auxo.pos.ui.components.AuxoCard
@@ -256,7 +256,7 @@ fun Role.labelRes(): Int = when (this) {
 private fun MoreItem(@DrawableRes icon: Int, title: String, body: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     AuxoCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            AuxoIcon(icon, contentDescription = null, size = AuxoIconSize.Medium)
             Column(modifier = Modifier
                 .weight(1f)
                 .padding(start = Spacing.lg)) {

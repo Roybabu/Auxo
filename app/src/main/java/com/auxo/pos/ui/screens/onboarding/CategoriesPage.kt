@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.auxo.pos.R
+import com.auxo.pos.ui.components.AuxoArtwork
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.theme.AuthCard
 import com.auxo.pos.ui.theme.AuthEmerald
@@ -64,8 +65,8 @@ import com.auxo.pos.ui.theme.AuthInkMuted
  * the ones in the mock-up; when a design export arrives, replace the Art(...) lines in DecorationArt().
  *
  * What is native code, not a picture: the headline (with its green part), the line below it,
- * the six cards (white card, round icon button, label, arrow button). The six outline
- * icons are small vector files (res/drawable/ic_cat_*.xml), so they stay sharp at any size.
+ * the six cards (white card, round icon button, label, arrow button). The six category
+ * icons are soft-render emerald vector artwork (res/drawable/ic_cat_*.xml, drawn by tools/gen_category_icons.py), so they stay sharp at any size.
  */
 
 // ---------------------------------------------- PICTURES ----------------------------------------------
@@ -83,7 +84,7 @@ private val LeavesBottomLeft: Int? = null
 private val LeafBottomMiddle: Int? = null
 private val LeafBottomRight: Int? = null
 
-/** The six card pictures, each with the green outline icon (res/drawable/ic_cat_*.xml) shown in the round button beside its label. */
+/** The six card pictures, each with its emerald category icon (res/drawable/ic_cat_*.xml) shown on a mint disc beside its label. */
 private class CategoryCard(
     @DrawableRes val picture: Int,
     @StringRes val label: Int,
@@ -204,9 +205,8 @@ private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(42.dp).background(IconBack, CircleShape), contentAlignment = Alignment.Center) {
-                    card.icon?.let { Image(painterResource(it), contentDescription = null, modifier = Modifier.size(22.dp)) }
-                }
+                card.icon?.let { AuxoArtwork(it, contentDescription = null, size = 42.dp) }
+                    ?: Box(Modifier.size(42.dp).background(IconBack, CircleShape))
                 Spacer(Modifier.width(10.dp))
                 Text(
                     stringResource(card.label),

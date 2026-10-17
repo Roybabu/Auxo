@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +27,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -38,6 +38,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.domain.model.CustomerAccount
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.AuxoCard
@@ -253,7 +255,7 @@ private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit, ageDays: 
             StatusChip(text = balanceText(account.balance), tone = balanceTone(account.balance))
             if (onRemind != null) {
                 IconButton(onClick = onRemind, modifier = Modifier.testTag("remind_${account.customer.id}")) {
-                    Icon(painterResource(R.drawable.ic_chat), contentDescription = stringResource(R.string.reminder_button))
+                    AuxoIcon(R.drawable.ic_chat, stringResource(R.string.reminder_button), size = AuxoIconSize.Compact)
                 }
             }
         }

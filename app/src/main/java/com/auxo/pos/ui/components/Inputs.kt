@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -14,7 +13,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -97,7 +95,7 @@ fun QuantityStepper(
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = { onValueChange((value - 1).coerceAtLeast(min)) }, enabled = value > min) {
-            Icon(painterResource(R.drawable.ic_remove), contentDescription = stringResource(R.string.action_decrease))
+            AuxoIcon(R.drawable.ic_remove, stringResource(R.string.action_decrease), size = AuxoIconSize.Compact)
         }
         Text(
             text = value.toString(),
@@ -106,7 +104,7 @@ fun QuantityStepper(
             modifier = Modifier.widthIn(min = 32.dp),
         )
         IconButton(onClick = { onValueChange((value + 1).coerceAtMost(max)) }, enabled = value < max) {
-            Icon(painterResource(R.drawable.ic_add), contentDescription = stringResource(R.string.action_increase))
+            AuxoIcon(R.drawable.ic_add, stringResource(R.string.action_increase), size = AuxoIconSize.Compact)
         }
     }
 }

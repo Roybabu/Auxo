@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -36,6 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.StrengthMeter
@@ -203,9 +203,10 @@ fun AdminSetupContent(
 @Composable
 internal fun PasswordToggle(visible: Boolean, onToggle: () -> Unit) {
     IconButton(onClick = onToggle, modifier = Modifier.testTag("password_toggle")) {
-        Icon(
-            painterResource(if (visible) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
-            contentDescription = stringResource(if (visible) R.string.auth_hide_password else R.string.auth_show_password),
+        AuxoIcon(
+            if (visible) R.drawable.ic_visibility_off else R.drawable.ic_visibility,
+            stringResource(if (visible) R.string.auth_hide_password else R.string.auth_show_password),
+            size = AuxoIconSize.Mini,
         )
     }
 }

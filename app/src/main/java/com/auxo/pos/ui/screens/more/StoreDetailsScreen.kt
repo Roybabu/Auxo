@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,13 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuxoCard
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.screens.billing.BillingSettingsScreen
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.StoreLogoUiState
@@ -126,12 +126,7 @@ private fun LogoPreview(logo: Bitmap?) {
             )
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.testTag("store_logo_placeholder")) {
-                Icon(
-                    painterResource(R.drawable.ic_image),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(36.dp),
-                )
+                AuxoIcon(R.drawable.ic_image, contentDescription = null, size = AuxoIconSize.Large)
                 Text(
                     stringResource(R.string.store_logo_placeholder),
                     style = MaterialTheme.typography.bodySmall,

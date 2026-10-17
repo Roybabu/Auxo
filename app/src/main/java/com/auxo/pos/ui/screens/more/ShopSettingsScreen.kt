@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -18,12 +17,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuxoCard
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.ShopUiState
@@ -66,7 +66,7 @@ fun ShopSettingsContent(
             }
             AuxoCard(onClick = onOpenStoreDetails, modifier = Modifier.fillMaxWidth().testTag("shop_store_details")) {
                 Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.ic_store), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Medium)
                     Column(modifier = Modifier
                         .weight(1f)
                         .padding(start = Spacing.lg)) {

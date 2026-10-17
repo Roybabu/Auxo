@@ -2,7 +2,6 @@ package com.auxo.pos.ui.components
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -10,7 +9,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.auxo.pos.R
@@ -29,10 +27,7 @@ fun AuxoTopAppBar(
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.action_back),
-                    )
+                    AuxoIcon(R.drawable.ic_arrow_back, stringResource(R.string.action_back), size = AuxoIconSize.Compact)
                 }
             }
         },
@@ -48,6 +43,6 @@ fun AuxoTopAppBar(
 @Composable
 fun ActionIcon(iconRes: Int, contentDescription: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
-        Icon(painter = painterResource(iconRes), contentDescription = contentDescription)
+        AuxoIcon(iconRes, contentDescription, size = AuxoIconSize.Compact)
     }
 }

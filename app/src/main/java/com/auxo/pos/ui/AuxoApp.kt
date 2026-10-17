@@ -1,6 +1,5 @@
 package com.auxo.pos.ui
 
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -9,7 +8,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -17,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.auxo.pos.ui.navigation.AuxoNavHost
 import com.auxo.pos.ui.navigation.TopLevelDestination
 import com.auxo.pos.ui.navigation.navigateToTopLevel
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 
 /**
  * Root composable. The five main destinations appear as a bottom bar on phones
@@ -39,7 +39,10 @@ fun AuxoApp() {
                 item(
                     selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                     onClick = { navController.navigateToTopLevel(destination) },
-                    icon = { Icon(painterResource(destination.iconRes), contentDescription = null) },
+                    icon = {
+                        val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
+                        AuxoIcon(destination.iconRes, contentDescription = null, size = AuxoIconSize.Nav, selected = selected)
+                    },
                     label = { Text(stringResource(destination.labelRes)) },
                 )
             }
