@@ -83,7 +83,7 @@ class OnboardingScreenTest {
 
         next()
         composeRule.onNodeWithTag("onboarding_categories").assertIsDisplayed()
-        composeRule.onNodeWithText("Works for any business").assertIsDisplayed()
+        composeRule.onNodeWithText("You choose what you do").assertIsDisplayed()
         for (index in 0..5) composeRule.onNodeWithTag("onboarding_category_$index").assertIsDisplayed()
         composeRule.onNodeWithText("Apparel & Garments").assertIsDisplayed()
         composeRule.onNodeWithText("General Store").assertIsDisplayed()
