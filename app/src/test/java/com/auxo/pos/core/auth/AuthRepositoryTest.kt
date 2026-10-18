@@ -63,6 +63,20 @@ class AuthRepositoryTest {
         assertFalse(accountFile.exists())
     }
 
+    // The login screen offers "Get started" while the state is NeedsSetup, so it must stay there until an account exists.
+    @Test
+    fun beforeAnyoneSignsUp_manyAttempts_keepTheDeviceInNeedsSetup() = runBlocking {
+        val auth = launch()
+        repeat(3) { assertEquals(SignInResult.Unavailable, auth.signIn("sample.user", "Green-Leaf-42")) }
+        repeat(3) { assertTrue(auth.setUp(pw = "short", confirm = "short") is SetupResult.Invalid) }
+        assertTrue(auth.setUp(confirm = "nope") is SetupResult.Invalid)
+        assertEquals(AuthState.NeedsSetup, auth.state.value)
+        assertEquals(AuthState.NeedsSetup, launch().state.value)
+        assertEquals(SetupResult.Created, auth.setUp())
+        auth.signOut()
+        assertEquals(AuthState.SignedOut, auth.state.value)
+    }
+
     @Test
     fun aLeftoverTemporaryFile_isNotAnAccount() {
         File(dir, "accounts.json.tmp").writeText("{half written")

@@ -1,5 +1,7 @@
 package com.auxo.pos.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -76,6 +78,15 @@ fun AuxoNavHost(
         navController = navController,
         startDestination = TopLevelDestination.START.route,
         modifier = modifier,
+        // No animation at all: Navigation's default is a 700 ms cross-fade, and even a short one keeps the old screen drawn
+        // while the new one is built. With none, the old screen is gone the moment the new one is ready.
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
+        // The back gesture on Android 14+ plays its own shrink-and-settle preview; none of it either.
+        predictivePopEnterTransition = { EnterTransition.None },
+        predictivePopExitTransition = { ExitTransition.None },
     ) {
         guarded(navController, TopLevelDestination.HOME.route) {
             if (can(Permission.VIEW_DASHBOARD)) {

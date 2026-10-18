@@ -37,11 +37,14 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -93,7 +96,6 @@ import com.auxo.pos.ui.components.AuxoIconStyle
 import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.components.AuxoIcon
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBarsPadding
 
@@ -166,7 +168,10 @@ fun LoginContent(
         // The picture sets the page's shape. On a wide or short window the column narrows so the whole picture still fits its height.
         val width = minOf(maxWidth, MAX_LOGIN_WIDTH, maxHeight / ART_ASPECT)
         val artHeight = width * ART_ASPECT
-        Box(modifier = Modifier.width(width).fillMaxHeight().align(Alignment.TopCenter)) {
+        val pageHeight = maxHeight
+        // The page keeps its exact shape. Only when the keyboard is up does the viewport shrink and scroll, so the field being typed in is never hidden.
+        Box(modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
+        Box(modifier = Modifier.width(width).height(pageHeight).align(Alignment.TopCenter)) {
             Image(
                 painter = painterResource(R.drawable.auth_login_bg),
                 contentDescription = null,
@@ -197,6 +202,7 @@ fun LoginContent(
                     onTogglePassword = { showPassword = !showPassword },
                 )
             }
+        }
         }
         if (topEnd != null) {
             Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
@@ -439,6 +445,7 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                         scope.launch {
                             offset.animateTo(travel, tween(80))
                             delay(400)
+                            // While the sign-in runs the thumb waits at the end; the effect above brings it back when it stops.
                             if (!signingIn) offset.animateTo(0f, bounce)
                         }
                     }
@@ -448,11 +455,18 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                             position = offset.value
                         },
                         onDragEnd = {
-                            if (position >= travel * SLIDE_THRESHOLD) fire() else scope.launch { offset.animateTo(0f, bounce) }
+                            when {
+                                fired -> Unit // already on its way back, see fire()
+                                position >= travel * SLIDE_THRESHOLD -> fire()
+                                else -> scope.launch { offset.animateTo(0f, bounce) }
+                            }
                         },
-                        onDragCancel = { scope.launch { offset.animateTo(0f, bounce) } },
+                        onDragCancel = { if (!fired) scope.launch { offset.animateTo(0f, bounce) } },
                         onHorizontalDrag = { change, dx ->
                             change.consume()
+                            // Once the sign-in has fired, a finger still moving must not drag the thumb: that would cancel
+                            // the animation that returns it, and it would stay stuck on the right.
+                            if (fired) return@detectHorizontalDragGestures
                             position = (position + dx).coerceIn(0f, travel)
                             scope.launch { offset.snapTo(position) }
                             if (position >= travel) fire()
