@@ -1469,8 +1469,11 @@
     <string name="held_on_counter">अभी काउंटर पर है</string>
     <string name="held_resume">फिर शुरू करें</string>
     <string name="held_discard">हटाएँ</string>
+    <string name="held_review">देखें</string>
+    <string name="held_review_close">बंद करें</string>
+    <string name="held_review_unreadable">यह बिल अब पढ़ा नहीं जा सकता। आप इसे फिर भी हटा सकते हैं।</string>
     <string name="held_discard_title">यह होल्ड किया गया बिल हटाएँ?</string>
-    <string name="held_discard_body">%1$s होल्ड किए गए बिलों से हटा दिया जाएगा। इसे वापस नहीं लाया जा सकता।</string>
+    <string name="held_discard_body">क्या आप पक्का हैं? %1$s होल्ड किए गए बिलों से हटा दिया जाएगा। इसे वापस नहीं लाया जा सकता।</string>
     <string name="billing_bill_held">बिल होल्ड हो गया। अब अगला बिल शुरू कर सकते हैं।</string>
     <string name="held_unavailable">वह होल्ड किया गया बिल अब उपलब्ध नहीं है।</string>
     <plurals name="held_items">

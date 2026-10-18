@@ -15,6 +15,10 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.domain.billing.HeldBillSummary
 import com.auxo.pos.domain.model.Money
+import com.auxo.pos.domain.billing.Cart
+import com.auxo.pos.domain.billing.CartLine
+import com.auxo.pos.domain.billing.HeldBill
+import androidx.compose.ui.test.assertCountEquals
 import com.auxo.pos.ui.screens.billing.HeldBillsDialog
 import com.auxo.pos.ui.screens.billing.HoldBillForm
 import com.auxo.pos.ui.theme.AuxoTheme
@@ -76,25 +80,83 @@ class HeldBillsUiTest {
         composeRule.onNodeWithText("Hold or clear the current bill before resuming another.").assertIsDisplayed()
     }
 
+    private val heldBill = HeldBill(
+        bills[0],
+        Cart(
+            lines = listOf(
+                CartLine(
+                    variantId = 7, productId = 7, productName = "Basmati rice", variantLabel = "5 kg", barcode = "", hsnCode = null,
+                    unitPrice = Money(450_00), mrp = null, gstRate = null, quantity = 1, availableStock = 10,
+                ),
+            ),
+        ),
+    )
+
     @Test
-    fun discard_asksFirst_andOnlyThenRemoves() {
+    fun theList_hasNoDiscardButton_onlyResumeAndReview() {
+        composeRule.setContent {
+            AuxoTheme { HeldBillsDialog(bills, counterIsEmpty = true, resumedId = null, onResume = {}, onDiscard = {}, onDismiss = {}) }
+        }
+        composeRule.onNodeWithTag("held_review_open_1").assertIsDisplayed()
+        composeRule.onNodeWithTag("held_resume_1").assertIsDisplayed()
+        composeRule.onNodeWithTag("held_discard_1").assertDoesNotExist()
+        composeRule.onAllNodes(hasText("Discard")).assertCountEquals(0)
+    }
+
+    @Test
+    fun review_showsTheItems_andOffersResumeAndClose() {
+        var resumed: Long? = null
+        composeRule.setContent {
+            AuxoTheme {
+                HeldBillsDialog(
+                    bills, counterIsEmpty = true, resumedId = null, onResume = { resumed = it }, onDiscard = {}, onDismiss = {},
+                    onLoad = { heldBill },
+                )
+            }
+        }
+        composeRule.onNodeWithTag("held_review_open_1").performClick()
+        composeRule.onNodeWithText("Basmati rice").assertIsDisplayed()
+        composeRule.onNodeWithText("5 kg").assertIsDisplayed()
+        composeRule.onNodeWithTag("held_review_resume").performClick()
+        assertEquals(1L, resumed)
+    }
+
+    @Test
+    fun discard_livesInReview_asksAreYouSure_andOnlyThenRemoves() {
         val discarded = mutableListOf<Long>()
         composeRule.setContent {
             AuxoTheme {
-                HeldBillsDialog(bills, counterIsEmpty = true, resumedId = null, onResume = {}, onDiscard = { discarded += it }, onDismiss = {})
+                HeldBillsDialog(
+                    bills, counterIsEmpty = true, resumedId = null, onResume = {}, onDiscard = { discarded += it }, onDismiss = {},
+                    onLoad = { heldBill },
+                )
             }
         }
-        composeRule.onNodeWithTag("held_discard_1").performClick()
+        composeRule.onNodeWithTag("held_review_open_1").performClick()
+        composeRule.onNodeWithTag("held_review_discard").performClick()
         composeRule.onNodeWithText("Discard this held bill?").assertIsDisplayed()
+        composeRule.onNodeWithText("Are you sure?", substring = true).assertIsDisplayed()
         assertTrue(discarded.isEmpty())
         // Cancel keeps it.
         composeRule.onNodeWithText("Cancel").performClick()
         assertTrue(discarded.isEmpty())
 
-        composeRule.onNodeWithTag("held_discard_1").performClick()
-        // The dialog's own button, not the row's.
+        composeRule.onNodeWithTag("held_review_discard").performClick()
+        // The confirmation's own button is the last "Discard" on screen.
         composeRule.onAllNodes(hasText("Discard")).onLast().performClick()
         assertEquals(listOf(1L), discarded)
+    }
+
+    @Test
+    fun aBillThatCannotBeRead_canStillBeReviewedAndDiscarded() {
+        composeRule.setContent {
+            AuxoTheme {
+                HeldBillsDialog(bills, counterIsEmpty = true, resumedId = null, onResume = {}, onDiscard = {}, onDismiss = {}, onLoad = { null })
+            }
+        }
+        composeRule.onNodeWithTag("held_review_open_2").performClick()
+        composeRule.onNodeWithTag("held_review_unreadable").assertIsDisplayed()
+        composeRule.onNodeWithTag("held_review_discard").assertIsDisplayed()
     }
 
     @Test

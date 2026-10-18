@@ -337,9 +337,6 @@ fun BillingScreen(
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
                         ActionIcon(R.drawable.ic_history, stringResource(R.string.billing_history), onOpenHistory)
-                        if (canManageSettings) {
-                            ActionIcon(R.drawable.ic_settings, stringResource(R.string.billing_settings), onOpenSettings)
-                        }
                     }
                 },
             )
@@ -429,6 +426,7 @@ fun BillingScreen(
             },
             onDiscard = viewModel::discardHeld,
             onDismiss = { showHeld = false },
+            onLoad = viewModel::loadHeld,
         )
     }
 

@@ -1469,8 +1469,11 @@ in %2$s</string>
     <string name="held_on_counter">On the counter now</string>
     <string name="held_resume">Resume</string>
     <string name="held_discard">Discard</string>
+    <string name="held_review">Review</string>
+    <string name="held_review_close">Close</string>
+    <string name="held_review_unreadable">This bill can\'t be read any more. You can still discard it.</string>
     <string name="held_discard_title">Discard this held bill?</string>
-    <string name="held_discard_body">%1$s will be removed from the held bills. This cannot be undone.</string>
+    <string name="held_discard_body">Are you sure? %1$s will be removed from the held bills. This cannot be undone.</string>
     <string name="billing_bill_held">Bill held. You can start the next one.</string>
     <string name="held_unavailable">That held bill is no longer available.</string>
     <plurals name="held_items">

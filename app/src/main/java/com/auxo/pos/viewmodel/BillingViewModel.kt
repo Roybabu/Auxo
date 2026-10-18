@@ -792,6 +792,10 @@ class BillingViewModel(
         }
     }
 
+    /** Reads a parked bill to look at it, without putting it on the counter. Null when it is gone or cannot be read. */
+    suspend fun loadHeld(id: Long): com.auxo.pos.domain.billing.HeldBill? =
+        runCatching { heldBills?.get(id) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+
     /** Throws a parked bill away. The screen asks first. */
     fun discardHeld(id: Long) {
         val store = heldBills ?: return
