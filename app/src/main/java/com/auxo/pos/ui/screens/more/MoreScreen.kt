@@ -137,7 +137,7 @@ fun MoreScreen(
             }
             if (can(Permission.MANAGE_USERS)) {
                 MoreItem(
-                    R.drawable.ic_group,
+                    R.drawable.ic_badge,
                     stringResource(R.string.users_title),
                     stringResource(R.string.more_users_body),
                     actions::onOpenUsers,
@@ -177,7 +177,7 @@ fun MoreScreen(
                     MoreItem(R.drawable.ic_swap, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
                 }
                 if (showCount) {
-                    MoreItem(R.drawable.ic_nav_inventory, stringResource(R.string.count_title), stringResource(R.string.more_count_body), actions::onOpenCount, modifier = Modifier.testTag("more_stock_count"))
+                    MoreItem(R.drawable.ic_fact_check, stringResource(R.string.count_title), stringResource(R.string.more_count_body), actions::onOpenCount, modifier = Modifier.testTag("more_stock_count"))
                 }
                 if (showImport) {
                     MoreItem(R.drawable.ic_download, stringResource(R.string.import_title), stringResource(R.string.more_import_body), actions::onOpenImport, modifier = Modifier.testTag("more_import_products"))
@@ -189,11 +189,11 @@ fun MoreScreen(
                 MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
             }
             if (can(Permission.VIEW_FINANCIALS)) {
-                MoreItem(R.drawable.ic_receipt, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
+                MoreItem(R.drawable.ic_invoice, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
             } else {
                 // An Employee opens past invoices to view, print or share them; there are no payment records or totals.
                 MoreItem(
-                    R.drawable.ic_receipt,
+                    R.drawable.ic_invoice,
                     stringResource(R.string.employee_home_invoices),
                     stringResource(R.string.more_invoices_only_body),
                     actions::onOpenHistory,

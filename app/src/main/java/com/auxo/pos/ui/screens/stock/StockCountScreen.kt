@@ -175,7 +175,7 @@ fun StockCountContent(state: StockCountUiState, actions: StockCountActions, modi
         state.isLoading -> LoadingState(modifier)
         state.loadFailed -> ErrorState(stringResource(R.string.error_generic), actions::onRetry, modifier)
         state.count == null -> EmptyState(
-            iconRes = R.drawable.ic_nav_inventory,
+            iconRes = R.drawable.ic_fact_check,
             title = stringResource(R.string.count_intro_title),
             message = stringResource(R.string.count_intro_body),
             actionLabel = stringResource(R.string.count_start),
