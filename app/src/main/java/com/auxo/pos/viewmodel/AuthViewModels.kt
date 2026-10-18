@@ -1,5 +1,6 @@
 package com.auxo.pos.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,12 @@ import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.auth.PasswordStrength
 import com.auxo.pos.core.auth.SavedSessionVault
 import com.auxo.pos.core.auth.UsernameSuggestions
+import com.auxo.pos.domain.billing.Fssai
+import com.auxo.pos.domain.billing.Gstin
+import com.auxo.pos.domain.billing.SettingsError
+import com.auxo.pos.domain.billing.SettingsField
+import com.auxo.pos.domain.billing.SettingsValidator
+import com.auxo.pos.domain.model.StoreSettings
 import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.core.auth.SetupResult
@@ -32,7 +39,19 @@ data class AdminSetupUiState(
     val isSubmitting: Boolean = false,
     val saveFailed: Boolean = false,
     val businessName: String = "",
+    /** The optional store details (address, GST, UPI, receipt and so on). The store name comes from [businessName]. */
+    val details: StoreSettings = StoreSettings(),
+    /** A logo picked on the form; it is saved once the account exists, because saving it needs a signed-in person. */
+    val logo: Uri? = null,
 ) {
+    /**
+     * Problems in what was typed under the optional details. Nothing there is required, so an empty field, or a
+     * GST state that is still unchosen, is never a problem; only a value that is filled in wrongly is.
+     */
+    val detailErrors: Map<SettingsField, SettingsError>
+        get() = SettingsValidator.check(details.copy(storeName = "-"))
+            .filterKeys { it != SettingsField.STORE_NAME && it != SettingsField.STATE }
+
     /** Username ideas from the typed name, offered only while the username is still empty. */
     val suggestions: List<String> get() = if (identifier.isBlank()) UsernameSuggestions.from(name) else emptyList()
 
@@ -41,18 +60,32 @@ data class AdminSetupUiState(
 }
 
 /**
- * [saveBusinessName] stores the business name once the account exists. The app wires it to the store settings and runs it
- * outside this screen, so it still completes when setup closes the moment the account is created.
+ * [saveStore] stores the business name, the optional store details and the picked logo (if any) once the account exists.
+ * The app wires it to the store settings and runs it outside this screen, so it still completes when setup closes the
+ * moment the account is created.
  */
 class AdminSetupViewModel(
     private val auth: AuthRepository,
-    private val saveBusinessName: (String) -> Unit = {},
+    private val saveStore: (businessName: String, details: StoreSettings, logo: Uri?) -> Unit = { _, _, _ -> },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminSetupUiState())
     val uiState: StateFlow<AdminSetupUiState> = _uiState.asStateFlow()
 
     fun onBusinessChange(value: String) = edit { it.copy(businessName = value.take(AdminSetupValidator.MAX_BUSINESS_NAME_LENGTH + 20)) }
+
+    fun onDetailsChange(transform: (StoreSettings) -> StoreSettings) = edit { it.copy(details = transform(it.details)) }
+
+    /** Fills the GST state from the GSTIN's first two digits when it is not chosen yet, as Store details does. */
+    fun onGstinChange(value: String) = onDetailsChange { settings ->
+        val gstin = Gstin.normalize(value).take(15)
+        val inferred = if (settings.stateCode.isEmpty() && Gstin.isValid(gstin)) Gstin.stateCode(gstin) else settings.stateCode
+        settings.copy(gstin = gstin, stateCode = inferred)
+    }
+
+    fun onLogoPicked(uri: Uri?) = edit { it.copy(logo = uri ?: it.logo) }
+
+    fun onLogoRemoved() = edit { it.copy(logo = null) }
 
     fun useSuggestion(username: String) = edit { it.copy(identifier = username) }
 
@@ -72,27 +105,32 @@ class AdminSetupViewModel(
     private fun validate(state: AdminSetupUiState): Map<SetupField, SetupError> {
         val errors = LinkedHashMap<SetupField, SetupError>()
         AdminSetupValidator.businessNameError(state.businessName)?.let { errors[SetupField.BUSINESS] = it }
-        errors.putAll(AdminSetupValidator.validate(state.name, state.identifier, state.password, state.confirm))
+        errors.putAll(AdminSetupValidator.validate(accountName(state), state.identifier, state.password, state.confirm))
+        // The person's own name is optional; the username stands in for it (see accountName).
+        if (state.name.isBlank()) errors.remove(SetupField.NAME)
         return errors
     }
+
+    /** The name the account is created with: the typed name, or the username when none was given. */
+    private fun accountName(state: AdminSetupUiState): String = state.name.ifBlank { state.identifier.trim() }
 
     fun submit() {
         val current = _uiState.value
         // Ignore a second tap while the first is still being saved.
         if (current.isSubmitting) return
         val errors = validate(current)
-        if (errors.isNotEmpty()) {
+        if (errors.isNotEmpty() || current.detailErrors.isNotEmpty()) {
             _uiState.update { it.copy(submitted = true, errors = errors, saveFailed = false) }
             return
         }
         _uiState.update { it.copy(submitted = true, errors = emptyMap(), isSubmitting = true, saveFailed = false) }
         viewModelScope.launch {
-            val result = auth.createAdministrator(current.name, current.identifier, current.password, current.confirm)
+            val result = auth.createAdministrator(accountName(current), current.identifier, current.password, current.confirm)
             _uiState.update { state ->
                 when (result) {
                     // The app moves on by itself once the account exists; do not keep the password around.
                     SetupResult.Created -> {
-                        saveBusinessName(AdminSetupValidator.normalizeName(current.businessName))
+                        saveStore(AdminSetupValidator.normalizeName(current.businessName), current.details.trimmed(), current.logo)
                         state.copy(isSubmitting = false, password = "", confirm = "")
                     }
                     SetupResult.AlreadyInitialized -> state.copy(isSubmitting = false, password = "", confirm = "")
@@ -103,11 +141,23 @@ class AdminSetupViewModel(
         }
     }
 
+    private fun StoreSettings.trimmed() = copy(
+        address = address.trim(),
+        phone = phone.trim(),
+        gstin = Gstin.normalize(gstin),
+        fssai = Fssai.normalize(fssai),
+        invoicePrefix = invoicePrefix.trim().uppercase(),
+        creditNotePrefix = creditNotePrefix.trim().uppercase(),
+        upiId = upiId.trim(),
+        upiPayeeName = upiPayeeName.trim(),
+        receipt = receipt.copy(footer = receipt.footer.trim()),
+    )
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                AdminSetupViewModel(container.authRepository, container::rememberBusinessName)
+                AdminSetupViewModel(container.authRepository, container::rememberStore)
             }
         }
     }

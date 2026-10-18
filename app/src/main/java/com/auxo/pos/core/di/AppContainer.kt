@@ -145,6 +145,18 @@ class AppContainer(context: Context) {
         }
     }
 
+    /**
+     * Saves everything the setup form collected about the store: the name, the optional details and the logo. Like
+     * [rememberBusinessName] it runs on the app's own scope, and a failure leaves the defaults, which can be edited
+     * later in Store details. The logo is saved after the settings, and only if one was picked.
+     */
+    fun rememberStore(name: String, details: com.auxo.pos.domain.model.StoreSettings, logo: android.net.Uri?) {
+        background.launch {
+            runCatching { settingsRepository.saveSettings(details.copy(storeName = name)) }
+            if (logo != null) runCatching { storeLogoRepository.save(logo) }
+        }
+    }
+
     /** Whether the owner closed the "add your FSSAI number" reminder on Home. */
     val fssaiHintStore: com.auxo.pos.viewmodel.FssaiHintStore by lazy { com.auxo.pos.viewmodel.SharedPrefsFssaiHintStore(appContext) }
 

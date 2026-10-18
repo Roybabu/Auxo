@@ -85,7 +85,7 @@ class AuthViewModelsTest {
         viewModel.submit()
         val state = viewModel.uiState.value
         assertTrue(state.submitted)
-        assertEquals(setOf(SetupField.BUSINESS, SetupField.NAME, SetupField.IDENTIFIER, SetupField.PASSWORD, SetupField.CONFIRM), state.errors.keys)
+        assertEquals(setOf(SetupField.BUSINESS, SetupField.IDENTIFIER, SetupField.PASSWORD, SetupField.CONFIRM), state.errors.keys)
         assertEquals(0, auth.setups)
         assertEquals(StoredAccounts.Missing, store.read())
     }
@@ -125,7 +125,7 @@ class AuthViewModelsTest {
     @Test
     fun theBusinessName_isSavedOnce_afterTheAccountExists() {
         val saved = mutableListOf<String>()
-        val viewModel = AdminSetupViewModel(auth) { saved += it }
+        val viewModel = AdminSetupViewModel(auth) { name, _, _ -> saved += name }
         viewModel.fill()
         viewModel.onBusinessChange("  Roy   Stores ")
         viewModel.submit()
@@ -136,11 +136,61 @@ class AuthViewModelsTest {
     @Test
     fun theBusinessName_isNotSaved_whenTheFormIsInvalid() {
         val saved = mutableListOf<String>()
-        val viewModel = AdminSetupViewModel(auth) { saved += it }
+        val viewModel = AdminSetupViewModel(auth) { name, _, _ -> saved += name }
         viewModel.fill(confirm = "nope")
         viewModel.submit()
         assertTrue(saved.isEmpty())
         assertEquals(StoredAccounts.Missing, store.read())
+    }
+
+    @Test
+    fun onlyTheShopNameUsernameAndPassword_areRequired() {
+        val viewModel = AdminSetupViewModel(auth)
+        viewModel.onBusinessChange("Roy Stores")
+        viewModel.onIdentifierChange("roy.babu")
+        viewModel.onPasswordChange("Green-Leaf-42")
+        viewModel.onConfirmChange("Green-Leaf-42")
+        viewModel.submit()
+        waitUntil { viewModel.uiState.first { !it.isSubmitting } }
+        assertTrue(viewModel.uiState.value.errors.isEmpty())
+        assertEquals(1, auth.setups)
+        // With no name typed, the username stands in for it.
+        assertEquals(AuthState.SignedIn("roy.babu"), auth.state.value)
+    }
+
+    @Test
+    fun theStoreDetails_areSavedWithTheBusinessName_andTheLogo() {
+        var savedName: String? = null
+        var savedDetails: com.auxo.pos.domain.model.StoreSettings? = null
+        var savedLogo: android.net.Uri? = null
+        val viewModel = AdminSetupViewModel(auth) { name, details, logo ->
+            savedName = name
+            savedDetails = details
+            savedLogo = logo
+        }
+        viewModel.fill()
+        viewModel.onDetailsChange { it.copy(address = "  12 Park Street  ", phone = "9876543210", upiId = "roy@okbank") }
+        val logo = android.net.Uri.parse("content://media/picker/1")
+        viewModel.onLogoPicked(logo)
+        viewModel.submit()
+        waitUntil { viewModel.uiState.first { !it.isSubmitting } }
+        assertEquals("Roy Stores", savedName)
+        assertEquals("12 Park Street", savedDetails?.address)
+        assertEquals("9876543210", savedDetails?.phone)
+        assertEquals("roy@okbank", savedDetails?.upiId)
+        assertEquals(logo, savedLogo)
+    }
+
+    @Test
+    fun aWronglyFilledDetail_stopsSetup_butAnEmptyOneNever_does() {
+        val viewModel = AdminSetupViewModel(auth)
+        viewModel.fill()
+        viewModel.onDetailsChange { it.copy(phone = "123") }
+        viewModel.submit()
+        assertTrue(com.auxo.pos.domain.billing.SettingsField.PHONE in viewModel.uiState.value.detailErrors)
+        assertEquals(0, auth.setups)
+        viewModel.onDetailsChange { it.copy(phone = "") }
+        assertTrue(viewModel.uiState.value.detailErrors.isEmpty())
     }
 
     @Test

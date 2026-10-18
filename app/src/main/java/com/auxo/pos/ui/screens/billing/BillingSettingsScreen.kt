@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.domain.billing.InvoiceNumbers
+import com.auxo.pos.domain.billing.SettingsError
 import com.auxo.pos.domain.billing.SettingsField
 import com.auxo.pos.domain.model.ExpiryWarning
 import com.auxo.pos.domain.model.Language
@@ -114,7 +115,6 @@ fun BillingSettingsScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BillingSettingsContent(
     state: BillingSettingsUiState,
@@ -126,10 +126,7 @@ fun BillingSettingsContent(
 ) {
     val settings = state.settings
     val errors = state.visibleErrors
-    @Composable
-    fun errorOf(field: SettingsField): String? = errors[field]?.let { stringResource(it.messageRes()) }
     val canSetDiscountLimit = can(Permission.UNLIMITED_DISCOUNT)
-    fun receipt(transform: (ReceiptOptions) -> ReceiptOptions) = onChange { it.copy(receipt = transform(it.receipt)) }
 
     LazyColumn(
         modifier = modifier
@@ -143,233 +140,34 @@ fun BillingSettingsContent(
         }
 
         item(key = "store") {
-            SettingsCard(stringResource(R.string.settings_store)) {
-                AuxoTextField(
-                    value = settings.storeName,
-                    onValueChange = { v -> onChange { it.copy(storeName = v.take(70)) } },
-                    label = stringResource(R.string.settings_store_name),
-                    error = errorOf(SettingsField.STORE_NAME),
-                    capitalization = KeyboardCapitalization.Words,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("settings_store_name"),
-                )
-                AuxoTextField(
-                    value = settings.address,
-                    onValueChange = { v -> onChange { it.copy(address = v.take(220)) } },
-                    label = stringResource(R.string.settings_address),
-                    error = errorOf(SettingsField.ADDRESS),
-                    capitalization = KeyboardCapitalization.Words,
-                    singleLine = false,
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                AuxoTextField(
-                    value = settings.phone,
-                    onValueChange = { v -> onChange { it.copy(phone = v.filter { c -> c.isDigit() || c in "+ -" }.take(20)) } },
-                    label = stringResource(R.string.settings_phone),
-                    error = errorOf(SettingsField.PHONE),
-                    keyboardType = KeyboardType.Phone,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            SettingsCard(stringResource(R.string.settings_store)) { StoreSection(settings, errors, onChange) }
         }
 
         item(key = "gst") {
-            SettingsCard(stringResource(R.string.settings_gst)) {
-                SwitchRow(
-                    label = stringResource(R.string.settings_gst_registered),
-                    checked = settings.gstRegistered,
-                    onCheckedChange = { v -> onChange { it.copy(gstRegistered = v) } },
-                    hint = if (!settings.gstRegistered) stringResource(R.string.settings_gst_registered_off) else null,
-                    testTag = "settings_gst_registered",
-                )
-                if (settings.gstRegistered) {
-                    AuxoTextField(
-                        value = settings.gstin,
-                        onValueChange = onGstinChange,
-                        label = stringResource(R.string.settings_gstin),
-                        error = errorOf(SettingsField.GSTIN),
-                        capitalization = KeyboardCapitalization.Characters,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("settings_gstin"),
-                    )
-                }
-                AuxoTextField(
-                    value = settings.fssai,
-                    onValueChange = { v -> onChange { it.copy(fssai = Fssai.normalize(v).take(Fssai.LENGTH)) } },
-                    label = stringResource(R.string.settings_fssai),
-                    error = errorOf(SettingsField.FSSAI),
-                    supportingText = stringResource(R.string.settings_fssai_hint),
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("settings_fssai"),
-                )
-                StatePicker(
-                    label = stringResource(R.string.settings_state),
-                    selectedCode = settings.stateCode,
-                    onSelect = { code -> onChange { it.copy(stateCode = code) } },
-                    error = errorOf(SettingsField.STATE),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (settings.gstRegistered) {
-                    SwitchRow(
-                        label = stringResource(R.string.settings_prices_include_tax),
-                        checked = settings.pricesIncludeTax,
-                        onCheckedChange = { v -> onChange { it.copy(pricesIncludeTax = v) } },
-                        hint = stringResource(R.string.settings_prices_include_tax_hint),
-                    )
-                }
-                SwitchRow(
-                    label = stringResource(R.string.settings_round_off),
-                    checked = settings.roundOffTotal,
-                    onCheckedChange = { v -> onChange { it.copy(roundOffTotal = v) } },
-                )
-            }
+            SettingsCard(stringResource(R.string.settings_gst)) { GstSection(settings, errors, onChange, onGstinChange) }
         }
 
         // Only the Super Admin sees (and may change) what Employees are allowed to discount.
         if (canSetDiscountLimit) {
             item(key = "discount_limit") {
-                SettingsCard(stringResource(R.string.settings_employee_discount_limit)) {
-                    Text(
-                        stringResource(R.string.settings_employee_discount_limit_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                        DiscountPolicy.LIMIT_CHOICES.forEach { choice ->
-                            FilterChip(
-                                selected = settings.employeeDiscountLimitBp == choice,
-                                onClick = { onChange { it.copy(employeeDiscountLimitBp = choice) } },
-                                label = { Text(if (choice == 0) stringResource(R.string.settings_discount_limit_none) else DiscountLimits.label(choice)) },
-                                modifier = Modifier.testTag("discount_limit_$choice"),
-                            )
-                        }
-                    }
-                }
+                SettingsCard(stringResource(R.string.settings_employee_discount_limit)) { DiscountLimitSection(settings, onChange) }
             }
         }
 
         item(key = "expiry_warning") {
-            SettingsCard(stringResource(R.string.settings_expiry_warning)) {
-                Text(
-                    stringResource(R.string.settings_expiry_warning_help),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    ExpiryWarning.CHOICES.forEach { days ->
-                        FilterChip(
-                            selected = settings.expiryWarningDays == days,
-                            onClick = { onChange { it.copy(expiryWarningDays = days) } },
-                            label = { Text(pluralStringResource(R.plurals.settings_expiry_days, days, days)) },
-                            modifier = Modifier.testTag("expiry_days_$days"),
-                        )
-                    }
-                }
-            }
+            SettingsCard(stringResource(R.string.settings_expiry_warning)) { ExpiryWarningSection(settings, onChange) }
         }
 
         item(key = "numbering") {
-            SettingsCard(stringResource(R.string.settings_numbering)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    AuxoTextField(
-                        value = settings.invoicePrefix,
-                        onValueChange = { v -> onChange { it.copy(invoicePrefix = v.uppercase().filter { c -> c.isLetterOrDigit() }.take(4)) } },
-                        label = stringResource(R.string.settings_invoice_prefix),
-                        error = errorOf(SettingsField.INVOICE_PREFIX),
-                        capitalization = KeyboardCapitalization.Characters,
-                        modifier = Modifier.weight(1f),
-                    )
-                    AuxoTextField(
-                        value = settings.creditNotePrefix,
-                        onValueChange = { v -> onChange { it.copy(creditNotePrefix = v.uppercase().filter { c -> c.isLetterOrDigit() }.take(4)) } },
-                        label = stringResource(R.string.settings_credit_note_prefix),
-                        error = errorOf(SettingsField.CREDIT_NOTE_PREFIX),
-                        capitalization = KeyboardCapitalization.Characters,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                val example = InvoiceNumbers.format(
-                    settings.invoicePrefix.ifEmpty { "INV" },
-                    InvoiceNumbers.financialYearStart(LocalDate.now(BusinessTime.ZONE)),
-                    1,
-                )
-                Text(
-                    stringResource(R.string.settings_numbering_hint, example),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            SettingsCard(stringResource(R.string.settings_numbering)) { NumberingSection(settings, errors, onChange) }
         }
 
         item(key = "upi") {
-            SettingsCard(stringResource(R.string.settings_upi)) {
-                AuxoTextField(
-                    value = settings.upiId,
-                    onValueChange = { v -> onChange { it.copy(upiId = v.trim().take(80)) } },
-                    label = stringResource(R.string.settings_upi_id),
-                    error = errorOf(SettingsField.UPI_ID),
-                    keyboardType = KeyboardType.Email,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                AuxoTextField(
-                    value = settings.upiPayeeName,
-                    onValueChange = { v -> onChange { it.copy(upiPayeeName = v.take(60)) } },
-                    label = stringResource(R.string.settings_upi_payee),
-                    error = errorOf(SettingsField.UPI_PAYEE),
-                    capitalization = KeyboardCapitalization.Words,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            SettingsCard(stringResource(R.string.settings_upi)) { UpiSection(settings, errors, onChange) }
         }
 
         item(key = "receipt") {
-            SettingsCard(stringResource(R.string.settings_receipt)) {
-                Text(stringResource(R.string.settings_receipt_paper), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    ReceiptPaper.entries.forEach { paper ->
-                        FilterChip(
-                            selected = settings.receipt.paper == paper,
-                            onClick = { receipt { it.copy(paper = paper) } },
-                            label = { Text(stringResource(paper.longLabelRes())) },
-                        )
-                    }
-                }
-                Text(stringResource(R.string.settings_bill_language), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    Language.entries.forEach { language ->
-                        FilterChip(
-                            selected = settings.receipt.language == language,
-                            onClick = { receipt { it.copy(language = language) } },
-                            label = { Text(language.nativeName) },
-                            modifier = Modifier.testTag("settings_bill_language_${language.tag}"),
-                        )
-                    }
-                }
-                Text(
-                    stringResource(R.string.settings_bill_language_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                AuxoTextField(
-                    value = settings.receipt.footer,
-                    onValueChange = { v -> receipt { it.copy(footer = v.take(140)) } },
-                    label = stringResource(R.string.settings_footer),
-                    error = errorOf(SettingsField.FOOTER),
-                    capitalization = KeyboardCapitalization.Sentences,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                SwitchRow(stringResource(R.string.settings_show_customer), settings.receipt.showCustomer, { v -> receipt { it.copy(showCustomer = v) } })
-                SwitchRow(stringResource(R.string.settings_show_hsn), settings.receipt.showHsn, { v -> receipt { it.copy(showHsn = v) } })
-                SwitchRow(stringResource(R.string.settings_show_tax_breakup), settings.receipt.showTaxBreakup, { v -> receipt { it.copy(showTaxBreakup = v) } })
-                SwitchRow(stringResource(R.string.settings_show_savings), settings.receipt.showSavings, { v -> receipt { it.copy(showSavings = v) } })
-                SwitchRow(stringResource(R.string.settings_show_barcode), settings.receipt.showInvoiceBarcode, { v -> receipt { it.copy(showInvoiceBarcode = v) } })
-                SwitchRow(stringResource(R.string.settings_show_upi_qr), settings.receipt.showUpiQr, { v -> receipt { it.copy(showUpiQr = v) } })
-            }
+            SettingsCard(stringResource(R.string.settings_receipt)) { ReceiptSection(settings, errors, onChange) }
         }
 
         item(key = "save") {
@@ -385,8 +183,264 @@ fun BillingSettingsContent(
     }
 }
 
+// The sections below are shared by Store details and the Set up your business page. Each one draws only its fields; the
+// caller supplies the card or heading around it.
+
 @Composable
-private fun SettingsCard(title: String, content: @Composable () -> Unit) {
+private fun errorOf(errors: Map<SettingsField, SettingsError>, field: SettingsField): String? =
+    errors[field]?.let { stringResource(it.messageRes()) }
+
+/** The name, address and phone of the store. [showName] is false when the page already asks for the name elsewhere. */
+@Composable
+fun StoreSection(
+    settings: StoreSettings,
+    errors: Map<SettingsField, SettingsError>,
+    onChange: ((StoreSettings) -> StoreSettings) -> Unit,
+    showName: Boolean = true,
+) {
+    if (showName) {
+        AuxoTextField(
+            value = settings.storeName,
+            onValueChange = { v -> onChange { it.copy(storeName = v.take(70)) } },
+            label = stringResource(R.string.settings_store_name),
+            error = errorOf(errors, SettingsField.STORE_NAME),
+            capitalization = KeyboardCapitalization.Words,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("settings_store_name"),
+        )
+    }
+    AuxoTextField(
+        value = settings.address,
+        onValueChange = { v -> onChange { it.copy(address = v.take(220)) } },
+        label = stringResource(R.string.settings_address),
+        error = errorOf(errors, SettingsField.ADDRESS),
+        capitalization = KeyboardCapitalization.Words,
+        singleLine = false,
+        minLines = 2,
+        modifier = Modifier.fillMaxWidth().testTag("settings_address"),
+    )
+    AuxoTextField(
+        value = settings.phone,
+        onValueChange = { v -> onChange { it.copy(phone = v.filter { c -> c.isDigit() || c in "+ -" }.take(20)) } },
+        label = stringResource(R.string.settings_phone),
+        error = errorOf(errors, SettingsField.PHONE),
+        keyboardType = KeyboardType.Phone,
+        modifier = Modifier.fillMaxWidth().testTag("settings_phone"),
+    )
+}
+
+@Composable
+fun GstSection(
+    settings: StoreSettings,
+    errors: Map<SettingsField, SettingsError>,
+    onChange: ((StoreSettings) -> StoreSettings) -> Unit,
+    onGstinChange: (String) -> Unit,
+) {
+    SwitchRow(
+        label = stringResource(R.string.settings_gst_registered),
+        checked = settings.gstRegistered,
+        onCheckedChange = { v -> onChange { it.copy(gstRegistered = v) } },
+        hint = if (!settings.gstRegistered) stringResource(R.string.settings_gst_registered_off) else null,
+        testTag = "settings_gst_registered",
+    )
+    if (settings.gstRegistered) {
+        AuxoTextField(
+            value = settings.gstin,
+            onValueChange = onGstinChange,
+            label = stringResource(R.string.settings_gstin),
+            error = errorOf(errors, SettingsField.GSTIN),
+            capitalization = KeyboardCapitalization.Characters,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("settings_gstin"),
+        )
+    }
+    AuxoTextField(
+        value = settings.fssai,
+        onValueChange = { v -> onChange { it.copy(fssai = Fssai.normalize(v).take(Fssai.LENGTH)) } },
+        label = stringResource(R.string.settings_fssai),
+        error = errorOf(errors, SettingsField.FSSAI),
+        supportingText = stringResource(R.string.settings_fssai_hint),
+        keyboardType = KeyboardType.Number,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("settings_fssai"),
+    )
+    StatePicker(
+        label = stringResource(R.string.settings_state),
+        selectedCode = settings.stateCode,
+        onSelect = { code -> onChange { it.copy(stateCode = code) } },
+        error = errorOf(errors, SettingsField.STATE),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    if (settings.gstRegistered) {
+        SwitchRow(
+            label = stringResource(R.string.settings_prices_include_tax),
+            checked = settings.pricesIncludeTax,
+            onCheckedChange = { v -> onChange { it.copy(pricesIncludeTax = v) } },
+            hint = stringResource(R.string.settings_prices_include_tax_hint),
+        )
+    }
+    SwitchRow(
+        label = stringResource(R.string.settings_round_off),
+        checked = settings.roundOffTotal,
+        onCheckedChange = { v -> onChange { it.copy(roundOffTotal = v) } },
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DiscountLimitSection(settings: StoreSettings, onChange: ((StoreSettings) -> StoreSettings) -> Unit) {
+    Text(
+        stringResource(R.string.settings_employee_discount_limit_help),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        DiscountPolicy.LIMIT_CHOICES.forEach { choice ->
+            FilterChip(
+                selected = settings.employeeDiscountLimitBp == choice,
+                onClick = { onChange { it.copy(employeeDiscountLimitBp = choice) } },
+                label = { Text(if (choice == 0) stringResource(R.string.settings_discount_limit_none) else DiscountLimits.label(choice)) },
+                modifier = Modifier.testTag("discount_limit_$choice"),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ExpiryWarningSection(settings: StoreSettings, onChange: ((StoreSettings) -> StoreSettings) -> Unit) {
+    Text(
+        stringResource(R.string.settings_expiry_warning_help),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        ExpiryWarning.CHOICES.forEach { days ->
+            FilterChip(
+                selected = settings.expiryWarningDays == days,
+                onClick = { onChange { it.copy(expiryWarningDays = days) } },
+                label = { Text(pluralStringResource(R.plurals.settings_expiry_days, days, days)) },
+                modifier = Modifier.testTag("expiry_days_$days"),
+            )
+        }
+    }
+}
+
+@Composable
+fun NumberingSection(
+    settings: StoreSettings,
+    errors: Map<SettingsField, SettingsError>,
+    onChange: ((StoreSettings) -> StoreSettings) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        AuxoTextField(
+            value = settings.invoicePrefix,
+            onValueChange = { v -> onChange { it.copy(invoicePrefix = v.uppercase().filter { c -> c.isLetterOrDigit() }.take(4)) } },
+            label = stringResource(R.string.settings_invoice_prefix),
+            error = errorOf(errors, SettingsField.INVOICE_PREFIX),
+            capitalization = KeyboardCapitalization.Characters,
+            modifier = Modifier.weight(1f),
+        )
+        AuxoTextField(
+            value = settings.creditNotePrefix,
+            onValueChange = { v -> onChange { it.copy(creditNotePrefix = v.uppercase().filter { c -> c.isLetterOrDigit() }.take(4)) } },
+            label = stringResource(R.string.settings_credit_note_prefix),
+            error = errorOf(errors, SettingsField.CREDIT_NOTE_PREFIX),
+            capitalization = KeyboardCapitalization.Characters,
+            modifier = Modifier.weight(1f),
+        )
+    }
+    val example = InvoiceNumbers.format(
+        settings.invoicePrefix.ifEmpty { "INV" },
+        InvoiceNumbers.financialYearStart(LocalDate.now(BusinessTime.ZONE)),
+        1,
+    )
+    Text(
+        stringResource(R.string.settings_numbering_hint, example),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+fun UpiSection(
+    settings: StoreSettings,
+    errors: Map<SettingsField, SettingsError>,
+    onChange: ((StoreSettings) -> StoreSettings) -> Unit,
+) {
+    AuxoTextField(
+        value = settings.upiId,
+        onValueChange = { v -> onChange { it.copy(upiId = v.trim().take(80)) } },
+        label = stringResource(R.string.settings_upi_id),
+        error = errorOf(errors, SettingsField.UPI_ID),
+        keyboardType = KeyboardType.Email,
+        modifier = Modifier.fillMaxWidth().testTag("settings_upi_id"),
+    )
+    AuxoTextField(
+        value = settings.upiPayeeName,
+        onValueChange = { v -> onChange { it.copy(upiPayeeName = v.take(60)) } },
+        label = stringResource(R.string.settings_upi_payee),
+        error = errorOf(errors, SettingsField.UPI_PAYEE),
+        capitalization = KeyboardCapitalization.Words,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ReceiptSection(
+    settings: StoreSettings,
+    errors: Map<SettingsField, SettingsError>,
+    onChange: ((StoreSettings) -> StoreSettings) -> Unit,
+) {
+    fun receipt(transform: (ReceiptOptions) -> ReceiptOptions) = onChange { it.copy(receipt = transform(it.receipt)) }
+    Text(stringResource(R.string.settings_receipt_paper), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        ReceiptPaper.entries.forEach { paper ->
+            FilterChip(
+                selected = settings.receipt.paper == paper,
+                onClick = { receipt { it.copy(paper = paper) } },
+                label = { Text(stringResource(paper.longLabelRes())) },
+            )
+        }
+    }
+    Text(stringResource(R.string.settings_bill_language), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Language.entries.forEach { language ->
+            FilterChip(
+                selected = settings.receipt.language == language,
+                onClick = { receipt { it.copy(language = language) } },
+                label = { Text(language.nativeName) },
+                modifier = Modifier.testTag("settings_bill_language_${language.tag}"),
+            )
+        }
+    }
+    Text(
+        stringResource(R.string.settings_bill_language_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    AuxoTextField(
+        value = settings.receipt.footer,
+        onValueChange = { v -> receipt { it.copy(footer = v.take(140)) } },
+        label = stringResource(R.string.settings_footer),
+        error = errorOf(errors, SettingsField.FOOTER),
+        capitalization = KeyboardCapitalization.Sentences,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    SwitchRow(stringResource(R.string.settings_show_customer), settings.receipt.showCustomer, { v -> receipt { it.copy(showCustomer = v) } })
+    SwitchRow(stringResource(R.string.settings_show_hsn), settings.receipt.showHsn, { v -> receipt { it.copy(showHsn = v) } })
+    SwitchRow(stringResource(R.string.settings_show_tax_breakup), settings.receipt.showTaxBreakup, { v -> receipt { it.copy(showTaxBreakup = v) } })
+    SwitchRow(stringResource(R.string.settings_show_savings), settings.receipt.showSavings, { v -> receipt { it.copy(showSavings = v) } })
+    SwitchRow(stringResource(R.string.settings_show_barcode), settings.receipt.showInvoiceBarcode, { v -> receipt { it.copy(showInvoiceBarcode = v) } })
+    SwitchRow(stringResource(R.string.settings_show_upi_qr), settings.receipt.showUpiQr, { v -> receipt { it.copy(showUpiQr = v) } })
+}
+
+@Composable
+internal fun SettingsCard(title: String, content: @Composable () -> Unit) {
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             SectionHeader(title)
@@ -396,7 +450,7 @@ private fun SettingsCard(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SwitchRow(
+internal fun SwitchRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,

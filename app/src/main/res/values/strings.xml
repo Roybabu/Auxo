@@ -1007,6 +1007,9 @@ in %2$s</string>
     <string name="auth_setup_title">Set up your business</string>
     <string name="auth_setup_body">Tell us about your business and create the owner account. Everything is kept on this device.</string>
     <string name="auth_field_name">Your name</string>
+    <string name="auth_field_name_optional">Your name (optional)</string>
+    <string name="auth_setup_details_title">Store details (optional)</string>
+    <string name="auth_setup_details_hint">Only the shop name, username and password are required. Add the rest now, or later in Store details.</string>
     <string name="auth_field_identifier">Username or email</string>
     <string name="auth_field_identifier_hint">Letters, numbers, dot, dash or underscore, or an email address</string>
     <string name="auth_field_password">Password</string>

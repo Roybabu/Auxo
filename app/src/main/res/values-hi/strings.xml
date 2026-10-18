@@ -1006,6 +1006,9 @@
     <string name="auth_setup_title">अपना बिज़नेस सेट अप करें</string>
     <string name="auth_setup_body">अपने बिज़नेस के बारे में बताएँ और मालिक का खाता बनाएँ। सब कुछ इसी डिवाइस पर रहता है।</string>
     <string name="auth_field_name">आपका नाम</string>
+    <string name="auth_field_name_optional">आपका नाम (वैकल्पिक)</string>
+    <string name="auth_setup_details_title">स्टोर की जानकारी (वैकल्पिक)</string>
+    <string name="auth_setup_details_hint">सिर्फ़ दुकान का नाम, यूज़रनेम और पासवर्ड ज़रूरी हैं। बाकी अभी भरें, या बाद में स्टोर की जानकारी में।</string>
     <string name="auth_field_identifier">यूज़रनेम या ईमेल</string>
     <string name="auth_field_identifier_hint">अक्षर, अंक, बिंदु, डैश या अंडरस्कोर, या ईमेल पता</string>
     <string name="auth_field_password">पासवर्ड</string>

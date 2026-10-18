@@ -1,6 +1,35 @@
 package com.auxo.pos.ui.screens.auth
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import com.auxo.pos.domain.model.StoreSettings
+import com.auxo.pos.ui.components.SectionHeader
+import com.auxo.pos.ui.screens.billing.ExpiryWarningSection
+import com.auxo.pos.ui.screens.billing.GstSection
+import com.auxo.pos.ui.screens.billing.NumberingSection
+import com.auxo.pos.ui.screens.billing.ReceiptSection
+import com.auxo.pos.ui.screens.billing.StoreSection
+import com.auxo.pos.ui.screens.billing.UpiSection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,6 +98,7 @@ internal fun SetupError.messageRes(): Int = when (this) {
 @Composable
 fun AdminSetupScreen(onBack: (() -> Unit)? = null, viewModel: AdminSetupViewModel = viewModel(factory = AdminSetupViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> viewModel.onLogoPicked(uri) }
     AdminSetupContent(
         state = state,
         onNameChange = viewModel::onNameChange,
@@ -79,6 +109,10 @@ fun AdminSetupScreen(onBack: (() -> Unit)? = null, viewModel: AdminSetupViewMode
         onBack = onBack,
         onBusinessChange = viewModel::onBusinessChange,
         onSuggestionPick = viewModel::useSuggestion,
+        onDetailsChange = viewModel::onDetailsChange,
+        onGstinChange = viewModel::onGstinChange,
+        onLogoChoose = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        onLogoRemove = viewModel::onLogoRemoved,
     )
 }
 
@@ -93,6 +127,10 @@ fun AdminSetupContent(
     onBack: (() -> Unit)? = null,
     onBusinessChange: (String) -> Unit = {},
     onSuggestionPick: (String) -> Unit = {},
+    onDetailsChange: ((StoreSettings) -> StoreSettings) -> Unit = {},
+    onGstinChange: (String) -> Unit = {},
+    onLogoChoose: () -> Unit = {},
+    onLogoRemove: () -> Unit = {},
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout {
@@ -116,7 +154,7 @@ fun AdminSetupContent(
             AuxoTextField(
                 value = state.name,
                 onValueChange = onNameChange,
-                label = stringResource(R.string.auth_field_name),
+                label = stringResource(R.string.auth_field_name_optional),
                 error = state.errors[SetupField.NAME]?.let { stringResource(it.messageRes()) },
                 capitalization = KeyboardCapitalization.Words,
                 enabled = !state.isSubmitting,
@@ -168,6 +206,31 @@ fun AdminSetupContent(
                 enabled = !state.isSubmitting,
                 modifier = Modifier.fillMaxWidth().testTag("setup_confirm"),
             )
+            // Everything below is optional; only the shop name, username and password above are required.
+            val detailErrors = if (state.submitted) state.detailErrors else emptyMap()
+            val enabled = !state.isSubmitting
+            Text(stringResource(R.string.auth_setup_details_title), style = MaterialTheme.typography.titleMedium, color = AuthInk)
+            Text(
+                stringResource(R.string.auth_setup_details_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.testTag("setup_details")) {
+                SectionHeader(stringResource(R.string.store_logo_title))
+                SetupLogoPicker(state.logo, enabled, onLogoChoose, onLogoRemove)
+                SectionHeader(stringResource(R.string.settings_store))
+                StoreSection(state.details, detailErrors, onDetailsChange, showName = false)
+                SectionHeader(stringResource(R.string.settings_gst))
+                GstSection(state.details, detailErrors, onDetailsChange, onGstinChange)
+                SectionHeader(stringResource(R.string.settings_expiry_warning))
+                ExpiryWarningSection(state.details, onDetailsChange)
+                SectionHeader(stringResource(R.string.settings_numbering))
+                NumberingSection(state.details, detailErrors, onDetailsChange)
+                SectionHeader(stringResource(R.string.settings_upi))
+                UpiSection(state.details, detailErrors, onDetailsChange)
+                SectionHeader(stringResource(R.string.settings_receipt))
+                ReceiptSection(state.details, detailErrors, onDetailsChange)
+            }
             if (state.saveFailed) {
                 Text(
                     stringResource(R.string.auth_setup_failed),
@@ -208,5 +271,59 @@ internal fun PasswordToggle(visible: Boolean, onToggle: () -> Unit) {
             stringResource(if (visible) R.string.auth_hide_password else R.string.auth_show_password),
             size = AuxoIconSize.Mini,
         )
+    }
+}
+
+/** Choose / replace / remove the store logo on the setup form, with a small preview of the picture picked. */
+@Composable
+private fun SetupLogoPicker(logo: Uri?, enabled: Boolean, onChoose: () -> Unit, onRemove: () -> Unit) {
+    val context = LocalContext.current
+    val preview by produceState<Bitmap?>(initialValue = null, logo) {
+        value = if (logo == null) {
+            null
+        } else {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openInputStream(logo)?.use {
+                        BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = 4 })
+                    }
+                }.getOrNull()
+            }
+        }
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().testTag("setup_logo"),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (preview != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            val bitmap = preview
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = stringResource(R.string.store_logo_description),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().padding(Spacing.xs),
+                )
+            } else {
+                AuxoIcon(R.drawable.ic_image, contentDescription = null, size = AuxoIconSize.Large)
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            OutlinedButton(onClick = onChoose, enabled = enabled, modifier = Modifier.testTag("setup_logo_choose")) {
+                Text(stringResource(if (logo == null) R.string.store_logo_choose else R.string.store_logo_replace))
+            }
+            if (logo != null) {
+                TextButton(onClick = onRemove, enabled = enabled, modifier = Modifier.testTag("setup_logo_remove")) {
+                    Text(stringResource(R.string.store_logo_remove))
+                }
+            }
+        }
     }
 }
