@@ -25,6 +25,8 @@ data class HomeColors(
 /** A hue and how strong its colour is. Lightness is chosen per role below, not per accent. */
 private data class Hue(val hue: Float, val saturation: Float)
 
+internal fun AppAccent.hueAndSaturation(): Pair<Float, Float> = hue().let { it.hue to it.saturation }
+
 private fun AppAccent.hue(): Hue = when (this) {
     AppAccent.EMERALD -> Hue(160f, 0.90f)
     AppAccent.TEAL -> Hue(188f, 0.85f)
@@ -197,5 +199,46 @@ object AccentPalette {
         surfaceContainerHighest = GreyLineSoft,
         outline = GreyLine,
         outlineVariant = GreyLineSoft,
+    )
+}
+
+/**
+ * The colours the soft-render icons are drawn with, one set per accent. [bright], [mid] and [deep] run from the lit top
+ * of a glyph to its shaded bottom; the mint ones are the pale tile behind it in the light theme, and the dark ones are
+ * the tile and glyph in the dark theme.
+ */
+@Immutable
+data class IconColors(
+    val bright: Color,
+    val mid: Color,
+    val deep: Color,
+    val mint: Color,
+    val mintLight: Color,
+    val mintEdge: Color,
+    val darkTileTop: Color,
+    val darkTileBottom: Color,
+    val darkEdge: Color,
+    val darkGlyphTop: Color,
+    val darkGlyphBottom: Color,
+)
+
+/** Emerald keeps the exact colours the icons always had; every other accent is the same shape of palette in its own hue. */
+fun AccentPalette.icons(accent: AppAccent): IconColors {
+    if (accent == AppAccent.EMERALD) {
+        return IconColors(
+            bright = Color(0xFF10A56F), mid = Color(0xFF0B7A55), deep = Color(0xFF064E3B),
+            mint = Color(0xFFD9F3E7), mintLight = Color(0xFFF0FBF6), mintEdge = Color(0xFFBFE4CD),
+            darkTileTop = Color(0xFF14503E), darkTileBottom = Color(0xFF0B3B2D), darkEdge = Color(0xFF1B6B53),
+            darkGlyphTop = Color(0xFFA7F3D0), darkGlyphBottom = Color(0xFF34D399),
+        )
+    }
+    val (h, s) = accent.hueAndSaturation()
+    // Emerald's own saturation is 0.9, so every strength below is that palette's value scaled to this accent.
+    val f = s / 0.9f
+    return IconColors(
+        bright = hsl(h, 0.82f * f, 0.355f), mid = hsl(h, 0.84f * f, 0.26f), deep = hsl(h, 0.85f * f, 0.165f),
+        mint = hsl(h, 0.50f * f, 0.90f), mintLight = hsl(h, 0.48f * f, 0.955f), mintEdge = hsl(h, 0.40f * f, 0.82f),
+        darkTileTop = hsl(h, 0.60f * f, 0.196f), darkTileBottom = hsl(h, 0.69f * f, 0.137f), darkEdge = hsl(h, 0.60f * f, 0.263f),
+        darkGlyphTop = hsl(h, 0.87f * f, 0.80f), darkGlyphBottom = hsl(h, 0.65f * f, 0.52f),
     )
 }

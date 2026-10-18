@@ -28,9 +28,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
+import com.auxo.pos.ui.theme.LocalIconColors
 
 /*
- * Auxo's icon system: soft-render emerald icons.
+ * Auxo's icon system: soft-render icons in the chosen accent colour (emerald by default).
  *
  * Every glyph (the single-colour vector files in res/drawable/ic_*.xml) can be drawn in three ways through ONE
  * component, so screens never repeat gradient or shadow code:
@@ -46,15 +47,8 @@ import com.auxo.pos.R
  * tinted icon.
  */
 
-/** The emerald and mint colours every icon is drawn with. */
+/** The red the delete icon is drawn with; every other icon takes its colours from the chosen accent (LocalIconColors). */
 object AuxoIconColors {
-    val Deep = Color(0xFF064E3B)
-    val Mid = Color(0xFF0B7A55)
-    val Bright = Color(0xFF10A56F)
-    val Soft = Color(0xFF34D399)
-    val Mint = Color(0xFFD9F3E7)
-    val MintLight = Color(0xFFF0FBF6)
-    val MintEdge = Color(0xFFBFE4CD)
     val DangerDeep = Color(0xFF991B1B)
     val DangerBright = Color(0xFFEF4444)
     val DangerTile = Color(0xFFFEE2E2)
@@ -115,10 +109,12 @@ private class IconPalette(
 @Composable
 private fun palette(tone: AuxoIconTone, selected: Boolean, accent: Color?): IconPalette {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val brand = LocalIconColors.current
+
     return when {
         selected -> IconPalette(
-            tileTop = AuxoIconColors.Bright, tileBottom = AuxoIconColors.Deep, edge = AuxoIconColors.Mid,
-            glyphTop = Color.White, glyphBottom = AuxoIconColors.MintLight, shadow = AuxoIconColors.Deep,
+            tileTop = brand.bright, tileBottom = brand.deep, edge = brand.mid,
+            glyphTop = Color.White, glyphBottom = brand.mintLight, shadow = brand.deep,
         )
         accent != null -> IconPalette(
             tileTop = accent.copy(alpha = if (dark) 0.28f else 0.10f), tileBottom = accent.copy(alpha = if (dark) 0.18f else 0.20f),
@@ -134,12 +130,12 @@ private fun palette(tone: AuxoIconTone, selected: Boolean, accent: Color?): Icon
             )
         }
         dark -> IconPalette(
-            Color(0xFF14503E), Color(0xFF0B3B2D), Color(0xFF1B6B53),
-            Color(0xFFA7F3D0), Color(0xFF34D399), AuxoIconColors.Deep,
+            brand.darkTileTop, brand.darkTileBottom, brand.darkEdge,
+            brand.darkGlyphTop, brand.darkGlyphBottom, brand.deep,
         )
         else -> IconPalette(
-            AuxoIconColors.MintLight, AuxoIconColors.Mint, AuxoIconColors.MintEdge,
-            AuxoIconColors.Bright, AuxoIconColors.Deep, AuxoIconColors.Deep,
+            brand.mintLight, brand.mint, brand.mintEdge,
+            brand.bright, brand.deep, brand.deep,
         )
     }
 }
@@ -231,12 +227,13 @@ fun AuxoArtwork(
     glass: Boolean = false,
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val brand = LocalIconColors.current
     val discModifier = if (disc && glass) {
         Modifier.crystalGlass(CircleShape, elevation = 2.dp)
     } else if (disc) {
         Modifier.background(
             Brush.verticalGradient(
-                if (dark) listOf(Color(0xFF14503E), Color(0xFF0B3B2D)) else listOf(AuxoIconColors.MintLight, AuxoIconColors.Mint),
+                if (dark) listOf(brand.darkTileTop, brand.darkTileBottom) else listOf(brand.mintLight, brand.mint),
             ),
             CircleShape,
         )

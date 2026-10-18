@@ -119,7 +119,7 @@ fun MoreScreen(
             }
             if (can(Permission.MANAGE_LOYALTY)) {
                 MoreItem(
-                    R.drawable.ic_wallet,
+                    R.drawable.ic_star,
                     stringResource(R.string.loyalty_settings_title),
                     stringResource(R.string.more_loyalty_body),
                     actions::onOpenLoyalty,
@@ -128,7 +128,7 @@ fun MoreScreen(
             }
             if (can(Permission.CLOSE_DAY)) {
                 MoreItem(
-                    R.drawable.ic_wallet,
+                    R.drawable.ic_day_end,
                     stringResource(R.string.dayend_title),
                     stringResource(R.string.more_dayend_body),
                     actions::onOpenDayEnd,
@@ -137,7 +137,7 @@ fun MoreScreen(
             }
             if (can(Permission.MANAGE_USERS)) {
                 MoreItem(
-                    R.drawable.ic_person,
+                    R.drawable.ic_group,
                     stringResource(R.string.users_title),
                     stringResource(R.string.more_users_body),
                     actions::onOpenUsers,
@@ -146,7 +146,7 @@ fun MoreScreen(
             }
             if (can(Permission.MANAGE_USERS)) {
                 MoreItem(
-                    R.drawable.ic_person,
+                    R.drawable.ic_key,
                     stringResource(R.string.recovery_screen_title),
                     stringResource(R.string.more_recovery_body),
                     actions::onOpenRecoveryCode,
@@ -217,7 +217,7 @@ fun MoreScreen(
 
             SectionHeader(stringResource(R.string.more_section_account), modifier = Modifier.padding(top = Spacing.md))
             MoreItem(
-                R.drawable.ic_person,
+                R.drawable.ic_lock,
                 stringResource(R.string.quick_title),
                 stringResource(R.string.more_quick_body),
                 actions::onOpenQuickUnlock,
