@@ -110,7 +110,7 @@ fun MoreScreen(
             }
             if (can(Permission.GST_REPORT)) {
                 MoreItem(
-                    R.drawable.ic_reports,
+                    R.drawable.ic_percent,
                     stringResource(R.string.gst_title),
                     stringResource(R.string.more_gst_body),
                     actions::onOpenGstReport,
@@ -155,7 +155,7 @@ fun MoreScreen(
             }
             if (can(Permission.VIEW_ACTIVITY_LOG)) {
                 MoreItem(
-                    R.drawable.ic_history,
+                    R.drawable.ic_activity,
                     stringResource(R.string.activity_title),
                     stringResource(R.string.more_activity_body),
                     actions::onOpenActivity,
@@ -174,7 +174,7 @@ fun MoreScreen(
                 }
                 if (showStockRecords) {
                     MoreItem(R.drawable.ic_alert, stringResource(R.string.alerts_title), stringResource(R.string.more_alerts_body), actions::onOpenAlerts)
-                    MoreItem(R.drawable.ic_history, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
+                    MoreItem(R.drawable.ic_swap, stringResource(R.string.movements_title), stringResource(R.string.more_movements_body), actions::onOpenMovements)
                 }
                 if (showCount) {
                     MoreItem(R.drawable.ic_nav_inventory, stringResource(R.string.count_title), stringResource(R.string.more_count_body), actions::onOpenCount, modifier = Modifier.testTag("more_stock_count"))
@@ -189,11 +189,11 @@ fun MoreScreen(
                 MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
             }
             if (can(Permission.VIEW_FINANCIALS)) {
-                MoreItem(R.drawable.ic_history, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
+                MoreItem(R.drawable.ic_receipt, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
             } else {
                 // An Employee opens past invoices to view, print or share them; there are no payment records or totals.
                 MoreItem(
-                    R.drawable.ic_history,
+                    R.drawable.ic_receipt,
                     stringResource(R.string.employee_home_invoices),
                     stringResource(R.string.more_invoices_only_body),
                     actions::onOpenHistory,
