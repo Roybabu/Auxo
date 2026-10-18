@@ -198,7 +198,7 @@ class RoomStockTest {
     }
 
     @Test
-    fun ingredientStock_isCountedInGrams() = runTest {
+    fun gramCountedStock_isChangedInGrams() = runTest {
         val flour = saveNew(TestData.flour(grams = 2_000))
         val use = StockMovement(variantId = flour.variants[0].id, quantityChange = -750, reason = StockChangeReason.USED, createdAtMillis = 1)
         assertEquals(StockChangeResult.Applied, inventory.recordStockChange(use))

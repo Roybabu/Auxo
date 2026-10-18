@@ -340,17 +340,13 @@ fun ProductEditorContent(
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
 
-        if (form.category.isSold) {
-            item(key = "subcategory") { SubcategorySection(form, errors, actions) }
-        }
+        item(key = "subcategory") { SubcategorySection(form, errors, actions) }
 
         if (form.category.canSkipStock) {
             item(key = "restaurant") { RestaurantSection(form, errors, actions) }
         }
 
-        if (form.category.isSold) {
-            item(key = "tax") { TaxSection(form, errors, actions) }
-        }
+        item(key = "tax") { TaxSection(form, errors, actions) }
 
         // Nothing to show here without suppliers unless the item can be counted in more than one unit.
         if (form.tracksStock && (suppliersEnabled || form.category.allowedStockUnits.size > 1)) {
@@ -591,7 +587,7 @@ private fun SwitchRow(title: String, body: String, checked: Boolean, onCheckedCh
     }
 }
 
-/** How an ingredient is counted, and the supplier reorders go to. */
+/** The supplier reorders go to. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, actions: ProductEditorActions) {
@@ -929,33 +925,31 @@ private fun VariantEditorCard(
                 }
             }
 
-            if (category.isSold) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                AuxoTextField(
+                    value = row.sellingPrice,
+                    onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sellingPrice = sanitizeDecimal(value)) } },
+                    label = stringResource(R.string.field_selling_price),
+                    prefix = currency,
+                    error = errorFor(VariantField.SELLING_PRICE),
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("variant_price_$index"),
+                )
+                if (category != ProductCategory.RESTAURANT) {
                     AuxoTextField(
-                        value = row.sellingPrice,
-                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sellingPrice = sanitizeDecimal(value)) } },
-                        label = stringResource(R.string.field_selling_price),
+                        value = row.mrp,
+                        onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
+                        label = stringResource(R.string.field_mrp),
                         prefix = currency,
-                        error = errorFor(VariantField.SELLING_PRICE),
+                        error = errorFor(VariantField.MRP),
                         keyboardType = KeyboardType.Decimal,
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("variant_price_$index"),
+                        modifier = Modifier.weight(1f),
                     )
-                    if (category != ProductCategory.RESTAURANT) {
-                        AuxoTextField(
-                            value = row.mrp,
-                            onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
-                            label = stringResource(R.string.field_mrp),
-                            prefix = currency,
-                            error = errorFor(VariantField.MRP),
-                            keyboardType = KeyboardType.Decimal,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
                 }
             }
-            // Quantities are typed in pieces, kg or L; ingredients may use up to 3 decimals.
+            // Quantities are typed in pieces.
             val quantityKeyboard = if (unit == StockUnit.UNIT) KeyboardType.Number else KeyboardType.Decimal
             fun sanitizeQuantity(text: String): String = if (unit == StockUnit.UNIT) sanitizeCount(text) else sanitizeDecimal(text, 3)
             @Composable
@@ -965,11 +959,7 @@ private fun VariantEditorCard(
                 AuxoTextField(
                     value = row.costPrice,
                     onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(costPrice = sanitizeDecimal(value)) } },
-                    label = if (category.isSold) {
-                        stringResource(R.string.field_cost_price)
-                    } else {
-                        stringResource(R.string.field_cost_per, unit.entrySymbol)
-                    },
+                    label = stringResource(R.string.field_cost_price),
                     prefix = currency,
                     error = errorFor(VariantField.COST_PRICE),
                     keyboardType = KeyboardType.Decimal,

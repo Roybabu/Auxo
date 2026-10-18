@@ -42,16 +42,7 @@ object StockAdjustmentCalculator {
         StockChangeReason.CORRECTION,
     )
 
-    /** Ingredients aren't sold or returned at the counter; the kitchen uses them up. */
-    private val ingredientReasons: List<StockChangeReason> = listOf(
-        StockChangeReason.RECEIVED,
-        StockChangeReason.USED,
-        StockChangeReason.DAMAGED,
-        StockChangeReason.CORRECTION,
-    )
-
-    fun manualReasonsFor(category: ProductCategory): List<StockChangeReason> =
-        if (category.isSold) manualReasons else ingredientReasons
+    fun manualReasonsFor(category: ProductCategory): List<StockChangeReason> = manualReasons
 
     /**
      * @param unit how the item's stock is counted; ingredients are typed in kg or L

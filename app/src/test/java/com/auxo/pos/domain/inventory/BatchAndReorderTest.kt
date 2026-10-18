@@ -145,25 +145,16 @@ class ItemSearchTest {
         assertEquals(listOf("Butter Biscuits"), ItemSearch.search(products, "butter").map { it.product.name }.distinct())
         val byBarcode = ItemSearch.search(products, TestData.EAN[1])
         assertEquals(TestData.tShirt().variants[1].id, byBarcode.single().variant.id)
-        val ingredientsOnly = ItemSearch.search(products, "", include = { !it.category.isSold })
-        assertEquals(listOf("Wheat Flour"), ingredientsOnly.map { it.product.name })
     }
 }
 
 class StockAdjustmentUnitsTest {
 
     @Test
-    fun ingredientAdjustments_areTypedInKilograms() {
+    fun gramCountedAdjustments_areTypedInKilograms() {
         val used = StockAdjustmentCalculator.calculate(StockChangeReason.USED, "0.25", currentStock = 1_000, unit = StockUnit.GRAM)
         assertEquals(StockAdjustment.Valid(-250, StockChangeReason.USED), used)
         val counted = StockAdjustmentCalculator.calculate(StockChangeReason.CORRECTION, "0.8", currentStock = 1_000, unit = StockUnit.GRAM)
         assertEquals(StockAdjustment.Valid(-200, StockChangeReason.CORRECTION), counted)
-    }
-
-    @Test
-    fun ingredients_offerKitchenReasons() {
-        val reasons = StockAdjustmentCalculator.manualReasonsFor(com.auxo.pos.domain.model.ProductCategory.INGREDIENT)
-        assertTrue(StockChangeReason.USED in reasons)
-        assertTrue(StockChangeReason.SOLD !in reasons)
     }
 }

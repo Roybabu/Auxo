@@ -284,8 +284,8 @@ object Reports {
                     ReportValue.Text(categoryName(product.category)),
                     ReportValue.Quantity(variant.stockQuantity, unit),
                     variant.costPrice?.let { ReportValue.Amount(unit.costOf(variant.stockQuantity, it)) } ?: ReportValue.Empty,
-                    if (product.category.isSold) ReportValue.Amount(variant.sellingPrice * variant.stockQuantity) else ReportValue.Empty,
-                ) to (variant.costPrice?.let { unit.costOf(variant.stockQuantity, it) } to if (product.category.isSold) variant.sellingPrice * variant.stockQuantity else null)
+                    ReportValue.Amount(variant.sellingPrice * variant.stockQuantity),
+                ) to (variant.costPrice?.let { unit.costOf(variant.stockQuantity, it) } to variant.sellingPrice * variant.stockQuantity)
             }
         }
         return ReportTable(
@@ -308,7 +308,6 @@ object Reports {
         ProductCategory.GARMENT -> "Garment"
         ProductCategory.PACKAGED_FOOD -> "Packaged food"
         ProductCategory.BEVERAGE -> "Beverage"
-        ProductCategory.INGREDIENT -> "Ingredient"
         ProductCategory.RESTAURANT -> "Restaurant"
     }
 

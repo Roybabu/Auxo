@@ -30,9 +30,6 @@ import com.auxo.pos.domain.billing.CreditAccount
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.billing.HeldBillSummary
-import com.auxo.pos.domain.billing.KitchenOrders
-import com.auxo.pos.domain.billing.KitchenTicket
-import com.auxo.pos.domain.billing.PlaceOrderResult
 import com.auxo.pos.data.repository.QuotationRepository
 import com.auxo.pos.domain.billing.QuotationRepricing
 import com.auxo.pos.domain.billing.QuotationStatus
@@ -40,7 +37,6 @@ import com.auxo.pos.domain.billing.QuotationSummary
 import com.auxo.pos.domain.billing.Quotations
 import com.auxo.pos.domain.billing.SaleBuilder
 import com.auxo.pos.domain.model.Invoice
-import com.auxo.pos.domain.billing.ServiceType
 import com.auxo.pos.data.repository.HeldBillRepository
 import com.auxo.pos.domain.billing.DiscountPolicy
 import com.auxo.pos.domain.billing.DiscountParse
@@ -140,11 +136,6 @@ data class BillingUiState(
     val canHold: Boolean = false,
     /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
     val resumedHeldId: Long? = null,
-    /** True in restaurant mode: dine-in or takeaway, a table and kitchen tickets are offered. */
-    val restaurantMode: Boolean = false,
-    /** Set after "Place order" is pressed with the service or table missing, to show what is needed. */
-    val orderShowErrors: Boolean = false,
-    val isPlacingOrder: Boolean = false,
     /** Quotations, newest first. */
     val quotations: List<QuotationSummary> = emptyList(),
     /** True when the shop can make quotations at all. */
@@ -206,15 +197,6 @@ sealed interface BillingEvent {
     data class CustomerSaved(val name: String) : BillingEvent
     data object BillHeld : BillingEvent
 
-    /** The order was sent to the kitchen; the ticket is ready to print or share. */
-    data class OrderPlaced(val ticket: KitchenTicket) : BillingEvent
-
-    /** Another open order already has this table. */
-    data class TableInUse(val table: String) : BillingEvent
-
-    /** Nothing new to send since the last ticket. */
-    data object NothingNewForKitchen : BillingEvent
-
     /** The parked bill was finished or discarded meanwhile, or cannot be read. */
     data object HeldBillUnavailable : BillingEvent
 
@@ -248,7 +230,7 @@ class BillingViewModel(
     private val quotations: QuotationRepository? = null,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(BillingUiState(restaurantMode = shop?.restaurantMenu?.value ?: false))
+    private val _uiState = MutableStateFlow(BillingUiState())
     val uiState: StateFlow<BillingUiState> = _uiState.asStateFlow()
 
     private val eventChannel = Channel<BillingEvent>(Channel.BUFFERED)
@@ -294,8 +276,8 @@ class BillingViewModel(
                     recalculate { state ->
                         state.copy(
                             productsLoaded = true,
-                            productCount = list.count { it.category.isSold },
-                            expiredItemCount = list.count { p -> p.category.isSold && p.variants.any { it.expiredQuantity(today) > 0 } },
+                            productCount = list.size,
+                            expiredItemCount = list.count { p -> p.variants.any { it.expiredQuantity(today) > 0 } },
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
                             quickItems = quickItems(),
@@ -328,7 +310,7 @@ class BillingViewModel(
             viewModelScope.launch {
                 prefs.restaurantMenu.collect { enabled ->
                     restaurantEnabled = enabled
-                    recalculate { state -> state.copy(restaurantMode = enabled, quickItems = quickItems()) }
+                    recalculate { state -> state.copy(quickItems = quickItems()) }
                 }
             }
         }
@@ -580,62 +562,9 @@ class BillingViewModel(
                 quickSection = it.quickSection,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
-                restaurantMode = it.restaurantMode,
                 quotations = it.quotations,
                 canQuote = it.canQuote,
             )
-        }
-    }
-
-    // Restaurant orders
-
-    fun onServiceTypeChange(type: ServiceType?) = recalculate {
-        it.copy(cart = it.cart.copy(serviceType = type, tableNumber = if (type == ServiceType.DINE_IN) it.cart.tableNumber else ""))
-    }
-
-    fun onTableNumberChange(text: String) = recalculate {
-        it.copy(cart = it.cart.copy(tableNumber = text.take(KitchenOrders.TABLE_MAX + 4)))
-    }
-
-    /**
-     * Sends the bill to the kitchen and keeps it open for its table (or as a takeaway), then clears the counter.
-     * Only the items the kitchen has not been told about go on the ticket. Stock changes only when the order is
-     * settled as a normal invoice.
-     */
-    fun placeOrder() {
-        val store = heldBills ?: return
-        val state = _uiState.value
-        if (state.cart.isEmpty || state.isSaving || state.isPlacingOrder) return
-        val service = state.cart.serviceType
-        if (service == null || (service == ServiceType.DINE_IN && KitchenOrders.normalizeTable(state.cart.tableNumber).isEmpty())) {
-            _uiState.update { it.copy(orderShowErrors = true) }
-            return
-        }
-        _uiState.update { it.copy(isPlacingOrder = true, orderShowErrors = false) }
-        viewModelScope.launch {
-            val result = runCatching { store.placeOrder(state.cart, state.totals.grandTotal, state.cart.customer.name, state.resumedHeldId) }
-                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-                .getOrNull()
-            _uiState.update { it.copy(isPlacingOrder = false) }
-            when (result) {
-                is PlaceOrderResult.Placed -> {
-                    val ticket = KitchenTicket(
-                        shopName = state.settings?.storeName.orEmpty(),
-                        kotNumber = result.kotNumber,
-                        serviceType = service,
-                        table = KitchenOrders.normalizeTable(state.cart.tableNumber).ifEmpty { null },
-                        label = state.cart.customer.name.trim(),
-                        delta = result.delta,
-                        isAddOn = result.isAddOn,
-                        createdAtMillis = clock.millis(),
-                    )
-                    clearCart()
-                    eventChannel.send(BillingEvent.OrderPlaced(ticket))
-                }
-                is PlaceOrderResult.TableInUse -> eventChannel.send(BillingEvent.TableInUse(KitchenOrders.normalizeTable(state.cart.tableNumber)))
-                PlaceOrderResult.NothingNew -> eventChannel.send(BillingEvent.NothingNewForKitchen)
-                null -> eventChannel.send(BillingEvent.SaveFailed)
-            }
         }
     }
 
@@ -1025,7 +954,7 @@ class BillingViewModel(
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
         val codes = BarcodeRules.equivalents(code)
-        return products.filter { it.category.isSold }.firstNotNullOfOrNull { product ->
+        return products.firstNotNullOfOrNull { product ->
             product.variants.firstOrNull { it.barcode in codes }?.let { product to it }
         }
     }
@@ -1035,7 +964,7 @@ class BillingViewModel(
         if (query.isEmpty()) return emptyList()
         val day = today
         return products
-            .filter { it.category.isSold && InventoryFilter.matchesText(it, query) }
+            .filter { InventoryFilter.matchesText(it, query) }
             .flatMap { product ->
                 val variants = product.variants.filter { variant ->
                     // When the query names a variant (size, colour, code), show just that variant.

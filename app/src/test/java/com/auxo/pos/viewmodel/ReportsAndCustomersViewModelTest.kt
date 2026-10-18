@@ -237,7 +237,7 @@ class BillingAccountsAndMenuTest {
 
     private val dosa = TestData.dish(id = 5, name = "Masala Dosa", price = Money(12_000))
     private val idli = TestData.dish(id = 6, name = "Idli", price = Money(6_000), available = false)
-    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.flour(), dosa, idli))
+    private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), dosa, idli))
     private val billing = FakeBillingRepository(inventory)
     private val settings = FakeSettingsRepository()
     private val anita = Customer(id = 1, name = "Anita Das", phone = "9830012345", creditLimit = Money(100_000))
@@ -252,14 +252,12 @@ class BillingAccountsAndMenuTest {
     )
 
     @Test
-    fun dishes_canBeBilled_withoutStock_butIngredientsAndUnavailableOnesCant() = runTest {
+    fun dishes_canBeBilled_withoutStock_butUnavailableOnesCant() = runTest {
         val viewModel = viewModel()
         val events = record(viewModel.events)
         assertEquals(listOf("Masala Dosa"), viewModel.uiState.value.quickItems.map { it.product.name })
-        assertEquals(3, viewModel.uiState.value.productCount) // flour is an ingredient
+        assertEquals(3, viewModel.uiState.value.productCount)
 
-        viewModel.onSearchTextChange("flour")
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
         viewModel.onSearchTextChange("dosa")
         val result = viewModel.uiState.value.searchResults.single()
         viewModel.addResult(result)

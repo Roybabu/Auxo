@@ -80,7 +80,6 @@ object SheetInvoiceLayout {
             add((if (invoice.isQuotation) labels.quotationNo else if (isReturn) labels.creditNoteNo else labels.invoiceNo) to invoice.number)
             add(labels.dateHeading to ReceiptText.dateTime(invoice.createdAtMillis, zone))
             invoice.quotationValidUntil?.let { add(labels.validUntilHeading to ReceiptText.date(it)) }
-            ReceiptText.serviceLine(invoice, labels)?.let { add(labels.serviceHeading to it) }
             invoice.originalInvoiceNumber?.let { add(labels.againstInvoice to it) }
         }
         val buyerLines = if (options.showCustomer) {

@@ -80,7 +80,7 @@ class CategorySetupTest {
             AuxoTheme {
                 CategorySetupContent(
                     CategorySetupUiState(
-                        categories = listOf(category(1, ProductCategory.GARMENT, true), category(4, ProductCategory.INGREDIENT, true), category(2, ProductCategory.RESTAURANT, false)),
+                        categories = listOf(category(1, ProductCategory.GARMENT, true), category(2, ProductCategory.RESTAURANT, false)),
                         selected = setOf(1), loaded = true,
                     ),
                     onToggle = { toggled += it },
@@ -93,8 +93,6 @@ class CategorySetupTest {
         composeRule.onNodeWithTag("category_setup_continue").performClick()
         assertEquals(listOf(2L), toggled)
         assertEquals(1, confirmed)
-        // Ingredients are kitchen stock, not something the shop sells, so they are not offered here.
-        composeRule.onNodeWithTag("setup_category_4").assertDoesNotExist()
     }
 
     @Test

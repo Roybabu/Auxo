@@ -409,7 +409,6 @@ private fun ImportIssue.messageRes(): Int = when {
         ImportParseError.UNKNOWN_CATEGORY -> R.string.import_parse_unknown_category
         ImportParseError.UNKNOWN_DIET -> R.string.import_parse_unknown_diet
         ImportParseError.UNKNOWN_UNIT -> R.string.import_parse_unknown_unit
-        ImportParseError.UNKNOWN_STOCK_UNIT -> R.string.import_parse_unknown_stock_unit
         ImportParseError.INVALID_DATE -> R.string.import_parse_invalid_date
         null -> R.string.error_generic
     }

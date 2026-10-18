@@ -30,7 +30,6 @@ fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.string.category_garment
     ProductCategory.PACKAGED_FOOD -> R.string.category_packaged_food
     ProductCategory.BEVERAGE -> R.string.category_beverage
-    ProductCategory.INGREDIENT -> R.string.category_ingredient
     ProductCategory.RESTAURANT -> R.string.category_restaurant
 }
 
@@ -39,7 +38,6 @@ fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.drawable.ic_garment
     ProductCategory.PACKAGED_FOOD -> R.drawable.ic_food
     ProductCategory.BEVERAGE -> R.drawable.ic_beverage
-    ProductCategory.INGREDIENT -> R.drawable.ic_ingredient
     ProductCategory.RESTAURANT -> R.drawable.ic_restaurant
 }
 

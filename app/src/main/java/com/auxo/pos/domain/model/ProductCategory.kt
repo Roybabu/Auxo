@@ -6,9 +6,6 @@ enum class ProductCategory {
     PACKAGED_FOOD,
     BEVERAGE,
 
-    /** Raw material for the kitchen, kept in stock and not sold at the counter. */
-    INGREDIENT,
-
     /** Dishes and drinks made or served to order. Stock is optional, per item. */
     RESTAURANT,
     ;
@@ -19,11 +16,8 @@ enum class ProductCategory {
     /** Packaged food and beverages carry a net quantity (weight or volume) on each pack. */
     val usesNetQuantity: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE
 
-    /** Food, beverages and ingredients are kept in batches with expiry dates. Restaurant items are not. */
+    /** Food and beverages are kept in batches with expiry dates. Restaurant items are not. */
     val tracksExpiry: Boolean get() = this != GARMENT && this != RESTAURANT
-
-    /** Sold at the billing counter. Ingredients are kept for the kitchen and are not billed. */
-    val isSold: Boolean get() = this != INGREDIENT
 
     /** Restaurant items can be sold without a stock count; every other category always keeps stock. */
     val canSkipStock: Boolean get() = this == RESTAURANT
@@ -33,7 +27,7 @@ enum class ProductCategory {
 
     val allowedUnits: List<QuantityUnit>
         get() = when (this) {
-            GARMENT, INGREDIENT, RESTAURANT -> emptyList()
+            GARMENT, RESTAURANT -> emptyList()
             PACKAGED_FOOD -> listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.PIECE)
             BEVERAGE -> listOf(QuantityUnit.MILLILITRE, QuantityUnit.LITRE)
         }
@@ -41,9 +35,9 @@ enum class ProductCategory {
     val defaultUnit: QuantityUnit?
         get() = allowedUnits.firstOrNull()
 
-    /** How stock can be counted: ingredients by weight, volume or piece; everything else by unit. */
+    /** How stock can be counted: by unit (pieces or packs). */
     val allowedStockUnits: List<StockUnit>
-        get() = if (this == INGREDIENT) listOf(StockUnit.GRAM, StockUnit.MILLILITRE, StockUnit.UNIT) else listOf(StockUnit.UNIT)
+        get() = listOf(StockUnit.UNIT)
 
     companion object {
         /** Restaurant service is usually taxed at 5% GST. */

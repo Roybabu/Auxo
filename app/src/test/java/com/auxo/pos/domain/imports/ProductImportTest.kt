@@ -6,7 +6,6 @@ import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.QuantityUnit
-import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.domain.validation.FieldError
 import com.auxo.pos.testutil.TestData
 import org.junit.Assert.assertEquals
@@ -72,12 +71,12 @@ class ProductImportTest {
     // The template
 
     @Test
-    fun theTemplate_importsAsFourProducts() {
+    fun theTemplate_importsAsThreeProducts() {
         val result = preview(table(*ProductImportTemplate.csv().trim().lines().toTypedArray()))
-        assertEquals(listOf("Cotton T-Shirt", "Glucose Biscuits", "Mango Juice", "Wheat Flour"), result.items.map { it.name })
+        assertEquals(listOf("Cotton T-Shirt", "Glucose Biscuits", "Mango Juice"), result.items.map { it.name })
         assertTrue(result.items.all { it.status == ImportStatus.READY })
-        assertEquals(5, result.rowCount)
-        assertEquals(5, result.readyVariants)
+        assertEquals(4, result.rowCount)
+        assertEquals(4, result.readyVariants)
     }
 
     @Test
@@ -107,12 +106,6 @@ class ProductImportTest {
         assertEquals(GstRate.Fixed(1_200), juice.gstRate)
         assertEquals(LocalDate.of(2026, 12, 31), juice.variants[0].expiryDate)
         assertEquals(QuantityUnit.LITRE, juice.variants[0].netQuantity!!.unit)
-
-        val flour = products[3]
-        assertEquals(StockUnit.GRAM, flour.stockUnit)
-        assertEquals(10_000, flour.variants[0].stockQuantity)
-        assertEquals(2_000, flour.variants[0].lowStockThreshold)
-        assertEquals(Money(4_500), flour.variants[0].costPrice)
     }
 
     // Grouping and reading cells
@@ -165,7 +158,7 @@ class ProductImportTest {
         assertEquals(ProductCategory.PACKAGED_FOOD, ProductImport.parseCategory("packaged_food"))
         assertEquals(ProductCategory.GARMENT, ProductImport.parseCategory("Clothing"))
         assertEquals(ProductCategory.BEVERAGE, ProductImport.parseCategory("drinks"))
-        assertEquals(ProductCategory.INGREDIENT, ProductImport.parseCategory("Raw material"))
+        assertNull(ProductImport.parseCategory("Raw material"))
         assertNull(ProductImport.parseCategory("toys"))
         assertEquals(DietType.NON_VEG, ProductImport.parseDiet("Non-Veg"))
         assertEquals(DietType.VEG, ProductImport.parseDiet("vegetarian"))
@@ -275,12 +268,11 @@ class ProductImportTest {
     }
 
     @Test
-    fun badUnitDietStockUnitAndDate_areNamedOnce() {
+    fun badUnitDietAndDate_areNamedOnce() {
         val result = preview(
             table(
-                "name,category,diet,net_quantity,unit,selling_price,expiry_date,stock_unit",
-                "Rusk,Packaged food,sometimes,200,bucket,30,someday,",
-                "Rice,Ingredient,,,,,,tonnes",
+                "name,category,diet,net_quantity,unit,selling_price,expiry_date",
+                "Rusk,Packaged food,sometimes,200,bucket,30,someday",
             ),
         )
         val rusk = result.items[0]
@@ -289,7 +281,6 @@ class ProductImportTest {
         assertEquals(ImportParseError.INVALID_DATE, rusk.issue(ImportColumn.EXPIRY_DATE)!!.parseError)
         // The unit problem is not reported a second time as "unit required".
         assertEquals(1, rusk.issues.count { it.column == ImportColumn.UNIT })
-        assertEquals(ImportParseError.UNKNOWN_STOCK_UNIT, result.items[1].issue(ImportColumn.STOCK_UNIT)!!.parseError)
     }
 
     @Test
@@ -300,12 +291,12 @@ class ProductImportTest {
     }
 
     @Test
-    fun twoRowsOfOneIngredient_cannotBeToldApart() {
+    fun twoRowsOfOneGarmentWithTheSameSizeAndColour_cannotBeToldApart() {
         val result = preview(
             table(
-                "name,category,cost_price,opening_stock,stock_unit",
-                "Flour,Ingredient,45,10,kg",
-                "Flour,Ingredient,45,5,kg",
+                "name,category,size,colour,selling_price",
+                "Flour Sack Bag,Garment,M,Navy,45",
+                "Flour Sack Bag,Garment,M,Navy,45",
             ),
         )
         val item = result.invalid.single()

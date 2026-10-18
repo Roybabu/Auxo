@@ -112,10 +112,6 @@ data class Cart(
     val customer: CustomerDetails = CustomerDetails(),
     /** Two-digit GST state code where the goods are supplied; null means the store's state. */
     val placeOfSupplyStateCode: String? = null,
-    /** Dine-in or takeaway; null until chosen (and always null outside restaurant mode). */
-    val serviceType: ServiceType? = null,
-    /** The table for a dine-in order, as typed. */
-    val tableNumber: String = "",
 ) {
     val isEmpty: Boolean get() = lines.isEmpty()
     val itemCount: Int get() = lines.sumOf { it.quantity }

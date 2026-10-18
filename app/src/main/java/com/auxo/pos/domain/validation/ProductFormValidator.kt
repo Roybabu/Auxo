@@ -106,13 +106,11 @@ object ProductFormValidator {
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
         if (form.subcategory.trim().length > SUBCATEGORY_MAX) fieldErrors[FormField.SUBCATEGORY] = FieldError.TOO_LONG
 
-        // Ingredients aren't sold, so they carry no GST or HSN.
-        val sold = form.category.isSold
         val unit = form.stockUnit.takeIf { it in form.category.allowedStockUnits } ?: StockUnit.UNIT
         // Only restaurant items can be sold without a stock count.
         val tracksStock = !form.category.canSkipStock || form.tracksStock
 
-        val gstRate: GstRate? = if (!sold) null else when (val choice = form.gst) {
+        val gstRate: GstRate? = when (val choice = form.gst) {
             GstChoice.NotSet -> null
             GstChoice.Apparel -> {
                 if (form.category != ProductCategory.GARMENT) fieldErrors[FormField.GST_RATE] = FieldError.APPAREL_RULE_GARMENTS_ONLY
@@ -125,7 +123,7 @@ object ProductFormValidator {
                 basisPoints?.let { GstRate.Fixed(it) }
             }
         }
-        val hsn = if (sold) form.hsnCode.trim() else ""
+        val hsn = form.hsnCode.trim()
         if (hsn.isNotEmpty() && !HSN_PATTERN.matches(hsn)) fieldErrors[FormField.HSN] = FieldError.INVALID_HSN
 
         if (form.category.usesSizeAndColour) {
@@ -165,7 +163,7 @@ object ProductFormValidator {
             hsnCode = hsn.ifEmpty { null },
             gstRate = gstRate,
             variants = validVariants,
-            subcategory = form.subcategory.trim().ifEmpty { null }.takeIf { form.category.isSold },
+            subcategory = form.subcategory.trim().ifEmpty { null },
             categoryId = form.categoryId,
             available = form.available || form.category != ProductCategory.RESTAURANT,
             tracksStock = tracksStock,
@@ -207,7 +205,6 @@ object ProductFormValidator {
         }
 
         val price = when {
-            !category.isSold -> Money.ZERO
             row.sellingPrice.isBlank() -> {
                 errors[VariantField.SELLING_PRICE] = FieldError.REQUIRED
                 null
@@ -216,7 +213,7 @@ object ProductFormValidator {
                 if (it == null) errors[VariantField.SELLING_PRICE] = FieldError.INVALID_PRICE
             }
         }
-        val mrp = if (category.isSold) optionalMoney(row.mrp, VariantField.MRP, errors) else null
+        val mrp = optionalMoney(row.mrp, VariantField.MRP, errors)
         if (price != null && mrp != null && mrp < price) errors[VariantField.MRP] = FieldError.MRP_BELOW_PRICE
         val cost = optionalMoney(row.costPrice, VariantField.COST_PRICE, errors)
 

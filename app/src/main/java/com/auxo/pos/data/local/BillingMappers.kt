@@ -57,8 +57,6 @@ fun InvoiceWithDetails.toDomain(): Invoice = Invoice(
     note = invoice.note,
     customerId = invoice.customerId,
     discountReason = invoice.discountReason,
-    serviceType = invoice.serviceType?.let { enumValueOrNull<com.auxo.pos.domain.billing.ServiceType>(it) },
-    tableNumber = invoice.tableNumber,
 )
 
 fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
@@ -142,8 +140,6 @@ fun Invoice.toEntity(): InvoiceEntity = InvoiceEntity(
     note = note,
     customerId = customerId,
     discountReason = discountReason,
-    serviceType = serviceType?.name,
-    tableNumber = tableNumber,
 )
 
 fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity(

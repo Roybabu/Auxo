@@ -169,14 +169,12 @@ class RoomCategoryRepository(private val database: AuxoDatabase) : CategoryRepos
         seedIfEmpty()
         val rows = dao.categories()
         val chosen = rows.filter { it.id in enabledIds }
-        if (chosen.none { sellsIn(it) }) return@withTransaction CategoryResult.LastOne
+        if (chosen.isEmpty()) return@withTransaction CategoryResult.LastOne
         rows.forEach { dao.setEnabled(it.id, it.id in enabledIds) }
         CategoryResult.Done(0)
     }
 
-    private fun sellsIn(row: ShopCategoryEntity): Boolean = profileOf(row.profile).isSold
-
-    private suspend fun sellingEnabledCount(): Int = dao.categories().count { it.enabled && sellsIn(it) }
+    private suspend fun sellingEnabledCount(): Int = dao.categories().count { it.enabled }
 
     private fun defaultName(profile: String): String = profile.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
 

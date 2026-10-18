@@ -91,7 +91,6 @@ object ThermalReceiptBuilder {
         left(fillIn(if (invoice.isQuotation) labels.quoteNo else if (invoice.type == InvoiceType.RETURN) labels.cnNo else labels.invNo, invoice.number))
         left(fillIn(labels.date, ReceiptText.dateTime(invoice.createdAtMillis, zone)))
         invoice.quotationValidUntil?.let { left(fillIn(labels.validUntil, ReceiptText.date(it))) }
-        ReceiptText.serviceLine(invoice, labels)?.let { left(it) }
         invoice.originalInvoiceNumber?.let { left(fillIn(labels.against, it)) }
         if (options.showCustomer) {
             left(fillIn(labels.customer, invoice.buyer.name ?: labels.walkInCustomer))

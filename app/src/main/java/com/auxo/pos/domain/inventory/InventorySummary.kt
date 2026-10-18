@@ -46,8 +46,7 @@ object InventorySummaryCalculator {
     /**
      * Counts are per variant. Stock value uses cost price where known; variants
      * without a cost price are left out of the cost total. Units in stock and
-     * value at selling price count shop items only; ingredients are weighed or
-     * measured and not sold, so they add to the cost total alone.
+     * value at selling price count every item.
      */
     fun calculate(
         products: List<Product>,
@@ -70,10 +69,8 @@ object InventorySummaryCalculator {
             for (variant in product.variants) {
                 val inStock = variant.stockQuantity.coerceAtLeast(0)
                 variant.costPrice?.let { valueAtCost += product.stockUnit.costOf(inStock, it) }
-                if (product.category.isSold) {
-                    units += inStock
-                    valueAtPrice += variant.sellingPrice * inStock
-                }
+                units += inStock
+                valueAtPrice += variant.sellingPrice * inStock
 
                 val alertType = when {
                     variant.isExpired(today) -> StockAlertType.EXPIRED

@@ -43,11 +43,11 @@ class RoomCategoryTest {
     fun aNewShop_startsWithTheBuiltInCategories_andRestaurantOff() = runTest {
         val all = categories.getCategories()
         assertEquals(
-            listOf(ProductCategory.GARMENT, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT, ProductCategory.INGREDIENT),
+            listOf(ProductCategory.GARMENT, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT),
             all.map { it.profile },
         )
         assertTrue(all.all { it.builtIn && it.name == null })
-        assertEquals(listOf(true, true, true, false, true), all.map { it.enabled })
+        assertEquals(listOf(true, true, true, false), all.map { it.enabled })
     }
 
     @Test
@@ -57,9 +57,8 @@ class RoomCategoryTest {
         assertTrue(categories.applySetup(setOf(restaurant.id)) is CategoryResult.Done)
         assertEquals(listOf(restaurant.id), categories.getCategories().filter { it.enabled }.map { it.id })
 
-        // Ingredients alone are not something the shop sells.
-        val ingredient = all.first { it.profile == ProductCategory.INGREDIENT }
-        assertEquals(CategoryResult.LastOne, categories.applySetup(setOf(ingredient.id)))
+        // At least one category has to stay on.
+        assertEquals(CategoryResult.LastOne, categories.applySetup(emptySet()))
         assertEquals(listOf(restaurant.id), categories.getCategories().filter { it.enabled }.map { it.id })
     }
 
@@ -101,7 +100,7 @@ class RoomCategoryTest {
         assertTrue(categories.setEnabled(garment.id, false) is CategoryResult.Done)
         assertEquals(garment.id, inventory.getProduct(saved)!!.categoryId)
 
-        val sellable = categories.getCategories().filter { it.enabled && it.profile.isSold }
+        val sellable = categories.getCategories().filter { it.enabled }
         sellable.dropLast(1).forEach { assertTrue(categories.setEnabled(it.id, false) is CategoryResult.Done) }
         assertEquals(CategoryResult.LastOne, categories.setEnabled(sellable.last().id, false))
     }

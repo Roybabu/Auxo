@@ -99,7 +99,7 @@ class ReportsTest {
         val flourRow = value.rows.single { (it[0] as ReportValue.Text).value == "Wheat Flour" }
         assertEquals(ReportValue.Quantity(2_500, StockUnit.GRAM), flourRow[3])
         assertEquals(Money(11_250), amount(flourRow[4])) // 2.5 kg at ₹45/kg
-        assertEquals(ReportValue.Empty, flourRow[5]) // ingredients have no selling value
+        assertEquals(Money.ZERO, amount(flourRow[5])) // the fixture has no selling price
         assertEquals(1, Reports.stockValue(products, categoryId = 4).rows.size)
 
         val low = Reports.lowStock(listOf(TestData.tShirt().copy(preferredSupplierId = 3)), listOf(Supplier(id = 3, name = "Sample Textiles")))
@@ -107,7 +107,7 @@ class ReportsTest {
 
         val today = TestData.today
         fun batch(id: Long, expiry: LocalDate?) = BatchWithProduct(
-            StockBatch(id = id, variantId = 41, expiryDate = expiry, quantity = 1_000), 4, "Wheat Flour", "", ProductCategory.INGREDIENT, StockUnit.GRAM, Money(4_500),
+            StockBatch(id = id, variantId = 41, expiryDate = expiry, quantity = 1_000), 4, "Wheat Flour", "", ProductCategory.PACKAGED_FOOD, StockUnit.GRAM, Money(4_500),
         )
         val batches = listOf(batch(1, today.minusDays(2)), batch(2, today.plusDays(5)), batch(3, today.plusDays(20)), batch(4, null))
         assertEquals(1, Reports.expiry(batches, today, ExpiryWindow.EXPIRED).rows.size)
@@ -124,7 +124,7 @@ class ReportsTest {
     fun wastage_valuesWriteOffsAtCost_andIgnoresSales() {
         fun record(change: Int, reason: StockChangeReason, cost: Money?) = StockMovementRecord(
             movement = StockMovement(variantId = 41, quantityChange = change, reason = reason, createdAtMillis = 0),
-            productId = 4, productName = "Wheat Flour", variantLabel = "", category = ProductCategory.INGREDIENT, categoryId = 4,
+            productId = 4, productName = "Wheat Flour", variantLabel = "", category = ProductCategory.PACKAGED_FOOD, categoryId = 4,
             stockUnit = StockUnit.GRAM, batchNumber = "F1", reference = null, unitCost = cost,
         )
         val records = listOf(

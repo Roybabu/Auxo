@@ -4,8 +4,6 @@ import com.auxo.pos.domain.billing.Cart
 import com.auxo.pos.domain.billing.CartLine
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
-import com.auxo.pos.domain.billing.SentItem
-import com.auxo.pos.domain.billing.ServiceType
 import com.auxo.pos.domain.model.GstRate
 import com.auxo.pos.domain.model.Money
 import org.json.JSONArray
@@ -26,8 +24,6 @@ object HeldCartCodec {
         put("billDiscountReason", cart.billDiscountReason)
         put("customer", encodeCustomer(cart.customer))
         cart.placeOfSupplyStateCode?.let { put("placeOfSupply", it) }
-        cart.serviceType?.let { put("service", it.name) }
-        put("table", cart.tableNumber)
     }.toString()
 
     /** The cart, or null if the text is damaged or from a newer version of the app. */
@@ -43,8 +39,6 @@ object HeldCartCodec {
                 billDiscountReason = root.optString("billDiscountReason", ""),
                 customer = decodeCustomer(root.getJSONObject("customer")),
                 placeOfSupplyStateCode = if (root.has("placeOfSupply")) root.getString("placeOfSupply") else null,
-                serviceType = if (root.has("service")) ServiceType.entries.firstOrNull { it.name == root.getString("service") } else null,
-                tableNumber = root.optString("table", ""),
             )
         }
     } catch (e: org.json.JSONException) {
@@ -125,25 +119,4 @@ object HeldCartCodec {
         gstin = o.optString("gstin", ""),
         customerId = if (o.has("id")) o.getLong("id") else null,
     )
-}
-
-/** Keeps what the kitchen has been told as text on the open order. */
-object KitchenOrderCodec {
-    fun encode(items: List<SentItem>): String = JSONArray().also { array ->
-        items.forEach { array.put(JSONObject().put("key", it.key).put("name", it.name).put("variant", it.variant).put("qty", it.quantity)) }
-    }.toString()
-
-    /** The items, or an empty list for missing or damaged text (the kitchen then gets everything again). */
-    fun decode(text: String?): List<SentItem> {
-        if (text.isNullOrBlank()) return emptyList()
-        return try {
-            val array = JSONArray(text)
-            (0 until array.length()).map {
-                val o = array.getJSONObject(it)
-                SentItem(o.getLong("key"), o.getString("name"), o.optString("variant", ""), o.getInt("qty"))
-            }
-        } catch (e: org.json.JSONException) {
-            emptyList()
-        }
-    }
 }

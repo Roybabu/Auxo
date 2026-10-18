@@ -435,7 +435,7 @@ class OperationsScreenTest {
 
     @Test
     fun writeOffForm_showsReasonsAndErrors() {
-        val batch = BatchWithProduct(StockBatch(id = 9, variantId = 41, expiryDate = today, quantity = 1_500), 4, "Wheat Flour", "", ProductCategory.INGREDIENT, StockUnit.GRAM, Money(4_500))
+        val batch = BatchWithProduct(StockBatch(id = 9, variantId = 41, expiryDate = today, quantity = 1_500), 4, "Wheat Flour", "", ProductCategory.PACKAGED_FOOD, StockUnit.GRAM, Money(4_500))
         show {
             WriteOffForm(
                 state = WastageDialogState(batch, StockChangeReason.SPOILED, "2", error = com.auxo.pos.domain.usecase.WastageError.MORE_THAN_IN_BATCH),

@@ -51,14 +51,6 @@ internal object ReceiptText {
         else -> labels.billOfSupply
     }
 
-    /** "Dine-in · Table 4" or "Takeaway" for a restaurant bill; null on any other bill. */
-    fun serviceLine(invoice: Invoice, labels: ReceiptLabels): String? = when (invoice.serviceType) {
-        com.auxo.pos.domain.billing.ServiceType.DINE_IN ->
-            invoice.tableNumber?.takeIf { it.isNotBlank() }?.let { fillIn(labels.dineInTable, it) }
-        com.auxo.pos.domain.billing.ServiceType.TAKEAWAY -> labels.takeaway
-        null -> null
-    }
-
     fun method(method: PaymentMethod, labels: ReceiptLabels): String = when (method) {
         PaymentMethod.CASH -> labels.methodCash
         PaymentMethod.UPI -> labels.methodUpi

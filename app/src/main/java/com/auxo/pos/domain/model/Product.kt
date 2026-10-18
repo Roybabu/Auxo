@@ -91,7 +91,7 @@ data class Product(
      * counts, alerts or movements. Every other category keeps stock.
      */
     val tracksStock: Boolean = true,
-    /** How stock is counted; only ingredients use grams or millilitres. */
+    /** How stock is counted. Items are counted in pieces; grams and millilitres are kept only for old data. */
     val stockUnit: StockUnit = StockUnit.UNIT,
     /** Supplier that low-stock purchase orders go to by default. */
     val preferredSupplierId: Long? = null,

@@ -398,16 +398,6 @@ class DatabaseMigrationTest {
         assertEquals("Alteration", held.get(id)!!.cart.lines.single().productName)
         assertEquals(Money(30_000), customers.observeAccount(1).first()!!.balance)
 
-        // Open restaurant orders: a parked bill becomes an open table, and bills record the table.
-        val order = held.placeOrder(
-            cart.copy(serviceType = com.auxo.pos.domain.billing.ServiceType.DINE_IN, tableNumber = "t2"),
-            Money(100_00),
-            "",
-        ) as com.auxo.pos.domain.billing.PlaceOrderResult.Placed
-        assertEquals("KOT-001", order.kotNumber)
-        assertEquals("T2", held.observeHeld().first().first { it.id == order.orderId }.tableNumber)
-        // The bill parked before is still just a parked bill.
-        assertNull(held.observeHeld().first().first { it.id == id }.serviceType)
         // Quotations: the table exists and starts empty; the first quotation is QT/..../00001 and moves no stock.
         assertEquals(0, com.auxo.pos.testutil.DataIntegrity.count(db, "quotations"))
         val quotes = com.auxo.pos.data.repository.RoomQuotationRepository(db, TestData.clock)
@@ -419,7 +409,7 @@ class DatabaseMigrationTest {
             val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
                 generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
             }
-            assertTrue("$table has table_number and service_type", "table_number" in columns && "service_type" in columns)
+            assertTrue("$table no longer has table_number or service_type", "table_number" !in columns && "service_type" !in columns)
         }
 
         // Stock counts: the table exists and starts empty; a count can be started, filled and cancelled with no
@@ -519,16 +509,15 @@ class DatabaseMigrationTest {
         }
 
         // The parked bill opens: the dish is now an ordinary line, and a dish that no longer existed stays as a one-off item.
-        val held = db.openHelper.readableDatabase.query("SELECT payload, kot_sent FROM held_bills WHERE id = 1").use { c ->
+        val held = db.openHelper.readableDatabase.query("SELECT payload FROM held_bills WHERE id = 1").use { c ->
             c.moveToFirst()
-            c.getString(0) to c.getString(1)
+            c.getString(0)
         }
-        val cart = com.auxo.pos.data.repository.HeldCartCodec.decode(held.first)!!
+        val cart = com.auxo.pos.data.repository.HeldCartCodec.decode(held)!!
         assertEquals(dosa.variants.single().id, cart.lines[0].variantId)
         assertEquals(dosa.id, cart.lines[0].productId)
         assertEquals("DISH-3", cart.lines[0].barcode)
         assertTrue(cart.lines[1].isCustom)
-        assertEquals(listOf(dosa.variants.single().id), com.auxo.pos.data.repository.KitchenOrderCodec.decode(held.second).map { it.key })
     }
 
     @Test
@@ -608,5 +597,63 @@ class DatabaseMigrationTest {
         val saved = settings.copy(fssai = "12345678901234")
         RoomSettingsRepository(db).saveSettings(saved)
         assertEquals("12345678901234", RoomSettingsRepository(db).getSettings().fssai)
+    }
+
+    @Test
+    fun migrate18To19_dropsKitchenColumns_keepsParkedBills_andRemovesIngredients() = runTest {
+        createFromSchema(18).also {
+            it.execSQL("INSERT INTO products (id, name, category, created_at, updated_at) VALUES (1, 'Wheat Flour', 'INGREDIENT', 1, 1), (2, 'Cotton Shirt', 'GARMENT', 1, 1)")
+            it.execSQL(
+                "INSERT INTO product_variants (id, product_id, barcode, price_minor, stock_quantity, low_stock_threshold) VALUES " +
+                    "(11, 1, 'FLOUR-1', 0, 5000, 0), (12, 2, 'SHIRT-1', 49900, 3, 0)",
+            )
+            it.execSQL("INSERT INTO stock_movements (variant_id, quantity_change, reason, created_at) VALUES (11, 5000, 'RECEIVED', 1), (12, 3, 'INITIAL', 1)")
+            it.execSQL("INSERT INTO stock_batches (variant_id, quantity, received_at) VALUES (11, 5000, 1)")
+            it.execSQL("INSERT INTO shop_categories (id, profile, enabled, sort_order, built_in) VALUES (1, 'GARMENT', 1, 0, 1), (2, 'INGREDIENT', 1, 4, 1)")
+            it.execSQL("INSERT INTO number_sequences (name, next_value) VALUES ('KOT|2026-10-01', 3), ('INV/26-27', 8)")
+            it.execSQL(
+                "INSERT INTO invoices (id, number, type, created_at, seller_name, seller_address, seller_phone, seller_gstin, seller_state_code, seller_fssai, place_of_supply, " +
+                    "gst_registered, prices_include_tax, inter_state, subtotal_minor, discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor, round_off_minor, " +
+                    "grand_total_minor, savings_minor, service_type, table_number) " +
+                    "VALUES (1, 'INV-1', 'SALE', 300, 'Shop', 'Addr', '9', '', '19', '', '19', 0, 1, 0, 100, 0, 100, 0, 0, 0, 0, 100, 0, 'DINE_IN', 'T4')",
+            )
+            it.execSQL(
+                "INSERT INTO held_bills (id, label, created_at, updated_at, item_count, total_minor, payload, service_type, table_number, kot_sent, kot_count) " +
+                    "VALUES (1, 'T4', 100, 100, 2, 25000, 'payload', 'DINE_IN', 'T4', '[]', 1)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
+
+        fun columns(table: String) = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
+            generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+        }
+        fun count(sql: String) = db.openHelper.readableDatabase.query(sql).use { c ->
+            c.moveToFirst()
+            c.getInt(0)
+        }
+        for (table in listOf("held_bills", "invoices")) {
+            val names = columns(table)
+            assertTrue("$table has no service_type", "service_type" !in names)
+            assertTrue("$table has no table_number", "table_number" !in names)
+        }
+        assertTrue("kot_sent" !in columns("held_bills") && "kot_count" !in columns("held_bills"))
+
+        // The parked bill and the invoice are kept, and the kitchen ticket numbers are gone.
+        assertEquals("T4", db.openHelper.readableDatabase.query("SELECT label FROM held_bills WHERE id = 1").use { c -> c.moveToFirst(); c.getString(0) })
+        assertEquals(1, count("SELECT COUNT(*) FROM invoices"))
+        assertEquals(0, count("SELECT COUNT(*) FROM number_sequences WHERE name LIKE 'KOT|%'"))
+        assertEquals(1, count("SELECT COUNT(*) FROM number_sequences"))
+
+        // The ingredient, its variant, batches and movements are gone; the shirt is untouched.
+        assertEquals(0, count("SELECT COUNT(*) FROM products WHERE category = 'INGREDIENT'"))
+        assertEquals(0, count("SELECT COUNT(*) FROM product_variants WHERE id = 11"))
+        assertEquals(0, count("SELECT COUNT(*) FROM stock_batches"))
+        assertEquals(1, count("SELECT COUNT(*) FROM stock_movements"))
+        assertEquals(1, count("SELECT COUNT(*) FROM product_variants WHERE id = 12"))
+        assertEquals(1, count("SELECT COUNT(*) FROM shop_categories"))
+        assertEquals(listOf("Cotton Shirt"), RoomInventoryRepository(db, TestData.clock).observeProducts().first().map { it.name })
     }
 }

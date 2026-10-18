@@ -258,17 +258,13 @@ private fun ProductHeader(product: Product) {
             if (product.category.usesDietType) {
                 Text(stringResource(product.dietType.labelRes()), style = MaterialTheme.typography.bodyMedium)
             }
-            if (product.category.isSold) {
-                Text(
-                    text = listOfNotNull(
-                        stringResource(R.string.detail_gst, gstLabel(product.gstRate)),
-                        product.hsnCode?.let { stringResource(R.string.detail_hsn, it) },
-                    ).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            } else {
-                Text(stringResource(R.string.detail_ingredient_note), style = MaterialTheme.typography.bodyMedium)
-            }
+            Text(
+                text = listOfNotNull(
+                    stringResource(R.string.detail_gst, gstLabel(product.gstRate)),
+                    product.hsnCode?.let { stringResource(R.string.detail_hsn, it) },
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+            )
             product.description?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -311,33 +307,25 @@ private fun VariantCard(
                     else -> StatusChip(stringResource(variant.stockStatus.labelRes()), variant.stockStatus.tone())
                 }
             }
-            if (!category.isSold) {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                 Text(
-                    text = variant.costPrice?.let { stringResource(R.string.detail_cost_per, formatter.format(it), unit.entrySymbol) }
-                        ?: stringResource(R.string.detail_cost_unknown),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = formatter.format(variant.sellingPrice),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                 )
-            } else {
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                variant.mrp?.let {
                     Text(
-                        text = formatter.format(variant.sellingPrice),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        text = stringResource(R.string.detail_mrp, formatter.format(it)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    variant.mrp?.let {
-                        Text(
-                            text = stringResource(R.string.detail_mrp, formatter.format(it)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    variant.costPrice?.let {
-                        Text(
-                            text = stringResource(R.string.detail_cost, formatter.format(it)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                }
+                variant.costPrice?.let {
+                    Text(
+                        text = stringResource(R.string.detail_cost, formatter.format(it)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
             BarcodeImage(

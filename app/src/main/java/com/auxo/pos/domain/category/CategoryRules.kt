@@ -20,7 +20,6 @@ object CategoryRules {
         ProductCategory.PACKAGED_FOOD,
         ProductCategory.BEVERAGE,
         ProductCategory.RESTAURANT,
-        ProductCategory.INGREDIENT,
     )
 
     /** Names are trimmed, single-spaced and compared without regard to case. [others] are the names already in use. */
@@ -34,6 +33,6 @@ object CategoryRules {
         }
     }
 
-    /** Restaurant service (dine-in, tables, kitchen tickets) is offered while any Restaurant category is on. */
+    /** The restaurant menu is offered while any Restaurant category is on. */
     fun restaurantModeOn(all: List<ShopCategory>): Boolean = all.any { it.enabled && it.profile == ProductCategory.RESTAURANT }
 }

@@ -47,7 +47,7 @@ object ReceiptRenderer {
     private fun thermalPage(invoice: Invoice, options: ReceiptOptions, zone: ZoneId, logo: Bitmap?, labels: ReceiptLabels, fonts: ReceiptFonts): ReceiptPage =
         drawThermal(ThermalReceiptBuilder.build(invoice, options, options.paper.spec.charsPerLine, zone, labels), options.paper, logo, fonts)
 
-    /** Any text laid out for a thermal roll (a kitchen ticket, say), drawn as one tall page. */
+    /** Any text laid out for a thermal roll (a printer test page, say), drawn as one tall page. */
     fun thermalPages(receipt: ThermalReceipt, paper: ReceiptPaper, fonts: ReceiptFonts = ReceiptFonts.system): List<ReceiptPage> =
         listOf(drawThermal(receipt, paper, null, fonts))
 

@@ -15,9 +15,6 @@ interface HeldBillDao {
     @Query("SELECT * FROM held_bills WHERE id = :id")
     suspend fun get(id: Long): HeldBillEntity?
 
-    @Query("SELECT * FROM held_bills WHERE table_number = :table AND id != :exceptId LIMIT 1")
-    suspend fun openOrderForTable(table: String, exceptId: Long): HeldBillEntity?
-
     @Insert
     suspend fun insert(bill: HeldBillEntity): Long
 

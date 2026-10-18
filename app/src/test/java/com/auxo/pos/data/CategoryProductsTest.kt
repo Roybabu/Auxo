@@ -100,7 +100,6 @@ class CategoryProductsTest {
         categories.setEnabled(sweets, false)
         val product = inventory.getProduct(id)!!
         assertEquals(sweets, product.categoryId)
-        assertTrue(product.category.isSold)
     }
 
     @Test

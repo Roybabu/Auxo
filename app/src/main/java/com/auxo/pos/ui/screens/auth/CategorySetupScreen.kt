@@ -43,7 +43,7 @@ fun CategorySetupContent(state: CategorySetupUiState, onToggle: (Long) -> Unit, 
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            state.categories.filter { it.profile.isSold }.forEach { category ->
+            state.categories.forEach { category ->
                 AuxoCard(onClick = { onToggle(category.id) }, modifier = Modifier.fillMaxWidth().testTag("setup_category_${category.id}")) {
                     Row(modifier = Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = category.id in state.selected, onCheckedChange = { onToggle(category.id) })

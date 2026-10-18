@@ -2,6 +2,7 @@ package com.auxo.pos.data.local
 
 import android.content.Context
 import androidx.room.AutoMigration
+import androidx.room.DeleteColumn
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -78,6 +79,9 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  *     ([MIGRATION_16_17]).
  * 18. FSSAI number: store_settings.fssai and invoices.seller_fssai (empty for existing shops and bills). Written by
  *     hand ([MIGRATION_17_18]).
+ * 19. Order type and kitchen tickets are removed: held_bills.service_type, table_number, kot_sent and kot_count and
+ *     invoices.service_type and table_number are dropped. The Ingredient category is removed too, with its products,
+ *     batches and stock movements. An automatic migration from 18 ([RemoveKitchenAndIngredients]).
  */
 @Database(
     entities = [
@@ -114,6 +118,7 @@ import com.auxo.pos.data.local.entity.SupplierEntity
         AutoMigration(from = 2, to = 3, spec = AuxoDatabase.BatchBackfill::class),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 18, to = 19, spec = AuxoDatabase.RemoveKitchenAndIngredients::class),
     ],
 )
 abstract class AuxoDatabase : RoomDatabase() {
@@ -156,11 +161,42 @@ abstract class AuxoDatabase : RoomDatabase() {
         }
     }
 
+    /**
+     * Version 19 drops the order-type and kitchen-ticket columns (Room rebuilds the two tables) and then removes
+     * the Ingredient category: its products, variants, batches and stock movements and its shop category rows.
+     * Old bills, purchase lines and receipt lines that point at an ingredient keep their text and lose only the
+     * link. Foreign keys are not enforced while a migration runs, so the children are cleared here by hand.
+     */
+    @DeleteColumn.Entries(
+        DeleteColumn(tableName = "held_bills", columnName = "service_type"),
+        DeleteColumn(tableName = "held_bills", columnName = "table_number"),
+        DeleteColumn(tableName = "held_bills", columnName = "kot_sent"),
+        DeleteColumn(tableName = "held_bills", columnName = "kot_count"),
+        DeleteColumn(tableName = "invoices", columnName = "service_type"),
+        DeleteColumn(tableName = "invoices", columnName = "table_number"),
+    )
+    class RemoveKitchenAndIngredients : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) {
+            // Kitchen ticket numbers ("KOT|<day>") are no longer used.
+            db.execSQL("DELETE FROM number_sequences WHERE name LIKE 'KOT|%'")
+            val ingredientVariants = "SELECT id FROM product_variants WHERE product_id IN (SELECT id FROM products WHERE category = 'INGREDIENT')"
+            db.execSQL("DELETE FROM stock_movements WHERE variant_id IN ($ingredientVariants)")
+            db.execSQL("DELETE FROM stock_batches WHERE variant_id IN ($ingredientVariants)")
+            db.execSQL("UPDATE invoice_lines SET variant_id = NULL WHERE variant_id IN ($ingredientVariants)")
+            db.execSQL("UPDATE purchase_order_lines SET variant_id = NULL WHERE variant_id IN ($ingredientVariants)")
+            db.execSQL("UPDATE purchase_receipt_lines SET variant_id = NULL WHERE variant_id IN ($ingredientVariants)")
+            db.execSQL("DELETE FROM product_variants WHERE product_id IN (SELECT id FROM products WHERE category = 'INGREDIENT')")
+            db.execSQL("DELETE FROM products WHERE category = 'INGREDIENT'")
+            db.execSQL("DELETE FROM shop_subcategories WHERE category_id IN (SELECT id FROM shop_categories WHERE profile = 'INGREDIENT')")
+            db.execSQL("DELETE FROM shop_categories WHERE profile = 'INGREDIENT'")
+        }
+    }
+
     companion object {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 18
+        const val VERSION = 19
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty

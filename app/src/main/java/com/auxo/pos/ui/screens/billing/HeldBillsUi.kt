@@ -31,7 +31,6 @@ import com.auxo.pos.domain.billing.BusinessTime
 import com.auxo.pos.domain.billing.HeldBill
 import com.auxo.pos.domain.billing.HeldBillSummary
 import com.auxo.pos.domain.billing.HeldBills
-import com.auxo.pos.domain.billing.ServiceType
 import com.auxo.pos.ui.components.ConfirmDialog
 import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.format.LocalMoneyFormatter
@@ -112,19 +111,6 @@ fun HeldBillsDialog(
                                 bill.label.ifBlank { stringResource(R.string.held_unnamed) },
                                 style = MaterialTheme.typography.titleSmall,
                             )
-                            if (bill.isOpenOrder) {
-                                val where = if (bill.serviceType == ServiceType.DINE_IN && !bill.tableNumber.isNullOrBlank()) {
-                                    stringResource(R.string.order_dine_in_table, bill.tableNumber)
-                                } else {
-                                    stringResource(R.string.order_takeaway)
-                                }
-                                Text(
-                                    where + " · " + pluralStringResource(R.plurals.order_kots, bill.kotCount, bill.kotCount),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.testTag("held_order_${bill.id}"),
-                                )
-                            }
                             Text(
                                 pluralStringResource(R.plurals.held_items, bill.itemCount, bill.itemCount) + " · " +
                                     formatter.format(bill.total) + " · " +

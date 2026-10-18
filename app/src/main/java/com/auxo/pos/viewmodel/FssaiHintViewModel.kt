@@ -60,7 +60,7 @@ class FssaiHintViewModel(
 
     companion object {
         private val FOOD = setOf(
-            ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.INGREDIENT, ProductCategory.RESTAURANT,
+            ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT,
         )
 
         fun needsFssai(category: ShopCategory): Boolean = category.enabled && category.profile in FOOD

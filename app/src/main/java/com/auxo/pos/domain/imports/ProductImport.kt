@@ -43,7 +43,6 @@ enum class ImportColumn(val key: String, val required: Boolean = false, vararg a
     SKU("sku", false, "itemcode", "productcode"),
     BATCH("batch", false, "batchno", "batchnumber", "lot"),
     EXPIRY_DATE("expiry_date", false, "expiry", "expirydate", "expdate", "bestbefore", "useby"),
-    STOCK_UNIT("stock_unit", false, "stockunit", "countedin", "uom"),
     ;
 
     private val matches: Set<String> = (aliases.toList() + key).map(::normalizeImportHeader).toSet()
@@ -93,7 +92,6 @@ enum class ImportParseError {
     UNKNOWN_CATEGORY,
     UNKNOWN_DIET,
     UNKNOWN_UNIT,
-    UNKNOWN_STOCK_UNIT,
     INVALID_DATE,
 }
 
@@ -168,10 +166,6 @@ object ProductImportTemplate {
             ImportColumn.NAME to "Mango Juice", ImportColumn.CATEGORY to "Beverage", ImportColumn.GST_RATE to "12",
             ImportColumn.NET_QUANTITY to "1", ImportColumn.UNIT to "L", ImportColumn.SELLING_PRICE to "95",
             ImportColumn.MRP to "99", ImportColumn.OPENING_STOCK to "24", ImportColumn.EXPIRY_DATE to "31/12/2026",
-        ),
-        row(
-            ImportColumn.NAME to "Wheat Flour", ImportColumn.CATEGORY to "Ingredient", ImportColumn.COST_PRICE to "45",
-            ImportColumn.OPENING_STOCK to "10", ImportColumn.LOW_STOCK to "2", ImportColumn.STOCK_UNIT to "kg",
         ),
     ).joinToString("\r\n") + "\r\n"
 
@@ -322,7 +316,7 @@ object ProductImport {
         var gst = GstChoice.defaultFor(category)
         var customRate = ""
         val gstText = reader.text(first, ImportColumn.GST_RATE)
-        if (gstText.isNotEmpty() && category.isSold) {
+        if (gstText.isNotEmpty()) {
             val cleaned = gstText.removeSuffix("%").trim()
             if (cleaned.equals("apparel", ignoreCase = true)) {
                 gst = GstChoice.Apparel
@@ -339,12 +333,7 @@ object ProductImport {
             }
         }
 
-        var stockUnit = StockUnit.UNIT
-        val stockUnitText = reader.text(first, ImportColumn.STOCK_UNIT)
-        if (category == ProductCategory.INGREDIENT && stockUnitText.isNotEmpty()) {
-            val parsed = parseStockUnit(stockUnitText)
-            if (parsed == null) issue(first, ImportColumn.STOCK_UNIT, ImportParseError.UNKNOWN_STOCK_UNIT) else stockUnit = parsed
-        }
+        val stockUnit = StockUnit.UNIT
 
         val variants = rows.map { row ->
             val unitText = reader.text(row, ImportColumn.UNIT)
@@ -415,7 +404,6 @@ object ProductImport {
         "garment", "garments", "clothing", "clothes", "apparel", "cloth" -> ProductCategory.GARMENT
         "packagedfood", "packaged", "food", "grocery", "snack", "snacks" -> ProductCategory.PACKAGED_FOOD
         "beverage", "beverages", "drink", "drinks" -> ProductCategory.BEVERAGE
-        "ingredient", "ingredients", "rawmaterial", "rawmaterials" -> ProductCategory.INGREDIENT
         else -> null
     }
 
@@ -431,14 +419,6 @@ object ProductImport {
         "ml", "millilitre", "milliliter", "millilitres", "milliliters" -> QuantityUnit.MILLILITRE
         "l", "ltr", "litre", "liter", "litres", "liters" -> QuantityUnit.LITRE
         "pcs", "pc", "piece", "pieces", "nos", "no" -> QuantityUnit.PIECE
-        else -> null
-    }
-
-    /** Ingredients are counted in pieces, kilograms or litres; stock and prices in the file are in that unit. */
-    fun parseStockUnit(text: String): StockUnit? = when (normalizeImportHeader(text)) {
-        "pcs", "pc", "piece", "pieces", "unit", "units", "nos" -> StockUnit.UNIT
-        "kg", "kgs", "kilogram", "kilograms" -> StockUnit.GRAM
-        "l", "ltr", "litre", "liter", "litres", "liters" -> StockUnit.MILLILITRE
         else -> null
     }
 

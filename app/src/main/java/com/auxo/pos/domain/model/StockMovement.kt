@@ -18,7 +18,7 @@ enum class StockChangeReason {
     /** Food that went bad before its expiry date. */
     SPOILED,
 
-    /** Ingredients used up by dishes sold from the menu. */
+    /** Stock used up. Kept for old stock history; it is no longer offered as a reason. */
     USED,
     ;
 

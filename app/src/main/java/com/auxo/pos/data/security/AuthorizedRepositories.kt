@@ -473,16 +473,6 @@ class AuthorizedHeldBillRepository(
         auth.require(Permission.SELL)
         inner.discard(id)
     }
-
-    override suspend fun placeOrder(
-        cart: com.auxo.pos.domain.billing.Cart,
-        total: Money,
-        label: String,
-        replacingId: Long?,
-    ): com.auxo.pos.domain.billing.PlaceOrderResult {
-        auth.require(Permission.SELL)
-        return inner.placeOrder(cart, total, label, replacingId)
-    }
 }
 
 /** Making and converting quotations is part of billing, so it needs the same permission as selling. */

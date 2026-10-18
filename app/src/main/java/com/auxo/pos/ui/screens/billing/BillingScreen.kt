@@ -111,13 +111,7 @@ import com.auxo.pos.ui.theme.Spacing
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.auxo.pos.core.receipt.KitchenTicketOutput
 import com.auxo.pos.core.receipt.ReceiptOutput
-import com.auxo.pos.core.receipt.KotLabels
-import com.auxo.pos.domain.billing.KitchenTicket
-import com.auxo.pos.domain.model.Language
-import com.auxo.pos.domain.model.ReceiptPaper
-import kotlinx.coroutines.launch
 import com.auxo.pos.viewmodel.BillingEvent
 import com.auxo.pos.viewmodel.BillingStage
 import com.auxo.pos.viewmodel.BillingUiState
@@ -165,9 +159,6 @@ interface BillingActions {
     fun onPutRestOnAccount() = Unit
     fun onRemovePayment(key: Int) = Unit
     fun onCompleteSale() = Unit
-    fun onServiceTypeChange(type: com.auxo.pos.domain.billing.ServiceType?) = Unit
-    fun onTableNumberChange(text: String) = Unit
-    fun onPlaceOrder() = Unit
 }
 
 @Composable
@@ -189,8 +180,6 @@ fun BillingScreen(
     var showHold by rememberSaveable { mutableStateOf(false) }
     var showHeld by rememberSaveable { mutableStateOf(false) }
     var showQuotes by rememberSaveable { mutableStateOf(false) }
-    // The ticket of the order just sent, until the cashier has printed or shared it (or chosen to skip).
-    var placedTicket by remember { mutableStateOf<KitchenTicket?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val currentReceipt by rememberUpdatedState(uiState.settings?.receipt)
@@ -229,7 +218,6 @@ fun BillingScreen(
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
                 BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
                 BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
-                is BillingEvent.OrderPlaced -> placedTicket = event.ticket
                 is BillingEvent.QuotationSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_quote_saved, event.number))
                 is BillingEvent.QuotationLoaded -> {
                     showQuotes = false
@@ -249,8 +237,6 @@ fun BillingScreen(
                     val shared = receipt != null && ReceiptOutput.share(context, event.invoice, receipt, resources.getString(R.string.quotes_share_title))
                     if (!shared) snackbarHostState.showSnackbar(resources.getString(R.string.quotes_share_failed))
                 }
-                is BillingEvent.TableInUse -> snackbarHostState.showSnackbar(resources.getString(R.string.order_table_in_use, event.table), duration = SnackbarDuration.Long)
-                BillingEvent.NothingNewForKitchen -> snackbarHostState.showSnackbar(resources.getString(R.string.order_nothing_new))
             }
         }
     }
@@ -305,9 +291,6 @@ fun BillingScreen(
             override fun onPutRestOnAccount() = viewModel.putRemainingOnAccount()
             override fun onRemovePayment(key: Int) = viewModel.removePayment(key)
             override fun onCompleteSale() = viewModel.completeSale()
-            override fun onServiceTypeChange(type: com.auxo.pos.domain.billing.ServiceType?) = viewModel.onServiceTypeChange(type)
-            override fun onTableNumberChange(text: String) = viewModel.onTableNumberChange(text)
-            override fun onPlaceOrder() = viewModel.placeOrder()
         }
     }
 
@@ -365,29 +348,6 @@ fun BillingScreen(
         }
     }
 
-    placedTicket?.let { ticket ->
-        val receipt = uiState.settings?.receipt
-        val paper = receipt?.paper ?: ReceiptPaper.THERMAL_80
-        val language = receipt?.language ?: Language.DEFAULT
-        OrderPlacedDialog(
-            kotNumber = ticket.kotNumber,
-            onPrint = {
-                if (!KitchenTicketOutput.print(context, ticket, paper, KotLabels.from(context, language))) {
-                    scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.order_print_failed)) }
-                }
-            },
-            onShare = {
-                scope.launch {
-                    val shared = KitchenTicketOutput.share(
-                        context, ticket, paper, KotLabels.from(context, language),
-                        resources.getString(R.string.order_ticket_share),
-                    )
-                    if (!shared) snackbarHostState.showSnackbar(resources.getString(R.string.order_share_failed))
-                }
-            },
-            onDone = { placedTicket = null },
-        )
-    }
     if (showHold) {
         HoldBillDialog(
             suggestion = uiState.cart.customer.name,
@@ -598,9 +558,6 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 }
             }
         } else {
-            if (state.restaurantMode && state.canHold) {
-                item(key = "service") { ServiceCard(state, actions) }
-            }
             item(key = "items_header") {
                 SectionHeader(title = stringResource(R.string.billing_items) + " (${state.cart.itemCount})")
             }

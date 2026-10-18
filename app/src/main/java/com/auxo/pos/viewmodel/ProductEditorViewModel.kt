@@ -154,7 +154,7 @@ class ProductEditorViewModel(
             // A restaurant item starts without a stock count; everything else always keeps one.
             tracksStock = !category.canSkipStock,
             hsnCode = hsnCode,
-            gst = if (category.isSold) gst else GstChoice.NotSet,
+            gst = gst,
             stockUnit = base.stockUnit.takeIf { it in category.allowedStockUnits } ?: category.allowedStockUnits.first(),
         )
     }
@@ -207,7 +207,7 @@ class ProductEditorViewModel(
 
     fun onHsnChange(value: String) = editForm { it.copy(hsnCode = value.filter { c -> c.isDigit() }.take(8)) }
 
-    /** Ingredients can be counted by weight, volume or piece; fixed once the product is saved. */
+    /** How stock is counted; fixed once the product is saved. Only pieces are offered. */
     fun onStockUnitChange(unit: StockUnit) = editForm { form ->
         if (!form.isNew || unit !in form.category.allowedStockUnits) form else form.copy(stockUnit = unit)
     }

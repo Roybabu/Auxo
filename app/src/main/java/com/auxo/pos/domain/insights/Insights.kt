@@ -230,7 +230,7 @@ object InsightsBuilder {
         ProductCategory.RESTAURANT -> Department.RESTAURANT
         ProductCategory.PACKAGED_FOOD -> Department.PACKAGED_FOOD
         ProductCategory.BEVERAGE -> Department.BEVERAGES
-        ProductCategory.INGREDIENT, null -> Department.OTHER
+        null -> Department.OTHER
     }
 
     private fun topProducts(invoices: List<Invoice>): List<ProductRank> {
