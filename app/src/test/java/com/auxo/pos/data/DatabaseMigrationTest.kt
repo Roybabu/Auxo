@@ -553,7 +553,8 @@ class DatabaseMigrationTest {
         assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
 
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
-        assertEquals(5, categories.size)
+        // The Ingredient category that version 17 added is removed again by version 19.
+        assertEquals(4, categories.size)
         assertTrue(categories.all { it.builtIn && it.enabled })
 
         val inventory = RoomInventoryRepository(db, TestData.clock)
@@ -571,7 +572,7 @@ class DatabaseMigrationTest {
         database = db
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
         assertEquals(
-            listOf(true, true, true, false, true),
+            listOf(true, true, true, false),
             categories.map { it.enabled },
         )
     }
