@@ -116,7 +116,7 @@ class RoomCategoryRepository(private val database: AuxoDatabase) : CategoryRepos
 
     override suspend fun setEnabled(id: Long, enabled: Boolean): CategoryResult = database.withTransaction {
         val row = dao.category(id) ?: return@withTransaction CategoryResult.NotFound
-        if (!enabled && row.enabled && sellsIn(row) && sellingEnabledCount() <= 1) return@withTransaction CategoryResult.LastOne
+        if (!enabled && row.enabled && sellingEnabledCount() <= 1) return@withTransaction CategoryResult.LastOne
         dao.setEnabled(id, enabled)
         CategoryResult.Done(id)
     }
@@ -126,7 +126,7 @@ class RoomCategoryRepository(private val database: AuxoDatabase) : CategoryRepos
         when {
             row.builtIn -> CategoryResult.BuiltIn
             dao.productCount(id) > 0 -> CategoryResult.InUse
-            row.enabled && sellsIn(row) && sellingEnabledCount() <= 1 -> CategoryResult.LastOne
+            row.enabled && sellingEnabledCount() <= 1 -> CategoryResult.LastOne
             else -> {
                 dao.deleteCategory(id)
                 CategoryResult.Done(id)
