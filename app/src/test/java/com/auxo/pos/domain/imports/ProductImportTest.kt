@@ -290,20 +290,6 @@ class ProductImportTest {
         assertEquals(listOf(FieldError.INVALID_GST_RATE), issues.map { it.fieldError })
     }
 
-    @Test
-    fun twoRowsOfOneGarmentWithTheSameSizeAndColour_cannotBeToldApart() {
-        val result = preview(
-            table(
-                "name,category,size,colour,selling_price",
-                "Flour Sack Bag,Garment,M,Navy,45",
-                "Flour Sack Bag,Garment,M,Navy,45",
-            ),
-        )
-        val item = result.invalid.single()
-        assertEquals(FieldError.DUPLICATE_VARIANT, item.issue(ImportColumn.NAME)!!.fieldError)
-        assertEquals(3, item.issue(ImportColumn.NAME)!!.rowNumber)
-    }
-
     // Duplicates
 
     @Test

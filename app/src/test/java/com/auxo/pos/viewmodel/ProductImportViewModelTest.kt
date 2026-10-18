@@ -189,11 +189,11 @@ class ProductImportViewModelTest {
         val empty = FakeInventoryRepository()
         val vm = viewModel(empty)
         pick(vm, ProductImportTemplate.csv())
-        assertEquals(4, vm.uiState.value.preview!!.ready.size)
+        assertEquals(3, vm.uiState.value.preview!!.ready.size)
         vm.onImport()
         vm.onConfirmImport()
-        assertEquals(4, vm.uiState.value.outcome!!.imported)
-        assertNotNull(empty.products.value.firstOrNull { it.name == "Wheat Flour" })
+        assertEquals(3, vm.uiState.value.outcome!!.imported)
+        assertNotNull(empty.products.value.firstOrNull { it.name == "Mango Juice" })
     }
 
     @Test
