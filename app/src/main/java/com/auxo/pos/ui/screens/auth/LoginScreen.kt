@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
@@ -198,7 +199,7 @@ fun LoginContent(
             }
         }
         if (topEnd != null) {
-            Box(modifier = Modifier.align(Alignment.TopEnd).fixedInsetsPadding().padding(12.dp)) { topEnd() }
+            Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
         }
     }
 }
@@ -362,7 +363,7 @@ private fun LoginForm(
                     .align(Alignment.CenterHorizontally)
                     .fillMaxWidth(0.5f)
                     .padding(horizontal = 1.dp) // 2 dp narrower overall, still centred
-                    .height(SLIDER_HEIGHT + SLIDER_DEPTH)
+                    .height(62.dp)
                     .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
                     .testTag("login_setup_business"),
             ) {
@@ -377,9 +378,9 @@ private fun LoginForm(
     }
 }
 
-private val SLIDER_HEIGHT = 56.dp
+private val SLIDER_HEIGHT = 50.dp
 private val SLIDER_DEPTH = 6.dp
-private val THUMB_SIZE = 44.dp
+private val THUMB_SIZE = 38.dp
 private val THUMB_INSET = 6.dp
 
 /** How far along the track (0..1) a release still counts as a sign-in. */

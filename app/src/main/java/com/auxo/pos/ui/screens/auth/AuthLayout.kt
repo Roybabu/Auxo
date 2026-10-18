@@ -14,22 +14,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.luminance
@@ -100,7 +98,7 @@ fun AuthLayout(
                         .weight(1f)
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.primary)
-                        .fixedInsetsPadding()
+                        .safeDrawingPadding()
                         .padding(Spacing.xl),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
@@ -113,7 +111,9 @@ fun AuthLayout(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .fixedInsetsPadding()
+                        .safeDrawingPadding()
+                        .imePadding()
+                        .verticalScroll(rememberScrollState())
                         .padding(Spacing.xl),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
@@ -129,7 +129,9 @@ fun AuthLayout(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .fixedInsetsPadding()
+                    .safeDrawingPadding()
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = Spacing.screen, vertical = Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -144,7 +146,7 @@ fun AuthLayout(
             }
         }
         if (topEnd != null) {
-            Box(modifier = Modifier.align(Alignment.TopEnd).fixedInsetsPadding().padding(12.dp)) { topEnd() }
+            Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
         }
     }
 }
@@ -160,9 +162,4 @@ private fun FormCard(content: @Composable () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) { content() }
     }
-}
-
-/** Keeps clear of the status bar, navigation bar and cutout, but not the keyboard, so auth screens stay put when it opens. */
-internal fun Modifier.fixedInsetsPadding(): Modifier = composed {
-    windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))
 }

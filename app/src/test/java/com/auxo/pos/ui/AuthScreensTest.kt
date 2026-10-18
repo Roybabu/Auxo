@@ -18,7 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -158,7 +158,7 @@ class AuthScreensTest {
         composeRule.onNodeWithTag("setup_password").assertExists()
         composeRule.onNodeWithTag("setup_confirm").assertExists()
         composeRule.onNodeWithContentDescription("Auxo").assertExists()
-        composeRule.onNodeWithTag("setup_submit").assertIsEnabled()
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsEnabled()
     }
 
     @Test
@@ -184,7 +184,7 @@ class AuthScreensTest {
     fun setupScreen_disablesTheButton_whileSaving_soItCannotBeSubmittedTwice() {
         var submits = 0
         setup(AdminSetupUiState(isSubmitting = true), onSubmit = { submits++ })
-        composeRule.onNodeWithTag("setup_submit").assertIsNotEnabled()
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsNotEnabled()
         composeRule.onNodeWithText("Creating…").assertExists()
         composeRule.onNodeWithTag("setup_name").assertIsNotEnabled()
         assertEquals(0, submits)
@@ -194,8 +194,7 @@ class AuthScreensTest {
     fun setupScreen_submitsWhenTheButtonIsTapped() {
         var submits = 0
         setup(onSubmit = { submits++ })
-        // The test screen is small and the fixed form no longer scrolls, so the button can sit off-screen; invoke its click directly.
-        composeRule.onNodeWithTag("setup_submit").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().performClick()
         assertEquals(1, submits)
     }
 
@@ -212,7 +211,7 @@ class AuthScreensTest {
         // The field is marked as a password (so its text is masked on screen and kept out of autofill/accessibility readouts).
         composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
         composeRule.onNodeWithTag("setup_confirm").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
-        composeRule.onNodeWithContentDescription("Show password")
+        composeRule.onNodeWithContentDescription("Show password").performScrollTo()
         composeRule.onNodeWithContentDescription("Show password").performClick()
         // The fields stay marked as passwords (keyboard type), so only the on-screen text changes; the toggle flips its label.
         composeRule.onNodeWithTag("setup_password").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
@@ -248,7 +247,7 @@ class AuthScreensTest {
                 AdminSetupContent(AdminSetupUiState(name = "Roy Babu"), {}, {}, {}, {}, {}, onSuggestionPick = { picked = it })
             }
         }
-        composeRule.onNodeWithTag("suggestion_0").performClick()
+        composeRule.onNodeWithTag("suggestion_0").performScrollTo().performClick()
         assertEquals("roy.babu", picked)
     }
 
@@ -413,7 +412,7 @@ class AuthScreensTabletTest {
         // Both layouts show the approved logo (symbol, wordmark and tagline in one image), described as "Auxo".
         composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
         composeRule.onNodeWithTag("setup_name").assertIsDisplayed()
-        composeRule.onNodeWithTag("setup_submit").assertIsDisplayed()
+        composeRule.onNodeWithTag("setup_submit").performScrollTo().assertIsDisplayed()
     }
 
     @Test
