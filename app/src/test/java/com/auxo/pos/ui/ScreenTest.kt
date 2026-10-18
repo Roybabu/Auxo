@@ -92,7 +92,7 @@ class ScreenTest {
         show {
             HomeContent(
                 uiState = HomeUiState.Ready(
-                    storeName = "Roy Mart",
+                    storeName = "Sample Mart",
                     salesToday = formatter.format(Money.ZERO),
                     billsToday = 0,
                     inventory = summary,
@@ -106,7 +106,7 @@ class ScreenTest {
                 onRetry = {},
             )
         }
-        composeRule.onNodeWithText("Roy Mart").assertIsDisplayed()
+        composeRule.onNodeWithText("Sample Mart").assertIsDisplayed()
         // The inventory figures sit in the white panel, below the header.
         composeRule.onNodeWithText("Units in stock").performScrollTo().assertIsDisplayed()
         screenshot("01_home")

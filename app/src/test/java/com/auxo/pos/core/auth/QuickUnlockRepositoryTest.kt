@@ -26,7 +26,7 @@ class QuickUnlockRepositoryTest {
     private val events = mutableListOf<AccountEvent>()
     private lateinit var settings: InMemoryLockSettings
 
-    private val owner = "roy.babu"
+    private val owner = "sample.user"
     private val ownerPw = "Green-Leaf-42"
     private val staff = "test.staff"
     private val staffPw = "Counter-Desk-17"
@@ -43,7 +43,7 @@ class QuickUnlockRepositoryTest {
     private val accountFile get() = File(dir, "accounts.json")
 
     private suspend fun LocalAuthRepository.ownerSignedIn() {
-        createAdministrator("Roy Babu", owner, ownerPw, ownerPw)
+        createAdministrator("Sample User", owner, ownerPw, ownerPw)
     }
 
     private suspend fun LocalAuthRepository.withStaff() {
@@ -185,7 +185,7 @@ class QuickUnlockRepositoryTest {
         val before = auth.state.value
         assertTrue(auth.lockNow())
         assertTrue(auth.lock.value.locked)
-        assertEquals("Roy Babu", auth.lock.value.userName)
+        assertEquals("Sample User", auth.lock.value.userName)
         assertEquals(before, auth.state.value)
         assertEquals(UnlockResult.Unlocked, auth.unlockWithPassword(ownerPw))
         assertEquals(before, auth.state.value)
@@ -382,7 +382,7 @@ class QuickUnlockRepositoryTest {
         clock.now += 2_000
         auth.checkIdle()
         assertTrue(auth.lock.value.locked)
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
     }
 
     @Test

@@ -51,7 +51,7 @@ class BillLanguageStorageTest {
     fun savingOtherSettings_keepsTheBillLanguage() = runTest {
         settings.saveSettings(TestData.settings.let { it.copy(receipt = it.receipt.copy(language = Language.BENGALI)) })
         val saved = settings.getSettings()
-        settings.saveSettings(saved.copy(storeName = "Roy Mart 2"))
+        settings.saveSettings(saved.copy(storeName = "Sample Mart 2"))
         assertEquals(Language.BENGALI, settings.getSettings().receipt.language)
     }
 

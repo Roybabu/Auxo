@@ -42,7 +42,7 @@ class ResumeViewModelTest {
     private fun restartedWithSavedOwner(): LocalAuthRepository {
         runBlocking {
             val first = launch()
-            first.createAdministrator("Roy Babu", "roy.babu", pw, pw)
+            first.createAdministrator("Sample User", "sample.user", pw, pw)
             assertEquals(QuickUnlockChange.Done, first.setFingerprint(true, pw))
         }
         return launch()
@@ -51,7 +51,7 @@ class ResumeViewModelTest {
     @Test
     fun aPassedFingerprint_opensTheSavedSession() {
         val auth = restartedWithSavedOwner()
-        val model = ResumeViewModel(auth, vault, "Roy Babu")
+        val model = ResumeViewModel(auth, vault, "Sample User")
         model.fingerprintAccepted(cipher)
         assertTrue(auth.state.value is AuthState.SignedIn)
         assertFalse(model.uiState.value.unavailable)
@@ -61,7 +61,7 @@ class ResumeViewModelTest {
     fun aSavedNumberThatNoLongerMatchesAnAccount_fallsBackToThePassword_andIsForgotten() {
         val auth = restartedWithSavedOwner()
         vault.userId = 99L
-        val model = ResumeViewModel(auth, vault, "Roy Babu")
+        val model = ResumeViewModel(auth, vault, "Sample User")
         model.fingerprintAccepted(cipher)
         assertEquals(AuthState.SignedOut, auth.state.value)
         assertTrue(model.uiState.value.unavailable)
@@ -70,7 +70,7 @@ class ResumeViewModelTest {
 
     @Test
     fun aKeyThatCannotBeUsed_fallsBackToThePassword() {
-        val model = ResumeViewModel(restartedWithSavedOwner(), vault, "Roy Babu")
+        val model = ResumeViewModel(restartedWithSavedOwner(), vault, "Sample User")
         assertNull(model.cipher())
         assertTrue(model.uiState.value.unavailable)
     }
@@ -78,7 +78,7 @@ class ResumeViewModelTest {
     @Test
     fun aFingerThatIsNotRecognised_isReported_withoutSigningAnyoneIn() {
         val auth = restartedWithSavedOwner()
-        val model = ResumeViewModel(auth, vault, "Roy Babu")
+        val model = ResumeViewModel(auth, vault, "Sample User")
         model.fingerprintRejected()
         assertTrue(model.uiState.value.failed)
         assertEquals(AuthState.SignedOut, auth.state.value)

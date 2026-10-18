@@ -37,7 +37,7 @@ class RecoveryViewModelsTest {
     private lateinit var dir: File
     private lateinit var auth: LocalAuthRepository
 
-    private val owner = "roy.babu"
+    private val owner = "sample.user"
     private val ownerPw = "Green-Leaf-42"
     private val newPw = "Blue-River-77"
 
@@ -49,7 +49,7 @@ class RecoveryViewModelsTest {
 
     private fun <T> waitUntil(block: suspend () -> T): T = runBlocking { withTimeout(15_000) { block() } }
 
-    private fun setUp() = runBlocking { auth.createAdministrator("Roy Babu", owner, ownerPw, ownerPw) }
+    private fun setUp() = runBlocking { auth.createAdministrator("Sample User", owner, ownerPw, ownerPw) }
 
     private fun RecoveryCodeViewModel.settle() = waitUntil { uiState.first { !it.busy } }
 

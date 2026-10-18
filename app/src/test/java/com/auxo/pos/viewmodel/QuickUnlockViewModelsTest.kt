@@ -43,7 +43,7 @@ class QuickUnlockViewModelsTest {
     fun freshDevice() {
         val dir = File(context.cacheDir, "quick-vm-${UUID.randomUUID()}").apply { mkdirs() }
         auth = LocalAuthRepository(FileAccountStore(dir), PasswordHasher(iterations = 1_000), lockSettings = InMemoryLockSettings())
-        runBlocking { auth.createAdministrator("Roy Babu", "roy.babu", ownerPw, ownerPw) }
+        runBlocking { auth.createAdministrator("Sample User", "sample.user", ownerPw, ownerPw) }
     }
 
     private fun <T> waitUntil(block: suspend () -> T): T = runBlocking { withTimeout(15_000) { block() } }
@@ -206,7 +206,7 @@ class QuickUnlockViewModelsTest {
         vm.unlockWithPassword()
         vm.settle()
         assertFalse(auth.lock.value.locked)
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
     }
 
     @Test

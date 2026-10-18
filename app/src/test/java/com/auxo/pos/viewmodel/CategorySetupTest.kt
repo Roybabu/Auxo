@@ -133,7 +133,7 @@ class CategorySetupTest {
         composeRule.setContent {
             AuxoTheme {
                 AuthGate(
-                    state = AuthState.SignedIn("Roy"),
+                    state = AuthState.SignedIn("Sample"),
                     categoryPrompt = true,
                     categorySetup = { Text("CATEGORIES", modifier = Modifier.testTag("fake_categories")) },
                     app = { Text("THE APP", modifier = Modifier.testTag("fake_app")) },

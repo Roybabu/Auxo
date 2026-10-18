@@ -63,7 +63,7 @@ class LabelContentFactoryTest {
         assertEquals(2, labels.size)
         val label = labels.first()
         assertEquals("Cotton T-Shirt", label.title)
-        assertEquals("Roy Wear · M · Navy", label.subtitle)
+        assertEquals("Sample Wear · M · Navy", label.subtitle)
         assertEquals(m.barcode, label.barcode)
         assertNull(label.mrp)
     }

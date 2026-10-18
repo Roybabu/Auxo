@@ -49,8 +49,8 @@ class AuthRepositoryTest {
     private val accountFile get() = File(dir, "accounts.json")
 
     private suspend fun LocalAuthRepository.setUp(
-        name: String = "Roy Babu",
-        identifier: String = "roy.babu",
+        name: String = "Sample User",
+        identifier: String = "sample.user",
         pw: String = "Green-Leaf-42",
         confirm: String = pw,
     ) = createAdministrator(name, identifier, pw, confirm)
@@ -74,8 +74,8 @@ class AuthRepositoryTest {
     @Test
     fun successfulSetup_createsTheAdministrator_andSignsThemIn() = runBlocking {
         val auth = launch()
-        assertEquals(SetupResult.Created, auth.setUp(name = "  Roy   Babu "))
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(SetupResult.Created, auth.setUp(name = "  Sample   User "))
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
         assertTrue(accountFile.isFile)
     }
 
@@ -141,7 +141,7 @@ class AuthRepositoryTest {
 
     @Test
     fun anExistingAdministrator_isDetected_andSetupIsRefused_withoutChangingTheAccount() = runBlocking {
-        launch().setUp(name = "Roy Babu", identifier = "roy.babu", pw = "Green-Leaf-42")
+        launch().setUp(name = "Sample User", identifier = "sample.user", pw = "Green-Leaf-42")
         val before = accountFile.readText()
 
         val next = launch()
@@ -152,7 +152,7 @@ class AuthRepositoryTest {
 
         // Only the original credentials work.
         assertEquals(SignInResult.Rejected, next.signIn("intruder", "Other-Pass-99"))
-        assertEquals(SignInResult.Success, next.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Success, next.signIn("sample.user", "Green-Leaf-42"))
     }
 
     @Test
@@ -162,7 +162,7 @@ class AuthRepositoryTest {
         val result = stale.setUp(name = "Late", identifier = "late.user", pw = "Late-Pass-77")
         assertEquals(SetupResult.AlreadyInitialized, result)
         assertEquals(AuthState.SignedOut, stale.state.value)
-        assertEquals(SignInResult.Success, launch().signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Success, launch().signIn("sample.user", "Green-Leaf-42"))
     }
 
     // Duplicates and concurrency
@@ -188,7 +188,7 @@ class AuthRepositoryTest {
         val auth = launch()
         assertEquals(SetupResult.Created, auth.setUp())
         assertEquals(SetupResult.AlreadyInitialized, auth.setUp(name = "Second", identifier = "second.admin", pw = "Second-Pass-1"))
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
     }
 
     // A damaged account must never become "no account"
@@ -200,58 +200,58 @@ class AuthRepositoryTest {
         assertEquals(AuthState.Unreadable, auth.state.value)
         assertEquals(SetupResult.Failed, auth.setUp())
         assertEquals("this is not json", accountFile.readText())
-        assertEquals(SignInResult.Unavailable, auth.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Unavailable, auth.signIn("sample.user", "Green-Leaf-42"))
     }
 
     // Sign-in
 
     @Test
     fun signIn_checksTheUsernameAndPassword() = runBlocking {
-        launch().setUp(identifier = "Roy@Example.com", pw = "Green-Leaf-42")
+        launch().setUp(identifier = "Sample@Example.com", pw = "Green-Leaf-42")
         val auth = launch()
-        assertEquals(SignInResult.Rejected, auth.signIn("roy@example.com", "wrong-Pass-1"))
+        assertEquals(SignInResult.Rejected, auth.signIn("sample@example.com", "wrong-Pass-1"))
         assertEquals(SignInResult.Rejected, auth.signIn("someone.else", "Green-Leaf-42"))
         assertEquals(AuthState.SignedOut, auth.state.value)
         // Case of the username does not matter; the password's case does.
-        assertEquals(SignInResult.Rejected, auth.signIn("roy@example.com", "green-leaf-42"))
-        assertEquals(SignInResult.Success, auth.signIn("  ROY@example.COM ", "Green-Leaf-42"))
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(SignInResult.Rejected, auth.signIn("sample@example.com", "green-leaf-42"))
+        assertEquals(SignInResult.Success, auth.signIn("  SAMPLE@example.COM ", "Green-Leaf-42"))
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
     }
 
     @Test
     fun repeatedFailures_lockSigningInForAWhile() = runBlocking {
         launch().setUp(pw = "Green-Leaf-42")
         val auth = launch()
-        repeat(5) { assertEquals(SignInResult.Rejected, auth.signIn("roy.babu", "bad-Pass-$it")) }
+        repeat(5) { assertEquals(SignInResult.Rejected, auth.signIn("sample.user", "bad-Pass-$it")) }
         // Even the right password waits while locked.
-        assertEquals(SignInResult.LockedOut(30), auth.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.LockedOut(30), auth.signIn("sample.user", "Green-Leaf-42"))
         clock.now += 10_000
-        assertEquals(SignInResult.LockedOut(20), auth.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.LockedOut(20), auth.signIn("sample.user", "Green-Leaf-42"))
         clock.now += 21_000
-        assertEquals(SignInResult.Success, auth.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", "Green-Leaf-42"))
     }
 
     @Test
     fun theLockGrowsWithMoreFailures_butIsCapped() = runBlocking {
         launch().setUp()
         val auth = launch()
-        repeat(5) { auth.signIn("roy.babu", "bad-Pass-1") }
+        repeat(5) { auth.signIn("sample.user", "bad-Pass-1") }
         clock.now += 31_000
-        auth.signIn("roy.babu", "bad-Pass-1") // 6th failure: 60 s
-        val locked = auth.signIn("roy.babu", "Green-Leaf-42") as SignInResult.LockedOut
+        auth.signIn("sample.user", "bad-Pass-1") // 6th failure: 60 s
+        val locked = auth.signIn("sample.user", "Green-Leaf-42") as SignInResult.LockedOut
         assertEquals(60, locked.seconds)
         repeat(8) {
             clock.now += 400_000
-            auth.signIn("roy.babu", "bad-Pass-1")
+            auth.signIn("sample.user", "bad-Pass-1")
         }
-        val capped = auth.signIn("roy.babu", "Green-Leaf-42") as SignInResult.LockedOut
+        val capped = auth.signIn("sample.user", "Green-Leaf-42") as SignInResult.LockedOut
         assertTrue(capped.seconds <= 300)
     }
 
     @Test
     fun signingIn_withNoAdministrator_doesNothing() = runBlocking {
         val auth = launch()
-        assertEquals(SignInResult.Unavailable, auth.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Unavailable, auth.signIn("sample.user", "Green-Leaf-42"))
         assertEquals(AuthState.NeedsSetup, auth.state.value)
     }
 

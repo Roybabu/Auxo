@@ -47,7 +47,7 @@ class ReorderListUiTest {
             isLoading = false,
             today = TestData.today,
             suggestions = ReorderPlanner.withQuantities(planned, texts),
-            suppliers = listOf(Supplier(id = 1, name = "Roy Textiles"), Supplier(id = 2, name = "Drinks Co")),
+            suppliers = listOf(Supplier(id = 1, name = "Sample Textiles"), Supplier(id = 2, name = "Drinks Co")),
             quantityTexts = texts,
             invalidQuantities = invalid,
         )
@@ -65,7 +65,7 @@ class ReorderListUiTest {
         composeRule.onNodeWithTag("reorder_group_1").assertIsDisplayed()
         composeRule.onNodeWithTag("reorder_group_0").assertIsDisplayed()
         composeRule.onNodeWithText("Drinks Co").assertIsDisplayed()
-        composeRule.onNodeWithText("Roy Textiles").assertIsDisplayed()
+        composeRule.onNodeWithText("Sample Textiles").assertIsDisplayed()
         composeRule.onNodeWithText("No preferred supplier").assertIsDisplayed()
         composeRule.onAllNodesWithText("1 item").assertCountEquals(3)
     }

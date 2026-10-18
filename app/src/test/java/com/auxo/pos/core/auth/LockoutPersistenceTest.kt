@@ -32,41 +32,41 @@ class LockoutPersistenceTest {
     @Test
     fun aLock_stillHolds_afterTheAppIsRestarted() = runBlocking {
         val saved = InMemoryLockoutStore()
-        launch(saved).createAdministrator("Roy Babu", "roy.babu", "Green-Leaf-42", "Green-Leaf-42")
+        launch(saved).createAdministrator("Sample User", "sample.user", "Green-Leaf-42", "Green-Leaf-42")
         val first = launch(saved)
-        repeat(5) { first.signIn("roy.babu", "bad-Pass-$it") }
+        repeat(5) { first.signIn("sample.user", "bad-Pass-$it") }
 
         // The next launch is a new repository over the same saved counters.
         val second = launch(saved)
-        assertEquals(SignInResult.LockedOut(30), second.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.LockedOut(30), second.signIn("sample.user", "Green-Leaf-42"))
         clock.now += 31_000
-        assertEquals(SignInResult.Success, second.signIn("roy.babu", "Green-Leaf-42"))
+        assertEquals(SignInResult.Success, second.signIn("sample.user", "Green-Leaf-42"))
     }
 
     @Test
     fun theFailureCount_isKept_soTheNextWrongGuessLocksAtOnce() = runBlocking {
         val saved = InMemoryLockoutStore()
-        launch(saved).createAdministrator("Roy Babu", "roy.babu", "Green-Leaf-42", "Green-Leaf-42")
-        repeat(4) { launch(saved).signIn("roy.babu", "bad-Pass-$it") } // four launches, one wrong guess each
-        assertEquals(SignInResult.Rejected, launch(saved).signIn("roy.babu", "bad-Pass-5")) // the fifth wrong guess
-        assertEquals(SignInResult.LockedOut(30), launch(saved).signIn("roy.babu", "Green-Leaf-42"))
+        launch(saved).createAdministrator("Sample User", "sample.user", "Green-Leaf-42", "Green-Leaf-42")
+        repeat(4) { launch(saved).signIn("sample.user", "bad-Pass-$it") } // four launches, one wrong guess each
+        assertEquals(SignInResult.Rejected, launch(saved).signIn("sample.user", "bad-Pass-5")) // the fifth wrong guess
+        assertEquals(SignInResult.LockedOut(30), launch(saved).signIn("sample.user", "Green-Leaf-42"))
     }
 
     @Test
     fun aRightPassword_clearsTheSavedCount() = runBlocking {
         val saved = InMemoryLockoutStore()
-        launch(saved).createAdministrator("Roy Babu", "roy.babu", "Green-Leaf-42", "Green-Leaf-42")
-        repeat(3) { launch(saved).signIn("roy.babu", "bad-Pass-$it") }
-        assertEquals(SignInResult.Success, launch(saved).signIn("roy.babu", "Green-Leaf-42"))
+        launch(saved).createAdministrator("Sample User", "sample.user", "Green-Leaf-42", "Green-Leaf-42")
+        repeat(3) { launch(saved).signIn("sample.user", "bad-Pass-$it") }
+        assertEquals(SignInResult.Success, launch(saved).signIn("sample.user", "Green-Leaf-42"))
         assertEquals(Lockout(), saved.read(LockoutKind.PASSWORD))
     }
 
     @Test
     fun aClockSetBack_cannotLockSomeoneOutForLongerThanTheLongestLock() = runBlocking {
         val saved = InMemoryLockoutStore()
-        launch(saved).createAdministrator("Roy Babu", "roy.babu", "Green-Leaf-42", "Green-Leaf-42")
+        launch(saved).createAdministrator("Sample User", "sample.user", "Green-Leaf-42", "Green-Leaf-42")
         saved.write(LockoutKind.PASSWORD, Lockout(failures = 9, lockedUntilMillis = clock.now + 10L * 24 * 60 * 60 * 1000))
-        val locked = launch(saved).signIn("roy.babu", "Green-Leaf-42") as SignInResult.LockedOut
+        val locked = launch(saved).signIn("sample.user", "Green-Leaf-42") as SignInResult.LockedOut
         assertTrue(locked.seconds <= 300)
     }
 

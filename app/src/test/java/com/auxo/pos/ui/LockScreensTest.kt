@@ -57,7 +57,7 @@ class LockScreensTest {
         composeRule.setContent {
             AuxoTheme {
                 AuthGate(
-                    state = AuthState.SignedIn("Roy"),
+                    state = AuthState.SignedIn("Sample"),
                     lock = lock.value,
                     lockScreen = { Text("LOCK SCREEN", modifier = Modifier.testTag("fake_lock")) },
                     app = {
@@ -75,7 +75,7 @@ class LockScreensTest {
         composeRule.onNodeWithText("taps 2").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_lock").assertDoesNotExist()
 
-        lock.value = LockInfo(locked = true, userName = "Roy")
+        lock.value = LockInfo(locked = true, userName = "Sample")
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("fake_lock").assertIsDisplayed()
         composeRule.onNodeWithTag("lock_overlay").assertExists()

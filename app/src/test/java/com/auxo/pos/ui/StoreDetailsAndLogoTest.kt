@@ -132,7 +132,7 @@ class StoreDetailsAndLogoTest {
 
     // Home
 
-    private fun home(name: String = "Roy Mart", logo: Bitmap?) {
+    private fun home(name: String = "Sample Mart", logo: Bitmap?) {
         composeRule.setContent {
             AuxoTheme {
                 CompositionLocalProvider(LocalStoreLogo provides logo) {
@@ -161,7 +161,7 @@ class StoreDetailsAndLogoTest {
         home(logo = logo)
         composeRule.onNodeWithTag("home_logo").assertIsDisplayed()
         composeRule.onNodeWithTag("home_icon").assertDoesNotExist()
-        composeRule.onNodeWithText("Roy Mart").assertIsDisplayed()
+        composeRule.onNodeWithText("Sample Mart").assertIsDisplayed()
     }
 
     @Test
@@ -259,7 +259,7 @@ class StoreDetailsAndLogoTest {
         composeRule.setContent {
             AuxoTheme {
                 HomeContent(
-                    uiState = HomeUiState.Ready("Roy Mart", "₹0.00", 0, InventorySummary.EMPTY, "₹0.00", "₹0.00"),
+                    uiState = HomeUiState.Ready("Sample Mart", "₹0.00", 0, InventorySummary.EMPTY, "₹0.00", "₹0.00"),
                     onNavigate = { destination = it },
                     onAddProduct = { added++ },
                     onOpenProduct = {},

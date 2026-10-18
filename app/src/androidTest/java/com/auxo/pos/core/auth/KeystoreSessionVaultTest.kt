@@ -25,15 +25,15 @@ class KeystoreSessionVaultTest {
 
     @Test
     fun savingEitherKeepsAProtectedSession_orKeepsNothingAtAll() {
-        val saved = vault.save(7L, "Roy Babu")
+        val saved = vault.save(7L, "Sample User")
         // A phone with no screen lock or fingerprint cannot protect it, and then nothing may be left behind.
-        assertEquals(saved, vault.savedName() == "Roy Babu")
+        assertEquals(saved, vault.savedName() == "Sample User")
         if (!saved) assertNull(vault.savedName())
     }
 
     @Test
     fun forgetting_removesTheSavedSessionAndItsKey() {
-        vault.save(7L, "Roy Babu")
+        vault.save(7L, "Sample User")
         vault.clear()
         assertNull(vault.savedName())
         assertNull(vault.unlockCipher())
@@ -41,7 +41,7 @@ class KeystoreSessionVaultTest {
 
     @Test
     fun theSavedFileNeverContainsTheNumberInTheClear() {
-        if (!vault.save(424242L, "Roy Babu")) return
+        if (!vault.save(424242L, "Sample User")) return
         val file = java.io.File(
             androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>().noBackupFilesDir,
             "saved_session.vault",

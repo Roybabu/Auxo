@@ -81,7 +81,7 @@ class AuthScreensTest {
 
     @Test
     fun aSavedSession_opensTheFingerprintScreen_first_andThePasswordIsOneTapAway() {
-        gate(AuthState.SignedOut, savedSessionName = "Roy")
+        gate(AuthState.SignedOut, savedSessionName = "Sample")
         composeRule.onNodeWithTag("fake_resume").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
         composeRule.onNodeWithTag("fake_resume").performClick()
@@ -91,7 +91,7 @@ class AuthScreensTest {
 
     @Test
     fun aSavedSession_isIgnored_beforeAnyBusinessExists_andWhenNothingWasSaved() {
-        gate(AuthState.NeedsSetup, savedSessionName = "Roy")
+        gate(AuthState.NeedsSetup, savedSessionName = "Sample")
         composeRule.onNodeWithTag("fake_login").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_resume").assertDoesNotExist()
     }
@@ -116,7 +116,7 @@ class AuthScreensTest {
 
     @Test
     fun signedIn_showsTheApp() {
-        gate(AuthState.SignedIn("Roy"))
+        gate(AuthState.SignedIn("Sample"))
         composeRule.onNodeWithTag("fake_app").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_login").assertDoesNotExist()
         composeRule.onNodeWithTag("fake_setup").assertDoesNotExist()
@@ -244,11 +244,11 @@ class AuthScreensTest {
         var picked: String? = null
         composeRule.setContent {
             AuxoTheme {
-                AdminSetupContent(AdminSetupUiState(name = "Roy Babu"), {}, {}, {}, {}, {}, onSuggestionPick = { picked = it })
+                AdminSetupContent(AdminSetupUiState(name = "Sample User"), {}, {}, {}, {}, {}, onSuggestionPick = { picked = it })
             }
         }
         composeRule.onNodeWithTag("suggestion_0").performScrollTo().performClick()
-        assertEquals("roy.babu", picked)
+        assertEquals("sample.user", picked)
     }
 
     @Test
@@ -314,13 +314,13 @@ class AuthScreensTest {
         composeRule.setContent {
             AuxoTheme {
                 com.auxo.pos.ui.screens.auth.ResumeContent(
-                    com.auxo.pos.viewmodel.ResumeUiState("Roy"),
+                    com.auxo.pos.viewmodel.ResumeUiState("Sample"),
                     onUseFingerprint = { fingerprints++ },
                     onUsePassword = { passwords++ },
                 )
             }
         }
-        composeRule.onNodeWithText("Welcome back, Roy").assertIsDisplayed()
+        composeRule.onNodeWithText("Welcome back, Sample").assertIsDisplayed()
         composeRule.onNodeWithTag("resume_idle").assertIsDisplayed()
         composeRule.onNodeWithTag("resume_fingerprint").performClick()
         composeRule.onNodeWithTag("resume_password").performClick()
@@ -331,7 +331,7 @@ class AuthScreensTest {
     @Test
     fun resumeScreen_saysSoWhenAFingerIsNotRecognised() {
         composeRule.setContent {
-            AuxoTheme { com.auxo.pos.ui.screens.auth.ResumeContent(com.auxo.pos.viewmodel.ResumeUiState("Roy", failed = true), {}, {}) }
+            AuxoTheme { com.auxo.pos.ui.screens.auth.ResumeContent(com.auxo.pos.viewmodel.ResumeUiState("Sample", failed = true), {}, {}) }
         }
         composeRule.onNodeWithTag("resume_failed").assertIsDisplayed()
         composeRule.onNodeWithText("Fingerprint not recognised. Try again.").assertIsDisplayed()
@@ -374,7 +374,7 @@ class AuthScreensTest {
     @Test
     fun loginButton_isEnabledWithBothFields_andSignsIn() {
         var signIns = 0
-        login(LoginUiState(identifier = "roy", password = "x"), onSignIn = { signIns++ })
+        login(LoginUiState(identifier = "sample", password = "x"), onSignIn = { signIns++ })
         composeRule.onNodeWithTag("login_submit").assertIsEnabled().performTouchInput { swipeRight(startX = width * 0.1f, endX = width * 0.95f, durationMillis = 400) }
         composeRule.waitForIdle()
         assertEquals(1, signIns)
@@ -382,13 +382,13 @@ class AuthScreensTest {
 
     @Test
     fun loginMessages_areShown() {
-        login(LoginUiState(identifier = "roy", message = LoginMessage.Rejected))
+        login(LoginUiState(identifier = "sample", message = LoginMessage.Rejected))
         composeRule.onNodeWithText("Incorrect username or password.").assertIsDisplayed()
     }
 
     @Test
     fun lockoutMessage_countsSeconds() {
-        login(LoginUiState(identifier = "roy", message = LoginMessage.LockedOut(30)))
+        login(LoginUiState(identifier = "sample", message = LoginMessage.LockedOut(30)))
         composeRule.onNodeWithText("Too many attempts. Try again in 30 seconds.").assertIsDisplayed()
     }
 }
@@ -418,7 +418,7 @@ class AuthScreensTabletTest {
     @Test
     fun onATablet_login_isUsable() {
         composeRule.setContent {
-            AuxoTheme { LoginContent(LoginUiState(identifier = "roy", password = "x"), {}, {}, {}) }
+            AuxoTheme { LoginContent(LoginUiState(identifier = "sample", password = "x"), {}, {}, {}) }
         }
         composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
         composeRule.onNodeWithTag("login_submit").assertIsDisplayed().assertIsEnabled()

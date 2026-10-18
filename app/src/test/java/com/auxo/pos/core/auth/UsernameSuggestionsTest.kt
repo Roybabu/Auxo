@@ -8,8 +8,8 @@ class UsernameSuggestionsTest {
 
     @Test
     fun aFullName_givesIdeasBuiltFromIt() {
-        val ideas = UsernameSuggestions.from("Roy Babu")
-        assertEquals(listOf("roy.babu", "roybabu", "roy_babu"), ideas)
+        val ideas = UsernameSuggestions.from("Sample User")
+        assertEquals(listOf("sample.user", "sampleuser", "sample_user"), ideas)
     }
 
     @Test
@@ -21,7 +21,7 @@ class UsernameSuggestionsTest {
 
     @Test
     fun everyIdea_isAUsernameTheFormAccepts() {
-        for (name in listOf("Roy", "Ro", "Åsa Öberg", "Mary Ann O'Neil", "A B")) {
+        for (name in listOf("Sample", "Ro", "Åsa Öberg", "Mary Ann O'Neil", "A B")) {
             for (idea in UsernameSuggestions.from(name)) {
                 assertTrue("$name -> $idea", AdminSetupValidator.isUsername(idea))
             }
@@ -30,7 +30,7 @@ class UsernameSuggestionsTest {
 
     @Test
     fun ideasNeverRepeat_andAreAtMostThree() {
-        val ideas = UsernameSuggestions.from("Roy Roy")
+        val ideas = UsernameSuggestions.from("Sample Sample")
         assertEquals(ideas.distinct(), ideas)
         assertTrue(ideas.size <= 3)
     }

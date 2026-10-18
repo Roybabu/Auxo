@@ -60,7 +60,7 @@ class SavedSessionTest {
         LocalAuthRepository(FileAccountStore(dir), hasher, MutableClock(), Dispatchers.Default, sessions = v)
 
     private suspend fun LocalAuthRepository.ownerWithFingerprint() {
-        createAdministrator("Roy Babu", "roy.babu", pw, pw)
+        createAdministrator("Sample User", "sample.user", pw, pw)
         assertEquals(QuickUnlockChange.Done, setFingerprint(true, pw))
     }
 
@@ -68,7 +68,7 @@ class SavedSessionTest {
     fun turningTheFingerprintOn_savesTheSession_andTurningItOffForgetsIt() = runBlocking {
         val auth = launch()
         auth.ownerWithFingerprint()
-        assertEquals("Roy Babu", vault.name)
+        assertEquals("Sample User", vault.name)
         assertEquals(1L, vault.userId)
         assertEquals(QuickUnlockChange.Done, auth.setFingerprint(false, null))
         assertNull(vault.name)
@@ -88,8 +88,8 @@ class SavedSessionTest {
         launch().ownerWithFingerprint()
         val restarted = launch()
         assertEquals(AuthState.SignedOut, restarted.state.value)
-        assertEquals("Roy Babu", restarted.savedSessionName())
-        assertEquals(SignInResult.Success, restarted.signIn("roy.babu", pw))
+        assertEquals("Sample User", restarted.savedSessionName())
+        assertEquals(SignInResult.Success, restarted.signIn("sample.user", pw))
         assertNull(restarted.savedSessionName())
     }
 
@@ -99,7 +99,7 @@ class SavedSessionTest {
         val restarted = launch()
         assertTrue(restarted.resumeSession(1L))
         val state = restarted.state.value as AuthState.SignedIn
-        assertEquals("Roy Babu", state.name)
+        assertEquals("Sample User", state.name)
         assertEquals(RecoveryPrompt.None, restarted.recoveryPrompt.value)
         assertFalse(restarted.lock.value.locked)
     }
@@ -125,9 +125,9 @@ class SavedSessionTest {
     @Test
     fun aSignInWithoutTheFingerprint_savesNothing() = runBlocking {
         val auth = launch()
-        auth.createAdministrator("Roy Babu", "roy.babu", pw, pw)
+        auth.createAdministrator("Sample User", "sample.user", pw, pw)
         auth.signOut()
-        assertEquals(SignInResult.Success, auth.signIn("roy.babu", pw))
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", pw))
         assertEquals(0, vault.saves)
         assertNull(auth.savedSessionName())
     }
@@ -136,10 +136,10 @@ class SavedSessionTest {
     fun aPhoneThatCannotProtectTheSession_stillSignsIn_andSavesNothing() = runBlocking {
         val weak = FakeSavedSessionVault(canProtect = false)
         val auth = launch(weak)
-        auth.createAdministrator("Roy Babu", "roy.babu", pw, pw)
+        auth.createAdministrator("Sample User", "sample.user", pw, pw)
         assertEquals(QuickUnlockChange.Done, auth.setFingerprint(true, pw))
         assertNull(weak.name)
         auth.signOut()
-        assertEquals(SignInResult.Success, auth.signIn("roy.babu", pw))
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", pw))
     }
 }

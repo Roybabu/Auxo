@@ -46,7 +46,7 @@ class BillingViewModelTest {
     @Test
     fun loads_settingsAndProducts() {
         val state = createViewModel().uiState.value
-        assertEquals("Roy Mart", state.settings?.storeName)
+        assertEquals("Sample Mart", state.settings?.storeName)
         assertTrue(state.productsLoaded)
         assertTrue(state.cart.isEmpty)
         assertFalse(state.needsSetup)
@@ -464,12 +464,12 @@ class BillingSettingsViewModelTest {
     fun gstin_fillsTheState_andSaves() = runTest {
         val repository = FakeSettingsRepository(StoreSettings())
         val viewModel = BillingSettingsViewModel(repository)
-        viewModel.update { it.copy(storeName = " Roy Mart ") }
+        viewModel.update { it.copy(storeName = " Sample Mart ") }
         viewModel.onGstinChange("19aabcu9603r1zk")
         assertEquals("19", viewModel.uiState.value.settings.stateCode)
         viewModel.save()
         assertEquals(SettingsEvent.Saved, viewModel.events.first())
-        assertEquals("Roy Mart", repository.settings.value.storeName)
+        assertEquals("Sample Mart", repository.settings.value.storeName)
         assertEquals("19AABCU9603R1ZK", repository.settings.value.gstin)
     }
 

@@ -49,7 +49,7 @@ class HomePanelTest {
             AuxoTheme {
                 HomeContent(
                     uiState = HomeUiState.Ready(
-                        storeName = "Roy Mart",
+                        storeName = "Sample Mart",
                         salesToday = formatter.format(Money.ZERO),
                         billsToday = 0,
                         inventory = summary,

@@ -8,7 +8,7 @@ import org.junit.Test
 
 class ReorderGroupsTest {
 
-    private val suppliers = listOf(Supplier(id = 1, name = "Roy Textiles"), Supplier(id = 2, name = "drinks Co"))
+    private val suppliers = listOf(Supplier(id = 1, name = "Sample Textiles"), Supplier(id = 2, name = "drinks Co"))
 
     // T-shirt L is low (supplier 1); juice is out of stock (supplier 2); flour is low (no supplier).
     private val catalogue = listOf(

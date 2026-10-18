@@ -21,12 +21,12 @@ import java.time.ZoneOffset
 class ReceiptUpiQrTest {
 
     private val sale = SampleSales.shirtsAndBiscuits()
-    private val withUpi = ReceiptOptions(upiId = "roymart@okaxis", upiPayeeName = "Roy Mart", shopName = "Roy Mart Store")
+    private val withUpi = ReceiptOptions(upiId = "samplemart@okaxis", upiPayeeName = "Sample Mart", shopName = "Sample Mart Store")
 
     @Test
     fun link_carriesTheExactGrandTotalAndTheRealInvoiceNumber() {
         val link = withUpi.upiLinkFor(sale)!!
-        assertTrue(link.startsWith("upi://pay?pa=roymart%40okaxis"))
+        assertTrue(link.startsWith("upi://pay?pa=samplemart%40okaxis"))
         assertTrue(link, link.contains("am=1557.00"))
         assertTrue(link, link.contains("tn=Invoice%20INV%2F26-27%2F00007"))
         assertTrue(link, link.contains("tr=INV262700007"))

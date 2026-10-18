@@ -7,8 +7,8 @@ import org.junit.Test
 class AdminSetupValidatorTest {
 
     private fun errors(
-        name: String = "Roy Babu",
-        identifier: String = "roy.babu",
+        name: String = "Sample User",
+        identifier: String = "sample.user",
         pw: String = "Green-Leaf-42",
         confirm: String = pw,
     ) = AdminSetupValidator.validate(name, identifier, pw, confirm)
@@ -16,8 +16,8 @@ class AdminSetupValidatorTest {
     @Test
     fun aCompleteValidForm_hasNoErrors() {
         assertTrue(errors().isEmpty())
-        assertTrue(errors(identifier = "roy@example.com").isEmpty())
-        assertTrue(errors(identifier = "  ROY_Babu-7  ").isEmpty())
+        assertTrue(errors(identifier = "sample@example.com").isEmpty())
+        assertTrue(errors(identifier = "  SAMPLE_User-7  ").isEmpty())
     }
 
     @Test
@@ -38,10 +38,10 @@ class AdminSetupValidatorTest {
 
     @Test
     fun identifier_acceptsUsernamesAndEmailsOnly() {
-        for (bad in listOf("ab", "has space", "bad!char", "a".repeat(33), "roy@", "@example.com", "roy@example", "roy@@example.com", "roy@exa mple.com")) {
+        for (bad in listOf("ab", "has space", "bad!char", "a".repeat(33), "sample@", "@example.com", "sample@example", "sample@@example.com", "sample@exa mple.com")) {
             assertEquals("'$bad' should be rejected", SetupError.IDENTIFIER_INVALID, errors(identifier = bad)[SetupField.IDENTIFIER])
         }
-        for (good in listOf("abc", "a.b-c_d", "x".repeat(32), "roy.babu@shop.co.in", "a+b@example.com")) {
+        for (good in listOf("abc", "a.b-c_d", "x".repeat(32), "sample.user@shop.co.in", "a+b@example.com")) {
             assertTrue("'$good' should be accepted", errors(identifier = good).isEmpty())
         }
     }
@@ -63,8 +63,8 @@ class AdminSetupValidatorTest {
     fun password_cannotBeAVeryCommonOne_orContainTheUsername() {
         assertEquals(SetupError.PASSWORD_TOO_COMMON, errors(pw = "Password1")[SetupField.PASSWORD])
         assertEquals(SetupError.PASSWORD_TOO_COMMON, errors(pw = "QWERTY123")[SetupField.PASSWORD])
-        assertEquals(SetupError.PASSWORD_CONTAINS_IDENTIFIER, errors(identifier = "royshop", pw = "RoyShop2026")[SetupField.PASSWORD])
-        assertEquals(SetupError.PASSWORD_CONTAINS_IDENTIFIER, errors(identifier = "royshop@example.com", pw = "xroyshop9z")[SetupField.PASSWORD])
+        assertEquals(SetupError.PASSWORD_CONTAINS_IDENTIFIER, errors(identifier = "sampleshop", pw = "SampleShop2026")[SetupField.PASSWORD])
+        assertEquals(SetupError.PASSWORD_CONTAINS_IDENTIFIER, errors(identifier = "sampleshop@example.com", pw = "xsampleshop9z")[SetupField.PASSWORD])
     }
 
     @Test
@@ -76,7 +76,7 @@ class AdminSetupValidatorTest {
 
     @Test
     fun normalising_trimsAndLowerCases() {
-        assertEquals("roy babu", AdminSetupValidator.normalizeName("  roy   babu ").lowercase())
-        assertEquals("roy@example.com", AdminSetupValidator.normalizeIdentifier("  Roy@Example.COM "))
+        assertEquals("sample user", AdminSetupValidator.normalizeName("  sample   user ").lowercase())
+        assertEquals("sample@example.com", AdminSetupValidator.normalizeIdentifier("  Sample@Example.COM "))
     }
 }

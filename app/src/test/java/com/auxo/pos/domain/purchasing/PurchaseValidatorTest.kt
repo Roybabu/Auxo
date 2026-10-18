@@ -143,9 +143,9 @@ class PurchaseNumbersAndTextTest {
                 PurchaseOrderLine(variantId = 11, productName = "Cotton T-Shirt", variantLabel = "M · Navy", quantityOrdered = 10, unitCost = Money(25_000)),
             ),
         )
-        val text = PurchaseOrderText.format(order, "Roy Mart", "9830012345")
+        val text = PurchaseOrderText.format(order, "Sample Mart", "9830012345")
         assertTrue(text.startsWith("Purchase order PO/26-27/00001"))
-        assertTrue(text.contains("From: Roy Mart (9830012345)"))
+        assertTrue(text.contains("From: Sample Mart (9830012345)"))
         assertTrue(text.contains("To: Fresh Mills"))
         assertTrue(text.contains("Needed by: 12 Oct 2026"))
         assertTrue(text.contains("1. Wheat Flour - 25 kg @ Rs. 45.00/kg"))

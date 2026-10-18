@@ -177,7 +177,7 @@ class SheetInvoiceLayoutTest {
         assertEquals(listOf("Walk-in Customer"), doc.buyerLines)
         assertTrue(doc.detailLines.none { it.first.contains("Place of supply") })
         assertEquals("Please share your feedback with us.", doc.feedbackNote)
-        assertEquals("For Roy Mart", doc.signatureLabel)
+        assertEquals("For Sample Mart", doc.signatureLabel)
     }
 
     @Test

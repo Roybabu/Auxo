@@ -14,7 +14,7 @@ class PasswordStrengthTest {
         assertEquals(1, PasswordStrength.segments("abc12"))
         assertEquals(1, PasswordStrength.segments("onlyletters"))
         assertEquals(1, PasswordStrength.segments("password123"))
-        assertEquals(1, PasswordStrength.segments("roy.babu-2024", identifier = "roy.babu"))
+        assertEquals(1, PasswordStrength.segments("sample.user-2024", identifier = "sample.user"))
     }
 
     @Test

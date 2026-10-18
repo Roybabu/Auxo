@@ -94,7 +94,7 @@ class ThermalReceiptPrinterTest {
 
     @Test
     fun aTestPrint_goesToThePrinter_andIsShorterThanABill() = runTest {
-        assertEquals(PrintResult.PRINTED, service(printer58).printTest("Roy Mart", Language.DEFAULT))
+        assertEquals(PrintResult.PRINTED, service(printer58).printTest("Sample Mart", Language.DEFAULT))
         assertEquals(PrintResult.PRINTED, service(printer58).printInvoice(sale, ReceiptOptions()))
         val (test, bill) = transport.sent.map { it.second }
         assertEquals(48, firstRasterWidthBytes(test))
@@ -104,7 +104,7 @@ class ThermalReceiptPrinterTest {
     @Test
     fun testReceipt_hasARulerAsWideAsTheLine_forEachRoll() {
         for (paper in listOf(ReceiptPaper.THERMAL_58, ReceiptPaper.THERMAL_76, ReceiptPaper.THERMAL_80)) {
-            val receipt = ThermalReceiptPrinter.testReceipt(context, "Roy Mart", printer58.copy(paper = paper))
+            val receipt = ThermalReceiptPrinter.testReceipt(context, "Sample Mart", printer58.copy(paper = paper))
             val width = paper.spec.charsPerLine
             assertEquals(width, receipt.width)
             val ruler = receipt.elements.filterIsInstance<com.auxo.pos.core.receipt.ThermalElement.Line>().map { it.text }.first { it.startsWith("1234567890") }

@@ -209,7 +209,7 @@ class RoomPurchasingRepositoryTest {
     fun theSameSupplierBill_isReceivedOnce_withOrWithoutAnOrder() = runTest {
         val shirt = saveNew(TestData.tShirt())
         val supplierId = supplier()
-        val otherSupplier = supplier("Roy Textiles")
+        val otherSupplier = supplier("Sample Textiles")
         purchasing.receive(PurchaseReceipt(supplierId = supplierId, supplierInvoiceNumber = "B-77", lines = listOf(receiptLine(shirt, 2, 24_000))), "a")
 
         val repeat = purchasing.receive(PurchaseReceipt(supplierId = supplierId, supplierInvoiceNumber = "b-77", lines = listOf(receiptLine(shirt, 2, 24_000))), "b")

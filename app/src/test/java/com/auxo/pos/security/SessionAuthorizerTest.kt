@@ -35,7 +35,7 @@ class SessionAuthorizerTest {
 
     private fun seed() = runBlocking {
         val owner = launch()
-        owner.createAdministrator("Roy Babu", "roy.babu", ownerPw, ownerPw)
+        owner.createAdministrator("Sample User", "sample.user", ownerPw, ownerPw)
         owner.createEmployee("Asha K", "asha.k", staffPw, staffPw)
     }
 
@@ -61,9 +61,9 @@ class SessionAuthorizerTest {
             val auth = launch()
             val authorizer = SessionAuthorizer(auth)
             assertTrue(Permission.entries.none { authorizer.can(it) }) // a restart signs everyone out
-            auth.signIn("roy.babu", ownerPw)
+            auth.signIn("sample.user", ownerPw)
             assertTrue(Permission.entries.all { authorizer.can(it) })
-            assertEquals("Roy Babu", authorizer.user?.name)
+            assertEquals("Sample User", authorizer.user?.name)
         }
     }
 
@@ -82,7 +82,7 @@ class SessionAuthorizerTest {
         seed()
         val auth = launch()
         val authorizer = SessionAuthorizer(auth)
-        auth.signIn("roy.babu", ownerPw)
+        auth.signIn("sample.user", ownerPw)
         assertTrue(authorizer.can(Permission.MANAGE_USERS))
         auth.signOut()
         assertFalse(authorizer.can(Permission.SELL))
@@ -97,7 +97,7 @@ class SessionAuthorizerTest {
         assertTrue(authorizer.can(Permission.SELL))
 
         val owner = launch()
-        owner.signIn("roy.babu", ownerPw)
+        owner.signIn("sample.user", ownerPw)
         owner.setEmployeeActive(2L, false)
 
         employee.revalidate() // run at app start and every time the app returns to the screen

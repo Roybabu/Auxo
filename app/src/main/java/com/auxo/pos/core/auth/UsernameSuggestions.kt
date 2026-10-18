@@ -3,7 +3,7 @@ package com.auxo.pos.core.auth
 import java.util.Locale
 
 /**
- * Username ideas built only from the name the person typed, such as "roy.babu" from "Roy Babu". They are never checked
+ * Username ideas built only from the name the person typed, such as "sample.user" from "Sample User". They are never checked
  * against saved accounts, so the setup form cannot be used to find out which usernames exist.
  */
 object UsernameSuggestions {

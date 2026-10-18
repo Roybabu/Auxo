@@ -112,7 +112,7 @@ class ReceiptPdfDeviceTest {
         assertEquals(Intent.ACTION_SEND, send.action)
         assertEquals(ReceiptOutput.PDF_MIME_TYPE, send.type)
         assertTrue(send.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
-        assertEquals("Roy Mart INV/26-27/00007", send.getStringExtra(Intent.EXTRA_SUBJECT))
+        assertEquals("Sample Mart INV/26-27/00007", send.getStringExtra(Intent.EXTRA_SUBJECT))
 
         val uri = requireNotNull(IntentCompat.getParcelableExtra(send, Intent.EXTRA_STREAM, Uri::class.java)) { "no PDF attached" }
         assertEquals("content", uri.scheme)

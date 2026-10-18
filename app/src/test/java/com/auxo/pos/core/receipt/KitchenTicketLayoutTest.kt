@@ -32,7 +32,7 @@ class KitchenTicketLayoutTest {
         added: List<KotLine> = listOf(KotLine("Masala Dosa", "", 2), KotLine("Tea", "Large", 1)),
         cancelled: List<KotLine> = emptyList(),
         addOn: Boolean = false,
-    ) = KitchenTicket("Roy Cafe", "KOT-003", service, table, "Asha", KotDelta(added, cancelled), addOn, 1_000_000L)
+    ) = KitchenTicket("Sample Cafe", "KOT-003", service, table, "Asha", KotDelta(added, cancelled), addOn, 1_000_000L)
 
     private fun texts(receipt: ThermalReceipt) = receipt.elements.filterIsInstance<ThermalElement.Line>().map { it.text }
 

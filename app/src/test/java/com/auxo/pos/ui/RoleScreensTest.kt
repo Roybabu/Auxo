@@ -127,11 +127,11 @@ class RoleScreensTest {
         composeRule.setContent {
             AuxoTheme {
                 CompositionLocalProvider(LocalCapabilities provides Capabilities(Role.EMPLOYEE, "Asha K")) {
-                    EmployeeHomeContent(shopName = "Roy Mart", onNewBill = { newBill++ }, onOpenInvoices = {}, onMore = {})
+                    EmployeeHomeContent(shopName = "Sample Mart", onNewBill = { newBill++ }, onOpenInvoices = {}, onMore = {})
                 }
             }
         }
-        composeRule.onNodeWithText("Roy Mart").assertIsDisplayed()
+        composeRule.onNodeWithText("Sample Mart").assertIsDisplayed()
         composeRule.onNodeWithTag("employee_home_user").assertIsDisplayed()
         composeRule.onNodeWithTag("home_action_new_bill").assertIsDisplayed()
         composeRule.onNodeWithTag("home_action_invoices").assertIsDisplayed()
@@ -147,7 +147,7 @@ class RoleScreensTest {
     @Test
     fun activityLog_listsWhoDidWhat() {
         val entries = listOf(
-            AuditRecord(2, 1_700_000_100_000, 1, "Roy Babu", Role.SUPER_ADMIN, "PRODUCT_DELETED", "product", 7, "Deleted product Linen Shirt"),
+            AuditRecord(2, 1_700_000_100_000, 1, "Sample User", Role.SUPER_ADMIN, "PRODUCT_DELETED", "product", 7, "Deleted product Linen Shirt"),
             AuditRecord(1, 1_700_000_000_000, 2, "Asha K", Role.EMPLOYEE, "SALE_RECORDED", "invoice", 3, "Sale INV/26-27/00001, total 899.00"),
         )
         composeRule.setContent { AuxoTheme { ActivityLogContent(ActivityLogUiState(isLoading = false, entries = entries), onRetry = {}) } }
@@ -163,7 +163,7 @@ class RoleScreensTest {
 
     private fun userManagement(withEmployee: Boolean = false) {
         runBlocking {
-            auth.createAdministrator("Roy Babu", "roy.babu", OWNER_PW, OWNER_PW)
+            auth.createAdministrator("Sample User", "sample.user", OWNER_PW, OWNER_PW)
             if (withEmployee) auth.createEmployee("Asha K", "asha.k", STAFF_PW, STAFF_PW)
         }
         val viewModel = UserManagementViewModel(auth)
@@ -182,10 +182,10 @@ class RoleScreensTest {
     @Test
     fun userManagement_showsTheProtectedSuperAdmin_andNoEmployeesYet() {
         userManagement()
-        composeRule.onNodeWithTag("user_roy.babu").assertIsDisplayed()
+        composeRule.onNodeWithTag("user_sample.user").assertIsDisplayed()
         composeRule.onNodeWithText("The Super Admin's username and password cannot be changed here.").assertIsDisplayed()
-        composeRule.onAllNodesWithTag("user_active_roy.babu").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("user_reset_roy.babu").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("user_active_sample.user").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("user_reset_sample.user").assertCountEquals(0)
         composeRule.onNodeWithTag("users_empty").assertIsDisplayed()
     }
 
@@ -234,7 +234,7 @@ class RoleScreensTest {
         auth.signOut()
         assertEquals(SignInResult.Deactivated, runBlocking { auth.signIn("asha.k", STAFF_PW) })
 
-        runBlocking { auth.signIn("roy.babu", OWNER_PW) }
+        runBlocking { auth.signIn("sample.user", OWNER_PW) }
     }
 
     @Test
@@ -256,7 +256,7 @@ class RoleScreensTest {
     @Test
     fun theUserManagementScreenIsEmptyForSomeoneWhoIsNotTheSuperAdmin() {
         runBlocking {
-            auth.createAdministrator("Roy Babu", "roy.babu", OWNER_PW, OWNER_PW)
+            auth.createAdministrator("Sample User", "sample.user", OWNER_PW, OWNER_PW)
             auth.createEmployee("Asha K", "asha.k", STAFF_PW, STAFF_PW)
             auth.signOut()
             auth.signIn("asha.k", STAFF_PW)
@@ -269,7 +269,7 @@ class RoleScreensTest {
             } }
         // The data layer refused to list anyone, so the screen shows an error and no accounts.
         composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("Something went wrong. Please try again.").fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onAllNodesWithTag("user_roy.babu").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("user_sample.user").assertCountEquals(0)
         assertTrue(runBlocking { auth.listUsers() } == null)
     }
 }

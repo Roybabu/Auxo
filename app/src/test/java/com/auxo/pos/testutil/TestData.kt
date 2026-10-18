@@ -26,13 +26,13 @@ object TestData {
 
     /** GST-registered store in West Bengal with prices including GST. */
     val settings = com.auxo.pos.domain.model.StoreSettings(
-        storeName = "Roy Mart",
+        storeName = "Sample Mart",
         address = "12 Park Street, Kolkata",
         phone = "9830012345",
         gstin = "19AABCU9603R1ZK",
         stateCode = "19",
-        upiId = "roymart@okaxis",
-        upiPayeeName = "Roy Mart",
+        upiId = "samplemart@okaxis",
+        upiPayeeName = "Sample Mart",
     )
 
     fun variant(
@@ -66,7 +66,7 @@ object TestData {
     fun tShirt(id: Long = 1) = Product(
         id = id,
         name = "Cotton T-Shirt",
-        brand = "Roy Wear",
+        brand = "Sample Wear",
         category = ProductCategory.GARMENT,
         material = "100% cotton",
         hsnCode = "6109",

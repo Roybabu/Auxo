@@ -49,7 +49,7 @@ class HomeViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
 
         val state = viewModel.uiState.value as HomeUiState.Ready
-        assertEquals("Roy Mart", state.storeName)
+        assertEquals("Sample Mart", state.storeName)
         assertEquals(formatter.format(Money.ZERO), state.salesToday)
         assertEquals(0, state.billsToday)
         assertEquals(2, state.inventory.productCount)

@@ -91,7 +91,7 @@ class DatabaseMigrationTest {
         // Step 2 data: a product, a variant with stock and its opening stock movement.
         db.execSQL(
             "INSERT INTO products (id, name, brand, category, description, material, diet_type, created_at, updated_at) " +
-                "VALUES (1, 'Cotton T-Shirt', 'Roy Wear', 'GARMENT', NULL, 'Cotton', NULL, 100, 100)",
+                "VALUES (1, 'Cotton T-Shirt', 'Sample Wear', 'GARMENT', NULL, 'Cotton', NULL, 100, 100)",
         )
         db.execSQL(
             "INSERT INTO product_variants (id, product_id, sku, barcode, size, colour, net_quantity_milli, net_quantity_unit, " +
@@ -200,8 +200,8 @@ class DatabaseMigrationTest {
                 "INSERT INTO store_settings (id, store_name, address, phone, gstin, state_code, gst_registered, prices_include_tax, round_off, " +
                     "invoice_prefix, credit_note_prefix, upi_id, upi_payee_name, receipt_paper, receipt_footer, receipt_show_hsn, " +
                     "receipt_show_tax_breakup, receipt_show_savings, receipt_show_customer, receipt_show_barcode) VALUES " +
-                    "(1, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', 1, 1, 1, 'INV', 'CN', " +
-                    "'roymart@okaxis', 'Roy Mart', 'THERMAL_58', 'Thank you', 1, 1, 1, 1, 0)",
+                    "(1, 'Sample Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', 1, 1, 1, 'INV', 'CN', " +
+                    "'samplemart@okaxis', 'Sample Mart', 'THERMAL_58', 'Thank you', 1, 1, 1, 1, 0)",
             )
             execSQL(
                 "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at) " +
@@ -218,9 +218,9 @@ class DatabaseMigrationTest {
                     "buyer_name, buyer_phone, buyer_gstin, place_of_supply, gst_registered, prices_include_tax, inter_state, subtotal_minor, " +
                     "discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor, round_off_minor, grand_total_minor, savings_minor, " +
                     "original_invoice_id, original_invoice_number, note) VALUES " +
-                    "(1, 'INV/26-27/00001', 'SALE', $soldAt, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
+                    "(1, 'INV/26-27/00001', 'SALE', $soldAt, 'Sample Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
                     "NULL, NULL, NULL, '19', 1, 1, 0, 99800, 0, 95048, 2376, 2376, 0, 0, 99800, 0, NULL, NULL, NULL), " +
-                    "(2, 'CN/26-27/00001', 'RETURN', $soldAt, 'Roy Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
+                    "(2, 'CN/26-27/00001', 'RETURN', $soldAt, 'Sample Mart', '12 Park Street, Kolkata', '9830012345', '19AABCU9603R1ZK', '19', " +
                     "NULL, NULL, NULL, '19', 1, 1, 0, 49900, 0, 47524, 1188, 1188, 0, 0, 49900, 0, 1, 'INV/26-27/00001', 'Wrong size')",
             )
             execSQL(
@@ -257,7 +257,7 @@ class DatabaseMigrationTest {
         val creditNote = billing.getInvoice(2)!!
         assertEquals(1L, creditNote.originalInvoiceId)
         assertEquals(PaymentKind.REFUND, creditNote.payments.single().kind)
-        assertEquals("Roy Mart", RoomSettingsRepository(db).getSettings().storeName)
+        assertEquals("Sample Mart", RoomSettingsRepository(db).getSettings().storeName)
         assertEquals(ReceiptPaper.THERMAL_58, RoomSettingsRepository(db).getSettings().receipt.paper)
         assertEquals("Thank you", RoomSettingsRepository(db).getSettings().receipt.footer)
         assertEquals(7, inventory.getProduct(1)!!.variants.single().stockQuantity)

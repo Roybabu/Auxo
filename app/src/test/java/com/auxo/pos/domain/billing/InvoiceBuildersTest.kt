@@ -34,7 +34,7 @@ class SaleBuilderTest {
     fun sale_snapshotsSellerBuyerAndAmounts() {
         val sale = SampleSales.shirtsAndBiscuits(CustomerDetails(name = " Anita Das ", phone = "+91 98310 00000"))
         assertEquals(InvoiceType.SALE, sale.type)
-        assertEquals("Roy Mart", sale.seller.name)
+        assertEquals("Sample Mart", sale.seller.name)
         assertEquals("19AABCU9603R1ZK", sale.seller.gstin)
         assertEquals("Anita Das", sale.buyer.name)
         assertEquals("9831000000", sale.buyer.phone)

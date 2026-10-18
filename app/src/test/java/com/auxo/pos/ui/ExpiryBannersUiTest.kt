@@ -48,7 +48,7 @@ class ExpiryBannersUiTest {
             AuxoTheme {
                 HomeContent(
                     uiState = HomeUiState.Ready(
-                        storeName = "Roy Mart",
+                        storeName = "Sample Mart",
                         salesToday = formatter.format(com.auxo.pos.domain.model.Money.ZERO),
                         billsToday = 0,
                         inventory = summary,

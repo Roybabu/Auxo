@@ -111,21 +111,21 @@ class RecoveryScreensTest {
 
     @Test
     fun afterSetup_theCodeScreenComesBeforeTheApp_andCannotBeSkipped() {
-        gate(AuthState.SignedIn("Roy"), RecoveryPrompt.Required)
+        gate(AuthState.SignedIn("Sample"), RecoveryPrompt.Required)
         composeRule.onNodeWithText("REQUIRED").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_app").assertDoesNotExist()
     }
 
     @Test
     fun anExistingInstall_isOfferedTheCode_withAWayToSkip() {
-        gate(AuthState.SignedIn("Roy"), RecoveryPrompt.Offered)
+        gate(AuthState.SignedIn("Sample"), RecoveryPrompt.Offered)
         composeRule.onNodeWithText("OFFER").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_app").assertDoesNotExist()
     }
 
     @Test
     fun withNothingToAsk_theAppOpensAtOnce() {
-        gate(AuthState.SignedIn("Roy"), RecoveryPrompt.None)
+        gate(AuthState.SignedIn("Sample"), RecoveryPrompt.None)
         composeRule.onNodeWithTag("fake_app").assertIsDisplayed()
         composeRule.onNodeWithTag("fake_recovery").assertDoesNotExist()
     }

@@ -38,7 +38,7 @@ class ReorderListViewModelTest {
             TestData.flour(grams = 500).copy(preferredSupplierId = 2),
         ),
     )
-    private val purchasing = FakePurchasingRepository(inventory, listOf(Supplier(id = 1, name = "Roy Textiles"), Supplier(id = 2, name = "Drinks Co")))
+    private val purchasing = FakePurchasingRepository(inventory, listOf(Supplier(id = 1, name = "Sample Textiles"), Supplier(id = 2, name = "Drinks Co")))
 
     private fun viewModel() = StockAlertsViewModel(
         initialTab = AlertsTab.LOW_STOCK,
@@ -102,7 +102,7 @@ class ReorderListViewModelTest {
     @Test
     fun existingPurchaseOrderRules_areUnchanged_itemsWithoutASupplierAreSkipped() = runTest {
         val noSupplier = FakeInventoryRepository(listOf(TestData.juice(stock = 0)))
-        val repo = FakePurchasingRepository(noSupplier, listOf(Supplier(id = 1, name = "Roy Textiles")))
+        val repo = FakePurchasingRepository(noSupplier, listOf(Supplier(id = 1, name = "Sample Textiles")))
         val vm = StockAlertsViewModel(
             initialTab = AlertsTab.LOW_STOCK,
             inventory = noSupplier,

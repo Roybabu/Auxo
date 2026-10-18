@@ -21,7 +21,7 @@ class ProductFormValidatorTest {
         return ProductForm(
             category = ProductCategory.GARMENT,
             name = "Cotton T-Shirt",
-            brand = "Roy Wear",
+            brand = "Sample Wear",
             material = "Cotton",
             sizes = sizes,
             colours = colours,

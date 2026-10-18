@@ -61,32 +61,32 @@ class IdentifiersTest {
 
     @Test
     fun upi() {
-        assertTrue(Upi.isValidVpa("roymart@okaxis"))
+        assertTrue(Upi.isValidVpa("samplemart@okaxis"))
         assertTrue(Upi.isValidVpa("9830012345@ybl"))
-        assertFalse(Upi.isValidVpa("roymart"))
-        assertFalse(Upi.isValidVpa("roy mart@okaxis"))
-        val uri = Upi.paymentUri("roymart@okaxis", "Roy Mart", Money(1_250_50), "Bill INV/26-27/00001", "")
-        assertEquals("upi://pay?pa=roymart%40okaxis&pn=Roy%20Mart&am=1250.50&cu=INR&tn=Bill%20INV%2F26-27%2F00001", uri)
+        assertFalse(Upi.isValidVpa("samplemart"))
+        assertFalse(Upi.isValidVpa("sample mart@okaxis"))
+        val uri = Upi.paymentUri("samplemart@okaxis", "Sample Mart", Money(1_250_50), "Bill INV/26-27/00001", "")
+        assertEquals("upi://pay?pa=samplemart%40okaxis&pn=Sample%20Mart&am=1250.50&cu=INR&tn=Bill%20INV%2F26-27%2F00001", uri)
     }
 
     @Test
     fun upiBillLink_carriesExactAmountAndInvoiceNumber() {
-        val link = Upi.billLink("roymart@okaxis", "Roy Mart", "Roy Mart Store", Money(1_250_50), "INV/26-27/00007")!!
+        val link = Upi.billLink("samplemart@okaxis", "Sample Mart", "Sample Mart Store", Money(1_250_50), "INV/26-27/00007")!!
         assertEquals(
-            "upi://pay?pa=roymart%40okaxis&pn=Roy%20Mart&am=1250.50&cu=INR&tn=Invoice%20INV%2F26-27%2F00007&tr=INV262700007",
+            "upi://pay?pa=samplemart%40okaxis&pn=Sample%20Mart&am=1250.50&cu=INR&tn=Invoice%20INV%2F26-27%2F00007&tr=INV262700007",
             link,
         )
     }
 
     @Test
     fun upiBillLink_fallsBackToShopNameAndHidesWhenUnusable() {
-        val link = Upi.billLink("roymart@okaxis", " ", "Roy Mart Store", Money(10_00), "")!!
-        assertTrue(link.contains("pn=Roy%20Mart%20Store"))
-        assertTrue(link.contains("tn=Roy%20Mart%20Store"))
+        val link = Upi.billLink("samplemart@okaxis", " ", "Sample Mart Store", Money(10_00), "")!!
+        assertTrue(link.contains("pn=Sample%20Mart%20Store"))
+        assertTrue(link.contains("tn=Sample%20Mart%20Store"))
         assertFalse(link.contains("tr="))
-        assertNull(Upi.billLink("", "Roy", "Shop", Money(10_00), "INV/1"))
-        assertNull(Upi.billLink("not a vpa", "Roy", "Shop", Money(10_00), "INV/1"))
-        assertNull(Upi.billLink("roymart@okaxis", "Roy", "Shop", Money.ZERO, "INV/1"))
+        assertNull(Upi.billLink("", "Sample", "Shop", Money(10_00), "INV/1"))
+        assertNull(Upi.billLink("not a vpa", "Sample", "Shop", Money(10_00), "INV/1"))
+        assertNull(Upi.billLink("samplemart@okaxis", "Sample", "Shop", Money.ZERO, "INV/1"))
     }
 
     @Test

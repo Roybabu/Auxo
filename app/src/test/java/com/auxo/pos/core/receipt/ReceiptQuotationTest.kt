@@ -23,7 +23,7 @@ class ReceiptQuotationTest {
         payments = emptyList(),
         quotationValidUntil = LocalDate.of(2026, 10, 25),
     )
-    private val options = ReceiptOptions(upiId = "roymart@okaxis", upiPayeeName = "Roy Mart", shopName = "Roy Mart Store")
+    private val options = ReceiptOptions(upiId = "samplemart@okaxis", upiPayeeName = "Sample Mart", shopName = "Sample Mart Store")
 
     private fun lines(receipt: ThermalReceipt) = receipt.elements.filterIsInstance<ThermalElement.Line>().map { it.text }
 

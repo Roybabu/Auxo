@@ -43,7 +43,7 @@ class OwingListViewModelTest {
         addEntry(LedgerEntry(customerId = 3, type = LedgerEntryType.PAYMENT, amount = Money(-100_00), createdAtMillis = now - 10 * dayMillis))
         addEntry(LedgerEntry(customerId = 4, type = LedgerEntryType.SALE, amount = Money(50_00), createdAtMillis = now))
     }
-    private val settings = FakeSettingsRepository(TestData.settings.copy(storeName = "Roy Mart", upiId = "roymart@okaxis"))
+    private val settings = FakeSettingsRepository(TestData.settings.copy(storeName = "Sample Mart", upiId = "samplemart@okaxis"))
 
     private fun viewModel() = CustomerListViewModel(customers, settings, TestData.clock)
 
@@ -79,8 +79,8 @@ class OwingListViewModelTest {
         val vm = viewModel()
         keepActive(vm.uiState)
         val shop = vm.uiState.value.reminderShop!!
-        assertEquals("Roy Mart", shop.shopName)
-        assertEquals("roymart@okaxis", shop.upiId)
+        assertEquals("Sample Mart", shop.shopName)
+        assertEquals("samplemart@okaxis", shop.upiId)
         assertEquals(Language.ENGLISH, shop.language)
 
         settings.settings.value = settings.settings.value.copy(upiId = "oops")

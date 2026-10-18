@@ -35,7 +35,7 @@ class UserAccountsTest {
     private fun launch() = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default)
 
     private suspend fun LocalAuthRepository.setUpOwner() =
-        createAdministrator("Roy Babu", "roy.babu", OWNER_PW, OWNER_PW)
+        createAdministrator("Sample User", "sample.user", OWNER_PW, OWNER_PW)
 
     private suspend fun LocalAuthRepository.addEmployee(identifier: String = "asha.k", pw: String = EMPLOYEE_PW) =
         createEmployee("Asha K", identifier, pw, pw)
@@ -53,7 +53,7 @@ class UserAccountsTest {
     fun theFirstAccount_isTheSuperAdmin_withId1() = runBlocking {
         val auth = launch()
         auth.setUpOwner()
-        assertEquals(AuthState.SignedIn("Roy Babu", Role.SUPER_ADMIN, 1L), auth.state.value)
+        assertEquals(AuthState.SignedIn("Sample User", Role.SUPER_ADMIN, 1L), auth.state.value)
         val saved = (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.single()
         assertEquals(Role.SUPER_ADMIN, saved.role)
         assertTrue(saved.active)
@@ -75,8 +75,8 @@ class UserAccountsTest {
         File(dir, "admin_account.json").writeText(
             JSONObject()
                 .put("version", 1)
-                .put("name", "Roy Babu")
-                .put("identifier", "roy.babu")
+                .put("name", "Sample User")
+                .put("identifier", "sample.user")
                 .put("salt", Base64.encodeToString(salt, Base64.NO_WRAP))
                 .put("hash", Base64.encodeToString(hasher.hash(OWNER_PW, salt), Base64.NO_WRAP))
                 .put("iterations", hasher.iterations)
@@ -85,8 +85,8 @@ class UserAccountsTest {
         )
         val auth = launch()
         assertEquals(AuthState.SignedOut, auth.state.value)
-        assertEquals(SignInResult.Success, auth.signIn("roy.babu", OWNER_PW))
-        assertEquals(AuthState.SignedIn("Roy Babu", Role.SUPER_ADMIN, 1L), auth.state.value)
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", OWNER_PW))
+        assertEquals(AuthState.SignedIn("Sample User", Role.SUPER_ADMIN, 1L), auth.state.value)
         assertTrue(File(dir, "accounts.json").isFile)
         assertFalse(File(dir, "admin_account.json").exists())
         // And setup is still refused.
@@ -126,7 +126,7 @@ class UserAccountsTest {
         assertEquals(UserChangeResult.Done, auth.addEmployee("asha.k"))
         val clash = auth.addEmployee("ASHA.K") as UserChangeResult.Invalid
         assertEquals(SetupError.IDENTIFIER_TAKEN, clash.errors[SetupField.IDENTIFIER])
-        val clashWithOwner = auth.addEmployee("Roy.Babu") as UserChangeResult.Invalid
+        val clashWithOwner = auth.addEmployee("Sample.User") as UserChangeResult.Invalid
         assertEquals(SetupError.IDENTIFIER_TAKEN, clashWithOwner.errors[SetupField.IDENTIFIER])
         assertEquals(2, auth.listUsers()!!.size)
     }
@@ -146,7 +146,7 @@ class UserAccountsTest {
 
         // Nothing on disk changed: still two accounts, owner untouched, employee still active with the old password.
         val fresh = launch()
-        assertEquals(SignInResult.Success, fresh.signIn("roy.babu", OWNER_PW))
+        assertEquals(SignInResult.Success, fresh.signIn("sample.user", OWNER_PW))
         assertEquals(2, fresh.listUsers()!!.size)
         fresh.signOut()
         assertEquals(SignInResult.Success, fresh.signIn("asha.k", EMPLOYEE_PW))
@@ -173,7 +173,7 @@ class UserAccountsTest {
         // A wrong password still looks like any wrong password, so a stranger learns nothing about the account.
         assertEquals(SignInResult.Rejected, next.signIn("asha.k", "Wrong-Pass-1"))
 
-        assertEquals(SignInResult.Success, next.signIn("roy.babu", OWNER_PW))
+        assertEquals(SignInResult.Success, next.signIn("sample.user", OWNER_PW))
         assertEquals(UserChangeResult.Done, next.setEmployeeActive(2L, true))
         next.signOut()
         assertEquals(SignInResult.Success, next.signIn("asha.k", EMPLOYEE_PW))
@@ -200,7 +200,7 @@ class UserAccountsTest {
         employeeSession.signIn("asha.k", EMPLOYEE_PW)
         // The Super Admin switches the account off from another session of the same files.
         val owner = launch()
-        owner.signIn("roy.babu", OWNER_PW)
+        owner.signIn("sample.user", OWNER_PW)
         owner.setEmployeeActive(2L, false)
 
         employeeSession.revalidate()
@@ -223,8 +223,8 @@ class UserAccountsTest {
         assertEquals(UserChangeResult.NotAnEmployee, owner.resetEmployeePassword(1L, "Hacked-Pass-1", "Hacked-Pass-1"))
         assertEquals(UserChangeResult.NotAnEmployee, owner.setEmployeeActive(99L, false))
         val fresh = launch()
-        assertEquals(SignInResult.Success, fresh.signIn("roy.babu", OWNER_PW))
-        assertEquals(SignInResult.Rejected, fresh.signIn("roy.babu", "Hacked-Pass-1"))
+        assertEquals(SignInResult.Success, fresh.signIn("sample.user", OWNER_PW))
+        assertEquals(SignInResult.Rejected, fresh.signIn("sample.user", "Hacked-Pass-1"))
     }
 
     @Test
@@ -306,7 +306,7 @@ class UserAccountsTest {
     fun aFailingListener_doesNotBreakSigningIn() = runBlocking {
         ownerWithEmployee()
         val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, AccountEventListener { error("log is broken") })
-        assertEquals(SignInResult.Success, auth.signIn("roy.babu", OWNER_PW))
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", OWNER_PW))
         auth.signOut()
         assertEquals(AuthState.SignedOut, auth.state.value)
     }
@@ -339,7 +339,7 @@ class UserAccountsTest {
         assertEquals(SignInResult.Success, restarted.signIn("asha.k", EMPLOYEE_PW))
         val signedIn = restarted.state.value as AuthState.SignedIn
         assertEquals(RolePermissions.BASE + menuAndReturns, signedIn.permissions)
-        val listed = (launch().also { it.signIn("roy.babu", OWNER_PW) }.listUsers())!!.single { it.id == 2L }
+        val listed = (launch().also { it.signIn("sample.user", OWNER_PW) }.listUsers())!!.single { it.id == 2L }
         assertEquals(menuAndReturns, listed.granted)
     }
 
@@ -440,7 +440,7 @@ class UserAccountsTest {
         val employee = launch()
         assertEquals(SignInResult.Success, employee.signIn("asha.k", EMPLOYEE_PW))
         assertEquals(RolePermissions.BASE, (employee.state.value as AuthState.SignedIn).permissions)
-        assertEquals(SignInResult.Success, launch().signIn("roy.babu", OWNER_PW))
+        assertEquals(SignInResult.Success, launch().signIn("sample.user", OWNER_PW))
     }
 
     @Test

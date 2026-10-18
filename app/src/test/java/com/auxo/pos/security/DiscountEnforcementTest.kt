@@ -168,8 +168,8 @@ class DiscountEnforcementTest {
         assertEquals(500, adminSettings.getSettings().employeeDiscountLimitBp)
 
         // Saving other changes keeps working for the manager...
-        managerSettings.saveSettings(store.copy(storeName = "Roy Mart 2", employeeDiscountLimitBp = 500))
-        assertEquals("Roy Mart 2", adminSettings.getSettings().storeName)
+        managerSettings.saveSettings(store.copy(storeName = "Sample Mart 2", employeeDiscountLimitBp = 500))
+        assertEquals("Sample Mart 2", adminSettings.getSettings().storeName)
         // ...but not raising the limit.
         try {
             managerSettings.saveSettings(store.copy(employeeDiscountLimitBp = 10_000))

@@ -18,17 +18,17 @@ class DuesReminderTest {
 
     private val body = "Hello %1\$s, a reminder from %2\$s: you owe %3\$s. Thank you!"
     private val upiLine = "Pay by UPI to %1\$s."
-    private val shop = ReminderShop.of("Roy Mart", "roymart@okaxis", Language.ENGLISH)
+    private val shop = ReminderShop.of("Sample Mart", "samplemart@okaxis", Language.ENGLISH)
 
     @Test
     fun message_hasNameShopAndAmount_andTheUpiLineOnlyWithAValidUpiId() {
         val withUpi = DuesReminder.message(body, upiLine, "  Asha ", shop, "₹1,250.00")
-        assertEquals("Hello Asha, a reminder from Roy Mart: you owe ₹1,250.00. Thank you!\nPay by UPI to roymart@okaxis.", withUpi)
+        assertEquals("Hello Asha, a reminder from Sample Mart: you owe ₹1,250.00. Thank you!\nPay by UPI to samplemart@okaxis.", withUpi)
 
-        val none = ReminderShop.of("Roy Mart", "", Language.ENGLISH)
+        val none = ReminderShop.of("Sample Mart", "", Language.ENGLISH)
         assertNull(none.upiId)
         assertFalse(DuesReminder.message(body, upiLine, "Asha", none, "₹1.00").contains("UPI"))
-        assertNull(ReminderShop.of("Roy Mart", "not a upi id", Language.ENGLISH).upiId)
+        assertNull(ReminderShop.of("Sample Mart", "not a upi id", Language.ENGLISH).upiId)
     }
 
     @Test

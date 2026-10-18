@@ -57,12 +57,12 @@ class AuthViewModelsTest {
     private fun <T> waitUntil(block: suspend () -> T): T = runBlocking { withTimeout(15_000) { block() } }
 
     private fun AdminSetupViewModel.fill(
-        name: String = "Roy Babu",
-        identifier: String = "roy.babu",
+        name: String = "Sample User",
+        identifier: String = "sample.user",
         pw: String = "Green-Leaf-42",
         confirm: String = pw,
     ) {
-        onBusinessChange("Roy Stores")
+        onBusinessChange("Sample Stores")
         onNameChange(name)
         onIdentifierChange(identifier)
         onPasswordChange(pw)
@@ -116,7 +116,7 @@ class AuthViewModelsTest {
         viewModel.fill()
         viewModel.submit()
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
-        assertEquals(AuthState.SignedIn("Roy Babu"), auth.state.value)
+        assertEquals(AuthState.SignedIn("Sample User"), auth.state.value)
         assertTrue(store.read() is StoredAccounts.Present)
         assertEquals("", viewModel.uiState.value.password)
         assertEquals("", viewModel.uiState.value.confirm)
@@ -127,10 +127,10 @@ class AuthViewModelsTest {
         val saved = mutableListOf<String>()
         val viewModel = AdminSetupViewModel(auth) { name, _, _ -> saved += name }
         viewModel.fill()
-        viewModel.onBusinessChange("  Roy   Stores ")
+        viewModel.onBusinessChange("  Sample   Stores ")
         viewModel.submit()
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
-        assertEquals(listOf("Roy Stores"), saved)
+        assertEquals(listOf("Sample Stores"), saved)
     }
 
     @Test
@@ -146,8 +146,8 @@ class AuthViewModelsTest {
     @Test
     fun onlyTheShopNameUsernameAndPassword_areRequired() {
         val viewModel = AdminSetupViewModel(auth)
-        viewModel.onBusinessChange("Roy Stores")
-        viewModel.onIdentifierChange("roy.babu")
+        viewModel.onBusinessChange("Sample Stores")
+        viewModel.onIdentifierChange("sample.user")
         viewModel.onPasswordChange("Green-Leaf-42")
         viewModel.onConfirmChange("Green-Leaf-42")
         viewModel.submit()
@@ -155,7 +155,7 @@ class AuthViewModelsTest {
         assertTrue(viewModel.uiState.value.errors.isEmpty())
         assertEquals(1, auth.setups)
         // With no name typed, the username stands in for it.
-        assertEquals(AuthState.SignedIn("roy.babu"), auth.state.value)
+        assertEquals(AuthState.SignedIn("sample.user"), auth.state.value)
     }
 
     @Test
@@ -169,15 +169,15 @@ class AuthViewModelsTest {
             savedLogo = logo
         }
         viewModel.fill()
-        viewModel.onDetailsChange { it.copy(address = "  12 Park Street  ", phone = "9876543210", upiId = "roy@okbank") }
+        viewModel.onDetailsChange { it.copy(address = "  12 Park Street  ", phone = "9876543210", upiId = "sample@okbank") }
         val logo = android.net.Uri.parse("content://media/picker/1")
         viewModel.onLogoPicked(logo)
         viewModel.submit()
         waitUntil { viewModel.uiState.first { !it.isSubmitting } }
-        assertEquals("Roy Stores", savedName)
+        assertEquals("Sample Stores", savedName)
         assertEquals("12 Park Street", savedDetails?.address)
         assertEquals("9876543210", savedDetails?.phone)
-        assertEquals("roy@okbank", savedDetails?.upiId)
+        assertEquals("sample@okbank", savedDetails?.upiId)
         assertEquals(logo, savedLogo)
     }
 
@@ -206,10 +206,10 @@ class AuthViewModelsTest {
     @Test
     fun usernameIdeas_followTheName_untilAUsernameIsTyped_andFillTheField() {
         val viewModel = AdminSetupViewModel(auth)
-        viewModel.onNameChange("Roy Babu")
-        assertTrue("roy.babu" in viewModel.uiState.value.suggestions)
-        viewModel.useSuggestion("roy.babu")
-        assertEquals("roy.babu", viewModel.uiState.value.identifier)
+        viewModel.onNameChange("Sample User")
+        assertTrue("sample.user" in viewModel.uiState.value.suggestions)
+        viewModel.useSuggestion("sample.user")
+        assertEquals("sample.user", viewModel.uiState.value.identifier)
         assertTrue(viewModel.uiState.value.suggestions.isEmpty())
     }
 
@@ -236,7 +236,7 @@ class AuthViewModelsTest {
         second.submit()
         waitUntil { second.uiState.first { !it.isSubmitting } }
         val saved = (store.read() as StoredAccounts.Present).accounts.single()
-        assertEquals("roy.babu", saved.identifier)
+        assertEquals("sample.user", saved.identifier)
     }
 
     // Login
@@ -256,11 +256,11 @@ class AuthViewModelsTest {
         val next = restart()
         assertEquals(AuthState.SignedOut, next.state.value)
         val login = LoginViewModel(next)
-        login.onIdentifierChange("roy.babu")
+        login.onIdentifierChange("sample.user")
         login.onPasswordChange("Green-Leaf-42")
         login.signIn()
         waitUntil { login.uiState.first { !it.isSigningIn } }
-        assertEquals(AuthState.SignedIn("Roy Babu"), next.state.value)
+        assertEquals(AuthState.SignedIn("Sample User"), next.state.value)
         assertEquals("", login.uiState.value.password)
     }
 
@@ -269,7 +269,7 @@ class AuthViewModelsTest {
         createAdmin()
         val next = restart()
         val login = LoginViewModel(next)
-        login.onIdentifierChange("roy.babu")
+        login.onIdentifierChange("sample.user")
         login.onPasswordChange("wrong-Pass-1")
         login.signIn()
         waitUntil { login.uiState.first { !it.isSigningIn } }
@@ -291,7 +291,7 @@ class AuthViewModelsTest {
         assertFalse(login.uiState.value.isSigningIn)
         assertNull(login.uiState.value.message)
 
-        login.onIdentifierChange("roy.babu")
+        login.onIdentifierChange("sample.user")
         assertFalse(login.uiState.value.identifierMissing)
         assertTrue(login.uiState.value.passwordMissing)
         login.signIn()

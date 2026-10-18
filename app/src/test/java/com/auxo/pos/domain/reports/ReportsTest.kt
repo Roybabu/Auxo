@@ -102,8 +102,8 @@ class ReportsTest {
         assertEquals(ReportValue.Empty, flourRow[5]) // ingredients have no selling value
         assertEquals(1, Reports.stockValue(products, categoryId = 4).rows.size)
 
-        val low = Reports.lowStock(listOf(TestData.tShirt().copy(preferredSupplierId = 3)), listOf(Supplier(id = 3, name = "Roy Textiles")))
-        assertEquals(ReportValue.Text("Roy Textiles"), low.rows.single().last())
+        val low = Reports.lowStock(listOf(TestData.tShirt().copy(preferredSupplierId = 3)), listOf(Supplier(id = 3, name = "Sample Textiles")))
+        assertEquals(ReportValue.Text("Sample Textiles"), low.rows.single().last())
 
         val today = TestData.today
         fun batch(id: Long, expiry: LocalDate?) = BatchWithProduct(

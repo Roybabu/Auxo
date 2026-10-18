@@ -58,7 +58,7 @@ class AccessOptionsScreenTest {
 
     private fun userManagement(withEmployee: Boolean = false) {
         runBlocking {
-            auth.createAdministrator("Roy Babu", "roy.babu", OWNER_PW, OWNER_PW)
+            auth.createAdministrator("Sample User", "sample.user", OWNER_PW, OWNER_PW)
             if (withEmployee) auth.createEmployee("Asha K", "asha.k", STAFF_PW, STAFF_PW)
         }
         val viewModel = UserManagementViewModel(auth)
@@ -154,7 +154,7 @@ class AccessOptionsScreenTest {
     fun theSuperAdmin_hasNoAccessEditor() {
         userManagement(withEmployee = true)
         waitFor("user_asha.k")
-        composeRule.onAllNodesWithTag("user_edit_access_roy.babu").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("user_edit_access_sample.user").assertCountEquals(0)
     }
 
     // What the employee then sees

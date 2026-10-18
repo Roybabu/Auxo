@@ -25,13 +25,13 @@ object DeviceFixtures {
 
     /** GST-registered store in West Bengal with prices including GST. */
     val settings = StoreSettings(
-        storeName = "Roy Mart",
+        storeName = "Sample Mart",
         address = "12 Park Street, Kolkata",
         phone = "9830012345",
         gstin = "19AABCU9603R1ZK",
         stateCode = "19",
-        upiId = "roymart@okaxis",
-        upiPayeeName = "Roy Mart",
+        upiId = "samplemart@okaxis",
+        upiPayeeName = "Sample Mart",
     )
 
     /** An in-store EAN-13 (starting with 2) that is very unlikely to be in use already. */
@@ -43,7 +43,7 @@ object DeviceFixtures {
     /** A T-shirt in one size and colour at ₹499. */
     fun shirt(name: String, barcode: String, stock: Int) = Product(
         name = name,
-        brand = "Roy Wear",
+        brand = "Sample Wear",
         category = ProductCategory.GARMENT,
         hsnCode = "6109",
         gstRate = GstRate.Apparel,

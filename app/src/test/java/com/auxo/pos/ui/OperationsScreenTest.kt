@@ -134,7 +134,7 @@ class OperationsScreenTest {
     }
 
     private val anita = Customer(id = 1, name = "Anita Das", phone = "9830012345", creditLimit = Money(500_000))
-    private val ravi = Customer(id = 2, name = "Ravi Roy", phone = "9830054321")
+    private val ravi = Customer(id = 2, name = "Ravi Sample", phone = "9830054321")
     private val entries = listOf(
         LedgerEntry(id = 1, customerId = 1, type = LedgerEntryType.SALE, amount = Money(80_000), invoiceId = 3, invoiceNumber = "INV/26-27/00003", createdAtMillis = TestData.clock.millis()),
         LedgerEntry(id = 2, customerId = 1, type = LedgerEntryType.PAYMENT, amount = Money(-30_000), method = PaymentMethod.UPI, reference = "UTR88", createdAtMillis = TestData.clock.millis()),
@@ -378,7 +378,7 @@ class OperationsScreenTest {
         isLoading = false,
         today = today,
         suggestions = ReorderPlanner.suggestions(listOf(shirt.copy(preferredSupplierId = 1), TestData.juice(stock = 0))),
-        suppliers = listOf(Supplier(id = 1, name = "Roy Textiles")),
+        suppliers = listOf(Supplier(id = 1, name = "Sample Textiles")),
     )
 
     @Test
@@ -401,7 +401,7 @@ class OperationsScreenTest {
         }
         composeRule.onNodeWithText("Low stock (2)").assertIsDisplayed()
         composeRule.onNodeWithText("No preferred supplier").assertIsDisplayed()
-        composeRule.onNodeWithText("Roy Textiles").assertIsDisplayed()
+        composeRule.onNodeWithText("Sample Textiles").assertIsDisplayed()
         screenshot("47_stock_alerts_low")
         composeRule.onNodeWithTag("suggestion_${TestData.juice().variants[0].id}").performClick()
         assertEquals(listOf(TestData.juice().variants[0].id), toggled)

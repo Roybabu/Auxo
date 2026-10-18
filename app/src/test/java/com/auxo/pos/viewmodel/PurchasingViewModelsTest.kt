@@ -35,7 +35,7 @@ class PurchasingViewModelsTest {
 
     private val inventory = FakeInventoryRepository(listOf(TestData.tShirt(), TestData.biscuits(), TestData.flour(grams = 500)))
     private val mills = Supplier(id = 1, name = "Fresh Mills")
-    private val textiles = Supplier(id = 2, name = "Roy Textiles")
+    private val textiles = Supplier(id = 2, name = "Sample Textiles")
     private val purchasing = FakePurchasingRepository(inventory, listOf(mills, textiles))
 
     private fun item(productId: Long, index: Int = 0): PickableItem {
@@ -148,7 +148,7 @@ class PurchasingViewModelsTest {
 
         viewModel.share()
         val share = events.last() as PurchaseOrderDetailEvent.Share
-        assertTrue(share.text.contains("From: Roy Mart"))
+        assertTrue(share.text.contains("From: Sample Mart"))
         assertTrue(share.text.contains("To: Fresh Mills"))
 
         viewModel.cancelOrder()
@@ -287,7 +287,7 @@ class PurchasingViewModelsTest {
 
         val list = SupplierListViewModel(purchasing)
         keepActive(list.uiState)
-        assertEquals(listOf("Fresh Mills", "Roy Textiles"), list.uiState.value.suppliers.map { it.name }.sorted())
+        assertEquals(listOf("Fresh Mills", "Sample Textiles"), list.uiState.value.suppliers.map { it.name }.sorted())
         list.onShowHiddenChange(true)
         assertEquals(3, list.uiState.value.suppliers.size)
         list.onQueryChange("2229")

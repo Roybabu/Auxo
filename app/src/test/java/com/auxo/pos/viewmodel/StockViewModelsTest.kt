@@ -53,7 +53,7 @@ class StockAlertsViewModelTest {
     )
     private val purchasing = FakePurchasingRepository(
         inventory,
-        listOf(Supplier(id = 1, name = "Roy Textiles"), Supplier(id = 2, name = "Drinks Co"), Supplier(id = 3, name = "Closed Co", active = false)),
+        listOf(Supplier(id = 1, name = "Sample Textiles"), Supplier(id = 2, name = "Drinks Co"), Supplier(id = 3, name = "Closed Co", active = false)),
     )
 
     private fun viewModel(tab: AlertsTab = AlertsTab.LOW_STOCK) = StockAlertsViewModel(
@@ -73,7 +73,7 @@ class StockAlertsViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(listOf("Mango Juice", "Cotton T-Shirt"), state.suggestions.map { it.product.name })
         assertNull(state.suggestions[0].supplierId) // the hidden supplier doesn't count
-        assertEquals(listOf("Roy Textiles", "Drinks Co"), state.suppliers.map { it.name })
+        assertEquals(listOf("Sample Textiles", "Drinks Co"), state.suppliers.map { it.name })
         assertEquals(1, state.selectedWithoutSupplier)
 
         viewModel.createDraftOrders()

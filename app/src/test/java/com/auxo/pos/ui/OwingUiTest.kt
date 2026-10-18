@@ -37,7 +37,7 @@ class OwingUiTest {
 
     private val asha = CustomerAccount(Customer(id = 1, name = "Asha", phone = "9830012345"), Money(500_00), owingSinceMillis = 1)
     private val bimal = CustomerAccount(Customer(id = 2, name = "Bimal"), Money(300_00), owingSinceMillis = 1)
-    private val shop = ReminderShop("Roy Mart", "roymart@okaxis", Language.ENGLISH)
+    private val shop = ReminderShop("Sample Mart", "samplemart@okaxis", Language.ENGLISH)
 
     private fun owingState(shop: ReminderShop? = this.shop, filter: CustomerFilter = CustomerFilter.OWING) = CustomerListUiState(
         isLoading = false,

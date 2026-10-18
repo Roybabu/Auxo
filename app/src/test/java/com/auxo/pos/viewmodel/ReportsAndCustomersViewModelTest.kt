@@ -147,7 +147,7 @@ class CustomerViewModelsTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val anita = Customer(id = 1, name = "Anita Das", phone = "9830012345", creditLimit = Money(100_000))
-    private val ravi = Customer(id = 2, name = "Ravi Roy", phone = "9830054321")
+    private val ravi = Customer(id = 2, name = "Ravi Sample", phone = "9830054321")
     private val customers = FakeCustomerRepository(listOf(anita, ravi)).apply {
         addEntry(LedgerEntry(customerId = 1, type = LedgerEntryType.SALE, amount = Money(80_000), invoiceNumber = "INV/26-27/00001", createdAtMillis = 10))
         addEntry(LedgerEntry(customerId = 1, type = LedgerEntryType.PAYMENT, amount = Money(-30_000), method = PaymentMethod.UPI, createdAtMillis = 20))
@@ -163,7 +163,7 @@ class CustomerViewModelsTest {
         assertEquals(listOf("Anita Das"), viewModel.uiState.value.accounts.map { it.customer.name })
         viewModel.onFilterChange(CustomerFilter.ALL)
         viewModel.onQueryChange("54321")
-        assertEquals(listOf("Ravi Roy"), viewModel.uiState.value.accounts.map { it.customer.name })
+        assertEquals(listOf("Ravi Sample"), viewModel.uiState.value.accounts.map { it.customer.name })
     }
 
     @Test

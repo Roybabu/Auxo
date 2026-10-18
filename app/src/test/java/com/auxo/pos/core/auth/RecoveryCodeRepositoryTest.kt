@@ -26,7 +26,7 @@ class RecoveryCodeRepositoryTest {
     private val hasher = PasswordHasher(iterations = 1_000)
     private val events = mutableListOf<AccountEvent>()
 
-    private val owner = "roy.babu"
+    private val owner = "sample.user"
     private val ownerPw = "Green-Leaf-42"
     private val newPw = "Blue-River-77"
 
@@ -40,7 +40,7 @@ class RecoveryCodeRepositoryTest {
 
     private val accountFile get() = File(dir, "accounts.json")
 
-    private suspend fun LocalAuthRepository.setUp() = createAdministrator("Roy Babu", owner, ownerPw, ownerPw)
+    private suspend fun LocalAuthRepository.setUp() = createAdministrator("Sample User", owner, ownerPw, ownerPw)
 
     /** Sets up the Super Admin and goes through the whole code flow. Returns the code that was shown. */
     private suspend fun LocalAuthRepository.setUpWithCode(): String {
@@ -270,7 +270,7 @@ class RecoveryCodeRepositoryTest {
         auth.resetPasswordWithRecoveryCode(code, newPw, newPw)
         val account = (FileAccountStore(dir).read() as StoredAccounts.Present).superAdmin!!
         assertEquals(owner, account.identifier)
-        assertEquals("Roy Babu", account.name)
+        assertEquals("Sample User", account.name)
         assertEquals(Role.SUPER_ADMIN, account.role)
         assertEquals(1L, account.id)
     }
@@ -382,7 +382,7 @@ class RecoveryCodeRepositoryTest {
         val reset = auth.resetPasswordWithRecoveryCode(code, newPw, newPw) as RecoveryResetResult.Reset
         val kinds = events.map { it.kind }
         assertEquals(listOf(AccountEventKind.RECOVERY_CODE_SET, AccountEventKind.SIGNED_OUT, AccountEventKind.PASSWORD_RESET_WITH_CODE), kinds)
-        assertEquals("Roy Babu", events.last().actor.name)
+        assertEquals("Sample User", events.last().actor.name)
         assertTrue(events.none { it.toString().contains(RecoveryCodes.normalize(code)) || it.toString().contains(RecoveryCodes.normalize(reset.newCode)) })
     }
 

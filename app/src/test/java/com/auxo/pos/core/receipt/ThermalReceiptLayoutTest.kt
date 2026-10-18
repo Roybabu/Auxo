@@ -61,6 +61,6 @@ class ThermalReceiptLayoutTest {
         val first = lines(32).first()
         assertTrue(first.large)
         assertEquals(Align.CENTER, first.align)
-        assertEquals("Roy Mart", first.text)
+        assertEquals("Sample Mart", first.text)
     }
 }

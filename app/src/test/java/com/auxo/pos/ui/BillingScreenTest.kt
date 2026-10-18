@@ -246,7 +246,7 @@ class BillingScreenTest {
 
     @Test
     fun upiQr_showsTheInvoiceNumber_whenUpiIdIsValid() {
-        upiPayment("roymart@okaxis", com.auxo.pos.core.auth.Role.EMPLOYEE)
+        upiPayment("samplemart@okaxis", com.auxo.pos.core.auth.Role.EMPLOYEE)
         composeRule.onNodeWithTag("payment").performScrollToNode(hasTestTag("upi_invoice_number"))
         composeRule.onNodeWithTag("upi_invoice_number").assertIsDisplayed()
         composeRule.onAllNodesWithTag("upi_hint").assertCountEquals(0)
