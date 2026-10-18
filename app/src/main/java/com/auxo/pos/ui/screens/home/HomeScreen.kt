@@ -473,7 +473,7 @@ private fun HomePanelContent(
             if (!inventory.hasProducts) {
                 AuxoCard {
                     EmptyState(
-                        iconRes = R.drawable.ic_nav_inventory,
+                        iconRes = R.drawable.ic_category,
                         title = stringResource(R.string.home_empty_title),
                         message = stringResource(R.string.home_empty_body),
                         actionLabel = stringResource(R.string.home_action_add_product),
@@ -485,7 +485,7 @@ private fun HomePanelContent(
                     StatTile(
                         label = stringResource(R.string.home_products),
                         value = inventory.productCount.toString(),
-                        iconRes = R.drawable.ic_nav_inventory,
+                        iconRes = R.drawable.ic_category,
                         modifier = Modifier.weight(1f),
                         onClick = { onOpenInventory(StockFilter.ALL) },
                     )
