@@ -171,7 +171,7 @@ fun StockMovementsContent(
             state.isLoading -> LoadingState()
             state.loadFailed -> ErrorState(stringResource(R.string.error_generic), onRetry)
             state.movements.isEmpty() -> EmptyState(
-                iconRes = R.drawable.ic_history,
+                iconRes = R.drawable.ic_swap,
                 title = stringResource(R.string.movements_empty_title),
                 message = stringResource(R.string.movements_empty_body),
             )

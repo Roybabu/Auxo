@@ -129,7 +129,7 @@ fun InvoiceHistoryContent(
             state.tab == HistoryTab.INVOICES -> {
                 if (state.invoices.isEmpty()) {
                     EmptyState(
-                        iconRes = R.drawable.ic_history,
+                        iconRes = R.drawable.ic_receipt,
                         title = stringResource(R.string.history_empty_title),
                         message = stringResource(if (state.query.isBlank()) R.string.history_empty_body else R.string.history_no_results),
                     )

@@ -208,7 +208,7 @@ fun InvoiceDetailContent(
                 }
                 if (onBluetoothPrint != null) {
                     Button(onClick = onBluetoothPrint, modifier = Modifier.fillMaxWidth().testTag("invoice_bluetooth_print")) {
-                        Icon(painterResource(R.drawable.ic_print), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(R.drawable.ic_bluetooth), contentDescription = null, modifier = Modifier.size(18.dp))
                         Text(stringResource(R.string.printer_print_button), modifier = Modifier.padding(start = Spacing.sm))
                     }
                 }

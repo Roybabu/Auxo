@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.BlendMode
@@ -113,16 +114,16 @@ private fun palette(tone: AuxoIconTone, selected: Boolean, accent: Color?): Icon
 
     return when {
         selected -> IconPalette(
-            tileTop = brand.bright, tileBottom = brand.deep, edge = brand.mid,
+            tileTop = brand.bright, tileBottom = brand.deep, edge = if (dark) Color.Transparent else brand.mid,
             glyphTop = Color.White, glyphBottom = brand.mintLight, shadow = brand.deep,
         )
         accent != null -> IconPalette(
             tileTop = accent.copy(alpha = if (dark) 0.28f else 0.10f), tileBottom = accent.copy(alpha = if (dark) 0.18f else 0.20f),
-            edge = accent.copy(alpha = 0.28f),
+            edge = accent.copy(alpha = if (dark) 0f else 0.28f),
             glyphTop = accent, glyphBottom = accent.darken(0.25f), shadow = accent,
         )
         tone == AuxoIconTone.Danger -> if (dark) {
-            IconPalette(Color(0xFF5A1D1D), Color(0xFF3F1313), Color(0xFF7F1D1D), Color(0xFFFCA5A5), Color(0xFFF87171), AuxoIconColors.DangerDeep)
+            IconPalette(Color(0xFF5A1D1D), Color(0xFF3F1313), Color.Transparent, Color(0xFFFCA5A5), Color(0xFFF87171), AuxoIconColors.DangerDeep)
         } else {
             IconPalette(
                 AuxoIconColors.DangerTileLight, AuxoIconColors.DangerTile, AuxoIconColors.DangerEdge,
@@ -130,7 +131,7 @@ private fun palette(tone: AuxoIconTone, selected: Boolean, accent: Color?): Icon
             )
         }
         dark -> IconPalette(
-            brand.darkTileTop, brand.darkTileBottom, brand.darkEdge,
+            brand.darkTileTop, brand.darkTileBottom, Color.Transparent,
             brand.darkGlyphTop, brand.darkGlyphBottom, brand.deep,
         )
         else -> IconPalette(
@@ -158,6 +159,7 @@ fun AuxoIcon(
     accent: Color? = null,
 ) {
     val colors = palette(tone, selected, accent)
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     // A disabled button hands down a faded content colour; the icon fades with it.
     val fade = LocalContentColor.current.alpha.coerceIn(0.3f, 1f)
     if (style == AuxoIconStyle.Flat) {
@@ -179,12 +181,14 @@ fun AuxoIcon(
             )
             .background(tileBrush, shape)
             .border(BorderStroke(0.75.dp, colors.edge), shape)
+            // The sheen below is a plain rectangle; without this clip its corners show square past the rounded tile on a dark page.
+            .clip(shape)
             .drawWithContent {
                 drawContent()
                 // A faint sheen across the upper half, as if lit from the top.
                 drawRect(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.30f), Color.Transparent),
+                        colors = listOf(Color.White.copy(alpha = if (dark) 0.14f else 0.30f), Color.Transparent),
                         endY = this.size.height * 0.55f,
                     ),
                 )

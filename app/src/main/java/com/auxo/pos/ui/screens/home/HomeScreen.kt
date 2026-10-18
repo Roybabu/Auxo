@@ -525,7 +525,7 @@ private fun HomePanelContent(
                     label = stringResource(R.string.home_expiring),
                     value = (inventory.expiringSoonCount + inventory.expiredCount).toString(),
                     tone = status.warning,
-                    iconRes = R.drawable.ic_warning,
+                    iconRes = R.drawable.ic_expiry,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpenInventory(StockFilter.EXPIRING_SOON) },
                 )

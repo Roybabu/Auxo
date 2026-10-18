@@ -125,7 +125,7 @@ fun EmployeeHomeContent(
             Spacer(Modifier.height(32.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 QuickAction(stringResource(R.string.home_action_new_bill), R.drawable.ic_nav_billing, onNewBill, "home_action_new_bill")
-                QuickAction(stringResource(R.string.employee_home_invoices), R.drawable.ic_history, onOpenInvoices, "home_action_invoices")
+                QuickAction(stringResource(R.string.employee_home_invoices), R.drawable.ic_receipt, onOpenInvoices, "home_action_invoices")
                 QuickAction(stringResource(R.string.nav_more), R.drawable.ic_apps_outline, onMore, "home_action_more")
             }
         }
