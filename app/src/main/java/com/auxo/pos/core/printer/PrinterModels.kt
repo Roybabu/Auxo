@@ -6,6 +6,7 @@ import com.auxo.pos.domain.model.ReceiptPaper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 /** How a print to the Bluetooth receipt printer ended. Everything except [PRINTED] needs something from the person. */
 enum class PrintResult {
@@ -65,17 +66,17 @@ class SharedPrefsPrinterPreferences(private val prefs: SharedPreferences) : Prin
     override val printer: StateFlow<SavedPrinter?> = state.asStateFlow()
 
     override fun save(printer: SavedPrinter) {
-        prefs.edit()
-            .putString(KEY_ADDRESS, printer.address)
-            .putString(KEY_NAME, printer.name)
-            .putString(KEY_PAPER, printer.paper.name)
-            .putBoolean(KEY_CUT, printer.cutPaper)
-            .apply()
+        prefs.edit {
+            putString(KEY_ADDRESS, printer.address)
+            putString(KEY_NAME, printer.name)
+            putString(KEY_PAPER, printer.paper.name)
+            putBoolean(KEY_CUT, printer.cutPaper)
+        }
         state.value = printer
     }
 
     override fun forget() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
         state.value = null
     }
 

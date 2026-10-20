@@ -97,6 +97,7 @@ import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.ProductEditorEvent
 import com.auxo.pos.viewmodel.ProductEditorUiState
 import com.auxo.pos.viewmodel.ProductEditorViewModel
+import androidx.core.net.toUri
 
 /** Callbacks from the editor UI, so the content can be previewed and tested without a ViewModel. */
 interface ProductEditorActions {
@@ -166,7 +167,7 @@ fun ProductEditorScreen(
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
         val target = captureUri
         captureUri = null
-        if (taken && target != null) viewModel.onPhotoPicked(Uri.parse(target))
+        if (taken && target != null) viewModel.onPhotoPicked(target.toUri())
     }
 
     val scan = rememberBarcodeScanner { outcome ->

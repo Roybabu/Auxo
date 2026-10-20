@@ -15,6 +15,7 @@ import java.io.InputStream
 import java.time.Clock
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import androidx.core.content.edit
 
 /** Making and restoring backups of everything entered in the app. */
 interface BackupService {
@@ -105,7 +106,7 @@ class BackupManager(
                     },
                 )
             }
-            prefs.edit().putLong(KEY_LAST_BACKUP, now).apply()
+            prefs.edit { putLong(KEY_LAST_BACKUP, now) }
             return saved
         } finally {
             work.deleteRecursively()

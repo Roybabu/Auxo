@@ -10,6 +10,7 @@ import com.auxo.pos.core.printer.PrinterDots
 import com.auxo.pos.domain.model.ReceiptPaper
 import kotlin.math.ceil
 import kotlin.math.max
+import androidx.core.graphics.createBitmap
 
 /**
  * Draws a thermal [ReceiptPage] as dots for a receipt printer. The same page drawing is used for the preview, the
@@ -32,7 +33,7 @@ object ReceiptRaster {
         var top = 0
         while (top < totalRows) {
             val rows = minOf(STRIP_ROWS, totalRows - top)
-            val bitmap = Bitmap.createBitmap(dots, rows, Bitmap.Config.ARGB_8888)
+            val bitmap = createBitmap(dots, rows)
             try {
                 val canvas = Canvas(bitmap)
                 canvas.drawColor(Color.WHITE)

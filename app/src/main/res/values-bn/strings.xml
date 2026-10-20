@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Auxo</string>
     <string name="app_tagline">বৃদ্ধির জন্য তৈরি।</string>
 
@@ -123,8 +123,6 @@
     <string name="detail_expiry">মেয়াদ %1$s</string>
     <string name="detail_low_stock_at">%1$s হলে আবার অর্ডার করুন</string>
     <string name="detail_reorder_quantity">একবারে %1$s অর্ডার করুন</string>
-    <string name="detail_cost_per">প্রতি %2$s ক্রয়মূল্য %1$s</string>
-    <string name="detail_cost_unknown">ক্রয়মূল্য ঠিক করা নেই</string>
     <string name="detail_batches">ব্যাচ</string>
     <string name="detail_batch_none">ব্যাচ নম্বর নেই</string>
     <string name="detail_expired_stock">%1$s-এর মেয়াদ শেষ হয়েছে, তাই বিক্রি করা যাবে না। মেয়াদ ও অপচয় থেকে এটি বাদ দিন।</string>
@@ -255,7 +253,7 @@
     <string name="template_a4_24">A4 শিট, 24টি লেবেল (63.5 × 33.9 মিমি)</string>
     <string name="template_roll_50x25">লেবেল রোল, 50 × 25 মিমি</string>
     <string name="labels_preview">প্রিভিউ</string>
-    <string name="labels_preview_note">%2$d-এর মধ্যে %1$dটি ভ্যারিয়েন্টের প্রিভিউ (যেগুলোর কপি ঠিক করা আছে), প্রিন্টে ঠিক যেমন হবে।</string>
+    <string name="labels_preview_note" tools:ignore="PluralsCandidate">%2$d-এর মধ্যে %1$dটি ভ্যারিয়েন্টের প্রিভিউ (যেগুলোর কপি ঠিক করা আছে), প্রিন্টে ঠিক যেমন হবে।</string>
     <string name="labels_preview_none">দেখানোর কিছু নেই। অন্তত একটি ভ্যারিয়েন্টের কপি ঠিক করুন।</string>
     <string name="labels_preview_caption">%1$s · %2$s · ×%3$d</string>
     <string name="labels_preview_skipped">প্রিন্ট হবে না (0 কপি): %1$s</string>
@@ -314,7 +312,6 @@
     <string name="billing_clear_title">এই বিল পরিষ্কার করবেন?</string>
     <string name="billing_clear_body">এই বিলের সব পণ্য ও বিবরণ সরে যাবে।</string>
     <string name="billing_history">বিল ও পেমেন্ট</string>
-    <string name="billing_settings">দোকানের বিবরণ</string>
     <string name="billing_setup_title">বিলিং সেটআপ শেষ করুন</string>
     <string name="billing_setup_body">বিল করার আগে আপনার দোকানের রাজ্য ও GSTIN যোগ করুন, অথবা দোকানকে GST-নিবন্ধিত নয় বলে চিহ্নিত করুন।</string>
     <string name="billing_setup_action">সেটিংস খুলুন</string>
@@ -326,12 +323,21 @@
     <string name="billing_discount_invalid">একটি অঙ্ক লিখুন, অথবা 100 পর্যন্ত শতাংশ</string>
     <string name="billing_bill_discount">বিলে ছাড়</string>
     <string name="loyalty_title">লয়্যালটি পয়েন্ট</string>
-    <string name="loyalty_balance">%1$d পয়েন্ট (মূল্য %2$s)</string>
+    <plurals name="loyalty_balance">
+        <item quantity="one">%1$d পয়েন্ট (মূল্য %2$s)</item>
+        <item quantity="other">%1$d পয়েন্ট (মূল্য %2$s)</item>
+    </plurals>
     <string name="loyalty_field">ব্যবহার করার পয়েন্ট</string>
-    <string name="loyalty_max">এই বিলে সর্বোচ্চ %1$d পয়েন্ট</string>
+    <plurals name="loyalty_max">
+        <item quantity="one">এই বিলে সর্বোচ্চ %1$d পয়েন্ট</item>
+        <item quantity="other">এই বিলে সর্বোচ্চ %1$d পয়েন্ট</item>
+    </plurals>
     <string name="loyalty_use_all">সব ব্যবহার করুন</string>
     <string name="loyalty_clear">পরিষ্কার করুন</string>
-    <string name="loyalty_using">%1$d পয়েন্ট ব্যবহার হচ্ছে: −%2$s</string>
+    <plurals name="loyalty_using">
+        <item quantity="one">%1$d পয়েন্ট ব্যবহার হচ্ছে: −%2$s</item>
+        <item quantity="other">%1$d পয়েন্ট ব্যবহার হচ্ছে: −%2$s</item>
+    </plurals>
     <string name="loyalty_invalid">এই পয়েন্টগুলো এই বিলে ব্যবহার করা যাবে না</string>
     <string name="loyalty_none_usable">পয়েন্ট এখনও এই বিলে ব্যবহার করা যাচ্ছে না (বিল খুব ছোট)</string>
     <string name="loyalty_unavailable">লয়্যালটি পয়েন্ট আর এই বিলে ব্যবহার করা যাবে না। মোট অঙ্ক দেখে আবার চেষ্টা করুন।</string>
@@ -640,8 +646,14 @@
     <string name="ledger_points_reversed">ফেরত নেওয়া পয়েন্ট</string>
     <string name="customer_points_balance">লয়্যালটি পয়েন্ট</string>
     <string name="customer_points_tab">পয়েন্ট (%1$d)</string>
-    <string name="customer_points_gained">+%1$d পয়েন্ট</string>
-    <string name="customer_points_used">−%1$d পয়েন্ট</string>
+    <plurals name="customer_points_gained">
+        <item quantity="one">+%1$d পয়েন্ট</item>
+        <item quantity="other">+%1$d পয়েন্ট</item>
+    </plurals>
+    <plurals name="customer_points_used">
+        <item quantity="one">−%1$d পয়েন্ট</item>
+        <item quantity="other">−%1$d পয়েন্ট</item>
+    </plurals>
     <string name="account_payment_title">পেমেন্ট নিন</string>
     <string name="account_payment_due">%1$s বাকি</string>
     <string name="account_payment_nothing_due">এই খাতায় কিছু বাকি নেই।</string>
@@ -886,7 +898,7 @@
     <string name="backup_pass_warning">এটি লিখে নিরাপদে রাখুন। Auxo এটি ফিরিয়ে দিতে পারে না। ভুলে গেলে তালাবন্ধ ব্যাকআপ আর কখনো খোলা যাবে না।</string>
     <string name="backup_pass_field">পাসফ্রেজ</string>
     <string name="backup_pass_repeat">পাসফ্রেজ আবার লিখুন</string>
-    <string name="backup_pass_short">কমপক্ষে %1$dটি অক্ষর দিন।</string>
+    <string name="backup_pass_short" tools:ignore="PluralsCandidate">কমপক্ষে %1$dটি অক্ষর দিন।</string>
     <string name="backup_pass_mismatch">দুটি পাসফ্রেজ একই নয়।</string>
     <string name="backup_pass_save">ব্যাকআপ তালাবন্ধ করুন</string>
     <string name="backup_turn_off_title">ব্যাকআপ তালাবন্ধ করা বন্ধ করবেন?</string>
@@ -985,7 +997,7 @@
     <string name="insights_dept_restaurant">রেস্তোরাঁর খাবার</string>
     <string name="insights_dept_other">অন্যান্য</string>
     <string name="insights_top_title">সবচেয়ে বেশি বিক্রি হওয়া পণ্য</string>
-    <string name="insights_top_sold">%1$d বিক্রি হয়েছে</string>
+    <string name="insights_top_sold" tools:ignore="PluralsCandidate">%1$d বিক্রি হয়েছে</string>
     <string name="insights_top_empty">এই সময়ে কোনো পণ্য বিক্রি হয়নি।</string>
     <string name="insights_expenses_title">খরচের বিভাগ</string>
     <string name="insights_expenses_unavailable">Auxo এখনও খরচ লেখে না, তাই এখানে চার্ট করার কিছু নেই। সরবরাহকারীর কাছ থেকে পাওয়া মাল বিক্রি ও ক্রয়ের অংশে দেখানো হয়।</string>
@@ -993,8 +1005,8 @@
     <string name="insights_stock_ok">স্টকে আছে</string>
     <string name="insights_stock_low">কম</string>
     <string name="insights_stock_out">শেষ</string>
-    <string name="insights_stock_expiring">30 দিনের মধ্যে %1$dটির মেয়াদ শেষ হচ্ছে</string>
-    <string name="insights_stock_description">পণ্য অনুযায়ী স্টকের অবস্থা: %1$dটি স্টকে আছে, %2$dটি কম, %3$dটি শেষ।</string>
+    <string name="insights_stock_expiring" tools:ignore="PluralsCandidate">30 দিনের মধ্যে %1$dটির মেয়াদ শেষ হচ্ছে</string>
+    <string name="insights_stock_description" tools:ignore="PluralsCandidate">পণ্য অনুযায়ী স্টকের অবস্থা: %1$dটি স্টকে আছে, %2$dটি কম, %3$dটি শেষ।</string>
     <plurals name="insights_bills">
         <item quantity="one">%dটি বিল</item>
         <item quantity="other">%dটি বিল</item>
@@ -1032,7 +1044,6 @@
     <string name="auth_error_confirm_required">পাসওয়ার্ড আবার লিখুন।</string>
     <string name="auth_error_confirm_mismatch">পাসওয়ার্ড দুটি মিলছে না।</string>
     <string name="auth_login_welcome">Auxo-তে স্বাগতম</string>
-    <string name="auth_login_action">সাইন ইন করুন</string>
     <string name="auth_login_slide">সাইন ইন করতে স্লাইড করুন</string>
     <string name="auth_login_working">সাইন ইন হচ্ছে…</string>
     <string name="auth_error_login_identifier_required">আপনার ইউজারনেম বা ইমেল লিখুন।</string>
@@ -1047,7 +1058,6 @@
     <string name="auth_login_forgot">পাসওয়ার্ড ভুলে গেছেন?</string>
     <string name="auth_login_hero_headline">পরিচালনা করুন\nবিক্রি করুন\nবৃদ্ধি করুন</string>
     <string name="auth_login_hero_body">আপনার ব্যবসার সব প্রয়োজন,\nএক জায়গায়।</string>
-    <string name="auth_login_remember_me">আমাকে মনে রাখুন</string>
     <string name="auth_login_setup_business_action">শুরু করুন</string>
     <string name="recovery_screen_title">রিকভারি কোড</string>
     <string name="more_recovery_body">এমন একটি কোড বানান যা দিয়ে সুপার অ্যাডমিনের পাসওয়ার্ড রিসেট করা যায়</string>
@@ -1179,13 +1189,16 @@
     <string name="activity_empty_body">বিক্রি, ফেরত, সম্পাদনা, মোছা, অ্যাকাউন্টের পরিবর্তন ও সাইন ইন এখানে দেখা যাবে।</string>
     <string name="activity_note">আপনার দেখার জন্য এই ফোনে রাখা একটি রেকর্ড। এটি জালিয়াতি-রোধী নয়: ফোনের স্টোরেজে পূর্ণ অ্যাক্সেস আছে এমন যে কেউ এটি বদলে দিতে পারে।</string>
     <string name="activity_by">%1$s · %2$s</string>
-    <string name="delete_product_has_stock">%1$d একক এখনও স্টকে আছে। স্টকের ইতিহাস ঠিক রাখতে আগে সেগুলো বের করুন (বিক্রি করুন, বাদ দিন বা স্টক ঠিক করুন), তারপর পণ্যটি মুছুন।</string>
+    <plurals name="delete_product_has_stock">
+        <item quantity="one">%1$d একক এখনও স্টকে আছে। স্টকের ইতিহাস ঠিক রাখতে আগে সেগুলো বের করুন (বিক্রি করুন, বাদ দিন বা স্টক ঠিক করুন), তারপর পণ্যটি মুছুন।</item>
+        <item quantity="other">%1$d একক এখনও স্টকে আছে। স্টকের ইতিহাস ঠিক রাখতে আগে সেগুলো বের করুন (বিক্রি করুন, বাদ দিন বা স্টক ঠিক করুন), তারপর পণ্যটি মুছুন।</item>
+    </plurals>
 
     <!-- Per-employee access -->
     <string name="perm_always">সবসময় অন্তর্ভুক্ত</string>
     <string name="perm_intro">প্রতিটি কর্মী বিল বানাতে, পেমেন্ট নিতে এবং বিল দেখতে, প্রিন্ট করতে ও শেয়ার করতে পারেন। এছাড়া এই ব্যক্তি আর যা করতে পারবেন তা বেছে নিন।</string>
     <string name="perm_summary_none">শুধু বিলিং ও বিল</string>
-    <string name="perm_summary_extra">বিলিং ও বিল, সঙ্গে আরও %1$d</string>
+    <string name="perm_summary_extra" tools:ignore="PluralsCandidate">বিলিং ও বিল, সঙ্গে আরও %1$d</string>
     <string name="perm_group_sales">বিলিং</string>
     <string name="perm_group_figures">বিক্রির হিসাব ও রিপোর্ট</string>
     <string name="perm_group_inventory">ইনভেন্টরি</string>
@@ -1296,7 +1309,10 @@
     <string name="dayend_confirm_action">দিন বন্ধ করুন</string>
     <string name="dayend_closed_title">আজকের দিন বন্ধ</string>
     <string name="dayend_closed_body">%2$s-এ %1$s বন্ধ করেছেন। গোনা %3$s; %4$s।</string>
-    <string name="dayend_after_closing">বন্ধ করার পর %1$dটি বিল বা ক্রেডিট নোট বানানো হয়েছে। সেগুলো এই বন্ধের অংশ নয়।</string>
+    <plurals name="dayend_after_closing">
+        <item quantity="one">বন্ধ করার পর %1$dটি বিল বা ক্রেডিট নোট বানানো হয়েছে। সেগুলো এই বন্ধের অংশ নয়।</item>
+        <item quantity="other">বন্ধ করার পর %1$dটি বিল বা ক্রেডিট নোট বানানো হয়েছে। সেগুলো এই বন্ধের অংশ নয়।</item>
+    </plurals>
     <string name="dayend_open_summary">সারাংশ খুলুন</string>
     <string name="dayend_history">বন্ধ করা দিন</string>
     <string name="dayend_history_empty">এখনও কোনো দিন বন্ধ করা হয়নি।</string>
@@ -1324,7 +1340,7 @@
     <string name="loyalty_settings_off">বন্ধ: কোনো পয়েন্ট অর্জন বা ব্যবহার হয় না</string>
     <string name="loyalty_settings_spend">1 পয়েন্টের জন্য খরচ (₹)</string>
     <string name="loyalty_settings_value">1 পয়েন্টের মূল্য (₹)</string>
-    <string name="loyalty_settings_example">উদাহরণ: %1$s-এর বিলে %2$d পয়েন্ট মেলে। %2$d পয়েন্টের মূল্য %3$s ছাড় (%4$s%% ফেরত)।</string>
+    <string name="loyalty_settings_example" tools:ignore="PluralsCandidate">উদাহরণ: %1$s-এর বিলে %2$d পয়েন্ট মেলে। %2$d পয়েন্টের মূল্য %3$s ছাড় (%4$s%% ফেরত)।</string>
     <string name="loyalty_settings_rules_note">পরিবর্তন শুধু নতুন বিলে প্রযোজ্য। যে পয়েন্ট আগেই অর্জিত হয়েছে তা ক্রেতার কাছেই থাকে এবং নতুন মূল্যে গোনা হয়। ছাড় হিসেবে নেওয়া পয়েন্ট পণ্য ফেরত এলে ফেরত দেওয়া হয় না।</string>
     <string name="loyalty_settings_saved">সংরক্ষিত</string>
     <string name="loyalty_error_spend_range">₹1 থেকে ₹1,00,000-এর মধ্যে লিখুন</string>
@@ -1338,7 +1354,7 @@
     <string name="gst_financial_year">এই অর্থবছর</string>
     <string name="gst_period">%1$s থেকে %2$s পর্যন্ত বিল</string>
     <string name="gst_headline_title">ক্রেডিট নোট বাদ দিয়ে</string>
-    <string name="gst_headline_counts">%1$dটি বিল, %2$dটি ক্রেডিট নোট</string>
+    <string name="gst_headline_counts" tools:ignore="PluralsCandidate">%1$dটি বিল, %2$dটি ক্রেডিট নোট</string>
     <string name="gst_taxable">করযোগ্য মূল্য</string>
     <string name="gst_total_tax">মোট কর</string>
     <string name="gst_invoice_value">বিলের মূল্য</string>
@@ -1563,8 +1579,8 @@
         <item quantity="one">%d টি পণ্য স্টকের সঙ্গে মেলেনি</item>
         <item quantity="other">%d টি পণ্য স্টকের সঙ্গে মেলেনি</item>
     </plurals>
-    <string name="count_short_value">%1$d কম, কেনা দামে %2$s</string>
-    <string name="count_extra_value">%1$d বেশি, কেনা দামে %2$s</string>
+    <string name="count_short_value" tools:ignore="PluralsCandidate">%1$d কম, কেনা দামে %2$s</string>
+    <string name="count_extra_value" tools:ignore="PluralsCandidate">%1$d বেশি, কেনা দামে %2$s</string>
     <string name="count_review_hint">নিশ্চিত করার পরেই স্টক আপনার গণনা অনুযায়ী বদলাবে। যেসব পণ্য গোনেননি সেগুলোতে হাত পড়বে না।</string>
     <string name="count_reason_heading">এই গণনার কারণ</string>
     <string name="count_reason_routine">নিয়মিত গণনা</string>
@@ -1587,7 +1603,7 @@
         <item quantity="other">%d টি পণ্যের স্টক আপডেট হয়েছে।</item>
     </plurals>
     <string name="count_posted_none">গণনা শেষ হয়েছে। কিছু বদলাতে হয়নি।</string>
-    <string name="count_partial">%1$d টি বদলানো হয়েছে। %2$d টি বদলানো যায়নি কারণ এর মধ্যে স্টক বদলে গেছে। সেগুলো দেখে আবার গুনুন।</string>
+    <string name="count_partial" tools:ignore="PluralsCandidate">%1$d টি বদলানো হয়েছে। %2$d টি বদলানো যায়নি কারণ এর মধ্যে স্টক বদলে গেছে। সেগুলো দেখে আবার গুনুন।</string>
     <string name="count_cancelled">গণনা বাতিল হয়েছে। স্টক বদলায়নি।</string>
     <string name="count_closed">এই গণনা আগেই শেষ হয়ে গেছে।</string>
     <string name="count_failed">সেভ করা যায়নি। আবার চেষ্টা করুন।</string>
@@ -1616,7 +1632,7 @@
     <string name="import_default_none">কোনোটি নয়</string>
     <string name="import_need_name">প্রিভিউ দেখতে প্রোডাক্টের নাম থাকা কলামটি বেছে নিন।</string>
     <string name="import_preview_title">প্রিভিউ</string>
-    <string name="import_summary">%1$d প্রস্তুত · %2$d ঠিক করতে হবে · %3$d আগে থেকেই আছে</string>
+    <string name="import_summary" tools:ignore="PluralsCandidate">%1$d প্রস্তুত · %2$d ঠিক করতে হবে · %3$d আগে থেকেই আছে</string>
     <string name="import_status_ready">প্রস্তুত</string>
     <string name="import_status_invalid">ঠিক করতে হবে</string>
     <string name="import_status_exists">আগে থেকেই আছে</string>
@@ -1625,11 +1641,11 @@
     <string name="import_parse_unknown_category">ক্যাটাগরি চেনা গেল না। Garment, Packaged food বা Beverage লিখুন।</string>
     <string name="import_parse_unknown_diet">Veg বা Non-veg লিখুন।</string>
     <string name="import_parse_unknown_unit">একক চেনা গেল না। g, kg, ml, L বা pcs লিখুন।</string>
-    <string name="import_parse_invalid_date">তারিখ চেনা গেল না। 31/12/2026 বা 2026-12-31 লিখুন।</string>
+    <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">তারিখ চেনা গেল না। 31/12/2026 বা 2026-12-31 লিখুন।</string>
     <string name="import_confirm_title">প্রোডাক্ট ইমপোর্ট করবেন?</string>
     <string name="import_confirm">ইমপোর্ট করুন</string>
     <string name="import_done_title">ইমপোর্ট শেষ</string>
-    <string name="import_done_not_added">%1$dটি যোগ হয়নি: %2$s</string>
+    <string name="import_done_not_added" tools:ignore="PluralsCandidate">%1$dটি যোগ হয়নি: %2$s</string>
     <string name="import_done_close">হয়েছে</string>
     <string name="import_done_another">আরেকটি ফাইল ইমপোর্ট করুন</string>
     <plurals name="import_item_variants">
@@ -1680,7 +1696,7 @@
     <string name="printer_choose">বেছে নিন</string>
     <string name="printer_chosen">বাছা হয়েছে</string>
     <string name="printer_test_title">টেস্ট প্রিন্ট</string>
-    <string name="printer_test_width">প্রতি লাইনে %1$d অক্ষর</string>
+    <string name="printer_test_width" tools:ignore="PluralsCandidate">প্রতি লাইনে %1$d অক্ষর</string>
     <string name="printer_test_body">এটি পড়তে পারলে এবং দুই পাশে কিছু কেটে না গেলে আপনার প্রিন্টার তৈরি।</string>
     <string name="printer_result_printed">প্রিন্টারে পাঠানো হয়েছে।</string>
     <string name="printer_result_no_printer">কোনও প্রিন্টার বাছা হয়নি। আরও, ব্লুটুথ প্রিন্টার থেকে বেছে নিন।</string>

@@ -14,6 +14,7 @@ import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 /**
  * Hands bills and reminders to WhatsApp through Android's own sharing. Nothing is ever sent for the user: WhatsApp
@@ -45,7 +46,7 @@ object WhatsAppShare {
      */
     fun textIntent(number: String?, message: String, packageName: String?): Intent {
         val intent = if (number != null) {
-            Intent(Intent.ACTION_VIEW, Uri.parse(DuesReminder.whatsAppLink(number, message)))
+            Intent(Intent.ACTION_VIEW, DuesReminder.whatsAppLink(number, message).toUri())
         } else {
             Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"

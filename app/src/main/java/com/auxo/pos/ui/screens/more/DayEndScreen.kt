@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -279,7 +280,7 @@ private fun ClosedTodayCard(closing: DayClosing, formatter: MoneyFormatter, onOp
             )
             if (closing.billsAfterClosing > 0) {
                 Text(
-                    stringResource(R.string.dayend_after_closing, closing.billsAfterClosing),
+                    pluralStringResource(R.plurals.dayend_after_closing, closing.billsAfterClosing, closing.billsAfterClosing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.testTag("day_end_after_closing"),
@@ -398,7 +399,7 @@ fun DayClosingContent(
             state.closing?.takeIf { it.billsAfterClosing > 0 }?.let { closing ->
                 item(key = "after") {
                     Text(
-                        stringResource(R.string.dayend_after_closing, closing.billsAfterClosing),
+                        pluralStringResource(R.plurals.dayend_after_closing, closing.billsAfterClosing, closing.billsAfterClosing),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )

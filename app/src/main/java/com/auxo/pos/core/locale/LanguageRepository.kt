@@ -7,6 +7,7 @@ import com.auxo.pos.domain.model.Language
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 /**
  * The language the person chose for the app on this device. Null means "follow the phone", which is what a new
@@ -26,9 +27,9 @@ class SharedPrefsLanguageRepository(private val prefs: SharedPreferences) : Lang
     override val appLanguage: StateFlow<Language?> = state.asStateFlow()
 
     override fun setAppLanguage(language: Language?) {
-        prefs.edit().apply {
+        prefs.edit {
             if (language == null) remove(KEY_LANGUAGE) else putString(KEY_LANGUAGE, language.tag)
-        }.apply()
+        }
         state.value = language
     }
 

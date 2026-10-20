@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 /** Where the automatic-backup choices and results are kept. */
 interface AutoBackupSettingsStore {
@@ -26,17 +27,17 @@ class SharedPrefsAutoBackupStore(context: Context) : AutoBackupSettingsStore {
     @Synchronized
     override fun update(change: (AutoBackupSettings) -> AutoBackupSettings) {
         val next = change(read()).sanitized()
-        prefs.edit()
-            .putString(FOLDER_URI, next.folderUri)
-            .putString(FOLDER_NAME, next.folderName)
-            .putString(SCHEDULE, next.schedule.name)
-            .putInt(INTERVAL, next.invoiceInterval)
-            .putInt(KEEP, next.keep)
-            .putLong(LAST_SUCCESS, next.lastSuccessMillis ?: 0L)
-            .putLong(LAST_FAILURE, next.lastFailureMillis ?: 0L)
-            .putString(FAILURE, next.lastFailure?.name)
-            .putInt(SINCE, next.invoicesSinceBackup)
-            .apply()
+        prefs.edit {
+            putString(FOLDER_URI, next.folderUri)
+            putString(FOLDER_NAME, next.folderName)
+            putString(SCHEDULE, next.schedule.name)
+            putInt(INTERVAL, next.invoiceInterval)
+            putInt(KEEP, next.keep)
+            putLong(LAST_SUCCESS, next.lastSuccessMillis ?: 0L)
+            putLong(LAST_FAILURE, next.lastFailureMillis ?: 0L)
+            putString(FAILURE, next.lastFailure?.name)
+            putInt(SINCE, next.invoicesSinceBackup)
+        }
         _settings.value = next
     }
 

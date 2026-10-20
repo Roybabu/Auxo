@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Auxo</string>
     <string name="app_tagline">Built to grow.</string>
 
@@ -123,8 +123,6 @@
     <string name="detail_expiry">Expiry %1$s</string>
     <string name="detail_low_stock_at">Reorder at %1$s</string>
     <string name="detail_reorder_quantity">Order %1$s at a time</string>
-    <string name="detail_cost_per">Cost %1$s per %2$s</string>
-    <string name="detail_cost_unknown">Cost not set</string>
     <string name="detail_batches">Batches</string>
     <string name="detail_batch_none">No batch number</string>
     <string name="detail_expired_stock">%1$s has expired and can\'t be sold. Write it off in Expiry and wastage.</string>
@@ -255,7 +253,7 @@
     <string name="template_a4_24">A4 sheet, 24 labels (63.5 × 33.9 mm)</string>
     <string name="template_roll_50x25">Label roll, 50 × 25 mm</string>
     <string name="labels_preview">Preview</string>
-    <string name="labels_preview_note">Previewing %1$d of %2$d variants (those with copies set), exactly as they will print.</string>
+    <string name="labels_preview_note" tools:ignore="PluralsCandidate">Previewing %1$d of %2$d variants (those with copies set), exactly as they will print.</string>
     <string name="labels_preview_none">Nothing to preview. Set copies for at least one variant.</string>
     <string name="labels_preview_caption">%1$s · %2$s · ×%3$d</string>
     <string name="labels_preview_skipped">Not printing (0 copies): %1$s</string>
@@ -314,7 +312,6 @@
     <string name="billing_clear_title">Clear this bill?</string>
     <string name="billing_clear_body">All items and details on this bill will be removed.</string>
     <string name="billing_history">Invoices and payments</string>
-    <string name="billing_settings">Store details</string>
     <string name="billing_setup_title">Finish billing setup</string>
     <string name="billing_setup_body">Add your store\'s state and GSTIN, or mark the store as not GST-registered, before billing.</string>
     <string name="billing_setup_action">Open settings</string>
@@ -326,12 +323,21 @@
     <string name="billing_discount_invalid">Enter an amount, or a percentage up to 100</string>
     <string name="billing_bill_discount">Bill discount</string>
     <string name="loyalty_title">Loyalty points</string>
-    <string name="loyalty_balance">%1$d points (worth %2$s)</string>
+    <plurals name="loyalty_balance">
+        <item quantity="one">%1$d point (worth %2$s)</item>
+        <item quantity="other">%1$d points (worth %2$s)</item>
+    </plurals>
     <string name="loyalty_field">Points to use</string>
-    <string name="loyalty_max">Up to %1$d points on this bill</string>
+    <plurals name="loyalty_max">
+        <item quantity="one">Up to %1$d point on this bill</item>
+        <item quantity="other">Up to %1$d points on this bill</item>
+    </plurals>
     <string name="loyalty_use_all">Use all</string>
     <string name="loyalty_clear">Clear</string>
-    <string name="loyalty_using">Using %1$d points: −%2$s</string>
+    <plurals name="loyalty_using">
+        <item quantity="one">Using %1$d point: −%2$s</item>
+        <item quantity="other">Using %1$d points: −%2$s</item>
+    </plurals>
     <string name="loyalty_invalid">These points cannot be used on this bill</string>
     <string name="loyalty_none_usable">The points cannot be used on this bill yet (the bill is too small)</string>
     <string name="loyalty_unavailable">Loyalty points can no longer be used on this bill. Check the total and try again.</string>
@@ -640,8 +646,14 @@
     <string name="ledger_points_reversed">Points taken back</string>
     <string name="customer_points_balance">Loyalty points</string>
     <string name="customer_points_tab">Points (%1$d)</string>
-    <string name="customer_points_gained">+%1$d points</string>
-    <string name="customer_points_used">−%1$d points</string>
+    <plurals name="customer_points_gained">
+        <item quantity="one">+%1$d point</item>
+        <item quantity="other">+%1$d points</item>
+    </plurals>
+    <plurals name="customer_points_used">
+        <item quantity="one">−%1$d point</item>
+        <item quantity="other">−%1$d points</item>
+    </plurals>
     <string name="account_payment_title">Receive payment</string>
     <string name="account_payment_due">Owes %1$s</string>
     <string name="account_payment_nothing_due">Nothing is due on this account.</string>
@@ -887,7 +899,7 @@ in %2$s</string>
     <string name="backup_pass_warning">Write it down and keep it safe. Auxo cannot recover it. If you forget it, locked backups can never be opened.</string>
     <string name="backup_pass_field">Passphrase</string>
     <string name="backup_pass_repeat">Repeat passphrase</string>
-    <string name="backup_pass_short">Use at least %1$d characters.</string>
+    <string name="backup_pass_short" tools:ignore="PluralsCandidate">Use at least %1$d characters.</string>
     <string name="backup_pass_mismatch">The two passphrases are not the same.</string>
     <string name="backup_pass_save">Lock backups</string>
     <string name="backup_turn_off_title">Stop locking backups?</string>
@@ -986,7 +998,7 @@ in %2$s</string>
     <string name="insights_dept_restaurant">Restaurant dishes</string>
     <string name="insights_dept_other">Other</string>
     <string name="insights_top_title">Top selling products</string>
-    <string name="insights_top_sold">%1$d sold</string>
+    <string name="insights_top_sold" tools:ignore="PluralsCandidate">%1$d sold</string>
     <string name="insights_top_empty">No products sold in this period.</string>
     <string name="insights_expenses_title">Expense categories</string>
     <string name="insights_expenses_unavailable">Auxo doesn\'t record expenses yet, so there is nothing to chart here. Goods received from suppliers are shown under Sales and purchases.</string>
@@ -994,8 +1006,8 @@ in %2$s</string>
     <string name="insights_stock_ok">In stock</string>
     <string name="insights_stock_low">Low</string>
     <string name="insights_stock_out">Out</string>
-    <string name="insights_stock_expiring">%1$d expiring in 30 days</string>
-    <string name="insights_stock_description">Stock health by item: %1$d in stock, %2$d low, %3$d out of stock.</string>
+    <string name="insights_stock_expiring" tools:ignore="PluralsCandidate">%1$d expiring in 30 days</string>
+    <string name="insights_stock_description" tools:ignore="PluralsCandidate">Stock health by item: %1$d in stock, %2$d low, %3$d out of stock.</string>
     <plurals name="insights_bills">
         <item quantity="one">%d bill</item>
         <item quantity="other">%d bills</item>
@@ -1033,7 +1045,6 @@ in %2$s</string>
     <string name="auth_error_confirm_required">Enter the password again.</string>
     <string name="auth_error_confirm_mismatch">The passwords do not match.</string>
     <string name="auth_login_welcome">Welcome to Auxo</string>
-    <string name="auth_login_action">Sign in</string>
     <string name="auth_login_slide">Slide to sign in</string>
     <string name="auth_login_working">Signing in…</string>
     <string name="auth_error_login_identifier_required">Enter your username or email.</string>
@@ -1048,7 +1059,6 @@ in %2$s</string>
     <string name="auth_login_forgot">Forgot password?</string>
     <string name="auth_login_hero_headline">Manage\nSell\nGrow</string>
     <string name="auth_login_hero_body">Everything your business needs\nin one place.</string>
-    <string name="auth_login_remember_me">Remember me</string>
     <string name="auth_login_setup_business_action">Get started</string>
     <string name="recovery_screen_title">Recovery code</string>
     <string name="more_recovery_body">Make a code that lets you reset the Super Admin password</string>
@@ -1180,13 +1190,16 @@ in %2$s</string>
     <string name="activity_empty_body">Sales, returns, edits, deletions, account changes and sign-ins will appear here.</string>
     <string name="activity_note">A record kept on this phone for you to review. It is not tamper-proof: anyone with full access to the phone\'s storage could change it.</string>
     <string name="activity_by">%1$s · %2$s</string>
-    <string name="delete_product_has_stock">%1$d units are still in stock. Take them out first (sell, write off or correct the stock) so the stock history stays right, then delete the product.</string>
+    <plurals name="delete_product_has_stock">
+        <item quantity="one">%1$d unit is still in stock. Take it out first (sell, write off or correct the stock) so the stock history stays right, then delete the product.</item>
+        <item quantity="other">%1$d units are still in stock. Take them out first (sell, write off or correct the stock) so the stock history stays right, then delete the product.</item>
+    </plurals>
 
     <!-- Per-employee access -->
     <string name="perm_always">Always included</string>
     <string name="perm_intro">Every employee can create bills, take payment, and view, print and share invoices. Choose anything else this person may do.</string>
     <string name="perm_summary_none">Billing and invoices only</string>
-    <string name="perm_summary_extra">Billing and invoices, plus %1$d more</string>
+    <string name="perm_summary_extra" tools:ignore="PluralsCandidate">Billing and invoices, plus %1$d more</string>
     <string name="perm_group_sales">Billing</string>
     <string name="perm_group_figures">Sales figures and reports</string>
     <string name="perm_group_inventory">Inventory</string>
@@ -1297,7 +1310,10 @@ in %2$s</string>
     <string name="dayend_confirm_action">Close day</string>
     <string name="dayend_closed_title">Today is closed</string>
     <string name="dayend_closed_body">Closed by %1$s at %2$s. Counted %3$s; %4$s.</string>
-    <string name="dayend_after_closing">%1$d bill(s) or credit note(s) were made after closing. They are not part of this closing.</string>
+    <plurals name="dayend_after_closing">
+        <item quantity="one">%1$d bill or credit note was made after closing. It is not part of this closing.</item>
+        <item quantity="other">%1$d bills or credit notes were made after closing. They are not part of this closing.</item>
+    </plurals>
     <string name="dayend_open_summary">Open summary</string>
     <string name="dayend_history">Closed days</string>
     <string name="dayend_history_empty">No day has been closed yet.</string>
@@ -1325,7 +1341,7 @@ in %2$s</string>
     <string name="loyalty_settings_off">Off: no points are earned or used</string>
     <string name="loyalty_settings_spend">Spend for 1 point (₹)</string>
     <string name="loyalty_settings_value">Value of 1 point (₹)</string>
-    <string name="loyalty_settings_example">Example: a %1$s bill earns %2$d points. %2$d points are worth %3$s off (%4$s%% back).</string>
+    <string name="loyalty_settings_example" tools:ignore="PluralsCandidate">Example: a %1$s bill earns %2$d points. %2$d points are worth %3$s off (%4$s%% back).</string>
     <string name="loyalty_settings_rules_note">Changes apply to new bills only. Points already earned stay with the customer and are worth the new value. Points taken as a discount are not given back when goods are returned.</string>
     <string name="loyalty_settings_saved">Saved</string>
     <string name="loyalty_error_spend_range">Enter between ₹1 and ₹1,00,000</string>
@@ -1339,7 +1355,7 @@ in %2$s</string>
     <string name="gst_financial_year">This financial year</string>
     <string name="gst_period">Invoices from %1$s to %2$s</string>
     <string name="gst_headline_title">Net of credit notes</string>
-    <string name="gst_headline_counts">%1$d invoices, %2$d credit notes</string>
+    <string name="gst_headline_counts" tools:ignore="PluralsCandidate">%1$d invoices, %2$d credit notes</string>
     <string name="gst_taxable">Taxable value</string>
     <string name="gst_total_tax">Total tax</string>
     <string name="gst_invoice_value">Invoice value</string>
@@ -1563,8 +1579,8 @@ in %2$s</string>
         <item quantity="one">%d item differs from your stock</item>
         <item quantity="other">%d items differ from your stock</item>
     </plurals>
-    <string name="count_short_value">%1$d short, worth %2$s at cost</string>
-    <string name="count_extra_value">%1$d extra, worth %2$s at cost</string>
+    <string name="count_short_value" tools:ignore="PluralsCandidate">%1$d short, worth %2$s at cost</string>
+    <string name="count_extra_value" tools:ignore="PluralsCandidate">%1$d extra, worth %2$s at cost</string>
     <string name="count_review_hint">Stock will be changed to match your count only after you confirm. Items you did not count are left alone.</string>
     <string name="count_reason_heading">Reason for this count</string>
     <string name="count_reason_routine">Routine count</string>
@@ -1587,7 +1603,7 @@ in %2$s</string>
         <item quantity="other">Stock updated for %d items.</item>
     </plurals>
     <string name="count_posted_none">Count finished. Nothing needed adjusting.</string>
-    <string name="count_partial">%1$d adjusted. %2$d could not be adjusted because stock has changed since. Check and recount them.</string>
+    <string name="count_partial" tools:ignore="PluralsCandidate">%1$d adjusted. %2$d could not be adjusted because stock has changed since. Check and recount them.</string>
     <string name="count_cancelled">Count cancelled. Stock was not changed.</string>
     <string name="count_closed">This count has already been finished.</string>
     <string name="count_failed">Could not save. Please try again.</string>
@@ -1616,7 +1632,7 @@ in %2$s</string>
     <string name="import_default_none">None</string>
     <string name="import_need_name">Pick the column that holds the product name to see the preview.</string>
     <string name="import_preview_title">Preview</string>
-    <string name="import_summary">%1$d ready · %2$d need fixing · %3$d already exist</string>
+    <string name="import_summary" tools:ignore="PluralsCandidate">%1$d ready · %2$d need fixing · %3$d already exist</string>
     <string name="import_status_ready">Ready</string>
     <string name="import_status_invalid">Needs fixing</string>
     <string name="import_status_exists">Already exists</string>
@@ -1625,11 +1641,11 @@ in %2$s</string>
     <string name="import_parse_unknown_category">Category not recognised. Use Garment, Packaged food or Beverage.</string>
     <string name="import_parse_unknown_diet">Use Veg or Non-veg.</string>
     <string name="import_parse_unknown_unit">Unit not recognised. Use g, kg, ml, L or pcs.</string>
-    <string name="import_parse_invalid_date">Date not recognised. Use 31/12/2026 or 2026-12-31.</string>
+    <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">Date not recognised. Use 31/12/2026 or 2026-12-31.</string>
     <string name="import_confirm_title">Import products?</string>
     <string name="import_confirm">Import</string>
     <string name="import_done_title">Import finished</string>
-    <string name="import_done_not_added">%1$d not added: %2$s</string>
+    <string name="import_done_not_added" tools:ignore="PluralsCandidate">%1$d not added: %2$s</string>
     <string name="import_done_close">Done</string>
     <string name="import_done_another">Import another file</string>
     <plurals name="import_item_variants">
@@ -1680,7 +1696,7 @@ in %2$s</string>
     <string name="printer_choose">Choose</string>
     <string name="printer_chosen">Chosen</string>
     <string name="printer_test_title">Test print</string>
-    <string name="printer_test_width">%1$d characters per line</string>
+    <string name="printer_test_width" tools:ignore="PluralsCandidate">%1$d characters per line</string>
     <string name="printer_test_body">If you can read this and nothing is cut off at the sides, your printer is ready.</string>
     <string name="printer_result_printed">Sent to the printer.</string>
     <string name="printer_result_no_printer">No printer chosen. Choose one in More, Bluetooth printer.</string>

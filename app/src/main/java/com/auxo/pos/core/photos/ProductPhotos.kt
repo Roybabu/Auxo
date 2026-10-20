@@ -16,6 +16,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.UUID
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 /** Rules for product photo files: where they live, what they are called and how big they get. */
 object PhotoFiles {
@@ -208,10 +210,10 @@ class FileProductPhotoStore(
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
         }
         val (width, height) = LogoSizing.fit(bitmap.width, bitmap.height, PhotoFiles.MAX_SIDE_PX)
-        if (width != bitmap.width || height != bitmap.height) bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+        if (width != bitmap.width || height != bitmap.height) bitmap = bitmap.scale(width, height)
         if (bitmap.hasAlpha()) {
             // JPEG has no transparency; without this, see-through parts of a PNG would turn black.
-            val flat = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+            val flat = createBitmap(bitmap.width, bitmap.height)
             Canvas(flat).apply {
                 drawColor(Color.WHITE)
                 drawBitmap(bitmap, 0f, 0f, null)

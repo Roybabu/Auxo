@@ -2,6 +2,7 @@ package com.auxo.pos.ui.screens.more
 
 import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -86,7 +87,10 @@ fun PrinterSettingsScreen(onBack: () -> Unit, viewModel: PrinterSettingsViewMode
         onCut = viewModel::setCut,
         onForget = viewModel::forget,
         onTest = viewModel::testPrint,
-        onAllowBluetooth = { permission.launch(Manifest.permission.BLUETOOTH_CONNECT) },
+        onAllowBluetooth = {
+            // Before Android 12 the install-time permission is enough, so there is nothing to ask for.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) permission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+        },
         onOpenBluetoothSettings = {
             runCatching { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         },

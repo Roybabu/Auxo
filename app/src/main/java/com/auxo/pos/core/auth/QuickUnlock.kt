@@ -5,6 +5,7 @@ import java.security.MessageDigest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 enum class PinError {
     /** Not 4 to 6 characters. */
@@ -92,7 +93,7 @@ class SharedPrefsLockSettings(context: Context) : LockSettingsStore {
 
     @Synchronized
     override fun setIdleTimeout(value: IdleTimeout) {
-        prefs.edit().putString(KEY, value.name).apply()
+        prefs.edit { putString(KEY, value.name) }
         _idleTimeout.value = value
     }
 

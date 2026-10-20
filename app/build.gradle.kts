@@ -61,6 +61,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    bundle {
+        // The language can be changed inside the app, so every language must ship in the base install.
+        language {
+            enableSplit = false
+        }
+    }
+
     buildFeatures {
         compose = true
     }

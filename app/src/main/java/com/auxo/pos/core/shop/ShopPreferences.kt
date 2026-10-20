@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 /** Which parts of the app this shop uses. Everything optional starts switched off. */
 interface ShopPreferences {
@@ -44,7 +45,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val restaurantMenu: StateFlow<Boolean> = state.asStateFlow()
 
     override fun setRestaurantMenu(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_RESTAURANT_MENU, enabled).apply()
+        prefs.edit { putBoolean(KEY_RESTAURANT_MENU, enabled) }
         state.value = enabled
     }
 
@@ -52,7 +53,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val suppliers: StateFlow<Boolean> = suppliersState.asStateFlow()
 
     override fun setSuppliers(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_SUPPLIERS, enabled).apply()
+        prefs.edit { putBoolean(KEY_SUPPLIERS, enabled) }
         suppliersState.value = enabled
     }
 
@@ -60,7 +61,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val categorySetupDone: StateFlow<Boolean> = categorySetupState.asStateFlow()
 
     override fun setCategorySetupDone(done: Boolean) {
-        prefs.edit().putBoolean(KEY_CATEGORY_SETUP, done).apply()
+        prefs.edit { putBoolean(KEY_CATEGORY_SETUP, done) }
         categorySetupState.value = done
     }
 
@@ -68,7 +69,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val onboardingSeen: StateFlow<Boolean> = onboardingState.asStateFlow()
 
     override fun setOnboardingSeen(seen: Boolean) {
-        prefs.edit().putBoolean(KEY_ONBOARDING_SEEN, seen).apply()
+        prefs.edit { putBoolean(KEY_ONBOARDING_SEEN, seen) }
         onboardingState.value = seen
     }
 

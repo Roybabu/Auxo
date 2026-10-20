@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -317,7 +318,7 @@ private fun PointsRow(entry: LedgerEntry, onOpenInvoice: (Long) -> Unit) {
             )
         }
         Text(
-            text = if (gained) stringResource(R.string.customer_points_gained, entry.points) else stringResource(R.string.customer_points_used, -entry.points),
+            text = if (gained) pluralStringResource(R.plurals.customer_points_gained, entry.points, entry.points) else pluralStringResource(R.plurals.customer_points_used, -entry.points, -entry.points),
             style = MaterialTheme.typography.titleSmall,
             color = if (gained) status.success.accent else status.warning.content,
         )

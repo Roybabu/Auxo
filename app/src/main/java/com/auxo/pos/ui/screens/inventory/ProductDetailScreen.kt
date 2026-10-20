@@ -101,7 +101,7 @@ fun ProductDetailScreen(
                 ProductDetailEvent.Deleted -> currentOnBack()
                 ProductDetailEvent.ActionFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
                 is ProductDetailEvent.StockOnHand -> snackbarHostState.showSnackbar(
-                    resources.getString(R.string.delete_product_has_stock, event.units),
+                    resources.getQuantityString(R.plurals.delete_product_has_stock, event.units, event.units),
                     duration = SnackbarDuration.Long,
                 )
             }

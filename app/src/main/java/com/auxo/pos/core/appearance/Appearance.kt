@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 /**
  * The eight colours the app can wear. Each one is a hue; the full set of Material 3 light and
@@ -57,12 +58,12 @@ class SharedPrefsAppearanceRepository(private val prefs: SharedPreferences) : Ap
     )
 
     override fun setAccent(accent: AppAccent) {
-        prefs.edit().putString(KEY_ACCENT, accent.id).apply()
+        prefs.edit { putString(KEY_ACCENT, accent.id) }
         state.value = state.value.copy(accent = accent)
     }
 
     override fun setDarkMode(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_DARK, enabled).apply()
+        prefs.edit { putBoolean(KEY_DARK, enabled) }
         state.value = state.value.copy(darkMode = enabled)
     }
 

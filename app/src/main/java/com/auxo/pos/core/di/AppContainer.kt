@@ -72,6 +72,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 /**
  * Manual dependency container, created once per process by AuxoApplication.
@@ -224,7 +225,7 @@ class AppContainer(context: Context) {
         val system = SessionUser(0L, "Automatic backup", Role.SUPER_ADMIN, emptySet())
         AutoBackupRunner(
             store = autoBackupSettings,
-            folderFor = { uri -> DocumentTreeFolder(appContext, Uri.parse(uri)) },
+            folderFor = { uri -> DocumentTreeFolder(appContext, uri.toUri()) },
             backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },

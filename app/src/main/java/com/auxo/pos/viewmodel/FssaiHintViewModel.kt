@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import androidx.core.content.edit
 
 /** Remembers that the owner closed the FSSAI hint on Home. */
 interface FssaiHintStore {
@@ -29,7 +30,7 @@ class SharedPrefsFssaiHintStore(context: Context) : FssaiHintStore {
     private val state = MutableStateFlow(prefs.getBoolean(KEY, false))
     override val dismissed: Flow<Boolean> get() = state
     override fun dismiss() {
-        prefs.edit().putBoolean(KEY, true).apply()
+        prefs.edit { putBoolean(KEY, true) }
         state.value = true
     }
 

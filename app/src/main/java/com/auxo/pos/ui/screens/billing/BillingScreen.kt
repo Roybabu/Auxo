@@ -817,7 +817,7 @@ private fun LoyaltyCard(state: BillingUiState, actions: BillingActions) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.loyalty_title), style = MaterialTheme.typography.titleSmall)
             Text(
-                stringResource(R.string.loyalty_balance, account.points, formatter.format(LoyaltyMath.valueOf(rules, account.points))),
+                pluralStringResource(R.plurals.loyalty_balance, account.points, account.points, formatter.format(LoyaltyMath.valueOf(rules, account.points))),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.testTag("loyalty_balance"),
             )
@@ -836,7 +836,7 @@ private fun LoyaltyCard(state: BillingUiState, actions: BillingActions) {
                     }
                 }
                 Text(
-                    stringResource(R.string.loyalty_max, state.loyaltyMax),
+                    pluralStringResource(R.plurals.loyalty_max, state.loyaltyMax, state.loyaltyMax),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -851,7 +851,7 @@ private fun LoyaltyCard(state: BillingUiState, actions: BillingActions) {
             if (state.loyaltyPoints > 0) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        stringResource(R.string.loyalty_using, state.loyaltyPoints, formatter.format(state.loyaltyDiscount)),
+                        pluralStringResource(R.plurals.loyalty_using, state.loyaltyPoints, state.loyaltyPoints, formatter.format(state.loyaltyDiscount)),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.testTag("loyalty_using"),
                     )

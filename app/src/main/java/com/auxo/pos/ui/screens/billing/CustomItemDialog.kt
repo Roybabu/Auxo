@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -42,7 +43,7 @@ fun CustomItemDialog(
     var name by rememberSaveable { mutableStateOf("") }
     var price by rememberSaveable { mutableStateOf("") }
     var quantity by rememberSaveable { mutableStateOf("1") }
-    var gst by rememberSaveable { mutableStateOf(if (showGst) DEFAULT_GST else 0) }
+    var gst by rememberSaveable { mutableIntStateOf(if (showGst) DEFAULT_GST else 0) }
     var showErrors by rememberSaveable { mutableStateOf(false) }
 
     val problems = (CustomItem.validate(name, price, quantity, gst) as? CustomItemResult.Invalid)?.problems.orEmpty()

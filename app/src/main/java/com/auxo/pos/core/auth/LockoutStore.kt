@@ -1,6 +1,7 @@
 package com.auxo.pos.core.auth
 
 import android.content.Context
+import androidx.core.content.edit
 
 /** Which counter of wrong guesses: the password at sign-in, or the recovery code. */
 enum class LockoutKind { PASSWORD, RECOVERY_CODE }
@@ -40,7 +41,7 @@ class SharedPrefsLockoutStore(context: Context) : LockoutStore {
     @Synchronized
     override fun write(kind: LockoutKind, value: Lockout) {
         // commit(), not apply(): the count must be on disk even if the app is stopped right after a wrong guess.
-        prefs.edit().putInt("${kind.name}_failures", value.failures).putLong("${kind.name}_until", value.lockedUntilMillis).commit()
+        prefs.edit(commit = true) { putInt("${kind.name}_failures", value.failures).putLong("${kind.name}_until", value.lockedUntilMillis) }
     }
 
     private companion object {

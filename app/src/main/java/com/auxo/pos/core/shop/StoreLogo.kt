@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import androidx.core.graphics.scale
 
 /** Size rules for the store logo. All of them keep the picture's aspect ratio. */
 object LogoSizing {
@@ -79,7 +80,7 @@ class FileStoreLogoRepository(
 
     override suspend fun save(bitmap: Bitmap): LogoSaveResult = withContext(io) {
         val (width, height) = LogoSizing.fit(bitmap.width, bitmap.height)
-        val sized = if (width == bitmap.width && height == bitmap.height) bitmap else Bitmap.createScaledBitmap(bitmap, width, height, true)
+        val sized = if (width == bitmap.width && height == bitmap.height) bitmap else bitmap.scale(width, height)
         store(sized)
     }
 
@@ -121,7 +122,7 @@ class FileStoreLogoRepository(
             val decoded = resolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, options) }
             decoded?.let {
                 val (width, height) = LogoSizing.fit(it.width, it.height)
-                if (width == it.width && height == it.height) it else Bitmap.createScaledBitmap(it, width, height, true)
+                if (width == it.width && height == it.height) it else it.scale(width, height)
             }
         }
     } catch (e: IOException) {

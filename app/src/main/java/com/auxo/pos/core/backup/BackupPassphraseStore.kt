@@ -9,6 +9,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import androidx.core.content.edit
 
 /**
  * Where the backup passphrase is kept on this phone, so scheduled backups can lock their files without anyone
@@ -52,11 +53,11 @@ class KeystoreBackupPassphraseStore(context: Context) : BackupPassphraseStore {
     override fun set(passphrase: String) {
         val cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, key()) }
         val sealed = cipher.iv + cipher.doFinal(passphrase.toByteArray(Charsets.UTF_8))
-        prefs.edit().putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP)).apply()
+        prefs.edit { putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP)) }
     }
 
     override fun clear() {
-        prefs.edit().remove(KEY_BLOB).apply()
+        prefs.edit { remove(KEY_BLOB) }
     }
 
     private fun key(): SecretKey {

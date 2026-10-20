@@ -2,6 +2,7 @@ package com.auxo.pos.core.imports
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import com.auxo.pos.domain.imports.FileReadResult
 import com.auxo.pos.domain.imports.ImportFile
 import com.auxo.pos.domain.imports.ImportFileReader
@@ -17,7 +18,7 @@ class ContentResolverImportReader(context: Context) : ImportFileReader {
 
     override suspend fun read(uri: String): FileReadResult = withContext(Dispatchers.IO) {
         try {
-            val bytes = resolver.openInputStream(Uri.parse(uri))?.use { input -> readAtMost(input, ImportFile.MAX_BYTES + 1) }
+            val bytes = resolver.openInputStream(uri.toUri())?.use { input -> readAtMost(input, ImportFile.MAX_BYTES + 1) }
                 ?: return@withContext FileReadResult.Unreadable
             if (bytes.size > ImportFile.MAX_BYTES) FileReadResult.TooLarge else FileReadResult.Text(ImportFile.decode(bytes))
         } catch (e: CancellationException) {
