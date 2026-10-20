@@ -2,6 +2,8 @@ package com.auxo.pos.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
+import com.auxo.pos.ui.components.crystalGlass
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,7 +31,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -70,6 +76,8 @@ fun AuthLayout(
     /** A full-screen picture behind everything (not used in dark mode). */
     @DrawableRes backdropImage: Int? = null,
     logoWidth: Dp = 280.dp,
+    /** Draws the form card as mint liquid glass instead of the plain white card. */
+    glass: Boolean = false,
     /** Loose pictures (leaves) drawn behind the logo and the card; placed by the screen's width and height. */
     decoration: @Composable BoxWithConstraintsScope.() -> Unit = {},
     /** Shown under the card. */
@@ -118,11 +126,31 @@ fun AuthLayout(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    FormCard { form() }
+                    // This column already scrolls, so the card stays a plain one here.
+                    FormCard(glass = false) { form() }
                     if (footer != null) {
                         Spacer(Modifier.height(Spacing.md))
                         Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
                     }
+                }
+            }
+        } else if (glass && !dark) {
+            // The logo and the glass stay put; only the form's contents scroll inside the glass.
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding()
+                    .imePadding()
+                    // The extra bottom padding shortens the glass from its lower edge.
+                    .padding(start = Spacing.screen, end = Spacing.screen, top = Spacing.xl, bottom = Spacing.xl + 128.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (topEnd != null) Spacer(Modifier.height(40.dp))
+                BrandLogo(width = logoWidth, modifier = Modifier.padding(bottom = Spacing.xl))
+                FormCard(glass = true, modifier = Modifier.weight(1f, fill = false)) { form() }
+                if (footer != null) {
+                    Spacer(Modifier.height(Spacing.md))
+                    Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
                 }
             }
         } else {
@@ -138,7 +166,7 @@ fun AuthLayout(
                 // Leave room for the corner button so it never sits on the logo.
                 if (topEnd != null) Spacer(Modifier.height(40.dp))
                 BrandLogo(width = logoWidth, modifier = Modifier.padding(bottom = Spacing.xl))
-                FormCard { form() }
+                FormCard(glass) { form() }
                 if (footer != null) {
                     Spacer(Modifier.height(Spacing.md))
                     Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
@@ -153,7 +181,29 @@ fun AuthLayout(
 
 /** The white rounded card the sign-in and setup forms sit on, over the mint backdrop. */
 @Composable
-private fun FormCard(content: @Composable () -> Unit) {
+private fun FormCard(glass: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    if (glass && MaterialTheme.colorScheme.background.luminance() >= 0.5f) {
+        // Mint-tinted liquid glass: the tint sits under the glass layers so the highlights and rim stay bright.
+        // The contents scroll inside it when the card is given a bounded height.
+        val shape = RoundedCornerShape(44.dp)
+        Box(
+            modifier = modifier
+                .widthIn(max = 480.dp)
+                .fillMaxWidth()
+                .background(Color(0xFFB9EBD3).copy(alpha = 0.25f), shape)
+                .crystalGlass(shape)
+                // Scrolled text is cut at the glass's curved edge instead of spilling over it.
+                .clip(shape),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fadeVerticalEdges(20.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+            ) { content() }
+        }
+        return
+    }
     Surface(
         modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -163,3 +213,21 @@ private fun FormCard(content: @Composable () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) { content() }
     }
 }
+
+/** Fades whatever is drawn to clear over the top and bottom [edge], so scrolled content melts away instead of being cut. */
+private fun Modifier.fadeVerticalEdges(edge: Dp): Modifier =
+    this
+        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+        .drawWithContent {
+            drawContent()
+            val fade = (edge.toPx() / size.height).coerceAtMost(0.5f)
+            drawRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.Transparent,
+                    fade to Color.Black,
+                    1f - fade to Color.Black,
+                    1f to Color.Transparent,
+                ),
+                blendMode = BlendMode.DstIn,
+            )
+        }

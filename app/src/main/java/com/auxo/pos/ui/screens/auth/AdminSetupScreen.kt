@@ -11,6 +11,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
@@ -139,7 +140,33 @@ fun AdminSetupContent(
     onLogoRemove: () -> Unit = {},
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AuthLayout(backdropImage = R.drawable.auth_signup_bg) {
+    AuthLayout(
+        backdropImage = R.drawable.auth_signup_bg,
+        logoWidth = 220.dp,
+        glass = true,
+        // Outside the glass, below it: the same size and look as "Get started" on the sign-in page.
+        footer = if (onBack == null) null else ({
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                OutlinedButton(
+                    onClick = onBack,
+                    enabled = !state.isSubmitting,
+                    shape = RoundedCornerShape(32.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    border = null,
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .padding(horizontal = 1.dp)
+                        .height(62.dp)
+                        .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
+                        .testTag("setup_back"),
+                ) {
+                    AuxoIcon(R.drawable.ic_arrow_back, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.auth_back_to_login), color = AuthEmerald, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                }
+            }
+        }),
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("admin_setup")) {
             Illustration(R.drawable.auth_storefront, modifier = Modifier.fillMaxWidth().height(110.dp))
             Text(stringResource(R.string.auth_setup_title), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
@@ -259,23 +286,6 @@ fun AdminSetupContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = Spacing.xs),
             )
-            if (onBack != null) {
-                OutlinedButton(
-                    onClick = onBack,
-                    enabled = !state.isSubmitting,
-                    shape = RoundedCornerShape(32.dp),
-                    border = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(62.dp)
-                        .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
-                        .testTag("setup_back"),
-                ) {
-                    AuxoIcon(R.drawable.ic_arrow_back, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.auth_back_to_login), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
-                }
-            }
         }
     }
 }
@@ -329,7 +339,7 @@ private fun SetupLogoPicker(logo: Uri?, enabled: Boolean, onChoose: () -> Unit, 
                     modifier = Modifier.fillMaxSize().padding(Spacing.xs),
                 )
             } else {
-                AuxoIcon(R.drawable.ic_image, contentDescription = null, size = AuxoIconSize.Large)
+                AuxoIcon(R.drawable.ic_image, contentDescription = null, size = AuxoIconSize.Large, style = AuxoIconStyle.Flat)
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
