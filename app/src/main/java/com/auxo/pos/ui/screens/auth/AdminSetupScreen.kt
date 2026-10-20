@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.screens.auth
 
+import com.auxo.pos.ui.components.GlassButton
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -239,12 +240,11 @@ fun AdminSetupContent(
                     modifier = Modifier.testTag("setup_save_failed"),
                 )
             }
-            Button(
+            GlassButton(
                 onClick = onSubmit,
                 enabled = !state.isSubmitting,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AuthEmerald, contentColor = Color.White),
-                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("setup_submit"),
+                lit = true,
+                modifier = Modifier.testTag("setup_submit"),
             ) {
                 Text(stringResource(if (state.isSubmitting) R.string.auth_setup_working else R.string.auth_setup_action))
             }

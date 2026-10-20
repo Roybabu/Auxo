@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.screens.auth
 
+import com.auxo.pos.ui.components.liquidGlass
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -414,7 +414,6 @@ internal fun SlideToSignIn(
     LaunchedEffect(isSigningIn) { if (!isSigningIn) offset.animateTo(0f, bounce) }
 
     val density = LocalDensity.current
-    val depthColor = lerp(AuthEmerald, Color.Black, 0.4f)
     val shape = RoundedCornerShape(32.dp)
 
     BoxWithConstraints(
@@ -430,16 +429,14 @@ internal fun SlideToSignIn(
         val travel = with(density) { (maxWidth - THUMB_SIZE - THUMB_INSET * 2).toPx() }.coerceAtLeast(1f)
         val progress = (offset.value / travel).coerceIn(0f, 1f)
 
-        // The darker slab under the track is what makes it look raised.
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(SLIDER_HEIGHT).background(depthColor, shape))
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(SLIDER_HEIGHT)
+                // Liquid glass, like the other sign-in buttons: the body, highlight and rim are drawn behind the sliding thumb.
+                .liquidGlass(shape)
                 .clip(shape)
-                .background(Brush.horizontalGradient(listOf(AuthEmerald, AuthEmeraldBright)))
-                .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent, Color.Black.copy(alpha = 0.10f))))
                 .pointerInput(travel, isSigningIn) {
                     if (isSigningIn) return@pointerInput
                     // The sign-in fires the moment the thumb reaches the end (or is released past the threshold), not after the settle animation.

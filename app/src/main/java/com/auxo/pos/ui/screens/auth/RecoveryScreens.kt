@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.screens.auth
 
+import com.auxo.pos.ui.components.GlassButton
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipDescription
@@ -268,7 +269,7 @@ fun RecoveryCodeBody(
                     )
                 }
                 if (message != null) ErrorLine(message, "recovery_error")
-                Button(onClick = onStart, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_start")) {
+                GlassButton(onClick = onStart, enabled = !state.busy, modifier = Modifier.testTag("recovery_start")) {
                     Text(stringResource(R.string.recovery_create))
                 }
                 if (onSkip != null) {
@@ -283,7 +284,7 @@ fun RecoveryCodeBody(
                 Text(stringResource(R.string.recovery_show_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 RecoveryCodeCard(state.code)
                 Text(stringResource(R.string.recovery_show_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = onWrittenDown, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_written")) {
+                GlassButton(onClick = onWrittenDown, modifier = Modifier.testTag("recovery_written")) {
                     Text(stringResource(R.string.recovery_written))
                 }
             }
@@ -292,7 +293,7 @@ fun RecoveryCodeBody(
                 Text(stringResource(R.string.recovery_confirm_title), style = MaterialTheme.typography.headlineSmall)
                 Text(stringResource(R.string.recovery_confirm_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TypeCodeField(state.typed, onTypedChange, onConfirm, message, !state.busy)
-                Button(onClick = onConfirm, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_confirm")) {
+                GlassButton(onClick = onConfirm, enabled = !state.busy, modifier = Modifier.testTag("recovery_confirm")) {
                     Text(stringResource(R.string.recovery_confirm_action))
                 }
                 TextButton(onClick = onShowAgain, modifier = Modifier.fillMaxWidth().testTag("recovery_show_again")) {
@@ -303,7 +304,7 @@ fun RecoveryCodeBody(
                 Text(stringResource(R.string.recovery_saved_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.testTag("recovery_saved"))
                 Text(stringResource(R.string.recovery_saved_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (onDone != null) {
-                    Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_done")) {
+                    GlassButton(onClick = onDone, modifier = Modifier.testTag("recovery_done")) {
                         Text(stringResource(R.string.recovery_done))
                     }
                 }
@@ -438,7 +439,7 @@ fun PasswordResetContent(
                         ResetMessage.Unavailable -> ErrorLine(stringResource(R.string.auth_login_unavailable), "reset_error")
                         ResetMessage.Mismatch -> Unit
                     }
-                    Button(onClick = onSubmit, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("reset_submit")) {
+                    GlassButton(onClick = onSubmit, enabled = !state.busy, modifier = Modifier.testTag("reset_submit")) {
                         Text(stringResource(if (state.busy) R.string.reset_working else R.string.reset_action))
                     }
                     TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth().testTag("reset_back")) {
@@ -451,7 +452,7 @@ fun PasswordResetContent(
                     Text(stringResource(R.string.reset_new_code_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     RecoveryCodeCard(state.newCode)
                     Text(stringResource(R.string.recovery_show_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = onWrittenDown, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_written")) {
+                    GlassButton(onClick = onWrittenDown, modifier = Modifier.testTag("recovery_written")) {
                         Text(stringResource(R.string.recovery_written))
                     }
                 }
@@ -466,7 +467,7 @@ fun PasswordResetContent(
                         if (state.message == ResetMessage.Mismatch) stringResource(R.string.recovery_mismatch) else null,
                         true,
                     )
-                    Button(onClick = onConfirmNewCode, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("recovery_confirm")) {
+                    GlassButton(onClick = onConfirmNewCode, modifier = Modifier.testTag("recovery_confirm")) {
                         Text(stringResource(R.string.recovery_confirm_action))
                     }
                     TextButton(onClick = onShowAgain, modifier = Modifier.fillMaxWidth().testTag("recovery_show_again")) {
@@ -476,7 +477,7 @@ fun PasswordResetContent(
                 ResetStep.DONE -> {
                     Text(stringResource(R.string.reset_done_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.testTag("reset_done_title"))
                     Text(stringResource(R.string.reset_done_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("reset_done")) {
+                    GlassButton(onClick = onBack, modifier = Modifier.testTag("reset_done")) {
                         Text(stringResource(R.string.reset_go_to_sign_in))
                     }
                 }

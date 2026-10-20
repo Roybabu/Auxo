@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.screens.auth
 
+import com.auxo.pos.ui.components.GlassButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,10 +68,10 @@ fun CategorySetupContent(state: CategorySetupUiState, onToggle: (Long) -> Unit, 
                     modifier = Modifier.testTag("category_setup_failed"),
                 )
             }
-            Button(
+            GlassButton(
                 onClick = onConfirm,
                 enabled = state.loaded && !state.saving,
-                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("category_setup_continue"),
+                modifier = Modifier.testTag("category_setup_continue"),
             ) {
                 Text(stringResource(R.string.category_setup_action))
             }

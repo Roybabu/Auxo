@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.screens.auth
 
+import com.auxo.pos.ui.components.GlassButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +30,7 @@ fun BusinessExistsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("business_exists_back")) {
+            GlassButton(onClick = onBack, modifier = Modifier.testTag("business_exists_back")) {
                 Text(stringResource(R.string.auth_back_to_login))
             }
         }

@@ -1,5 +1,6 @@
 package com.auxo.pos.ui.lock
 
+import com.auxo.pos.ui.components.GlassButton
 import com.auxo.pos.ui.components.SceneFingerprintButton
 import com.auxo.pos.ui.components.BotanicalScene
 import androidx.compose.foundation.BorderStroke
@@ -257,64 +258,32 @@ private val LOCK_FIELD_HEIGHT = 51.dp
 
 private val LOCK_BUTTON_HEIGHT = 52.dp
 
-/** "Unlock": an emerald gradient pill with a light highlight, a soft shadow and a circled arrow (a spinner while working). */
+/** "Unlock": a liquid-glass pill with a circled arrow (a spinner while working). */
 @Composable
 private fun UnlockButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(32.dp)
-    val fill = if (enabled || busy) {
-        Brush.horizontalGradient(listOf(AuthEmerald, AuthEmeraldBright))
-    } else {
-        Brush.horizontalGradient(listOf(AuthDotIdle, AuthDotIdle))
-    }
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        shape = shape,
-        contentPadding = PaddingValues(0.dp),
-        elevation = null,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = Color.White,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = Color.White,
-        ),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(LOCK_BUTTON_HEIGHT)
-            .shadow(if (enabled) 6.dp else 0.dp, shape, ambientColor = AuthEmerald, spotColor = AuthEmerald),
-    ) {
+    val live = enabled || busy
+    GlassButton(onClick = onClick, enabled = enabled, lit = live, modifier = modifier) {
+        Text(
+            stringResource(R.string.lock_unlock),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).padding(start = 40.dp),
+        )
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(fill, shape)
-                .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent, Color.Black.copy(alpha = 0.10f))), shape),
+            modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = if (live) 0.24f else 0.55f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 6.dp).fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.lock_unlock),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (enabled || busy) Color.White else AuthInkMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f).padding(start = 40.dp),
+            if (busy) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+            } else {
+                AuxoIcon(
+                    R.drawable.ic_arrow_forward,
+                    contentDescription = null,
+                    size = AuxoIconSize.Mini,
+                    style = AuxoIconStyle.Flat,
+                    accent = if (live) Color.White else AuthEmerald,
                 )
-                Box(
-                    modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = if (enabled || busy) 0.22f else 0.5f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (busy) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
-                    } else {
-                        AuxoIcon(
-                            R.drawable.ic_arrow_forward,
-                            contentDescription = null,
-                            size = AuxoIconSize.Mini,
-                            style = AuxoIconStyle.Flat,
-                            accent = if (enabled) Color.White else AuthInkMuted,
-                        )
-                    }
-                }
             }
         }
     }
