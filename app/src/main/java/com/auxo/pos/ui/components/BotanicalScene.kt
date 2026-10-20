@@ -1,6 +1,5 @@
 package com.auxo.pos.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,11 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,9 +41,7 @@ import com.auxo.pos.ui.screens.auth.FORM_TOP
 import com.auxo.pos.ui.screens.auth.LEAVES_ASPECT
 import com.auxo.pos.ui.screens.auth.MARK_ASPECT
 import com.auxo.pos.ui.screens.auth.MAX_LOGIN_WIDTH
-import com.auxo.pos.ui.theme.AuthEmerald
-import com.auxo.pos.ui.theme.AuthMint
-import com.auxo.pos.ui.theme.AuthMintLight
+import com.auxo.pos.ui.screens.auth.SlideToSignIn
 import com.auxo.pos.ui.theme.Spacing
 import kotlin.math.roundToInt
 
@@ -138,27 +131,15 @@ internal fun SceneBrand(modifier: Modifier = Modifier) {
     }
 }
 
-/** A pale-mint pill with the fingerprint tile at the left and an arrow at the right. */
+/** The same raised slider as the sign-in page (slide to the end, bounce back if let go early), with a fingerprint on the thumb. */
 @Composable
 internal fun SceneFingerprintButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(32.dp)
-    OutlinedButton(
-        onClick = onClick,
-        shape = shape,
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = AuthMintLight),
-        border = BorderStroke(1.dp, AuthMint),
-        modifier = modifier.fillMaxWidth().height(52.dp),
-    ) {
-        AuxoIcon(R.drawable.ic_fingerprint, contentDescription = null, size = AuxoIconSize.Compact)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            label,
-            color = AuthEmerald,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f),
-        )
-        AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
-    }
+    SlideToSignIn(
+        isSigningIn = false,
+        onSignIn = onClick,
+        label = label,
+        thumbIcon = R.drawable.ic_fingerprint,
+        modifier = modifier,
+    )
 }
 

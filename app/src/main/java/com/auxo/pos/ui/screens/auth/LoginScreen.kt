@@ -397,7 +397,14 @@ private const val SLIDE_THRESHOLD = 0.75f
  * with a bounce; a tap nudges it as a hint. Accessibility services get a plain click that signs in.
  */
 @Composable
-private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: Modifier = Modifier) {
+internal fun SlideToSignIn(
+    isSigningIn: Boolean,
+    onSignIn: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = stringResource(R.string.auth_login_slide),
+    workingLabel: String = stringResource(R.string.auth_login_working),
+    thumbIcon: Int = R.drawable.ic_arrow_forward,
+) {
     val scope = rememberCoroutineScope()
     val offset = remember { Animatable(0f) }
     val bounce = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
@@ -484,7 +491,7 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                 },
         ) {
             Text(
-                stringResource(if (isSigningIn) R.string.auth_login_working else R.string.auth_login_slide),
+                if (isSigningIn) workingLabel else label,
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.Center).alpha(1f - progress),
@@ -500,7 +507,7 @@ private fun SlideToSignIn(isSigningIn: Boolean, onSignIn: () -> Unit, modifier: 
                     .background(Brush.verticalGradient(listOf(Color.White, AuthMint))),
                 contentAlignment = Alignment.Center,
             ) {
-                AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Medium, style = AuxoIconStyle.Flat)
+                AuxoIcon(thumbIcon, contentDescription = null, size = AuxoIconSize.Medium, style = AuxoIconStyle.Flat)
             }
         }
     }
