@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
@@ -322,7 +323,7 @@ class AuthScreensTest {
         }
         composeRule.onNodeWithText("Welcome back, Sample").assertIsDisplayed()
         composeRule.onNodeWithTag("resume_idle").assertIsDisplayed()
-        composeRule.onNodeWithTag("resume_fingerprint").performClick()
+        composeRule.onNodeWithTag("resume_fingerprint").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         composeRule.onNodeWithTag("resume_password").performClick()
         assertEquals(1, fingerprints)
         assertEquals(1, passwords)

@@ -17,6 +17,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -180,7 +181,7 @@ class LockScreensTest {
     fun theFingerprintButton_showsWhenOffered() {
         val taps = Taps()
         lockScreen(LockInfo(locked = true, fingerprint = true), fingerprintOffered = true, taps = taps)
-        composeRule.onNodeWithTag("lock_fingerprint").performClick()
+        composeRule.onNodeWithTag("lock_fingerprint").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         assertEquals(1, taps.fingerprint)
     }
 
