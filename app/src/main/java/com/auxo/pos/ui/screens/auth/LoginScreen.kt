@@ -100,7 +100,7 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBarsPadding
 
 /** Width over height of auxo_mark.png (the icon glyph alone, cropped from the approved vertical lockup). */
-private const val MARK_ASPECT = 261f / 191f
+internal const val MARK_ASPECT = 261f / 191f
 
 /** The sign-in screen: the first screen on every launch. [hasBusiness] is false until a business has been set up on this device. */
 @Composable
@@ -135,13 +135,13 @@ fun LoginScreen(
  */
 
 /** Height over width of auth_login_bg. */
-private const val ART_ASPECT = 1672f / 941f
+internal const val ART_ASPECT = 1672f / 941f
 
 /** Height over width of auth_login_leaves, the leaf strip at the foot of the white sheet. */
-private const val LEAVES_ASPECT = 372f / 941f
+internal const val LEAVES_ASPECT = 372f / 941f
 
 /** Where the white sheet is safe to write on, as a share of the picture's height (its curved edge peaks near 0.54). */
-private const val FORM_TOP = 0.585f
+internal const val FORM_TOP = 0.585f
 
 /** How much of the picture's height the pitch text may use, so it stays on the dark part. */
 private const val PITCH_BOTTOM = 0.50f
@@ -150,7 +150,7 @@ private const val PITCH_BOTTOM = 0.50f
 private val LOGIN_FIELD_HEIGHT = 51.dp
 
 /** The widest the page is drawn; on a tablet it is a centred phone-shaped column. */
-private val MAX_LOGIN_WIDTH = 480.dp
+internal val MAX_LOGIN_WIDTH = 480.dp
 
 @Composable
 fun LoginContent(
