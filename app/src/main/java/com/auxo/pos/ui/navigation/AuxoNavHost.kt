@@ -92,17 +92,17 @@ fun AuxoNavHost(
             if (can(Permission.VIEW_DASHBOARD)) {
                 HomeScreen(
                     onNavigate = navController::navigateToTopLevel,
-                    onAddProduct = { navController.navigate(InventoryRoutes.newProduct()) },
-                    onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
+                    onAddProduct = { navController.navigateOnce(InventoryRoutes.newProduct()) },
+                    onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
                     onOpenInventory = { filter -> navController.navigateToInventory(filter) },
-                    onOpenAlerts = { navController.navigate(StockRoutes.alerts()) },
-                    onOpenBackup = { navController.navigate(MoreRoutes.BACKUP) },
-                    onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
+                    onOpenAlerts = { navController.navigateOnce(StockRoutes.alerts()) },
+                    onOpenBackup = { navController.navigateOnce(MoreRoutes.BACKUP) },
+                    onOpenStoreDetails = { navController.navigateOnce(MoreRoutes.STORE_DETAILS) },
                 )
             } else {
                 EmployeeHomeScreen(
                     onNavigate = navController::navigateToTopLevel,
-                    onOpenInvoices = { navController.navigate(BillingRoutes.HISTORY) },
+                    onOpenInvoices = { navController.navigateOnce(BillingRoutes.HISTORY) },
                 )
             }
         }
@@ -113,11 +113,11 @@ fun AuxoNavHost(
             guarded(navController, BillingRoutes.POS) {
                 BillingScreen(
                     onSaleCompleted = { invoiceId, changeMinor ->
-                        navController.navigate(BillingRoutes.savedInvoice(invoiceId, InvoiceNotice.SALE_SAVED, changeMinor))
+                        navController.navigateOnce(BillingRoutes.savedInvoice(invoiceId, InvoiceNotice.SALE_SAVED, changeMinor))
                     },
-                    onOpenHistory = { navController.navigate(BillingRoutes.HISTORY) },
-                    onOpenSettings = { navController.navigate(MoreRoutes.STORE_DETAILS) },
-                    onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
+                    onOpenHistory = { navController.navigateOnce(BillingRoutes.HISTORY) },
+                    onOpenSettings = { navController.navigateOnce(MoreRoutes.STORE_DETAILS) },
+                    onAddProduct = { barcode -> navController.navigateOnce(InventoryRoutes.newProduct(barcode)) },
                 )
             }
             guarded(navController,
@@ -136,9 +136,9 @@ fun AuxoNavHost(
                 ),
             ) {
                 InvoiceDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onReturn = { navController.navigate(BillingRoutes.returnFor(it)) },
-                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onBack = { navController.popOnce() },
+                    onReturn = { navController.navigateOnce(BillingRoutes.returnFor(it)) },
+                    onOpenInvoice = { navController.navigateOnce(BillingRoutes.invoice(it)) },
                     onNewBill = {
                         navController.navigate(BillingRoutes.POS) {
                             popUpTo(BillingRoutes.POS) { inclusive = false }
@@ -149,8 +149,8 @@ fun AuxoNavHost(
             }
             guarded(navController, BillingRoutes.HISTORY) {
                 InvoiceHistoryScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onBack = { navController.popOnce() },
+                    onOpenInvoice = { navController.navigateOnce(BillingRoutes.invoice(it)) },
                 )
             }
             guarded(navController,
@@ -158,7 +158,7 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(BillingRoutes.ARG_INVOICE_ID) { type = NavType.LongType }),
             ) {
                 ReturnScreen(
-                    onBack = { navController.popBackStack() },
+                    onBack = { navController.popOnce() },
                     onCompleted = { creditNoteId ->
                         navController.navigate(BillingRoutes.savedInvoice(creditNoteId, InvoiceNotice.RETURN_SAVED)) {
                             popUpTo(BillingRoutes.RETURN) { inclusive = true }
@@ -182,8 +182,8 @@ fun AuxoNavHost(
                 ),
             ) {
                 InventoryListScreen(
-                    onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
-                    onAddProduct = { barcode -> navController.navigate(InventoryRoutes.newProduct(barcode)) },
+                    onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
+                    onAddProduct = { barcode -> navController.navigateOnce(InventoryRoutes.newProduct(barcode)) },
                     onOpenStockPage = { page ->
                         navController.navigate(
                             when (page) {
@@ -202,9 +202,9 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(InventoryRoutes.ARG_PRODUCT_ID) { type = NavType.LongType }),
             ) {
                 ProductDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onEdit = { navController.navigate(InventoryRoutes.editProduct(it)) },
-                    onPrintLabels = { navController.navigate(InventoryRoutes.labels(it)) },
+                    onBack = { navController.popOnce() },
+                    onEdit = { navController.navigateOnce(InventoryRoutes.editProduct(it)) },
+                    onPrintLabels = { navController.navigateOnce(InventoryRoutes.labels(it)) },
                 )
             }
             guarded(navController,
@@ -223,10 +223,10 @@ fun AuxoNavHost(
             ) { entry ->
                 val editingId = entry.arguments?.getLong(InventoryRoutes.ARG_PRODUCT_ID) ?: 0L
                 ProductEditorScreen(
-                    onBack = { navController.popBackStack() },
+                    onBack = { navController.popOnce() },
                     onSaved = { savedId ->
                         if (editingId != 0L) {
-                            navController.popBackStack()
+                            navController.popOnce()
                         } else {
                             // Replace the editor with the new product's page.
                             navController.navigate(InventoryRoutes.product(savedId)) {
@@ -240,7 +240,7 @@ fun AuxoNavHost(
                 route = InventoryRoutes.LABELS,
                 arguments = listOf(navArgument(InventoryRoutes.ARG_PRODUCT_ID) { type = NavType.LongType }),
             ) {
-                LabelPrintScreen(onBack = { navController.popBackStack() })
+                LabelPrintScreen(onBack = { navController.popOnce() })
             }
             stockGraph(navController)
         }
@@ -250,8 +250,8 @@ fun AuxoNavHost(
         ) {
             guarded(navController, CustomerRoutes.LIST) {
                 CustomerListScreen(
-                    onOpenCustomer = { navController.navigate(CustomerRoutes.detail(it)) },
-                    onAddCustomer = { navController.navigate(CustomerRoutes.newCustomer()) },
+                    onOpenCustomer = { navController.navigateOnce(CustomerRoutes.detail(it)) },
+                    onAddCustomer = { navController.navigateOnce(CustomerRoutes.newCustomer()) },
                 )
             }
             guarded(navController,
@@ -259,11 +259,11 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
             ) {
                 CustomerDetailScreen(
-                    onBack = { navController.popBackStack() },
-                    onEdit = { navController.navigate(CustomerRoutes.editCustomer(it)) },
-                    onReceivePayment = { navController.navigate(CustomerRoutes.payment(it)) },
-                    onOpenHistory = { navController.navigate(CustomerRoutes.history(it)) },
-                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onBack = { navController.popOnce() },
+                    onEdit = { navController.navigateOnce(CustomerRoutes.editCustomer(it)) },
+                    onReceivePayment = { navController.navigateOnce(CustomerRoutes.payment(it)) },
+                    onOpenHistory = { navController.navigateOnce(CustomerRoutes.history(it)) },
+                    onOpenInvoice = { navController.navigateOnce(BillingRoutes.invoice(it)) },
                 )
             }
             guarded(navController,
@@ -271,8 +271,8 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
             ) {
                 CustomerHistoryScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenInvoice = { navController.navigate(BillingRoutes.invoice(it)) },
+                    onBack = { navController.popOnce() },
+                    onOpenInvoice = { navController.navigateOnce(BillingRoutes.invoice(it)) },
                 )
             }
             guarded(navController,
@@ -286,10 +286,10 @@ fun AuxoNavHost(
             ) { entry ->
                 val editingId = entry.arguments?.getLong(CustomerRoutes.ARG_CUSTOMER_ID) ?: 0L
                 CustomerEditorScreen(
-                    onBack = { navController.popBackStack() },
+                    onBack = { navController.popOnce() },
                     onSaved = { savedId ->
                         if (editingId != 0L) {
-                            navController.popBackStack()
+                            navController.popOnce()
                         } else {
                             navController.navigate(CustomerRoutes.detail(savedId)) {
                                 popUpTo(CustomerRoutes.EDITOR) { inclusive = true }
@@ -303,8 +303,8 @@ fun AuxoNavHost(
                 arguments = listOf(navArgument(CustomerRoutes.ARG_CUSTOMER_ID) { type = NavType.LongType }),
             ) {
                 AccountPaymentScreen(
-                    onBack = { navController.popBackStack() },
-                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popOnce() },
+                    onSaved = { navController.popOnce() },
                 )
             }
         }
@@ -318,47 +318,47 @@ fun AuxoNavHost(
                 MoreScreen(
                     shop = shop,
                     actions = object : MoreActions {
-                        override fun onOpenSuppliers() = navController.navigate(StockRoutes.suppliers())
-                        override fun onOpenAlerts() = navController.navigate(StockRoutes.alerts())
-                        override fun onOpenMovements() = navController.navigate(StockRoutes.movements())
-                        override fun onOpenCount() = navController.navigate(StockRoutes.count())
-                        override fun onOpenImport() = navController.navigate(StockRoutes.import())
-                        override fun onOpenReports() = navController.navigate(MoreRoutes.REPORTS)
-                        override fun onOpenHistory() = navController.navigate(BillingRoutes.HISTORY)
-                        override fun onOpenAppearance() = navController.navigate(MoreRoutes.APPEARANCE)
-                        override fun onOpenBackup() = navController.navigate(MoreRoutes.BACKUP)
-                        override fun onOpenShopSettings() = navController.navigate(MoreRoutes.SHOP_SETTINGS)
-                        override fun onOpenPrinter() = navController.navigate(MoreRoutes.PRINTER)
-                        override fun onOpenUsers() = navController.navigate(MoreRoutes.USER_MANAGEMENT)
-                        override fun onOpenRecoveryCode() = navController.navigate(MoreRoutes.RECOVERY_CODE)
-                        override fun onOpenQuickUnlock() = navController.navigate(MoreRoutes.QUICK_UNLOCK)
-                        override fun onOpenActivity() = navController.navigate(MoreRoutes.ACTIVITY_LOG)
-                        override fun onOpenDayEnd() = navController.navigate(MoreRoutes.DAY_END)
-                        override fun onOpenGstReport() = navController.navigate(MoreRoutes.GST_REPORT)
-                        override fun onOpenLoyalty() = navController.navigate(MoreRoutes.LOYALTY)
+                        override fun onOpenSuppliers() = navController.navigateOnce(StockRoutes.suppliers())
+                        override fun onOpenAlerts() = navController.navigateOnce(StockRoutes.alerts())
+                        override fun onOpenMovements() = navController.navigateOnce(StockRoutes.movements())
+                        override fun onOpenCount() = navController.navigateOnce(StockRoutes.count())
+                        override fun onOpenImport() = navController.navigateOnce(StockRoutes.import())
+                        override fun onOpenReports() = navController.navigateOnce(MoreRoutes.REPORTS)
+                        override fun onOpenHistory() = navController.navigateOnce(BillingRoutes.HISTORY)
+                        override fun onOpenAppearance() = navController.navigateOnce(MoreRoutes.APPEARANCE)
+                        override fun onOpenBackup() = navController.navigateOnce(MoreRoutes.BACKUP)
+                        override fun onOpenShopSettings() = navController.navigateOnce(MoreRoutes.SHOP_SETTINGS)
+                        override fun onOpenPrinter() = navController.navigateOnce(MoreRoutes.PRINTER)
+                        override fun onOpenUsers() = navController.navigateOnce(MoreRoutes.USER_MANAGEMENT)
+                        override fun onOpenRecoveryCode() = navController.navigateOnce(MoreRoutes.RECOVERY_CODE)
+                        override fun onOpenQuickUnlock() = navController.navigateOnce(MoreRoutes.QUICK_UNLOCK)
+                        override fun onOpenActivity() = navController.navigateOnce(MoreRoutes.ACTIVITY_LOG)
+                        override fun onOpenDayEnd() = navController.navigateOnce(MoreRoutes.DAY_END)
+                        override fun onOpenGstReport() = navController.navigateOnce(MoreRoutes.GST_REPORT)
+                        override fun onOpenLoyalty() = navController.navigateOnce(MoreRoutes.LOYALTY)
                         override fun onSignOut() = authRepository?.signOut() ?: Unit
                     },
                 )
             }
             guarded(navController, MoreRoutes.USER_MANAGEMENT) {
-                UserManagementScreen(onBack = { navController.popBackStack() })
+                UserManagementScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.RECOVERY_CODE) {
-                RecoveryCodeScreen(onBack = { navController.popBackStack() })
+                RecoveryCodeScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.ACTIVITY_LOG) {
-                ActivityLogScreen(onBack = { navController.popBackStack() })
+                ActivityLogScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.GST_REPORT) {
-                GstReportScreen(onBack = { navController.popBackStack() })
+                GstReportScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.LOYALTY) {
-                LoyaltySettingsScreen(onBack = { navController.popBackStack() })
+                LoyaltySettingsScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.DAY_END) {
                 DayEndScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenClosing = { navController.navigate(MoreRoutes.dayClosing(it)) },
+                    onBack = { navController.popOnce() },
+                    onOpenClosing = { navController.navigateOnce(MoreRoutes.dayClosing(it)) },
                 )
             }
             guarded(
@@ -366,35 +366,35 @@ fun AuxoNavHost(
                 route = MoreRoutes.DAY_CLOSING,
                 arguments = listOf(navArgument(MoreRoutes.ARG_CLOSING_ID) { type = NavType.LongType }),
             ) {
-                DayClosingScreen(onBack = { navController.popBackStack() })
+                DayClosingScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.SHOP_SETTINGS) {
                 ShopSettingsScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenStoreDetails = { navController.navigate(MoreRoutes.STORE_DETAILS) },
-                    onOpenCategories = { navController.navigate(MoreRoutes.CATEGORIES) },
+                    onBack = { navController.popOnce() },
+                    onOpenStoreDetails = { navController.navigateOnce(MoreRoutes.STORE_DETAILS) },
+                    onOpenCategories = { navController.navigateOnce(MoreRoutes.CATEGORIES) },
                 )
             }
             guarded(navController, MoreRoutes.CATEGORIES) {
-                com.auxo.pos.ui.screens.more.CategoriesScreen(onBack = { navController.popBackStack() })
+                com.auxo.pos.ui.screens.more.CategoriesScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.PRINTER) {
-                com.auxo.pos.ui.screens.more.PrinterSettingsScreen(onBack = { navController.popBackStack() })
+                com.auxo.pos.ui.screens.more.PrinterSettingsScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.STORE_DETAILS) {
-                StoreDetailsScreen(onBack = { navController.popBackStack() })
+                StoreDetailsScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.APPEARANCE) {
-                AppearanceScreen(onBack = { navController.popBackStack() })
+                AppearanceScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.QUICK_UNLOCK) {
-                QuickUnlockScreen(onBack = { navController.popBackStack() })
+                QuickUnlockScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.BACKUP) {
-                BackupScreen(onBack = { navController.popBackStack() })
+                BackupScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.REPORTS) {
-                ReportsScreen(onBack = { navController.popBackStack() })
+                ReportsScreen(onBack = { navController.popOnce() })
             }
         }
     }
@@ -424,11 +424,11 @@ private fun NavGraphBuilder.guarded(
 private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
     guarded(navController, StockRoutes.SUPPLIERS) {
         SupplierListScreen(
-            onBack = { navController.popBackStack() },
-            onOpenSupplier = { navController.navigate(StockRoutes.editSupplier(it)) },
-            onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
-            onOpenPurchases = { navController.navigate(StockRoutes.purchases()) },
-            onReceiveStock = { navController.navigate(StockRoutes.receive()) },
+            onBack = { navController.popOnce() },
+            onOpenSupplier = { navController.navigateOnce(StockRoutes.editSupplier(it)) },
+            onAddSupplier = { navController.navigateOnce(StockRoutes.newSupplier()) },
+            onOpenPurchases = { navController.navigateOnce(StockRoutes.purchases()) },
+            onReceiveStock = { navController.navigateOnce(StockRoutes.receive()) },
         )
     }
     guarded(navController,
@@ -441,8 +441,8 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         ),
     ) {
         SupplierEditorScreen(
-            onBack = { navController.popBackStack() },
-            onSaved = { navController.popBackStack() },
+            onBack = { navController.popOnce() },
+            onSaved = { navController.popOnce() },
         )
     }
     guarded(navController,
@@ -456,12 +456,12 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         ),
     ) {
         PurchaseListScreen(
-            onBack = { navController.popBackStack() },
-            onOpenOrder = { navController.navigate(StockRoutes.order(it)) },
-            onOpenReceipt = { navController.navigate(StockRoutes.receipt(it)) },
-            onNewOrder = { navController.navigate(StockRoutes.newOrder()) },
-            onReceive = { navController.navigate(StockRoutes.receive()) },
-            onOpenSuppliers = { navController.navigate(StockRoutes.suppliers()) },
+            onBack = { navController.popOnce() },
+            onOpenOrder = { navController.navigateOnce(StockRoutes.order(it)) },
+            onOpenReceipt = { navController.navigateOnce(StockRoutes.receipt(it)) },
+            onNewOrder = { navController.navigateOnce(StockRoutes.newOrder()) },
+            onReceive = { navController.navigateOnce(StockRoutes.receive()) },
+            onOpenSuppliers = { navController.navigateOnce(StockRoutes.suppliers()) },
         )
     }
     guarded(navController,
@@ -469,10 +469,10 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         arguments = listOf(navArgument(StockRoutes.ARG_ORDER_ID) { type = NavType.LongType }),
     ) {
         PurchaseOrderDetailScreen(
-            onBack = { navController.popBackStack() },
-            onEdit = { navController.navigate(StockRoutes.editOrder(it)) },
-            onReceive = { navController.navigate(StockRoutes.receive(it)) },
-            onOpenReceipt = { navController.navigate(StockRoutes.receipt(it)) },
+            onBack = { navController.popOnce() },
+            onEdit = { navController.navigateOnce(StockRoutes.editOrder(it)) },
+            onReceive = { navController.navigateOnce(StockRoutes.receive(it)) },
+            onOpenReceipt = { navController.navigateOnce(StockRoutes.receipt(it)) },
         )
     }
     guarded(navController,
@@ -486,17 +486,17 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
     ) { entry ->
         val editingId = entry.arguments?.getLong(StockRoutes.ARG_ORDER_ID) ?: 0L
         PurchaseOrderEditorScreen(
-            onBack = { navController.popBackStack() },
+            onBack = { navController.popOnce() },
             onSaved = { orderId ->
                 if (editingId != 0L) {
-                    navController.popBackStack()
+                    navController.popOnce()
                 } else {
                     navController.navigate(StockRoutes.order(orderId)) {
                         popUpTo(StockRoutes.ORDER_EDITOR) { inclusive = true }
                     }
                 }
             },
-            onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
+            onAddSupplier = { navController.navigateOnce(StockRoutes.newSupplier()) },
         )
     }
     guarded(navController,
@@ -509,13 +509,13 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         ),
     ) {
         ReceiveGoodsScreen(
-            onBack = { navController.popBackStack() },
+            onBack = { navController.popOnce() },
             onSaved = { receiptId ->
                 navController.navigate(StockRoutes.receipt(receiptId)) {
                     popUpTo(StockRoutes.RECEIVE) { inclusive = true }
                 }
             },
-            onAddSupplier = { navController.navigate(StockRoutes.newSupplier()) },
+            onAddSupplier = { navController.navigateOnce(StockRoutes.newSupplier()) },
         )
     }
     guarded(navController,
@@ -523,14 +523,14 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         arguments = listOf(navArgument(StockRoutes.ARG_RECEIPT_ID) { type = NavType.LongType }),
     ) {
         ReceiptDetailScreen(
-            onBack = { navController.popBackStack() },
-            onOpenOrder = { navController.navigate(StockRoutes.order(it)) },
+            onBack = { navController.popOnce() },
+            onOpenOrder = { navController.navigateOnce(StockRoutes.order(it)) },
         )
     }
     guarded(navController, StockRoutes.MOVEMENTS) {
         StockMovementsScreen(
-            onBack = { navController.popBackStack() },
-            onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
+            onBack = { navController.popOnce() },
+            onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
         )
     }
     guarded(navController,
@@ -544,16 +544,37 @@ private fun NavGraphBuilder.stockGraph(navController: NavHostController) {
         ),
     ) {
         StockAlertsScreen(
-            onBack = { navController.popBackStack() },
-            onOpenProduct = { navController.navigate(InventoryRoutes.product(it)) },
-            onOpenOrders = { navController.navigate(StockRoutes.purchases(PurchaseTab.ORDERS)) },
+            onBack = { navController.popOnce() },
+            onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
+            onOpenOrders = { navController.navigateOnce(StockRoutes.purchases(PurchaseTab.ORDERS)) },
         )
     }
     guarded(navController, StockRoutes.COUNT) {
-        StockCountScreen(onBack = { navController.popBackStack() })
+        StockCountScreen(onBack = { navController.popOnce() })
     }
     guarded(navController, StockRoutes.IMPORT) {
-        ProductImportScreen(onBack = { navController.popBackStack() })
+        ProductImportScreen(onBack = { navController.popOnce() })
+    }
+}
+
+/**
+ * Navigates to [route], but only while the current screen is actually the one on top (its
+ * lifecycle is RESUMED). A tap that lands while a navigation animation is still finishing — for
+ * example a second, impatient tap on a card because the first tap hadn't visibly done anything
+ * yet — is ignored instead of pushing a second copy of the destination onto the back stack. That
+ * duplicate copy is what makes Back feel unresponsive: the first Back press only pops back to the
+ * identical-looking duplicate, so it looks like nothing happened and a second press is needed.
+ */
+fun NavHostController.navigateOnce(route: String) {
+    if (currentBackStackEntry?.lifecycle?.currentState == androidx.lifecycle.Lifecycle.State.RESUMED) {
+        navigate(route) { launchSingleTop = true }
+    }
+}
+
+/** Pops the back stack, but only once per settled screen — see [navigateOnce]. */
+fun NavHostController.popOnce() {
+    if (currentBackStackEntry?.lifecycle?.currentState == androidx.lifecycle.Lifecycle.State.RESUMED) {
+        popBackStack()
     }
 }
 
