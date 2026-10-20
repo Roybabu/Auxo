@@ -66,10 +66,15 @@ import com.auxo.pos.core.auth.SetupError
 import com.auxo.pos.core.auth.SetupField
 import com.auxo.pos.ui.components.AuxoIcon
 import com.auxo.pos.ui.components.AuxoIconSize
+import com.auxo.pos.ui.components.AuxoIconStyle
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.StrengthMeter
 import com.auxo.pos.ui.components.SuggestionRow
+import androidx.compose.ui.text.font.FontWeight
+import com.auxo.pos.ui.components.crystalGlass
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.Spacing
@@ -255,8 +260,20 @@ fun AdminSetupContent(
                 modifier = Modifier.padding(top = Spacing.xs),
             )
             if (onBack != null) {
-                TextButton(onClick = onBack, enabled = !state.isSubmitting, modifier = Modifier.fillMaxWidth().testTag("setup_back")) {
-                    Text(stringResource(R.string.auth_back_to_login))
+                OutlinedButton(
+                    onClick = onBack,
+                    enabled = !state.isSubmitting,
+                    shape = RoundedCornerShape(32.dp),
+                    border = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(62.dp)
+                        .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
+                        .testTag("setup_back"),
+                ) {
+                    AuxoIcon(R.drawable.ic_arrow_back, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.auth_back_to_login), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
