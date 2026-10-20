@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
@@ -78,6 +81,8 @@ fun AuthLayout(
     logoWidth: Dp = 280.dp,
     /** Draws the form card as mint liquid glass instead of the plain white card. */
     glass: Boolean = false,
+    /** Sits the glass box in the middle of the space below the logo instead of right under it. */
+    centerGlass: Boolean = false,
     /** Loose pictures (leaves) drawn behind the logo and the card; placed by the screen's width and height. */
     decoration: @Composable BoxWithConstraintsScope.() -> Unit = {},
     /** Shown under the card. */
@@ -136,19 +141,35 @@ fun AuthLayout(
             }
         } else if (glass && !dark) {
             // The logo and the glass stay put; only the form's contents scroll inside the glass.
+            // With the keyboard up the logo, the extra gap and the footer give way so the glass gets the room.
+            val keyboardUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
                     .imePadding()
                     // The extra bottom padding shortens the glass from its lower edge.
-                    .padding(start = Spacing.screen, end = Spacing.screen, top = Spacing.xl, bottom = Spacing.xl + 128.dp),
+                    .padding(
+                        start = Spacing.screen,
+                        end = Spacing.screen,
+                        top = if (keyboardUp) Spacing.md else Spacing.xl,
+                        bottom = if (keyboardUp) Spacing.md else if (centerGlass) Spacing.xl else Spacing.xl + 128.dp,
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (topEnd != null) Spacer(Modifier.height(40.dp))
-                BrandLogo(width = logoWidth, modifier = Modifier.padding(bottom = Spacing.xl))
-                FormCard(glass = true, modifier = Modifier.weight(1f, fill = false)) { form() }
-                if (footer != null) {
+                if (!keyboardUp) {
+                    if (topEnd != null) Spacer(Modifier.height(40.dp))
+                    BrandLogo(width = logoWidth, modifier = Modifier.padding(bottom = Spacing.xl))
+                }
+                if (centerGlass) {
+                    // A little bottom padding lifts the centred box slightly above the exact middle.
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 120.dp), contentAlignment = Alignment.Center) {
+                        FormCard(glass = true) { form() }
+                    }
+                } else {
+                    FormCard(glass = true, modifier = Modifier.weight(1f, fill = false)) { form() }
+                }
+                if (footer != null && !keyboardUp) {
                     Spacer(Modifier.height(Spacing.md))
                     Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) { footer() }
                 }

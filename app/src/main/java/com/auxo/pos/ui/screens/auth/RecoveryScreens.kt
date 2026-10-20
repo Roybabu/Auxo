@@ -322,7 +322,7 @@ private fun ErrorLine(text: String, tag: String) {
 @Composable
 fun RecoveryCodeGate(canSkip: Boolean, viewModel: RecoveryCodeViewModel = viewModel(factory = RecoveryCodeViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    AuthLayout {
+    AuthLayout(backdropImage = R.drawable.auth_signup_bg, logoWidth = 220.dp, glass = true, centerGlass = true) {
         RecoveryCodeBody(
             state = state,
             onPasswordChange = viewModel::onPasswordChange,
@@ -400,7 +400,7 @@ fun PasswordResetContent(
     onBack: () -> Unit,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AuthLayout {
+    AuthLayout(backdropImage = R.drawable.auth_signup_bg, logoWidth = 220.dp, glass = true) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("password_reset")) {
             when (state.step) {
                 ResetStep.FORM -> {

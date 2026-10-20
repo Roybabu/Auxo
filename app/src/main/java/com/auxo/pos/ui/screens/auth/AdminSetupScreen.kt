@@ -327,7 +327,8 @@ private fun SetupLogoPicker(logo: Uri?, enabled: Boolean, onChoose: () -> Unit, 
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (preview != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
+                // Only a picked logo gets a white plate; the empty placeholder lets the glass show through.
+                .background(if (preview != null) Color.White else Color.Transparent),
             contentAlignment = Alignment.Center,
         ) {
             val bitmap = preview

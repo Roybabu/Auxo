@@ -36,7 +36,7 @@ fun CategorySetupScreen(viewModel: CategorySetupViewModel = viewModel(factory = 
 
 @Composable
 fun CategorySetupContent(state: CategorySetupUiState, onToggle: (Long) -> Unit, onConfirm: () -> Unit) {
-    AuthLayout {
+    AuthLayout(backdropImage = R.drawable.auth_signup_bg, logoWidth = 220.dp, glass = true) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("category_setup")) {
             Text(stringResource(R.string.category_setup_title), style = MaterialTheme.typography.headlineSmall)
             Text(
