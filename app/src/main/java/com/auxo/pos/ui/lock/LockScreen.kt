@@ -1,5 +1,7 @@
 package com.auxo.pos.ui.lock
 
+import com.auxo.pos.ui.components.SceneFingerprintButton
+import com.auxo.pos.ui.components.BotanicalScene
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -152,197 +154,108 @@ fun LockContent(
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
-    // Same picture and proportions as the sign-in page, so locking feels like a continuation of it.
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.White).testTag("auth_screen")) {
-        val width = minOf(maxWidth, MAX_LOGIN_WIDTH, maxHeight / ART_ASPECT)
-        val artHeight = width * ART_ASPECT
-        val pageHeight = maxHeight
-        Box(modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
-            Box(modifier = Modifier.width(width).height(pageHeight).align(Alignment.TopCenter)) {
-                // The picture is as tall as the page allows and sits at the bottom, so its curved white sheet and
-                // leaves run to the screen's foot. Any spare height above it continues the picture's own top edge.
-                val gap = pageHeight - artHeight
-                if (gap > 0.dp) {
-                    Box(modifier = Modifier.fillMaxWidth().height(gap + 1.dp).background(Brush.horizontalGradient(LOCK_TOP_EDGE)))
-                }
-                Image(
-                    painter = painterResource(R.drawable.auth_lock_bg),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillWidth,
-                    alignment = Alignment.TopCenter,
-                    modifier = Modifier.fillMaxWidth().offset(y = gap).requiredHeight(artHeight),
-                )
-                LockBrand(modifier = Modifier.fillMaxWidth().height(gap + artHeight * FORM_TOP))
-                // The controls scroll inside the sheet's clear area.
-                Box(modifier = Modifier.fillMaxSize().padding(top = gap + artHeight * FORM_TOP)) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = Spacing.xl, vertical = Spacing.lg)
-                            .testTag("lock_screen"),
-                    ) {
-                        Text(
-                            stringResource(R.string.lock_title),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = AuthInk,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Text(
-                            stringResource(R.string.lock_body, info.userName),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.xs).testTag("lock_user"),
-                        )
+    BotanicalScene(contentTag = "lock_screen") {
+        Text(
+            stringResource(R.string.lock_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = AuthInk,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            stringResource(R.string.lock_body, info.userName),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.xs).testTag("lock_user"),
+        )
 
-                        if (info.quickUnlockOff) {
-                            Text(
-                                stringResource(R.string.lock_quick_off),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.testTag("lock_quick_off"),
-                            )
-                        }
+        if (info.quickUnlockOff) {
+            Text(
+                stringResource(R.string.lock_quick_off),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag("lock_quick_off"),
+            )
+        }
 
-                        if (fingerprintOffered) {
-                            FingerprintButton(onClick = onUseFingerprint, modifier = Modifier.testTag("lock_fingerprint"))
-                        }
+        if (fingerprintOffered) {
+            SceneFingerprintButton(stringResource(R.string.lock_use_fingerprint), onClick = onUseFingerprint, modifier = Modifier.testTag("lock_fingerprint"))
+        }
 
-                        val message = state.message
-                        if (info.pinAvailable) {
-                            AuthPillField(
-                                value = state.pin,
-                                onValueChange = onPinChange,
-                                placeholder = stringResource(R.string.lock_field_pin),
-                                icon = R.drawable.ic_lock,
-                                highlightError = message is LockMessage.WrongPin,
-                                keyboardType = KeyboardType.NumberPassword,
-                                visualTransformation = PasswordVisualTransformation(),
-                                imeAction = ImeAction.Done,
-                                keyboardActions = KeyboardActions(onDone = { onUnlockWithPin() }),
-                                enabled = !state.busy,
-                                fieldHeight = LOCK_FIELD_HEIGHT,
-                                modifier = Modifier.testTag("lock_pin"),
-                            )
-                            UnlockButton(
-                                enabled = !state.busy && state.pin.isNotEmpty(),
-                                busy = state.busy,
-                                onClick = onUnlockWithPin,
-                                modifier = Modifier.testTag("lock_pin_unlock"),
-                            )
-                        }
+        val message = state.message
+        if (info.pinAvailable) {
+            AuthPillField(
+                value = state.pin,
+                onValueChange = onPinChange,
+                placeholder = stringResource(R.string.lock_field_pin),
+                icon = R.drawable.ic_lock,
+                highlightError = message is LockMessage.WrongPin,
+                keyboardType = KeyboardType.NumberPassword,
+                visualTransformation = PasswordVisualTransformation(),
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(onDone = { onUnlockWithPin() }),
+                enabled = !state.busy,
+                fieldHeight = LOCK_FIELD_HEIGHT,
+                modifier = Modifier.testTag("lock_pin"),
+            )
+            UnlockButton(
+                enabled = !state.busy && state.pin.isNotEmpty(),
+                busy = state.busy,
+                onClick = onUnlockWithPin,
+                modifier = Modifier.testTag("lock_pin_unlock"),
+            )
+        }
 
-                        when (message) {
-                            null -> Unit
-                            is LockMessage.WrongPin -> LockError(pluralStringResource(R.plurals.lock_wrong_pin, message.triesLeft, message.triesLeft))
-                            LockMessage.PinOff -> LockError(stringResource(R.string.lock_pin_off))
-                            LockMessage.WrongPassword -> LockError(stringResource(R.string.lock_wrong_password))
-                            is LockMessage.LockedOut -> LockError(pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds))
-                            LockMessage.Unavailable -> LockError(stringResource(R.string.lock_unavailable))
-                        }
+        when (message) {
+            null -> Unit
+            is LockMessage.WrongPin -> LockError(pluralStringResource(R.plurals.lock_wrong_pin, message.triesLeft, message.triesLeft))
+            LockMessage.PinOff -> LockError(stringResource(R.string.lock_pin_off))
+            LockMessage.WrongPassword -> LockError(stringResource(R.string.lock_wrong_password))
+            is LockMessage.LockedOut -> LockError(pluralStringResource(R.plurals.auth_login_locked, message.seconds, message.seconds))
+            LockMessage.Unavailable -> LockError(stringResource(R.string.lock_unavailable))
+        }
 
-                        if (info.pinAvailable || fingerprintOffered) {
-                            OrDivider(stringResource(R.string.lock_or_password))
-                        }
-                        AuthPillField(
-                            value = state.password,
-                            onValueChange = onPasswordChange,
-                            placeholder = stringResource(R.string.auth_field_password),
-                            icon = R.drawable.ic_lock,
-                            highlightError = message == LockMessage.WrongPassword,
-                            keyboardType = KeyboardType.Password,
-                            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                            trailingIcon = { PasswordToggle(showPassword) { showPassword = !showPassword } },
-                            imeAction = ImeAction.Done,
-                            keyboardActions = KeyboardActions(onDone = { onUnlockWithPassword() }),
-                            enabled = !state.busy,
-                            fieldHeight = LOCK_FIELD_HEIGHT,
-                            modifier = Modifier.testTag("lock_password"),
-                        )
-                        UnlockButton(
-                            enabled = !state.busy && state.password.isNotEmpty(),
-                            busy = state.busy,
-                            onClick = onUnlockWithPassword,
-                            modifier = Modifier.testTag("lock_password_unlock"),
-                        )
+        if (info.pinAvailable || fingerprintOffered) {
+            OrDivider(stringResource(R.string.lock_or_password))
+        }
+        AuthPillField(
+            value = state.password,
+            onValueChange = onPasswordChange,
+            placeholder = stringResource(R.string.auth_field_password),
+            icon = R.drawable.ic_lock,
+            highlightError = message == LockMessage.WrongPassword,
+            keyboardType = KeyboardType.Password,
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = { PasswordToggle(showPassword) { showPassword = !showPassword } },
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(onDone = { onUnlockWithPassword() }),
+            enabled = !state.busy,
+            fieldHeight = LOCK_FIELD_HEIGHT,
+            modifier = Modifier.testTag("lock_password"),
+        )
+        UnlockButton(
+            enabled = !state.busy && state.password.isNotEmpty(),
+            busy = state.busy,
+            onClick = onUnlockWithPassword,
+            modifier = Modifier.testTag("lock_password_unlock"),
+        )
 
-                        TextButton(
-                            onClick = onSignOut,
-                            modifier = Modifier.fillMaxWidth().testTag("lock_sign_out"),
-                        ) {
-                            AuxoIcon(R.drawable.ic_logout, contentDescription = null, size = AuxoIconSize.Mini)
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.lock_sign_out), color = AuthEmerald, fontWeight = FontWeight.Medium)
-                        }
-                        // Keeps the last control clear of the leaf strip.
-                        Spacer(Modifier.height(width * LEAVES_ASPECT * 0.4f))
-                    }
-                }
-            }
+        TextButton(
+            onClick = onSignOut,
+            modifier = Modifier.fillMaxWidth().testTag("lock_sign_out"),
+        ) {
+            AuxoIcon(R.drawable.ic_logout, contentDescription = null, size = AuxoIconSize.Mini)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.lock_sign_out), color = AuthEmerald, fontWeight = FontWeight.Medium)
         }
     }
 }
 
 private val LOCK_FIELD_HEIGHT = 51.dp
 
-/** The top edge of auth_lock_bg, left to right, so the strip above the picture on a tall phone blends into it. */
-private val LOCK_TOP_EDGE = listOf(0xFF022C24, 0xFF03342C, 0xFF064436, 0xFF08513F, 0xFF095A43, 0xFF086148, 0xFF0B634A, 0xFF095A43, 0xFF08523B).map { Color(it) }
 private val LOCK_BUTTON_HEIGHT = 52.dp
-
-/** The Auxo mark, name and tagline over the dark part of the picture. */
-@Composable
-private fun LockBrand(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.statusBarsPadding().padding(horizontal = Spacing.screen, vertical = Spacing.sm),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.auxo_mark),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.width(84.dp).aspectRatio(MARK_ASPECT),
-        )
-        Text(
-            stringResource(R.string.app_name),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White,
-            modifier = Modifier.padding(top = 2.dp),
-        )
-        Text(
-            stringResource(R.string.app_tagline),
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.75f),
-        )
-    }
-}
-
-/** "Use fingerprint": a pale-mint pill with the fingerprint tile at the left and an arrow at the right. */
-@Composable
-private fun FingerprintButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(32.dp)
-    OutlinedButton(
-        onClick = onClick,
-        shape = shape,
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = AuthMintLight),
-        border = BorderStroke(1.dp, AuthMint),
-        modifier = modifier.fillMaxWidth().height(LOCK_BUTTON_HEIGHT),
-    ) {
-        AuxoIcon(R.drawable.ic_fingerprint, contentDescription = null, size = AuxoIconSize.Compact)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            stringResource(R.string.lock_use_fingerprint),
-            color = AuthEmerald,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f),
-        )
-        AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
-    }
-}
 
 /** "Unlock": an emerald gradient pill with a light highlight, a soft shadow and a circled arrow (a spinner while working). */
 @Composable

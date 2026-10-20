@@ -1,5 +1,9 @@
 package com.auxo.pos.ui.screens.auth
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.font.FontWeight
+import com.auxo.pos.ui.components.SceneFingerprintButton
+import com.auxo.pos.ui.components.BotanicalScene
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,38 +61,36 @@ fun ResumeScreen(name: String, onUsePassword: () -> Unit) {
 
 @Composable
 fun ResumeContent(state: ResumeUiState, onUseFingerprint: () -> Unit, onUsePassword: () -> Unit) {
-    AuthLayout {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().testTag("resume"),
-        ) {
+    // The same scene as the lock screen, so opening the app and locking it look like one thing.
+    BotanicalScene(contentTag = "resume") {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Illustration(
                 if (state.failed) R.drawable.fp_failed else R.drawable.fp_idle,
-                modifier = Modifier.height(120.dp).testTag(if (state.failed) "resume_failed" else "resume_idle"),
+                modifier = Modifier.height(96.dp).testTag(if (state.failed) "resume_failed" else "resume_idle"),
             )
-            Text(
-                stringResource(R.string.resume_title, state.name),
-                style = MaterialTheme.typography.headlineSmall,
-                color = AuthInk,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                stringResource(if (state.failed) R.string.resume_failed else R.string.resume_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (state.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("resume_message"),
-            )
-            Button(
-                onClick = onUseFingerprint,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AuthEmerald, contentColor = Color.White),
-                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("resume_fingerprint"),
-            ) { Text(stringResource(if (state.failed) R.string.resume_try_again else R.string.lock_use_fingerprint)) }
-            TextButton(onClick = onUsePassword, modifier = Modifier.fillMaxWidth().testTag("resume_password")) {
-                Text(stringResource(R.string.resume_use_password))
-            }
+        }
+        Text(
+            stringResource(R.string.resume_title, state.name),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = AuthInk,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            stringResource(if (state.failed) R.string.resume_failed else R.string.resume_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (state.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.xs).testTag("resume_message"),
+        )
+        SceneFingerprintButton(
+            stringResource(if (state.failed) R.string.resume_try_again else R.string.lock_use_fingerprint),
+            onClick = onUseFingerprint,
+            modifier = Modifier.testTag("resume_fingerprint"),
+        )
+        TextButton(onClick = onUsePassword, modifier = Modifier.fillMaxWidth().testTag("resume_password")) {
+            Text(stringResource(R.string.resume_use_password), color = AuthEmerald, fontWeight = FontWeight.Medium)
         }
     }
 }
