@@ -26,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -151,6 +154,7 @@ private fun DecorationArt() {
     Art(LeafBottomMiddle, x = 112, y = 876, width = 40, height = 40)
     Art(LeafBottomRight, x = 262, y = 936, width = 70, height = 42)
     // ====================================== PASTE ZONE: end ======================================
+    FloatingLeaves()
 }
 
 @Composable
@@ -228,4 +232,48 @@ private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** One floating leaf, placed by its top-left corner and width in the frame, tilted and (if soft) blurred like out-of-focus ones. */
+@Composable
+private fun Leaf(@DrawableRes id: Int, x: Int, y: Int, width: Int, rotation: Float = 0f, alpha: Float = 1f, blur: Int = 0) {
+    Image(
+        painter = painterResource(id),
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier
+            .offset(x.dp, y.dp)
+            .width(width.dp)
+            .rotate(rotation)
+            .alpha(alpha)
+            .then(if (blur > 0) Modifier.blur(blur.dp) else Modifier),
+    )
+}
+
+/** The leaves drifting over the page: crisp ones near the middle, soft ones close to the screen edges. */
+@Composable
+private fun FloatingLeaves() {
+    // Top.
+    Leaf(R.drawable.onb_leafset_18, -6, 60, 54, rotation = 8f, alpha = 0.9f, blur = 2)
+    Leaf(R.drawable.onb_leafset_20, 90, 66, 40, rotation = -30f)
+    Leaf(R.drawable.onb_leafset_11, 405, 92, 38, rotation = -15f)
+    Leaf(R.drawable.onb_leafset_01, 346, 134, 22, rotation = 20f)
+    // Left and right edges.
+    Leaf(R.drawable.onb_leafset_06, 52, 192, 38, rotation = 150f)
+    Leaf(R.drawable.onb_leafset_09, -14, 222, 44, rotation = 30f, alpha = 0.9f, blur = 3)
+    Leaf(R.drawable.onb_leafset_16, 388, 205, 22, rotation = -25f, blur = 1)
+    Leaf(R.drawable.onb_leafset_18, 404, 208, 40, rotation = -10f, alpha = 0.9f, blur = 4)
+    Leaf(R.drawable.onb_leafset_12, 396, 368, 28, rotation = 25f)
+    Leaf(R.drawable.onb_leafset_19, 410, 530, 32, rotation = 10f, alpha = 0.9f, blur = 2)
+    Leaf(R.drawable.onb_leafset_13, 402, 704, 40, rotation = -20f, alpha = 0.9f, blur = 1)
+    Leaf(R.drawable.onb_leafset_14, -2, 500, 28, rotation = -15f)
+    Leaf(R.drawable.onb_leafset_01, 33, 526, 18, rotation = 30f)
+    // Bottom.
+    Leaf(R.drawable.onb_leafset_09, -8, 744, 66, rotation = 30f, alpha = 0.9f, blur = 4)
+    Leaf(R.drawable.onb_leafset_08, 56, 872, 36, rotation = -15f)
+    Leaf(R.drawable.onb_leafset_20, 134, 872, 44, rotation = 15f)
+    Leaf(R.drawable.onb_leafset_13, 292, 870, 36, rotation = 20f)
+    Leaf(R.drawable.onb_leafset_09, -6, 850, 96, rotation = 40f, alpha = 0.95f, blur = 6)
+    Leaf(R.drawable.onb_leafset_13, 22, 920, 70, rotation = -30f, alpha = 0.95f, blur = 6)
+    Leaf(R.drawable.onb_leafset_09, 310, 890, 130, rotation = -25f, alpha = 0.95f, blur = 8)
 }

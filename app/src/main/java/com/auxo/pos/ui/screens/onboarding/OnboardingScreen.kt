@@ -1,7 +1,10 @@
 package com.auxo.pos.ui.screens.onboarding
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,8 +35,16 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -39,6 +52,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +62,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.ui.components.AuthGradientBackground
 import com.auxo.pos.ui.components.CircleNextButton
-import com.auxo.pos.ui.components.Illustration
 import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.components.PageDots
 import com.auxo.pos.ui.theme.AuthEmerald
@@ -123,62 +138,138 @@ fun OnboardingContent(
 private val TitleStyle = TextStyle(fontSize = 26.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold, color = AuthInk, textAlign = TextAlign.Center)
 private val BodyStyle = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = AuthInkMuted, textAlign = TextAlign.Center)
 
-/** The picture that sits behind the text on the splash, placed by fractions of the screen so it fits any size. */
+/** Height over width of the splash design (840 x 1871, the shape of a tall phone). */
+private const val SCENE_ASPECT = 1871f / 840f
+
+/**
+ * The splash, built from separate pictures so it matches the design: the wave background of the second page, the
+ * shop's goods round the edges (some running off the screen), leaves between them, and the Auxo logo, the line
+ * "Your Business Made Simple" and the three words in the empty middle. Everything is placed in an 840 x 1871 frame
+ * that is as wide as the screen and centred upright, so the pieces keep their places relative to each other.
+ */
 @Composable
 private fun SplashPage() {
     BoxWithConstraints(modifier = Modifier.fillMaxSize().testTag("onboarding_splash")) {
         val w = maxWidth
-        val h = maxHeight
-        // White page with soft mint blobs in the corners.
+        val unit = w / 840f
+        val top = (maxHeight - unit * 1871f) / 2
         Image(
-            painter = painterResource(R.drawable.onb_splash_bg),
+            painter = painterResource(R.drawable.onb_intro_bg),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        // The pictures are smaller than before, each tilted a little and carrying a soft shadow that is part of the file.
-        Illustration(R.drawable.onb_s_bag, Modifier.align(Alignment.TopStart).offset(x = w * -0.02f, y = h * 0.10f).width(w * 0.32f).rotate(-8f))
-        Illustration(R.drawable.onb_s_apparel, Modifier.align(Alignment.TopEnd).offset(x = w * 0.06f, y = h * 0.09f).width(w * 0.41f).rotate(6f))
-        Illustration(R.drawable.onb_s_burger, Modifier.align(Alignment.CenterStart).offset(x = w * -0.08f, y = h * -0.07f).width(w * 0.33f).rotate(5f))
-        Illustration(R.drawable.onb_s_coffee, Modifier.align(Alignment.CenterEnd).offset(x = w * 0.07f, y = h * -0.05f).width(w * 0.30f).rotate(-6f))
-        Illustration(R.drawable.onb_s_sneakers, Modifier.align(Alignment.BottomStart).offset(x = w * -0.04f, y = h * -0.17f).width(w * 0.41f).rotate(-5f))
-        Illustration(R.drawable.onb_s_grocery_bag, Modifier.align(Alignment.BottomEnd).offset(x = w * 0.06f, y = h * -0.11f).width(w * 0.41f).rotate(4f))
+
+        // Leaves behind the goods.
+        ScenePiece(R.drawable.onb_leafset_09, -12, -12, 150, top, unit, rotation = 20f, alpha = 0.95f, blur = 3.dp)
+        ScenePiece(R.drawable.onb_leafset_06, 10, 165, 65, top, unit, rotation = -15f)
+        ScenePiece(R.drawable.onb_leafpic_01, 288, 338, 80, top, unit, rotation = -20f)
+        ScenePiece(R.drawable.onb_leafset_19, 0, 462, 80, top, unit, rotation = 15f)
+        ScenePiece(R.drawable.onb_leafset_20, 264, 485, 70, top, unit, rotation = 20f)
+        ScenePiece(R.drawable.onb_leafset_20, 520, 195, 72, top, unit, rotation = 15f)
+        ScenePiece(R.drawable.onb_leafset_11, 762, 155, 80, top, unit, rotation = -20f)
+        ScenePiece(R.drawable.onb_leafset_08, 556, 566, 68, top, unit, rotation = -10f, alpha = 0.9f, blur = 1.dp)
+        ScenePiece(R.drawable.onb_leafset_18, 82, 866, 76, top, unit, rotation = 10f, alpha = 0.9f, blur = 1.dp)
+        ScenePiece(R.drawable.onb_leafset_11, 700, 910, 82, top, unit, rotation = -15f, alpha = 0.9f, blur = 1.dp)
+        ScenePiece(R.drawable.onb_leafset_08, 715, 1145, 100, top, unit, rotation = -10f, alpha = 0.9f, blur = 1.dp)
+        ScenePiece(R.drawable.onb_leafset_13, 17, 1432, 100, top, unit, rotation = 20f)
+        ScenePiece(R.drawable.onb_leafpic_01, 235, 1378, 117, top, unit, rotation = -20f)
+        ScenePiece(R.drawable.onb_leafset_13, 437, 1575, 103, top, unit, rotation = 15f)
+
+        // The goods, each placed and sized as in the design.
+        ScenePiece(R.drawable.onb_sp_bag, 8, 192, 248, top, unit)
+        ScenePiece(R.drawable.onb_sp_burger, 14, 585, 232, top, unit)
+        ScenePiece(R.drawable.onb_sp_shoe_red, 12, 1200, 250, top, unit)
+        ScenePiece(R.drawable.onb_sp_shoe_blue, 12, 1545, 250, top, unit)
+        // The shirt hangs from a wooden hanger.
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val u = size.width / 840f
+            val wood = Color(0xFFE0A468)
+            val t = top.toPx()
+            val hook = Path().apply {
+                moveTo(684f * u, t + 232f * u)
+                cubicTo(668f * u, t + 200f * u, 676f * u, t + 182f * u, 692f * u, t + 188f * u)
+                cubicTo(708f * u, t + 194f * u, 706f * u, t + 214f * u, 694f * u, t + 232f * u)
+            }
+            translate(left = -52f * u, top = 14f * u) { drawPath(hook, wood, style = Stroke(width = 9f * u, cap = StrokeCap.Round)) }
+            val bar = Path().apply {
+                moveTo(644f * u, t + 310f * u)
+                lineTo(688f * u, t + 232f * u)
+                lineTo(746f * u, t + 276f * u)
+            }
+            translate(left = -52f * u, top = 14f * u) { drawPath(bar, wood, style = Stroke(width = 10f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
+        }
+        ScenePiece(R.drawable.onb_sp_shirt, 515, 288, 305, top, unit)
+        ScenePiece(R.drawable.onb_sp_coffee, 596, 646, 244, top, unit)
+        ScenePiece(R.drawable.onb_sp_grocery, 462, 1296, 392, top, unit)
+        // The big soft leaves in the bottom corners, out of focus.
+        ScenePiece(R.drawable.onb_leafset_09, -15, 1665, 175, top, unit, rotation = 35f, alpha = 0.95f, blur = 6.dp)
+        ScenePiece(R.drawable.onb_leafset_09, 625, 1580, 235, top, unit, rotation = -30f, alpha = 0.95f, blur = 8.dp)
 
         Column(
-            modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxSize().padding(top = top + unit * 628f).padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.weight(1.05f))
             Image(
                 painter = painterResource(R.drawable.auxo_logo_vertical),
                 contentDescription = stringResource(R.string.app_name),
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.width(w * 0.40f).aspectRatio(LOGO_ASPECT),
+                modifier = Modifier.width(unit * 370f).aspectRatio(LOGO_ASPECT),
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(unit * 14f))
             Text(
                 stringResource(R.string.onboarding_splash_title),
-                style = TitleStyle.copy(fontSize = 28.sp, lineHeight = 33.sp, fontWeight = FontWeight.ExtraBold),
+                style = TitleStyle.copy(fontSize = unit.toSp(54f), lineHeight = unit.toSp(58f), fontWeight = FontWeight.ExtraBold),
                 modifier = Modifier.testTag("onboarding_splash_title"),
             )
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                SplashWord(R.string.onboarding_splash_inventory)
-                Text("•", style = TextStyle(fontSize = 14.sp, color = AuthEmerald))
-                SplashWord(R.string.onboarding_splash_billing)
-                Text("•", style = TextStyle(fontSize = 14.sp, color = AuthEmerald))
-                SplashWord(R.string.onboarding_splash_growth)
+            Spacer(Modifier.height(unit * 14f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 24f)) {
+                SplashWord(R.string.onboarding_splash_inventory, unit)
+                Text("•", style = TextStyle(fontSize = unit.toSp(28f), color = AuthEmerald))
+                SplashWord(R.string.onboarding_splash_billing, unit)
+                Text("•", style = TextStyle(fontSize = unit.toSp(28f), color = AuthEmerald))
+                SplashWord(R.string.onboarding_splash_growth, unit)
             }
-            Spacer(Modifier.weight(1.35f))
-            Spacer(Modifier.height(96.dp))
         }
     }
+}
+
+/** One picture of the splash, placed by its left, top and width in the 1024-wide design (and its top-left shifted by [top]). */
+@Composable
+private fun ScenePiece(
+    @DrawableRes id: Int,
+    x: Int,
+    y: Int,
+    width: Int,
+    top: Dp,
+    unit: Dp,
+    rotation: Float = 0f,
+    alpha: Float = 1f,
+    blur: Dp = 0.dp,
+    height: Int? = null,
+) {
+    Image(
+        painter = painterResource(id),
+        contentDescription = null,
+        contentScale = if (height != null) ContentScale.FillBounds else ContentScale.FillWidth,
+        modifier = Modifier
+            .offset(x = unit * x.toFloat(), y = top + unit * y.toFloat())
+            .requiredWidth(unit * width.toFloat())
+            .then(if (height != null) Modifier.requiredHeight(unit * height.toFloat()) else Modifier)
+            .rotate(rotation)
+            .alpha(alpha)
+            .then(if (blur > 0.dp) Modifier.blur(blur) else Modifier),
+    )
 }
 
 /** Width over height of auxo_logo_vertical.png. */
 private const val LOGO_ASPECT = 345f / 364f
 
 @Composable
-private fun SplashWord(@StringRes id: Int) {
-    Text(stringResource(id), style = TextStyle(fontSize = 15.sp, color = AuthEmerald, fontWeight = FontWeight.Medium))
+private fun SplashWord(@StringRes id: Int, unit: Dp) {
+    Text(stringResource(id), style = TextStyle(fontSize = unit.toSp(30f), color = AuthEmerald, fontWeight = FontWeight.Medium))
 }
+
+/** [units] design units of the splash as a text size: it grows and shrinks with the picture, not with the font setting. */
+@Composable
+private fun Dp.toSp(units: Float): TextUnit = with(LocalDensity.current) { (this@toSp * units).toSp() }
