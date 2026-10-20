@@ -87,6 +87,7 @@ import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthEmeraldBright
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.theme.AuthInkMuted
+import com.auxo.pos.ui.theme.AuthCream
 import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.LoginMessage
@@ -164,7 +165,7 @@ fun LoginContent(
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.White).testTag("auth_screen")) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(AuthCream).testTag("auth_screen")) {
         // The picture sets the page's shape. On a wide or short window the column narrows so the whole picture still fits its height.
         val width = minOf(maxWidth, MAX_LOGIN_WIDTH, maxHeight / ART_ASPECT)
         val artHeight = width * ART_ASPECT

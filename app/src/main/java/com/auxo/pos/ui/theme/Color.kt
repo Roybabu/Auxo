@@ -46,6 +46,9 @@ val AuthInkMuted = Color(0xFF5B6B64)
 val AuthEmerald = Color(0xFF0B7A55)
 val AuthEmeraldBright = Color(0xFF10A56F)
 val AuthMint = Color(0xFFD9F3E7)
+
+/** The warm off-white of the sign-in picture's sheet; used behind the picture so the two blend. */
+val AuthCream = Color(0xFFFBF9EE)
 val AuthMintLight = Color(0xFFF0FBF6)
 val AuthDotIdle = Color(0xFFD5DEDA)
 val AuthCard = Color(0xFFFFFFFF)
