@@ -67,8 +67,9 @@ fun BotanicalScene(contentTag: String, content: @Composable ColumnScope.() -> Un
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.White).testTag("auth_screen")) {
         val width = minOf(maxWidth, MAX_LOGIN_WIDTH, maxHeight / ART_ASPECT)
         val artHeight = width * ART_ASPECT
+        val pageHeight = maxHeight
         Box(modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
-            Box(modifier = Modifier.width(width).height(maxHeight).align(Alignment.TopCenter)) {
+            Box(modifier = Modifier.width(width).height(pageHeight).align(Alignment.TopCenter)) {
                 Canvas(modifier = Modifier.fillMaxSize()) { drawStretchedPicture(picture) }
                 SceneBrand(modifier = Modifier.fillMaxWidth().height(artHeight * FORM_TOP))
                 // The sheet's clear area: from below the curve to the bottom of the screen.
