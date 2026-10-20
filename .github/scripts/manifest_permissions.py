@@ -9,6 +9,7 @@ EXPECTED = {
     "android.permission.CAMERA",  # not requested by the app itself; allowed if a library adds it
     "android.permission.INTERNET",  # Play services code scanner / ML Kit libraries may declare it
     "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.REQUEST_INSTALL_PACKAGES",  # the app's own: install a downloaded app update
     "android.permission.WAKE_LOCK",
     "android.permission.FOREGROUND_SERVICE",
     "android.permission.BLUETOOTH",  # the app's own: Bluetooth receipt printer on Android 11 and older (maxSdk 30)

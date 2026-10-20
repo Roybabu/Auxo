@@ -58,7 +58,12 @@ if re.search(r'android:allowBackup\s*=\s*"true"', manifest):
     fail("app/src/main/AndroidManifest.xml", 1, "Manifest allows backup of the store database")
 # Permissions that were reviewed and are needed. Anything else still fails the check.
 #  - BLUETOOTH, BLUETOOTH_CONNECT: print receipts on the shop's paired Bluetooth printer. No scan, no location.
-REVIEWED_PERMISSIONS = {"android.permission.BLUETOOTH", "android.permission.BLUETOOTH_CONNECT"}
+REVIEWED_PERMISSIONS = {
+    "android.permission.BLUETOOTH",
+    "android.permission.BLUETOOTH_CONNECT",
+    "android.permission.INTERNET",  # app update: look up the newest GitHub release and download its APK
+    "android.permission.REQUEST_INSTALL_PACKAGES",  # app update: open the downloaded APK in the system installer
+}
 for permission in re.findall(r'<uses-permission[^>]*android:name="([^"]+)"', manifest):
     if permission in REVIEWED_PERMISSIONS:
         continue

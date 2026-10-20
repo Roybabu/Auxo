@@ -87,6 +87,9 @@ class AppContainer(context: Context) {
 
     private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /** Looks for newer releases of the app on GitHub and installs the one the user chooses. */
+    val appUpdater: com.auxo.pos.core.update.AppUpdater by lazy { com.auxo.pos.core.update.AppUpdater(appContext, background) }
+
     /** The saved sign-in that only the phone's fingerprint can open (see [KeystoreSessionVault]). */
     val sessionVault: SavedSessionVault by lazy { KeystoreSessionVault(appContext) }
 

@@ -1774,4 +1774,17 @@
     <string name="resume_failed">ফিঙ্গারপ্রিন্ট চেনা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="resume_try_again">আবার চেষ্টা করুন</string>
     <string name="resume_use_password">পরিবর্তে পাসওয়ার্ড ব্যবহার করুন</string>
+    <string name="update_title">অ্যাপ আপডেট</string>
+    <string name="update_version">সংস্করণ %1$s</string>
+    <string name="update_check">আপডেট খুঁজুন</string>
+    <string name="update_checking">খোঁজা হচ্ছে…</string>
+    <string name="update_up_to_date">আপনার কাছে সর্বশেষ সংস্করণ আছে।</string>
+    <string name="update_available">সংস্করণ %1$s পাওয়া যাচ্ছে।</string>
+    <string name="update_download">ডাউনলোড করুন</string>
+    <string name="update_downloading">ডাউনলোড হচ্ছে… %1$d%%</string>
+    <string name="update_install">ইনস্টল করুন</string>
+    <string name="update_failed">আপডেট খোঁজা বা ডাউনলোড করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।</string>
+    <string name="update_permission_hint">জিজ্ঞাসা করলে Auxo-কে অ্যাপ ইনস্টল করার অনুমতি দিন, তারপর আবার ইনস্টল চাপুন।</string>
+    <string name="update_prompt_title">আপডেট পাওয়া যাচ্ছে</string>
+    <string name="update_later">পরে</string>
 </resources>

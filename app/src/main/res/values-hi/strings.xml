@@ -1774,4 +1774,17 @@
     <string name="resume_failed">फ़िंगरप्रिंट पहचानी नहीं गई। फिर कोशिश करें।</string>
     <string name="resume_try_again">फिर कोशिश करें</string>
     <string name="resume_use_password">इसके बजाय पासवर्ड का उपयोग करें</string>
+    <string name="update_title">ऐप अपडेट</string>
+    <string name="update_version">संस्करण %1$s</string>
+    <string name="update_check">अपडेट जाँचें</string>
+    <string name="update_checking">जाँच हो रही है…</string>
+    <string name="update_up_to_date">आपके पास नवीनतम संस्करण है।</string>
+    <string name="update_available">संस्करण %1$s उपलब्ध है।</string>
+    <string name="update_download">डाउनलोड करें</string>
+    <string name="update_downloading">डाउनलोड हो रहा है… %1$d%%</string>
+    <string name="update_install">इंस्टॉल करें</string>
+    <string name="update_failed">अपडेट जाँचा या डाउनलोड नहीं किया जा सका। इंटरनेट जाँचकर फिर कोशिश करें।</string>
+    <string name="update_permission_hint">पूछे जाने पर Auxo को ऐप इंस्टॉल करने की अनुमति दें, फिर दोबारा इंस्टॉल दबाएँ।</string>
+    <string name="update_prompt_title">अपडेट उपलब्ध है</string>
+    <string name="update_later">बाद में</string>
 </resources>

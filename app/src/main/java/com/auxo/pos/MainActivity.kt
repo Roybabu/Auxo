@@ -122,6 +122,11 @@ class MainActivity : FragmentActivity() {
                         onboarding = !onboardingSeen,
                         savedSessionName = remember(authState) { container.authRepository.savedSessionName() },
                     ) { AuxoApp() }
+                    // Once someone is signed in, look quietly for a newer version and offer it if there is one.
+                    if (authState is AuthState.SignedIn) {
+                        LaunchedEffect(Unit) { container.appUpdater.checkOnLaunch() }
+                        com.auxo.pos.ui.screens.more.UpdatePrompt()
+                    }
                 }
             }
         }

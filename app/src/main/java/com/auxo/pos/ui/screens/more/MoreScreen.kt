@@ -201,6 +201,7 @@ fun MoreScreen(
                 actions::onOpenAppearance,
                 modifier = Modifier.testTag("more_appearance"),
             )
+            UpdateCard()
 
             // Account: sign-in security and the shop's data, then sign out last.
             SectionHeader(stringResource(R.string.more_section_account), modifier = Modifier.padding(top = Spacing.md))
