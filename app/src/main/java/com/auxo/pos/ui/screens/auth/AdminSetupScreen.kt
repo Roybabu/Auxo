@@ -139,7 +139,7 @@ fun AdminSetupContent(
     onLogoRemove: () -> Unit = {},
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
-    AuthLayout {
+    AuthLayout(backdropImage = R.drawable.auth_signup_bg) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("admin_setup")) {
             Illustration(R.drawable.auth_storefront, modifier = Modifier.fillMaxWidth().height(110.dp))
             Text(stringResource(R.string.auth_setup_title), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
