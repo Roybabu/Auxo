@@ -113,7 +113,7 @@ object ProductFormValidator {
         val gstRate: GstRate? = when (val choice = form.gst) {
             GstChoice.NotSet -> null
             GstChoice.Apparel -> {
-                if (form.category != ProductCategory.GARMENT) fieldErrors[FormField.GST_RATE] = FieldError.APPAREL_RULE_GARMENTS_ONLY
+                if (!form.category.usesApparelGst) fieldErrors[FormField.GST_RATE] = FieldError.APPAREL_RULE_GARMENTS_ONLY
                 GstRate.Apparel
             }
             is GstChoice.Standard -> GstRate.Fixed(choice.basisPoints)
@@ -158,7 +158,7 @@ object ProductFormValidator {
             brand = form.brand.trim().ifEmpty { null },
             category = form.category,
             description = form.description.trim().ifEmpty { null },
-            material = if (form.category == ProductCategory.GARMENT) form.material.trim().ifEmpty { null } else null,
+            material = if (form.category.usesMaterial) form.material.trim().ifEmpty { null } else null,
             dietType = if (form.category.usesDietType) form.dietType else null,
             hsnCode = hsn.ifEmpty { null },
             gstRate = gstRate,

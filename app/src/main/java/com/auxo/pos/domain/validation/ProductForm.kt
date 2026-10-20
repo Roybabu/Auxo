@@ -143,9 +143,6 @@ data class ProductForm(
 
 /** Helpers for building the garment size x colour matrix. */
 object GarmentVariants {
-
-    val PRESET_SIZES = listOf("XS", "S", "M", "L", "XL", "XXL", "3XL")
-
     /**
      * Rebuilds the variant list from [sizes] and [colours]: keeps rows whose size
      * and colour still exist, adds rows for new combinations using [defaults],
@@ -201,9 +198,9 @@ sealed interface GstChoice {
             is GstRate.Fixed -> if (rate.basisPoints in GstRate.STANDARD_BASIS_POINTS) Standard(rate.basisPoints) else Custom
         }
 
-        /** Default for new products: the apparel rule for garments, otherwise chosen by the user. */
+        /** Default for new products: the apparel rule for garments and footwear, otherwise chosen by the user. */
         fun defaultFor(category: com.auxo.pos.domain.model.ProductCategory): GstChoice = when (category) {
-            com.auxo.pos.domain.model.ProductCategory.GARMENT -> Apparel
+            com.auxo.pos.domain.model.ProductCategory.GARMENT, com.auxo.pos.domain.model.ProductCategory.FOOTWEAR -> Apparel
             com.auxo.pos.domain.model.ProductCategory.RESTAURANT ->
                 Standard(com.auxo.pos.domain.model.ProductCategory.RESTAURANT_GST_BASIS_POINTS)
             else -> NotSet

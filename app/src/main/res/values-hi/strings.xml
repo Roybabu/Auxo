@@ -68,6 +68,8 @@
 
     <!-- Categories, filters and statuses -->
     <string name="category_garment">कपड़ा</string>
+    <string name="category_footwear">à¤à¥à¤¤à¥-à¤à¤ªà¥à¤ªà¤²</string>
+    <string name="category_accessories">à¤à¤à¥à¤¸à¥à¤¸à¤°à¥à¤à¤¼</string>
     <string name="category_packaged_food">पैकेट वाला खाना</string>
     <string name="category_beverage">पेय</string>
     <string name="category_restaurant">रेस्टोरेंट</string>
@@ -284,7 +286,7 @@
     <string name="gst_not_set_hint">GST-पंजीकृत दुकानों में इस उत्पाद का बिल बनाने से पहले दर तय करना ज़रूरी है।</string>
     <string name="error_invalid_gst_rate">0 से 100 के बीच की दर लिखें, जैसे 5 या 12.5</string>
     <string name="error_invalid_hsn">HSN 4, 6 या 8 अंकों का होना चाहिए</string>
-    <string name="error_apparel_rule_garments">कपड़ों वाला नियम केवल कपड़ों पर लागू होता है</string>
+    <string name="error_apparel_rule_garments">कपड़ों वाला नियम केवल कपड़ों और जूते-चप्पल पर लागू होता है</string>
     <string name="detail_gst">GST %1$s</string>
     <string name="detail_hsn">HSN %1$s</string>
 
@@ -858,7 +860,6 @@
     <string name="report_next_page">अगला</string>
 
     <!-- More, Home and Inventory entry points -->
-    <string name="more_section_data">आपका डेटा</string>
     <string name="more_backup_title">बैकअप और रिस्टोर</string>
     <string name="more_backup_body">सब कुछ एक फ़ाइल में सहेजें, या दूसरे फ़ोन पर ले जाएँ</string>
     <string name="backup_title">बैकअप और रिस्टोर</string>
@@ -992,6 +993,8 @@
     <string name="insights_departments_empty">इस अवधि में सामान की कोई बिक्री नहीं।</string>
     <string name="insights_departments_description">विभाग के अनुसार शुद्ध बिक्री: %1$s।</string>
     <string name="insights_dept_garments">कपड़े</string>
+    <string name="insights_dept_footwear">à¤à¥à¤¤à¥-à¤à¤ªà¥à¤ªà¤²</string>
+    <string name="insights_dept_accessories">à¤à¤à¥à¤¸à¥à¤¸à¤°à¥à¤à¤¼</string>
     <string name="insights_dept_food">पैकेट वाला खाना</string>
     <string name="insights_dept_beverages">पेय</string>
     <string name="insights_dept_restaurant">रेस्टोरेंट के पकवान</string>

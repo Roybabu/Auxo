@@ -20,6 +20,7 @@ import com.auxo.pos.domain.billing.SaleBuilder
 import com.auxo.pos.domain.billing.taxModeFor
 import com.auxo.pos.domain.model.GstRate
 import com.auxo.pos.domain.model.Money
+import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.PaymentKind
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.PaymentRecord
@@ -553,8 +554,8 @@ class DatabaseMigrationTest {
         assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
 
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
-        // The Ingredient category that version 17 added is removed again by version 19.
-        assertEquals(4, categories.size)
+        // The Ingredient category that version 17 added is removed again by version 19; version 20 adds Footwear and Accessories.
+        assertEquals(6, categories.size)
         assertTrue(categories.all { it.builtIn && it.enabled })
 
         val inventory = RoomInventoryRepository(db, TestData.clock)
@@ -572,7 +573,7 @@ class DatabaseMigrationTest {
         database = db
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
         assertEquals(
-            listOf(true, true, true, false),
+            listOf(true, true, true, true, true, false),
             categories.map { it.enabled },
         )
     }
@@ -654,7 +655,29 @@ class DatabaseMigrationTest {
         assertEquals(0, count("SELECT COUNT(*) FROM stock_batches"))
         assertEquals(1, count("SELECT COUNT(*) FROM stock_movements"))
         assertEquals(1, count("SELECT COUNT(*) FROM product_variants WHERE id = 12"))
-        assertEquals(1, count("SELECT COUNT(*) FROM shop_categories"))
+        assertEquals(3, count("SELECT COUNT(*) FROM shop_categories"))
         assertEquals(listOf("Cotton Shirt"), RoomInventoryRepository(db, TestData.clock).observeProducts().first().map { it.name })
+    }
+
+    @Test
+    fun migrate19To20_addsFootwearAndAccessories_rightAfterGarment_keepingTheShopsChoices() = runTest {
+        createFromSchema(19).also {
+            it.execSQL(
+                "INSERT INTO shop_categories (id, profile, enabled, sort_order, built_in) VALUES " +
+                    "(1, 'GARMENT', 1, 0, 1), (2, 'PACKAGED_FOOD', 0, 1, 1), (3, 'BEVERAGE', 1, 2, 1), (4, 'RESTAURANT', 1, 3, 1)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
+
+        val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories().sortedBy { it.sortOrder }
+        assertEquals(
+            listOf(ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT),
+            categories.map { it.profile },
+        )
+        assertEquals(listOf(true, true, true, false, true, true), categories.map { it.enabled })
+        assertTrue(categories.all { it.builtIn })
     }
 }

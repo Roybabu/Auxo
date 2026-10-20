@@ -28,6 +28,8 @@ fun com.auxo.pos.domain.model.Product.categoryLabel(): String =
 @StringRes
 fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.string.category_garment
+    ProductCategory.FOOTWEAR -> R.string.category_footwear
+    ProductCategory.ACCESSORIES -> R.string.category_accessories
     ProductCategory.PACKAGED_FOOD -> R.string.category_packaged_food
     ProductCategory.BEVERAGE -> R.string.category_beverage
     ProductCategory.RESTAURANT -> R.string.category_restaurant
@@ -36,6 +38,8 @@ fun ProductCategory.labelRes(): Int = when (this) {
 @DrawableRes
 fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.GARMENT -> R.drawable.ic_garment
+    ProductCategory.FOOTWEAR -> R.drawable.ic_footwear
+    ProductCategory.ACCESSORIES -> R.drawable.ic_accessories
     ProductCategory.PACKAGED_FOOD -> R.drawable.ic_food
     ProductCategory.BEVERAGE -> R.drawable.ic_beverage
     ProductCategory.RESTAURANT -> R.drawable.ic_restaurant

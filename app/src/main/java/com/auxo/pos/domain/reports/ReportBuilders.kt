@@ -305,7 +305,9 @@ object Reports {
     }
 
     fun categoryName(category: ProductCategory): String = when (category) {
-        ProductCategory.GARMENT -> "Garment"
+        ProductCategory.GARMENT -> "Clothing"
+        ProductCategory.FOOTWEAR -> "Footwear"
+        ProductCategory.ACCESSORIES -> "Accessories"
         ProductCategory.PACKAGED_FOOD -> "Packaged food"
         ProductCategory.BEVERAGE -> "Beverage"
         ProductCategory.RESTAURANT -> "Restaurant"

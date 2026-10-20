@@ -68,6 +68,8 @@
 
     <!-- Categories, filters and statuses -->
     <string name="category_garment">পোশাক</string>
+    <string name="category_footwear">à¦à§à¦¤à¦¾</string>
+    <string name="category_accessories">à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸à¦°à¦¿à¦</string>
     <string name="category_packaged_food">প্যাকেটজাত খাবার</string>
     <string name="category_beverage">পানীয়</string>
     <string name="category_restaurant">রেস্তোরাঁ</string>
@@ -284,7 +286,7 @@
     <string name="gst_not_set_hint">GST-নিবন্ধিত দোকানে এই পণ্যের বিল করার আগে হার ঠিক করা দরকার।</string>
     <string name="error_invalid_gst_rate">0 থেকে 100-এর মধ্যে হার লিখুন, যেমন 5 বা 12.5</string>
     <string name="error_invalid_hsn">HSN 4, 6 বা 8 অঙ্কের হতে হবে</string>
-    <string name="error_apparel_rule_garments">পোশাকের নিয়ম শুধু পোশাকের ক্ষেত্রে প্রযোজ্য</string>
+    <string name="error_apparel_rule_garments">পোশাকের নিয়ম শুধু পোশাক ও জুতার ক্ষেত্রে প্রযোজ্য</string>
     <string name="detail_gst">GST %1$s</string>
     <string name="detail_hsn">HSN %1$s</string>
 
@@ -858,7 +860,6 @@
     <string name="report_next_page">পরের</string>
 
     <!-- More, Home and Inventory entry points -->
-    <string name="more_section_data">আপনার ডেটা</string>
     <string name="more_backup_title">ব্যাকআপ ও রিস্টোর</string>
     <string name="more_backup_body">সবকিছু একটি ফাইলে সংরক্ষণ করুন, বা অন্য ফোনে নিয়ে যান</string>
     <string name="backup_title">ব্যাকআপ ও রিস্টোর</string>
@@ -992,6 +993,8 @@
     <string name="insights_departments_empty">এই সময়ে পণ্যের কোনো বিক্রি নেই।</string>
     <string name="insights_departments_description">বিভাগ অনুযায়ী নিট বিক্রি: %1$s।</string>
     <string name="insights_dept_garments">পোশাক</string>
+    <string name="insights_dept_footwear">à¦à§à¦¤à¦¾</string>
+    <string name="insights_dept_accessories">à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸à¦°à¦¿à¦</string>
     <string name="insights_dept_food">প্যাকেটজাত খাবার</string>
     <string name="insights_dept_beverages">পানীয়</string>
     <string name="insights_dept_restaurant">রেস্তোরাঁর খাবার</string>

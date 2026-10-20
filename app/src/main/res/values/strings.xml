@@ -52,7 +52,7 @@
     <string name="home_no_alerts">All stock levels look good.</string>
     <string name="home_view_inventory">View inventory</string>
     <string name="home_empty_title">Add your first product</string>
-    <string name="home_empty_body">Add garments, packaged food or beverages to see stock levels and alerts here.</string>
+    <string name="home_empty_body">Add clothing, packaged food or beverages to see stock levels and alerts here.</string>
     <string name="home_action_new_bill">New bill</string>
     <string name="home_action_add_product">Add product</string>
 
@@ -67,7 +67,9 @@
     <string name="alert_low_stock_amount">Only %1$s left</string>
 
     <!-- Categories, filters and statuses -->
-    <string name="category_garment">Garment</string>
+    <string name="category_garment">Clothing</string>
+    <string name="category_footwear">Footwear</string>
+    <string name="category_accessories">Accessories</string>
     <string name="category_packaged_food">Packaged food</string>
     <string name="category_beverage">Beverage</string>
     <string name="category_restaurant">Restaurant</string>
@@ -102,7 +104,7 @@
     <string name="inventory_search_hint">Search name, brand, SKU or barcode</string>
     <string name="inventory_add_product">Add product</string>
     <string name="inventory_empty_title">No products yet</string>
-    <string name="inventory_empty_body">Add garments, packaged food and beverages to start tracking stock.</string>
+    <string name="inventory_empty_body">Add clothing, packaged food and beverages to start tracking stock.</string>
     <string name="inventory_no_results_title">No matching products</string>
     <string name="inventory_no_results_body">Try a different search or clear the filters.</string>
     <string name="scan_not_found">No product has barcode %1$s</string>
@@ -173,7 +175,7 @@
     <string name="editor_colours">Colours</string>
     <string name="editor_custom_size">Other size</string>
     <string name="editor_colour_hint">Colour, e.g. Navy blue</string>
-    <string name="editor_garment_hint">Pick sizes and add colours. A variant is created for each size and colour.</string>
+    <string name="editor_garment_hint">Pick sizes (or type your own) and add colours. A variant is created for each size and colour.</string>
     <string name="editor_defaults">Prices for all variants</string>
     <string name="editor_apply_defaults">Apply to all variants</string>
     <string name="editor_variants">Variants</string>
@@ -284,7 +286,7 @@
     <string name="gst_not_set_hint">GST-registered stores need a rate before this product can be billed.</string>
     <string name="error_invalid_gst_rate">Enter a rate from 0 to 100, like 5 or 12.5</string>
     <string name="error_invalid_hsn">HSN must be 4, 6 or 8 digits</string>
-    <string name="error_apparel_rule_garments">The apparel rule applies to garments only</string>
+    <string name="error_apparel_rule_garments">The apparel rule applies to clothing and footwear only</string>
     <string name="detail_gst">GST %1$s</string>
     <string name="detail_hsn">HSN %1$s</string>
 
@@ -858,7 +860,6 @@
     <string name="report_next_page">Next</string>
 
     <!-- More, Home and Inventory entry points -->
-    <string name="more_section_data">Your data</string>
     <string name="more_backup_title">Backup and restore</string>
     <string name="more_backup_body">Save everything to a file, or move it to another phone</string>
     <string name="backup_title">Backup and restore</string>
@@ -992,7 +993,9 @@ in %2$s</string>
     <string name="insights_departments_note">Net sales by product category. Restaurant dishes are counted separately.</string>
     <string name="insights_departments_empty">No item sales in this period.</string>
     <string name="insights_departments_description">Net sales by department: %1$s.</string>
-    <string name="insights_dept_garments">Garments</string>
+    <string name="insights_dept_garments">Clothing</string>
+    <string name="insights_dept_footwear">Footwear</string>
+    <string name="insights_dept_accessories">Accessories</string>
     <string name="insights_dept_food">Packaged food</string>
     <string name="insights_dept_beverages">Beverages</string>
     <string name="insights_dept_restaurant">Restaurant dishes</string>
@@ -1638,7 +1641,7 @@ in %2$s</string>
     <string name="import_status_exists">Already exists</string>
     <string name="import_row_unnamed">Row %1$d</string>
     <string name="import_issue_row">Row %1$d · %2$s: %3$s</string>
-    <string name="import_parse_unknown_category">Category not recognised. Use Garment, Packaged food or Beverage.</string>
+    <string name="import_parse_unknown_category">Category not recognised. Use Clothing, Footwear, Accessories, Packaged food or Beverage.</string>
     <string name="import_parse_unknown_diet">Use Veg or Non-veg.</string>
     <string name="import_parse_unknown_unit">Unit not recognised. Use g, kg, ml, L or pcs.</string>
     <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">Date not recognised. Use 31/12/2026 or 2026-12-31.</string>

@@ -315,6 +315,8 @@ private fun PaymentMethodsCard(insights: Insights, formatter: MoneyFormatter) {
 private fun departmentName(department: Department): String = stringResource(
     when (department) {
         Department.GARMENTS -> R.string.insights_dept_garments
+        Department.FOOTWEAR -> R.string.insights_dept_footwear
+        Department.ACCESSORIES -> R.string.insights_dept_accessories
         Department.PACKAGED_FOOD -> R.string.insights_dept_food
         Department.BEVERAGES -> R.string.insights_dept_beverages
         Department.RESTAURANT -> R.string.insights_dept_restaurant

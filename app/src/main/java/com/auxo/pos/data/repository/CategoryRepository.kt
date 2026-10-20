@@ -176,7 +176,7 @@ class RoomCategoryRepository(private val database: AuxoDatabase) : CategoryRepos
 
     private suspend fun sellingEnabledCount(): Int = dao.categories().count { it.enabled }
 
-    private fun defaultName(profile: String): String = profile.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
+    private fun defaultName(profile: String): String = if (profile == ProductCategory.GARMENT.name) "Clothing" else profile.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
 
     private fun profileOf(name: String): ProductCategory = ProductCategory.entries.firstOrNull { it.name == name } ?: ProductCategory.GARMENT
 

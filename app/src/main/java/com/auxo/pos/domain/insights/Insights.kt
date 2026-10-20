@@ -30,7 +30,7 @@ enum class InsightsPeriod(val preset: PeriodPreset) {
 }
 
 /** Where an item sold sits for the "by department" chart: its product category, or a restaurant dish. */
-enum class Department { GARMENTS, PACKAGED_FOOD, BEVERAGES, RESTAURANT, OTHER }
+enum class Department { GARMENTS, FOOTWEAR, ACCESSORIES, PACKAGED_FOOD, BEVERAGES, RESTAURANT, OTHER }
 
 data class SeriesPoint(val label: String, val amount: Money)
 
@@ -227,6 +227,8 @@ object InsightsBuilder {
 
     private fun ProductCategory?.toDepartment(): Department = when (this) {
         ProductCategory.GARMENT -> Department.GARMENTS
+        ProductCategory.FOOTWEAR -> Department.FOOTWEAR
+        ProductCategory.ACCESSORIES -> Department.ACCESSORIES
         ProductCategory.RESTAURANT -> Department.RESTAURANT
         ProductCategory.PACKAGED_FOOD -> Department.PACKAGED_FOOD
         ProductCategory.BEVERAGE -> Department.BEVERAGES

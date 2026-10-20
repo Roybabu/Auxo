@@ -107,8 +107,8 @@ class CategoriesTest {
     fun theViewModel_listsAddedCategories_andExplainsRefusals() = runTest {
         val viewModel = CategoriesViewModel(RoomCategoryRepository(database))
         keepActive(viewModel.uiState)
-        awaitUntil { viewModel.uiState.value.categories.size == 4 }
-        assertEquals(4, viewModel.uiState.value.categories.size)
+        awaitUntil { viewModel.uiState.value.categories.size == 6 }
+        assertEquals(6, viewModel.uiState.value.categories.size)
 
         viewModel.onAdd("Sweets", ProductCategory.PACKAGED_FOOD)
         awaitUntil { viewModel.uiState.value.categories.any { it.name == "Sweets" } }

@@ -127,15 +127,17 @@ class ProductEditorViewModel(
     private fun newKey(): String = "n${keyCounter++}"
 
     private fun newForm(category: ProductCategory, base: ProductForm = ProductForm()): ProductForm {
+        // Sizes picked for one kind of goods (S/M/L) mean nothing for another (shoe sizes), so they do not follow the form.
+        val sizes = if (base.category.presetSizes == category.presetSizes) base.sizes else emptyList()
         val variants = if (category.usesSizeAndColour) {
-            GarmentVariants.sync(base.sizes, base.colours, emptyList(), base.defaults, ::newKey)
+            GarmentVariants.sync(sizes, base.colours, emptyList(), base.defaults, ::newKey)
         } else {
             listOf(VariantForm(key = newKey(), unit = category.defaultUnit, barcode = initialBarcode.orEmpty()))
         }
         // The 5% a restaurant item starts with is a default, not a choice, so it does not follow the form to another category.
         val carried = if (base.category == ProductCategory.RESTAURANT && base.gst == GstChoice.Standard(ProductCategory.RESTAURANT_GST_BASIS_POINTS)) GstChoice.NotSet else base.gst
         val gst = when {
-            carried is GstChoice.Apparel && category != ProductCategory.GARMENT -> GstChoice.NotSet
+            carried is GstChoice.Apparel && !category.usesApparelGst -> GstChoice.NotSet
             carried is GstChoice.NotSet -> GstChoice.defaultFor(category)
             else -> carried
         }
@@ -147,6 +149,7 @@ class ProductEditorViewModel(
         }
         return base.copy(
             category = category,
+            sizes = sizes,
             variants = variants,
             dietType = base.dietType.takeIf { category.usesDietType },
             subcategory = base.subcategory,
@@ -294,7 +297,7 @@ class ProductEditorViewModel(
 
     /** Preset sizes keep their usual order; custom sizes follow in the order added. */
     private fun orderSizes(sizes: List<String>): List<String> {
-        val presets = GarmentVariants.PRESET_SIZES
+        val presets = _uiState.value.form.category.presetSizes
         val (known, custom) = sizes.distinctBy { it.lowercase() }.partition { size ->
             presets.any { it.equals(size, ignoreCase = true) }
         }

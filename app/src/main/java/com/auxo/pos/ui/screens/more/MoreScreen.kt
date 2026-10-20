@@ -87,7 +87,8 @@ fun MoreScreen(
                 modifier = Modifier.testTag("more_signed_in"),
             )
 
-            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_USERS) || can(Permission.VIEW_ACTIVITY_LOG) || can(Permission.CLOSE_DAY) || can(Permission.GST_REPORT) || can(Permission.MANAGE_LOYALTY)) {
+            // Business: how the shop runs.
+            if (can(Permission.MANAGE_SETTINGS) || can(Permission.MANAGE_LOYALTY) || can(Permission.MANAGE_USERS)) {
                 SectionHeader(stringResource(R.string.more_section_business), modifier = Modifier.padding(top = Spacing.sm))
             }
             if (can(Permission.MANAGE_SETTINGS)) {
@@ -98,23 +99,12 @@ fun MoreScreen(
                     actions::onOpenShopSettings,
                     modifier = Modifier.testTag("more_shop_settings"),
                 )
-            }
-            if (can(Permission.MANAGE_SETTINGS)) {
                 MoreItem(
                     R.drawable.ic_print,
                     stringResource(R.string.printer_title),
                     stringResource(R.string.more_printer_body),
                     actions::onOpenPrinter,
                     modifier = Modifier.testTag("more_printer"),
-                )
-            }
-            if (can(Permission.GST_REPORT)) {
-                MoreItem(
-                    R.drawable.ic_percent,
-                    stringResource(R.string.gst_title),
-                    stringResource(R.string.more_gst_body),
-                    actions::onOpenGstReport,
-                    modifier = Modifier.testTag("more_gst_report"),
                 )
             }
             if (can(Permission.MANAGE_LOYALTY)) {
@@ -126,15 +116,6 @@ fun MoreScreen(
                     modifier = Modifier.testTag("more_loyalty"),
                 )
             }
-            if (can(Permission.CLOSE_DAY)) {
-                MoreItem(
-                    R.drawable.ic_day_end,
-                    stringResource(R.string.dayend_title),
-                    stringResource(R.string.more_dayend_body),
-                    actions::onOpenDayEnd,
-                    modifier = Modifier.testTag("more_day_end"),
-                )
-            }
             if (can(Permission.MANAGE_USERS)) {
                 MoreItem(
                     R.drawable.ic_badge,
@@ -144,25 +125,8 @@ fun MoreScreen(
                     modifier = Modifier.testTag("more_user_management"),
                 )
             }
-            if (can(Permission.MANAGE_USERS)) {
-                MoreItem(
-                    R.drawable.ic_key,
-                    stringResource(R.string.recovery_screen_title),
-                    stringResource(R.string.more_recovery_body),
-                    actions::onOpenRecoveryCode,
-                    modifier = Modifier.testTag("more_recovery_code"),
-                )
-            }
-            if (can(Permission.VIEW_ACTIVITY_LOG)) {
-                MoreItem(
-                    R.drawable.ic_activity,
-                    stringResource(R.string.activity_title),
-                    stringResource(R.string.more_activity_body),
-                    actions::onOpenActivity,
-                    modifier = Modifier.testTag("more_activity_log"),
-                )
-            }
 
+            // Stock: buying, counting and moving goods.
             val showSuppliers = LocalSuppliersEnabled.current && can(Permission.MANAGE_SUPPLIERS)
             val showStockRecords = can(Permission.VIEW_STOCK_RECORDS)
             val showCount = can(Permission.ADJUST_STOCK)
@@ -184,10 +148,8 @@ fun MoreScreen(
                 }
             }
 
+            // Records: sales, tax, the day's closing and who did what.
             SectionHeader(stringResource(R.string.more_section_records), modifier = Modifier.padding(top = Spacing.md))
-            if (can(Permission.VIEW_REPORTS)) {
-                MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
-            }
             if (can(Permission.VIEW_FINANCIALS)) {
                 MoreItem(R.drawable.ic_invoice, stringResource(R.string.billing_history), stringResource(R.string.more_history_body), actions::onOpenHistory)
             } else {
@@ -200,10 +162,35 @@ fun MoreScreen(
                     modifier = Modifier.testTag("more_invoices"),
                 )
             }
-
-            if (can(Permission.BACKUP_AND_RESTORE)) {
-                SectionHeader(stringResource(R.string.more_section_data), modifier = Modifier.padding(top = Spacing.md))
-                MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
+            if (can(Permission.VIEW_REPORTS)) {
+                MoreItem(R.drawable.ic_reports, stringResource(R.string.reports_title), stringResource(R.string.more_reports_body), actions::onOpenReports)
+            }
+            if (can(Permission.GST_REPORT)) {
+                MoreItem(
+                    R.drawable.ic_percent,
+                    stringResource(R.string.gst_title),
+                    stringResource(R.string.more_gst_body),
+                    actions::onOpenGstReport,
+                    modifier = Modifier.testTag("more_gst_report"),
+                )
+            }
+            if (can(Permission.CLOSE_DAY)) {
+                MoreItem(
+                    R.drawable.ic_day_end,
+                    stringResource(R.string.dayend_title),
+                    stringResource(R.string.more_dayend_body),
+                    actions::onOpenDayEnd,
+                    modifier = Modifier.testTag("more_day_end"),
+                )
+            }
+            if (can(Permission.VIEW_ACTIVITY_LOG)) {
+                MoreItem(
+                    R.drawable.ic_activity,
+                    stringResource(R.string.activity_title),
+                    stringResource(R.string.more_activity_body),
+                    actions::onOpenActivity,
+                    modifier = Modifier.testTag("more_activity_log"),
+                )
             }
 
             SectionHeader(stringResource(R.string.more_section_appearance), modifier = Modifier.padding(top = Spacing.md))
@@ -215,6 +202,7 @@ fun MoreScreen(
                 modifier = Modifier.testTag("more_appearance"),
             )
 
+            // Account: sign-in security and the shop's data, then sign out last.
             SectionHeader(stringResource(R.string.more_section_account), modifier = Modifier.padding(top = Spacing.md))
             MoreItem(
                 R.drawable.ic_lock,
@@ -223,6 +211,18 @@ fun MoreScreen(
                 actions::onOpenQuickUnlock,
                 modifier = Modifier.testTag("more_quick_unlock"),
             )
+            if (can(Permission.MANAGE_USERS)) {
+                MoreItem(
+                    R.drawable.ic_key,
+                    stringResource(R.string.recovery_screen_title),
+                    stringResource(R.string.more_recovery_body),
+                    actions::onOpenRecoveryCode,
+                    modifier = Modifier.testTag("more_recovery_code"),
+                )
+            }
+            if (can(Permission.BACKUP_AND_RESTORE)) {
+                MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
+            }
             MoreItem(
                 R.drawable.ic_logout,
                 stringResource(R.string.sign_out_title),

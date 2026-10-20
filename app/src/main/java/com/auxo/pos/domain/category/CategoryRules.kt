@@ -17,6 +17,8 @@ object CategoryRules {
     /** Categories a new shop is offered, in the order they are listed. Restaurant starts off. */
     val builtInOrder: List<ProductCategory> = listOf(
         ProductCategory.GARMENT,
+        ProductCategory.FOOTWEAR,
+        ProductCategory.ACCESSORIES,
         ProductCategory.PACKAGED_FOOD,
         ProductCategory.BEVERAGE,
         ProductCategory.RESTAURANT,

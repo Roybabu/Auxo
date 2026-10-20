@@ -483,7 +483,7 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                 capitalization = KeyboardCapitalization.Words,
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (form.category == ProductCategory.GARMENT) {
+            if (form.category.usesMaterial) {
                 AuxoTextField(
                     value = form.material,
                     onValueChange = actions::onMaterialChange,
@@ -645,7 +645,7 @@ private fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: Pr
             )
             val choices = buildList {
                 add(GstChoice.NotSet)
-                if (form.category == ProductCategory.GARMENT) add(GstChoice.Apparel)
+                if (form.category.usesApparelGst) add(GstChoice.Apparel)
                 GstRate.STANDARD_BASIS_POINTS.forEach { add(GstChoice.Standard(it)) }
                 add(GstChoice.Custom)
             }
@@ -712,7 +712,8 @@ private fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: Pr
 @Composable
 private fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     var customSize by rememberSaveable { mutableStateOf("") }
-    val customSizes = form.sizes.filterNot { size -> GarmentVariants.PRESET_SIZES.any { it.equals(size, ignoreCase = true) } }
+    val presetSizes = form.category.presetSizes
+    val customSizes = form.sizes.filterNot { size -> presetSizes.any { it.equals(size, ignoreCase = true) } }
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             SectionHeader(stringResource(R.string.editor_sizes))
@@ -722,7 +723,7 @@ private fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                (GarmentVariants.PRESET_SIZES + customSizes).forEach { size ->
+                (presetSizes + customSizes).forEach { size ->
                     FilterChip(
                         selected = form.sizes.any { it.equals(size, ignoreCase = true) },
                         onClick = { actions.onToggleSize(size) },

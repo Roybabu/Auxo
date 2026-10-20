@@ -82,6 +82,8 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  * 19. Order type and kitchen tickets are removed: held_bills.service_type, table_number, kot_sent and kot_count and
  *     invoices.service_type and table_number are dropped. The Ingredient category is removed too, with its products,
  *     batches and stock movements. An automatic migration from 18 ([RemoveKitchenAndIngredients]).
+ * 20. Footwear and Accessories: two built-in rows are added to shop_categories, on, right after Garment. No table
+ *     changes. Written by hand ([MIGRATION_19_20]).
  */
 @Database(
     entities = [
@@ -196,7 +198,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 19
+        const val VERSION = 20
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -342,13 +344,30 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Version 20: the built-in Footwear and Accessories categories are added to a shop that already has its
+         * categories, on, listed straight after Garment. A shop with no category rows yet is seeded with them later.
+         */
+        val MIGRATION_19_20: Migration = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val garment = "(SELECT MIN(sort_order) FROM shop_categories WHERE profile = 'GARMENT' AND built_in = 1)"
+                db.execSQL("UPDATE shop_categories SET sort_order = sort_order + 2 WHERE sort_order > $garment")
+                listOf("FOOTWEAR", "ACCESSORIES").forEachIndexed { index, profile ->
+                    db.execSQL(
+                        "INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) " +
+                            "SELECT NULL, '$profile', 1, $garment + ${index + 1}, 1 WHERE $garment IS NOT NULL",
+                    )
+                }
+            }
+        }
+
         // Upgrades are guaranteed only from version 15 (nothing was released before it). Versions 6 to 14 have no
         // exported schema and are tested only through the 4 to 15 chain; see "Database upgrades" in the README.
 
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20)
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }

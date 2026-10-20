@@ -142,14 +142,14 @@ object ProductImportTemplate {
     fun csv(): String = listOf(
         header,
         row(
-            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Garment", ImportColumn.BRAND to "Acme",
+            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
             ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
             ImportColumn.SIZE to "M", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
             ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "10",
             ImportColumn.LOW_STOCK to "3", ImportColumn.SKU to "TS-BLU-M",
         ),
         row(
-            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Garment", ImportColumn.BRAND to "Acme",
+            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
             ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
             ImportColumn.SIZE to "L", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
             ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "8",
@@ -402,6 +402,8 @@ object ProductImport {
 
     fun parseCategory(text: String): ProductCategory? = when (normalizeImportHeader(text)) {
         "garment", "garments", "clothing", "clothes", "apparel", "cloth" -> ProductCategory.GARMENT
+        "footwear", "shoe", "shoes", "sandal", "sandals", "slipper", "slippers", "chappal" -> ProductCategory.FOOTWEAR
+        "accessory", "accessories", "bag", "bags", "belt", "belts", "cap", "caps", "wallet", "wallets" -> ProductCategory.ACCESSORIES
         "packagedfood", "packaged", "food", "grocery", "snack", "snacks" -> ProductCategory.PACKAGED_FOOD
         "beverage", "beverages", "drink", "drinks" -> ProductCategory.BEVERAGE
         else -> null

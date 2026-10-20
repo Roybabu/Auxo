@@ -139,7 +139,7 @@ class ProductPhotoUiTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Garment").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clothing").assertIsDisplayed()
     }
 
     @Test
@@ -152,6 +152,6 @@ class ProductPhotoUiTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Garment").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clothing").assertIsDisplayed()
     }
 }
