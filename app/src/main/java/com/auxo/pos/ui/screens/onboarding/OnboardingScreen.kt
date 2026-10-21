@@ -3,7 +3,6 @@ package com.auxo.pos.ui.screens.onboarding
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,11 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.Color
 
 import androidx.compose.ui.layout.ContentScale
@@ -181,24 +175,6 @@ private fun SplashPage() {
         ScenePiece(R.drawable.onb_sp_burger, 14, 585, 232, top, unit)
         ScenePiece(R.drawable.onb_sp_shoe_red, 12, 1200, 250, top, unit)
         ScenePiece(R.drawable.onb_sp_shoe_blue, 12, 1545, 250, top, unit)
-        // The shirt hangs from a wooden hanger.
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val u = size.width / 840f
-            val wood = Color(0xFFE0A468)
-            val t = top.toPx()
-            val hook = Path().apply {
-                moveTo(684f * u, t + 232f * u)
-                cubicTo(668f * u, t + 200f * u, 676f * u, t + 182f * u, 692f * u, t + 188f * u)
-                cubicTo(708f * u, t + 194f * u, 706f * u, t + 214f * u, 694f * u, t + 232f * u)
-            }
-            translate(left = -52f * u, top = 14f * u) { drawPath(hook, wood, style = Stroke(width = 9f * u, cap = StrokeCap.Round)) }
-            val bar = Path().apply {
-                moveTo(644f * u, t + 310f * u)
-                lineTo(688f * u, t + 232f * u)
-                lineTo(746f * u, t + 276f * u)
-            }
-            translate(left = -52f * u, top = 14f * u) { drawPath(bar, wood, style = Stroke(width = 10f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
-        }
         ScenePiece(R.drawable.onb_sp_shirt, 515, 288, 305, top, unit)
         ScenePiece(R.drawable.onb_sp_coffee, 596, 646, 244, top, unit)
         ScenePiece(R.drawable.onb_sp_grocery, 462, 1296, 392, top, unit)
