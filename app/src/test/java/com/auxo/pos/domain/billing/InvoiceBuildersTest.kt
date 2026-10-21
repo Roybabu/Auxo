@@ -198,7 +198,8 @@ class ReturnBuilderTest {
         val built = SaleBuilder.build(cart, totals, settings, payments, TestData.clock.millis())
         val sale = built.copy(id = 9, number = "INV/26-27/00009", lines = built.lines.mapIndexed { i, l -> l.copy(id = 300L + i) })
         assertTrue(!sale.roundedToRupee)
-        assertEquals(Money(33_33), ReturnBuilder.refundDue(sale, mapOf(sale.lines[0].id to 1)))
+        // One third of the line, worked out per amount (taxable and each tax) as credit notes are: 33.32, not rounded to 33.00.
+        assertEquals(Money(33_32), ReturnBuilder.refundDue(sale, mapOf(sale.lines[0].id to 1)))
         // The same bill made with round-off on refunds whole rupees.
         assertEquals(Money(33_00), ReturnBuilder.refundDue(sale.copy(roundedToRupee = true), mapOf(sale.lines[0].id to 1)))
     }
