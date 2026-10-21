@@ -177,7 +177,7 @@ private fun SplashPage() {
         ScenePiece(R.drawable.onb_sp_shoe_blue, 12, 1545, 250, top, unit)
         ScenePiece(R.drawable.onb_sp_shirt, 515, 288, 305, top, unit)
         ScenePiece(R.drawable.onb_sp_coffee, 596, 646, 244, top, unit)
-        ScenePiece(R.drawable.onb_sp_grocery, 462, 1296, 392, top, unit)
+        ScenePiece(R.drawable.onb_sp_grocery, 462, 1296, 392, top, unit, rotation = -14f)
         // The big soft leaves in the bottom corners, out of focus.
         ScenePiece(R.drawable.onb_leafset_09, -15, 1665, 175, top, unit, rotation = 35f, alpha = 0.95f, blur = 6.dp)
         ScenePiece(R.drawable.onb_leafset_09, 625, 1580, 235, top, unit, rotation = -30f, alpha = 0.95f, blur = 8.dp)
