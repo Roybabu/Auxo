@@ -82,6 +82,7 @@ object SaleBuilder {
             loyaltyPointsRedeemed = cart.loyalty?.points ?: 0,
             discountReason = if (cart.billDiscount != null) DiscountPolicy.cleanReason(cart.billDiscountReason) else null,
             loyaltyDiscount = totals.loyaltyDiscount,
+            roundedToRupee = mode.roundOff,
         )
     }
 }
@@ -160,6 +161,7 @@ object ReturnBuilder {
             originalInvoiceNumber = original.number,
             note = reason.trim().ifEmpty { null },
             customerId = original.customerId,
+            roundedToRupee = original.roundedToRupee,
         )
         return ReturnBuild.Ready(creditNote)
     }
@@ -172,9 +174,8 @@ object ReturnBuilder {
     fun refundDue(original: Invoice, returned: Map<Long, Int>): Money {
         if (original.lines.all { (returned[it.id] ?: 0) >= it.quantity }) return original.grandTotal
         val total = sum(original.lines.map { returnedShare(it, returned[it.id] ?: 0) })
-        // A bill rounded to the rupee always ends in 00 paise.
-        val rounded = original.grandTotal.minorUnits % 100 == 0L
-        return if (rounded) BillCalculator.roundToRupee(total) else total
+        // Follows the round-off setting the bill was made with, not whether its total happens to be whole rupees.
+        return if (original.roundedToRupee) BillCalculator.roundToRupee(total) else total
     }
 
     /**

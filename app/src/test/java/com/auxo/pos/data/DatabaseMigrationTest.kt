@@ -680,4 +680,43 @@ class DatabaseMigrationTest {
         assertEquals(listOf(true, true, true, false, true, true), categories.map { it.enabled })
         assertTrue(categories.all { it.builtIn })
     }
+
+    @Test
+    fun migrate19To20_withoutTheBuiltInGarment_putsFootwearAndAccessoriesAtTheEnd() = runTest {
+        createFromSchema(19).also {
+            it.execSQL(
+                "INSERT INTO shop_categories (id, profile, enabled, sort_order, built_in) VALUES " +
+                    "(2, 'PACKAGED_FOOD', 1, 0, 1), (3, 'BEVERAGE', 1, 1, 1)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories().sortedBy { it.sortOrder }
+        assertEquals(
+            listOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES),
+            categories.map { it.profile },
+        )
+    }
+
+    @Test
+    fun migrate20To21_marksOldBillsRoundedOnlyWhenTheirTotalIsWholeRupees() = runTest {
+        createFromSchema(20).also {
+            fun bill(id: Long, totalMinor: Long) = it.execSQL(
+                "INSERT INTO invoices (id, number, type, created_at, seller_name, seller_address, seller_phone, seller_gstin, " +
+                    "seller_state_code, seller_fssai, place_of_supply, gst_registered, prices_include_tax, inter_state, subtotal_minor, " +
+                    "discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor, round_off_minor, grand_total_minor, savings_minor) " +
+                    "VALUES ($id, 'INV/$id', 'SALE', 0, 'S', '', '', '', '19', '', '19', 1, 1, 0, $totalMinor, 0, $totalMinor, 0, 0, 0, 0, $totalMinor, 0)",
+            )
+            bill(1, 100_00)
+            bill(2, 99_99)
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val rows = db.openHelper.readableDatabase.query("SELECT id, rounded_to_rupee FROM invoices ORDER BY id").use { c ->
+            buildList { while (c.moveToNext()) add(c.getLong(0) to c.getInt(1)) }
+        }
+        assertEquals(listOf(1L to 1, 2L to 0), rows)
+    }
 }

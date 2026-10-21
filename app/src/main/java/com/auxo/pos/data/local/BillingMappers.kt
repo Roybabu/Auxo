@@ -57,6 +57,7 @@ fun InvoiceWithDetails.toDomain(): Invoice = Invoice(
     note = invoice.note,
     customerId = invoice.customerId,
     discountReason = invoice.discountReason,
+    roundedToRupee = invoice.roundedToRupee,
 )
 
 fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
@@ -133,6 +134,7 @@ fun Invoice.toEntity(): InvoiceEntity = InvoiceEntity(
     sgstMinor = sgstTotal.minorUnits,
     igstMinor = igstTotal.minorUnits,
     roundOffMinor = roundOff.minorUnits,
+    roundedToRupee = roundedToRupee,
     grandTotalMinor = grandTotal.minorUnits,
     savingsMinor = savings.minorUnits,
     originalInvoiceId = originalInvoiceId,

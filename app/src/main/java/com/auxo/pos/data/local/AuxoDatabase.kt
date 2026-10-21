@@ -84,6 +84,9 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  *     batches and stock movements. An automatic migration from 18 ([RemoveKitchenAndIngredients]).
  * 20. Footwear and Accessories: two built-in rows are added to shop_categories, on, right after Garment. No table
  *     changes. Written by hand ([MIGRATION_19_20]).
+ * 21. Whether each bill was rounded to the rupee (invoices.rounded_to_rupee), so partial refunds follow the bill's own
+ *     rounding. Existing bills count as rounded when their total is whole rupees, as before. Written by hand
+ *     ([MIGRATION_20_21]).
  */
 @Database(
     entities = [
@@ -198,7 +201,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 20
+        const val VERSION = 21
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -350,14 +353,29 @@ abstract class AuxoDatabase : RoomDatabase() {
          */
         val MIGRATION_19_20: Migration = object : Migration(19, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // Straight after Garment; a shop without the built-in Garment row gets them at the end of its list.
+                // A shop with no category rows yet is seeded with them later, so it gets nothing here.
                 val garment = "(SELECT MIN(sort_order) FROM shop_categories WHERE profile = 'GARMENT' AND built_in = 1)"
-                db.execSQL("UPDATE shop_categories SET sort_order = sort_order + 2 WHERE sort_order > $garment")
+                val after = "COALESCE($garment, (SELECT MAX(sort_order) FROM shop_categories))"
+                db.execSQL("UPDATE shop_categories SET sort_order = sort_order + 2 WHERE sort_order > $after")
                 listOf("FOOTWEAR", "ACCESSORIES").forEachIndexed { index, profile ->
                     db.execSQL(
                         "INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) " +
-                            "SELECT NULL, '$profile', 1, $garment + ${index + 1}, 1 WHERE $garment IS NOT NULL",
+                            "SELECT NULL, '$profile', 1, $after + ${index + 1}, 1 WHERE $after IS NOT NULL " +
+                            "AND NOT EXISTS (SELECT 1 FROM shop_categories WHERE profile = '$profile' AND built_in = 1)",
                     )
                 }
+            }
+        }
+
+        /**
+         * Version 21: invoices.rounded_to_rupee. Older bills are marked rounded when their total is whole rupees,
+         * which is how partial refunds treated them before, so nothing already issued changes.
+         */
+        val MIGRATION_20_21: Migration = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE invoices ADD COLUMN rounded_to_rupee INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE invoices SET rounded_to_rupee = CASE WHEN grand_total_minor % 100 = 0 THEN 1 ELSE 0 END")
             }
         }
 
@@ -367,7 +385,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21)
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }

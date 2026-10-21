@@ -185,6 +185,25 @@ class ReturnBuilderTest {
     }
 
     @Test
+    fun aBillThatWasNotRounded_refundsExactPaise_evenWhenItsTotalIsWholeRupees() {
+        val biscuits = TestData.biscuits()
+        val a = biscuits.variants.single().copy(id = 1, sellingPrice = Money(33_33), mrp = null, stockQuantity = 10)
+        val b = biscuits.variants.single().copy(id = 2, sellingPrice = Money(1), mrp = null, stockQuantity = 10)
+        val product = biscuits.copy(variants = listOf(a, b))
+        val cart = Cart().add(CartLine.from(product, a, quantity = 3)).add(CartLine.from(product, b, quantity = 1))
+        val settings = TestData.settings.copy(roundOffTotal = false)
+        val totals = BillCalculator.calculate(cart, settings.taxModeFor(cart))
+        assertEquals(Money(100_00), totals.grandTotal)
+        val payments = listOf(PaymentRecord(method = PaymentMethod.CASH, amount = totals.grandTotal))
+        val built = SaleBuilder.build(cart, totals, settings, payments, TestData.clock.millis())
+        val sale = built.copy(id = 9, number = "INV/26-27/00009", lines = built.lines.mapIndexed { i, l -> l.copy(id = 300L + i) })
+        assertTrue(!sale.roundedToRupee)
+        assertEquals(Money(33_33), ReturnBuilder.refundDue(sale, mapOf(sale.lines[0].id to 1)))
+        // The same bill made with round-off on refunds whole rupees.
+        assertEquals(Money(33_00), ReturnBuilder.refundDue(sale.copy(roundedToRupee = true), mapOf(sale.lines[0].id to 1)))
+    }
+
+    @Test
     fun rejections() {
         assertEquals(ReturnBuild.Rejected(ReturnError.NOTHING_SELECTED), build(emptyMap()))
         assertEquals(ReturnBuild.Rejected(ReturnError.QUANTITY_TOO_LARGE), build(mapOf(shirtLine.id to 4)))

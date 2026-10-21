@@ -45,6 +45,8 @@ data class InvoiceEntity(
     @ColumnInfo(name = "sgst_minor") val sgstMinor: Long,
     @ColumnInfo(name = "igst_minor") val igstMinor: Long,
     @ColumnInfo(name = "round_off_minor") val roundOffMinor: Long,
+    /** Whether the bill was rounded to the rupee when it was made. Added in version 21. */
+    @ColumnInfo(name = "rounded_to_rupee", defaultValue = "0") val roundedToRupee: Boolean = false,
     @ColumnInfo(name = "grand_total_minor") val grandTotalMinor: Long,
     @ColumnInfo(name = "savings_minor") val savingsMinor: Long,
     @ColumnInfo(name = "original_invoice_id") val originalInvoiceId: Long?,

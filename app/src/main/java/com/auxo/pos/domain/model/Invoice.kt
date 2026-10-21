@@ -147,6 +147,11 @@ data class Invoice(
      * Such a document is titled "Quotation", carries the quotation's number and is not a tax invoice.
      */
     val quotationValidUntil: java.time.LocalDate? = null,
+    /**
+     * Whether the bill was rounded to the rupee when it was made (the shop's round-off setting at the time). Partial
+     * refunds follow it. Bills saved before this was recorded count as rounded when their total is whole rupees.
+     */
+    val roundedToRupee: Boolean = grandTotal.minorUnits % 100 == 0L,
 ) {
     val isQuotation: Boolean get() = quotationValidUntil != null
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
