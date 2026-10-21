@@ -1,5 +1,6 @@
 package com.auxo.pos.domain.usecase
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.ReturnResult
@@ -85,11 +86,26 @@ class CheckoutUseCase(
 
         val invoice = SaleBuilder.build(cart, totals, store, payments.payments, clock.millis())
         return when (val result = billing.recordSale(invoice, store.invoicePrefix, requestId)) {
-            is SaleResult.Recorded -> CheckoutResult.Completed(result.invoiceId, result.number, payments.change)
-            is SaleResult.StockShortage -> CheckoutResult.StockChanged(result.variantIds)
-            SaleResult.CreditLimitExceeded -> CheckoutResult.CreditLimitExceeded
-            SaleResult.CustomerMissing -> CheckoutResult.CustomerMissing
-            SaleResult.LoyaltyUnavailable -> CheckoutResult.LoyaltyUnavailable
+            is SaleResult.Recorded -> {
+                DebugLog.event("Billing", "Sale ${result.number} saved: ${invoice.lines.size} lines, total ${totals.grandTotal.minorUnits} paise")
+                CheckoutResult.Completed(result.invoiceId, result.number, payments.change)
+            }
+            is SaleResult.StockShortage -> {
+                DebugLog.warn("Billing", "Sale not saved: stock changed for variants ${result.variantIds}")
+                CheckoutResult.StockChanged(result.variantIds)
+            }
+            SaleResult.CreditLimitExceeded -> {
+                DebugLog.warn("Billing", "Sale not saved: credit limit exceeded")
+                CheckoutResult.CreditLimitExceeded
+            }
+            SaleResult.CustomerMissing -> {
+                DebugLog.warn("Billing", "Sale not saved: customer account missing")
+                CheckoutResult.CustomerMissing
+            }
+            SaleResult.LoyaltyUnavailable -> {
+                DebugLog.warn("Billing", "Sale not saved: loyalty points unavailable")
+                CheckoutResult.LoyaltyUnavailable
+            }
         }
     }
 }
@@ -123,8 +139,14 @@ class ProcessReturnUseCase(
             is ReturnBuild.Ready -> build.creditNote
         }
         return when (val result = billing.recordReturn(creditNote, store.creditNotePrefix, requestId)) {
-            is ReturnResult.Recorded -> ProcessReturnResult.Completed(result.creditNoteId, result.number, creditNote.grandTotal)
-            ReturnResult.QuantityExceedsSold -> ProcessReturnResult.AlreadyReturned
+            is ReturnResult.Recorded -> {
+                DebugLog.event("Billing", "Return ${result.number} saved for ${original.number}: refund ${creditNote.grandTotal.minorUnits} paise")
+                ProcessReturnResult.Completed(result.creditNoteId, result.number, creditNote.grandTotal)
+            }
+            ReturnResult.QuantityExceedsSold -> {
+                DebugLog.warn("Billing", "Return of ${original.number} not saved: units were already returned")
+                ProcessReturnResult.AlreadyReturned
+            }
         }
     }
 }

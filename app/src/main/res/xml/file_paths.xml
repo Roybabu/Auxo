@@ -6,4 +6,7 @@
     <cache-path name="capture" path="capture/" />
     <cache-path name="updates" path="updates/" />
     <external-files-path name="backups" path="Auxo/" />
+    <!-- Debug builds only write these; the folder does not exist in a release build. -->
+    <external-files-path name="debuglogs" path="debug-logs/" />
+    <files-path name="debuglogs_internal" path="debug-logs/" />
 </paths>

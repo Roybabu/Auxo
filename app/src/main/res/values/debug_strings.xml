@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown only in debug builds, so they are deliberately not translated. -->
+<resources>
+    <string name="debug_logs_title" translatable="false">Share debug logs</string>
+    <string name="debug_logs_body" translatable="false">Send the saved record of recent app runs, including crashes</string>
+</resources>

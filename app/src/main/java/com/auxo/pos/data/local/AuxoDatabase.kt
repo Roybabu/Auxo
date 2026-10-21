@@ -386,6 +386,12 @@ abstract class AuxoDatabase : RoomDatabase() {
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
                 .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21)
+                .addCallback(object : RoomDatabase.Callback() {
+                    // Debug builds only record this (any upgrade has already run by now).
+                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        com.auxo.pos.core.debuglog.DebugLog.event("Database", "Opened, schema version ${db.version}")
+                    }
+                })
 
         fun create(context: Context): AuxoDatabase = builder(context).build()
     }
