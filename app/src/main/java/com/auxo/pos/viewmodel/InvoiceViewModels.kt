@@ -11,6 +11,7 @@ import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.CustomerRepository
 import com.auxo.pos.data.repository.SettingsRepository
 import com.auxo.pos.domain.billing.ReturnBuild
+import com.auxo.pos.domain.billing.businessDays
 import com.auxo.pos.domain.billing.ReturnBuilder
 import com.auxo.pos.domain.billing.ReturnError
 import com.auxo.pos.domain.model.Invoice
@@ -203,9 +204,12 @@ class InvoiceHistoryViewModel(
     private val filters = MutableStateFlow(Triple(HistoryTab.INVOICES, HistoryRange.TODAY, ""))
     private val reload = MutableStateFlow(0)
 
-    val uiState: StateFlow<InvoiceHistoryUiState> = combine(filters, reload) { f, _ -> f }
-        .flatMapLatest { (tab, range, query) ->
-            val (from, to) = bounds(range)
+    // The day is part of the input, so "Today", "Last 7 days" and "This month" move on at midnight
+    // even when the screen is left open overnight.
+    val uiState: StateFlow<InvoiceHistoryUiState> = combine(filters, reload, clock.businessDays()) { f, _, day -> f to day }
+        .flatMapLatest { (f, day) ->
+            val (tab, range, query) = f
+            val (from, to) = bounds(range, day)
             if (!showFinancials) {
                 // Only the list of invoices is read: no payment records, no totals.
                 return@flatMapLatest billing.observeInvoices(from, to).map { invoices ->
@@ -247,8 +251,7 @@ class InvoiceHistoryViewModel(
 
     fun retry() = reload.update { it + 1 }
 
-    private fun bounds(range: HistoryRange): Pair<Long, Long> {
-        val today = LocalDate.now(clock)
+    private fun bounds(range: HistoryRange, today: LocalDate): Pair<Long, Long> {
         val end = today.plusDays(1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
         val startDate = when (range) {
             HistoryRange.TODAY -> today

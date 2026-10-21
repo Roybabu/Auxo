@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -463,6 +465,25 @@ class ReturnAndHistoryViewModelTest {
         assertEquals(1, viewModel.uiState.value.invoices.size)
         viewModel.onRangeChange(HistoryRange.ALL)
         assertEquals(1, viewModel.uiState.value.invoices.size)
+    }
+
+    @Test
+    fun historyToday_movesOnToTheNewDayAtMidnight_whileTheScreenIsOpen() = runTest {
+        sellThreeShirts()
+        val scheduler = testScheduler
+        val start = TestData.today.atTime(23, 59).toInstant(java.time.ZoneOffset.UTC).minusMillis(scheduler.currentTime)
+        // A clock that moves with the test's virtual time, starting a minute before midnight.
+        val moving = object : java.time.Clock() {
+            override fun getZone(): java.time.ZoneId = java.time.ZoneOffset.UTC
+            override fun withZone(zone: java.time.ZoneId): java.time.Clock = this
+            override fun instant(): java.time.Instant = start.plusMillis(scheduler.currentTime)
+        }
+        val viewModel = InvoiceHistoryViewModel(billing, moving)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
+        assertEquals(1, viewModel.uiState.value.invoices.size)
+        advanceTimeBy(2 * 60_000L)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.invoices.isEmpty())
     }
 }
 
