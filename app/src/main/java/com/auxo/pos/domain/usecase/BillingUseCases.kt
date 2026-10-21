@@ -17,11 +17,14 @@ import com.auxo.pos.domain.billing.ReturnBuild
 import com.auxo.pos.domain.billing.ReturnBuilder
 import com.auxo.pos.domain.billing.ReturnError
 import com.auxo.pos.domain.billing.SaleBuilder
+import com.auxo.pos.domain.billing.businessDays
 import com.auxo.pos.domain.billing.taxModeFor
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.domain.model.StoreOverview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import java.time.Clock
@@ -132,11 +135,12 @@ class ObserveStoreOverviewUseCase(
     private val billing: BillingRepository,
     private val clock: Clock,
 ) {
-    operator fun invoke(): Flow<StoreOverview> {
-        val today = LocalDate.now(clock)
+    // "Today" moves on at midnight, so a till left open overnight does not keep showing yesterday's sales.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    operator fun invoke(): Flow<StoreOverview> = clock.businessDays().flatMapLatest { today ->
         val start = today.atStartOfDay(clock.zone).toInstant().toEpochMilli()
         val end = today.plusDays(1).atStartOfDay(clock.zone).toInstant().toEpochMilli()
-        return combine(settings.observeSettings(), billing.observeSalesTotals(start, end)) { store, totals ->
+        combine(settings.observeSettings(), billing.observeSalesTotals(start, end)) { store, totals ->
             StoreOverview(storeName = store.storeName, salesToday = totals.net, billsToday = totals.billCount)
         }
     }

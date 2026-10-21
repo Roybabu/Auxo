@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.data.repository.BillingRepository
 import com.auxo.pos.data.repository.InventoryRepository
 import com.auxo.pos.data.repository.PurchasingRepository
+import com.auxo.pos.domain.billing.businessDays
 import com.auxo.pos.domain.insights.Collected
 import com.auxo.pos.domain.insights.Insights
 import com.auxo.pos.domain.insights.InsightsBuilder
@@ -76,14 +77,17 @@ class HomeInsightsViewModel(
     /** Header figures: always today's business day, whatever period the charts show. */
     private fun loadToday() {
         todayJob?.cancel()
-        val (from, to) = ReportPeriod.of(PeriodPreset.TODAY, LocalDate.now(clock)).bounds(clock.zone)
         _uiState.update { it.copy(collectedToday = null) }
         todayJob = viewModelScope.launch {
             try {
-                billing.observeInvoices(from, to).collectLatest {
-                    val collected = runCatching { InsightsBuilder.collected(billing.invoicesBetween(from, to)) }
-                        .onFailure { e -> if (e is CancellationException) throw e }.getOrNull()
-                    _uiState.update { it.copy(collectedToday = collected) }
+                // Moves on to the new day at midnight, so the header never shows yesterday's takings as today's.
+                clock.businessDays().collectLatest { day ->
+                    val (from, to) = ReportPeriod.of(PeriodPreset.TODAY, day).bounds(clock.zone)
+                    billing.observeInvoices(from, to).collectLatest {
+                        val collected = runCatching { InsightsBuilder.collected(billing.invoicesBetween(from, to)) }
+                            .onFailure { e -> if (e is CancellationException) throw e }.getOrNull()
+                        _uiState.update { it.copy(collectedToday = collected) }
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -96,29 +100,31 @@ class HomeInsightsViewModel(
     private fun load() {
         loadJob?.cancel()
         val period = _uiState.value.period
-        val today = LocalDate.now(clock)
-        val (from, to) = ReportPeriod.of(period.preset, today).bounds(clock.zone)
         _uiState.update { it.copy(isLoading = true, failed = false, insights = null) }
         loadJob = viewModelScope.launch {
             try {
-                combine(
-                    billing.observeInvoices(from, to),
-                    purchasing.observeReceipts(from, to),
-                    inventory.observeProducts(),
-                ) { _, receipts, products -> receipts to products }
-                    .collectLatest { (receipts, products) ->
-                        val built = runCatching {
-                            InsightsBuilder.build(
-                                period = period,
-                                today = today,
-                                zone = clock.zone,
-                                invoices = billing.invoicesBetween(from, to),
-                                receipts = receipts,
-                                categoryByVariant = categories(products),
-                            )
-                        }.onFailure { if (it is CancellationException) throw it }.getOrNull()
-                        _uiState.update { it.copy(isLoading = false, failed = built == null, insights = built) }
-                    }
+                // The period is counted back from today, which moves on at midnight.
+                clock.businessDays().collectLatest { today ->
+                    val (from, to) = ReportPeriod.of(period.preset, today).bounds(clock.zone)
+                    combine(
+                        billing.observeInvoices(from, to),
+                        purchasing.observeReceipts(from, to),
+                        inventory.observeProducts(),
+                    ) { _, receipts, products -> receipts to products }
+                        .collectLatest { (receipts, products) ->
+                            val built = runCatching {
+                                InsightsBuilder.build(
+                                    period = period,
+                                    today = today,
+                                    zone = clock.zone,
+                                    invoices = billing.invoicesBetween(from, to),
+                                    receipts = receipts,
+                                    categoryByVariant = categories(products),
+                                )
+                            }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+                            _uiState.update { it.copy(isLoading = false, failed = built == null, insights = built) }
+                        }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
