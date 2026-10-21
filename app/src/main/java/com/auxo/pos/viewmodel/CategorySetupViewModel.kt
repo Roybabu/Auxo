@@ -43,6 +43,7 @@ class CategorySetupViewModel(
             } catch (e: com.auxo.pos.core.auth.PermissionDeniedException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("CategorySetupViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(loaded = true, failed = true) }
             }
         }
@@ -62,6 +63,7 @@ class CategorySetupViewModel(
             } catch (e: com.auxo.pos.core.auth.PermissionDeniedException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("CategorySetupViewModel", "Failed and showed an error", e)
                 null
             }
             when (result) {

@@ -48,6 +48,7 @@ class CategoriesViewModel(private val repository: CategoryRepository) : ViewMode
             } catch (e: com.auxo.pos.core.auth.PermissionDeniedException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("CategoriesViewModel", "Failed and showed an error", e)
                 null
             }
             problem.value = when (result) {

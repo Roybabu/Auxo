@@ -1,5 +1,6 @@
 package com.auxo.pos.viewmodel
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.domain.billing.BusinessTime
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -956,9 +957,11 @@ class BillingViewModel(
         // Items saved without a barcode have an empty one, so an empty scan must never match them.
         if (code.isBlank()) return null
         val codes = BarcodeRules.equivalents(code)
-        return products.firstNotNullOfOrNull { product ->
+        val found = products.firstNotNullOfOrNull { product ->
             product.variants.firstOrNull { it.barcode in codes }?.let { product to it }
         }
+        DebugLog.event("Scan", "Barcode $code: ${if (found != null) "found variant ${found.second.id}" else "no match"}")
+        return found
     }
 
     private fun search(text: String): List<ProductSearchResult> {

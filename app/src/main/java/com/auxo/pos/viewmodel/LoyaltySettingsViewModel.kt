@@ -57,6 +57,7 @@ class LoyaltySettingsViewModel(private val repository: LoyaltyRepository) : View
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("LoyaltySettingsViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(isLoading = false, loadFailed = true) }
                 return@launch
             }
@@ -107,6 +108,7 @@ class LoyaltySettingsViewModel(private val repository: LoyaltyRepository) : View
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("LoyaltySettingsViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(isSaving = false, saveFailed = true) }
             }
         }

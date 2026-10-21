@@ -1,5 +1,6 @@
 package com.auxo.pos.core.auth
 
+import com.auxo.pos.core.debuglog.DebugLog
 import java.time.Clock
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineDispatcher
@@ -336,15 +337,20 @@ class LocalAuthRepository(
 
     override suspend fun signIn(identifier: String, password: String): SignInResult = gate.withLock {
         val now = clock.millis()
-        if (now < lockedUntilMillis) return@withLock SignInResult.LockedOut(secondsLeft(now))
+        if (now < lockedUntilMillis) {
+            DebugLog.warn("Auth", "Sign-in refused: waiting after wrong passwords")
+            return@withLock SignInResult.LockedOut(secondsLeft(now))
+        }
 
         val accounts = when (val stored = store.read()) {
             is StoredAccounts.Present -> stored.accounts
             StoredAccounts.Missing -> {
+                DebugLog.warn("Auth", "Sign-in not possible: no accounts saved")
                 _state.value = AuthState.NeedsSetup
                 return@withLock SignInResult.Unavailable
             }
             StoredAccounts.Unreadable -> {
+                DebugLog.error("Auth", "Sign-in not possible: the saved accounts could not be read")
                 _state.value = AuthState.Unreadable
                 return@withLock SignInResult.Unavailable
             }
@@ -355,17 +361,22 @@ class LocalAuthRepository(
         val passwordMatches = withContext(worker) { hasher.matches(password, account ?: accounts.first()) }
         if (account != null && passwordMatches) {
             failures = 0
-            if (!account.active) return@withLock SignInResult.Deactivated
+            if (!account.active) {
+                DebugLog.warn("Auth", "Sign-in refused: account ${account.id} is turned off")
+                return@withLock SignInResult.Deactivated
+            }
             _state.value = AuthState.SignedIn(account.name, account.role, account.id, account.permissions)
             pendingCode = null
             startSession()
             _recoveryPrompt.value = if (account.role == Role.SUPER_ADMIN && account.recovery == null) RecoveryPrompt.Offered else RecoveryPrompt.None
+            DebugLog.event("Auth", "Signed in: user ${account.id}, role ${account.role}")
             tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
             // Someone who uses the fingerprint is picked back up by it after an update or a restart.
             if (account.fingerprint) keepSession(account) else sessions.clear()
             return@withLock SignInResult.Success
         }
         failures++
+        DebugLog.warn("Auth", "Sign-in rejected: wrong username or password (failed attempts $failures)")
         lockedUntilMillis = lockAfter(failures, lockedUntilMillis)
         SignInResult.Rejected
     }
@@ -379,6 +390,7 @@ class LocalAuthRepository(
 
     override fun signOut() {
         val current = _state.value as? AuthState.SignedIn ?: return
+        DebugLog.event("Auth", "Signed out: user ${current.userId}")
         _state.value = AuthState.SignedOut
         runCatching { sessions.clear() }
         forgetRecoveryPrompt()
@@ -430,6 +442,7 @@ class LocalAuthRepository(
             is StoredAccounts.Present -> {
                 val account = stored.accounts.firstOrNull { it.id == current.userId }
                 if (account == null || !account.active || account.role != current.role) {
+                    DebugLog.warn("Auth", "Signed out: the account of user ${current.userId} was removed, turned off or changed")
                     _state.value = AuthState.SignedOut
                     runCatching { sessions.clear() }
                     forgetRecoveryPrompt()
@@ -627,11 +640,13 @@ class LocalAuthRepository(
         if (_lock.value.locked) return true
         val account = (store.read() as? StoredAccounts.Present)?.accounts?.firstOrNull { it.id == current.userId }
         pinFailures = 0
+        DebugLog.event("Auth", "App locked")
         _lock.value = LockInfo(locked = true, userName = current.name, hasPin = account?.pin != null, fingerprint = account?.fingerprint == true)
         return true
     }
 
     private fun unlock() {
+        DebugLog.event("Auth", "App unlocked")
         _lock.value = LockInfo()
         pinFailures = 0
         lastActivityMillis = clock.millis()
@@ -653,6 +668,7 @@ class LocalAuthRepository(
             return@withLock UnlockResult.Unlocked
         }
         pinFailures++
+        DebugLog.warn("Auth", "Wrong PIN ($pinFailures of $MAX_PIN_TRIES)")
         if (pinFailures >= MAX_PIN_TRIES) {
             _lock.value = _lock.value.copy(quickUnlockOff = true)
             tell(AccountEvent(AccountEventKind.PIN_LOCKED_OUT, account.toSession()))
@@ -671,6 +687,7 @@ class LocalAuthRepository(
             return@withLock UnlockResult.Unlocked
         }
         failures++
+        DebugLog.warn("Auth", "Unlock rejected: wrong password (failed attempts $failures)")
         lockedUntilMillis = lockAfter(failures, lockedUntilMillis)
         UnlockResult.WrongPassword
     }

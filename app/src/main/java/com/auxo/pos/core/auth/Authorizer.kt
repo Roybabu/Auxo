@@ -17,7 +17,10 @@ interface Authorizer {
     fun can(permission: Permission): Boolean
 
     fun require(permission: Permission) {
-        if (!can(permission)) throw PermissionDeniedException(permission)
+        if (!can(permission)) {
+            com.auxo.pos.core.debuglog.DebugLog.warn("Permission", "Refused: $permission needed")
+            throw PermissionDeniedException(permission)
+        }
     }
 }
 

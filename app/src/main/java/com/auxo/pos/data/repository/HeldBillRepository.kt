@@ -1,5 +1,6 @@
 package com.auxo.pos.data.repository
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.local.entity.HeldBillEntity
 import com.auxo.pos.domain.billing.Cart
@@ -51,19 +52,26 @@ class RoomHeldBillRepository(private val database: AuxoDatabase, private val clo
         )
         return if (existing != null) {
             dao.update(entity)
+            DebugLog.event("HeldBill", "Held bill ${existing.id} updated: ${cart.itemCount} items")
             existing.id
         } else {
-            dao.insert(entity)
+            dao.insert(entity).also { DebugLog.event("HeldBill", "Bill held as $it: ${cart.itemCount} items") }
         }
     }
 
     override suspend fun get(id: Long): HeldBill? {
         val row = dao.get(id) ?: return null
-        val cart = HeldCartCodec.decode(row.payload) ?: return null
+        val cart = HeldCartCodec.decode(row.payload) ?: run {
+            DebugLog.error("HeldBill", "Held bill $id could not be read back (damaged data)")
+            return null
+        }
         return HeldBill(row.toSummary(), cart)
     }
 
-    override suspend fun discard(id: Long) = dao.delete(id)
+    override suspend fun discard(id: Long) {
+        dao.delete(id)
+        DebugLog.event("HeldBill", "Held bill $id discarded")
+    }
 
     private fun HeldBillEntity.toSummary() = HeldBillSummary(
         id = id,

@@ -54,6 +54,7 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(isWorking = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
             }
         }
@@ -89,6 +90,7 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
                 val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
                 when (problem) {
                     // A locked file: ask for the passphrase (again, after a wrong one) instead of failing.
@@ -109,6 +111,7 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             service.setPassphrase(passphrase)
             _uiState.update { it.copy(choosingPassphrase = false, isProtected = service.isProtected(), problem = null) }
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
             _uiState.update { it.copy(choosingPassphrase = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
         }
     }

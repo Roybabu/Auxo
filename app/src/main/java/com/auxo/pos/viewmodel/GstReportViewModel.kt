@@ -105,6 +105,7 @@ class GstReportViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("GstReportViewModel", "Failed and showed an error", e)
                 _uiState.update { if (it.period == period) it.copy(isLoading = false, loadFailed = true, report = null) else it }
             }
         }

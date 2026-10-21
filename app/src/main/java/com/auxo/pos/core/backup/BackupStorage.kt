@@ -48,6 +48,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
             out.use(write)
             resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupStorage", "Failed and showed an error", e)
             runCatching { resolver.delete(uri, null, null) }
             if (e is BackupException) throw e
             throw BackupException(BackupProblem.SAVE_FAILED, cause = e)
@@ -62,6 +63,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
         try {
             file.outputStream().use(write)
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupStorage", "Failed and showed an error", e)
             runCatching { file.delete() }
             if (e is BackupException) throw e
             throw BackupException(BackupProblem.SAVE_FAILED, cause = e)
