@@ -953,6 +953,8 @@ class BillingViewModel(
     }
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
+        // Items saved without a barcode have an empty one, so an empty scan must never match them.
+        if (code.isBlank()) return null
         val codes = BarcodeRules.equivalents(code)
         return products.firstNotNullOfOrNull { product ->
             product.variants.firstOrNull { it.barcode in codes }?.let { product to it }

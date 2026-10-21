@@ -110,6 +110,18 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun anEmptyScan_doesNotAddAnItemThatHasNoBarcode() = runTest {
+        val plain = TestData.biscuits(id = 6).let { p ->
+            p.copy(name = "Loose Item", variants = listOf(p.variants.single().copy(id = 61, barcode = "")))
+        }
+        val store = FakeInventoryRepository(listOf(plain))
+        val viewModel = BillingViewModel(store, settings, CheckoutUseCase(FakeBillingRepository(store), settings, TestData.clock))
+        viewModel.onBarcodeScanned("")
+        assertEquals(BillingEvent.BarcodeNotFound(""), viewModel.events.first())
+        assertTrue(viewModel.uiState.value.cart.isEmpty)
+    }
+
+    @Test
     fun quantityIsLimitedByStock_withNoMessage() = runTest {
         val viewModel = createViewModel()
         val events = record(viewModel.events)

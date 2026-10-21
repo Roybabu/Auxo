@@ -146,7 +146,8 @@ class AuthScreensTest {
     fun onAPhone_theFormUsesTheFullWidth_belowTheBrand() {
         setup()
         val left = composeRule.onNodeWithTag("setup_name").getUnclippedBoundsInRoot().left
-        assertTrue("form starts at ${left.value}dp", left.value < 40f)
+        // The form sits in the glass card: 20 dp of margin plus 20 dp of padding, so it starts at 40 dp.
+        assertTrue("form starts at ${left.value}dp", left.value <= 40f)
         composeRule.onNodeWithContentDescription("Auxo").assertIsDisplayed()
     }
 
