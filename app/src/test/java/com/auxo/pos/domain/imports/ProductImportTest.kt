@@ -159,7 +159,12 @@ class ProductImportTest {
         assertEquals(ProductCategory.GARMENT, ProductImport.parseCategory("Clothing"))
         assertEquals(ProductCategory.BEVERAGE, ProductImport.parseCategory("drinks"))
         assertNull(ProductImport.parseCategory("Raw material"))
-        assertNull(ProductImport.parseCategory("toys"))
+        assertNull(ProductImport.parseCategory("scrap metal"))
+        assertEquals(ProductCategory.GENERAL, ProductImport.parseCategory("Toys"))
+        assertEquals(ProductCategory.GENERAL, ProductImport.parseCategory("General item"))
+        assertEquals(ProductCategory.ELECTRONICS, ProductImport.parseCategory("Mobile"))
+        assertEquals(ProductCategory.PHARMACY, ProductImport.parseCategory("Medicines"))
+        assertEquals(ProductCategory.COSMETICS, ProductImport.parseCategory("Personal care"))
         assertEquals(DietType.NON_VEG, ProductImport.parseDiet("Non-Veg"))
         assertEquals(DietType.VEG, ProductImport.parseDiet("vegetarian"))
         assertEquals(QuantityUnit.MILLILITRE, ProductImport.parseUnit("ML"))
@@ -209,7 +214,7 @@ class ProductImportTest {
 
     @Test
     fun anUnknownCategory_isReportedOnItsRow() {
-        val result = preview(table("name,category,selling_price", "Toy car,Toys,100"))
+        val result = preview(table("name,category,selling_price", "Toy car,Scrap,100"))
         assertEquals(ImportParseError.UNKNOWN_CATEGORY, result.invalid.single().issue(ImportColumn.CATEGORY)!!.parseError)
     }
 
@@ -396,7 +401,7 @@ class ProductImportTest {
 
     @Test
     fun aFileWithOnlyProblems_cannotBeImported() {
-        val result = preview(table("name,category,selling_price", "Toy,Toys,10"))
+        val result = preview(table("name,category,selling_price", "Toy,Scrap,10"))
         assertFalse(result.canImport)
         assertNotNull(result.invalid.single())
     }

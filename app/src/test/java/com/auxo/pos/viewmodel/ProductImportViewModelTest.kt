@@ -128,7 +128,7 @@ class ProductImportViewModelTest {
     @Test
     fun theImportButton_doesNothingWhenNothingIsReady() = runTest {
         val vm = viewModel()
-        pick(vm, "name,category,selling_price\nToy,Toys,10")
+        pick(vm, "name,category,selling_price\nToy,Scrap,10")
         assertFalse(vm.uiState.value.canImport)
         vm.onImport()
         assertFalse(vm.uiState.value.confirmOpen)
