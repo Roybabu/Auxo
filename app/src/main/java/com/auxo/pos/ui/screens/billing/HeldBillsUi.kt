@@ -211,6 +211,8 @@ fun HeldBillsDialog(
     val formatter = LocalMoneyFormatter.current
     var reviewing by remember { mutableStateOf<HeldBillSummary?>(null) }
     var confirming by remember { mutableStateOf<HeldBillSummary?>(null) }
+    var filter by rememberSaveable { mutableStateOf(HeldFilter.ALL) }
+    val shown = bills.filter { filter.matches(it) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.held_title)) },
@@ -225,8 +227,23 @@ fun HeldBillsDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                if (bills.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        HeldFilter.entries.forEach { option ->
+                            FilterChip(
+                                selected = filter == option,
+                                onClick = { filter = option },
+                                label = { Text(stringResource(option.labelRes)) },
+                                modifier = Modifier.testTag("held_filter_${option.name}"),
+                            )
+                        }
+                    }
+                    if (shown.isEmpty()) {
+                        Text(stringResource(R.string.held_filter_empty), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
                 LazyColumn(modifier = Modifier.heightIn(max = 360.dp).testTag("held_list")) {
-                    items(bills, key = { it.id }) { bill ->
+                    items(shown, key = { it.id }) { bill ->
                         Column(modifier = Modifier.fillMaxWidth().testTag("held_${bill.id}")) {
                             HeldBillHeading(bill)
                             Text(
@@ -284,6 +301,20 @@ fun HeldBillsDialog(
             onDismiss = { confirming = null },
             destructive = true,
         )
+    }
+}
+
+/** Which parked bills the list shows: all, those for a restaurant table, or the rest. */
+enum class HeldFilter(val labelRes: Int) {
+    ALL(R.string.held_filter_all),
+    RESTAURANT(R.string.held_filter_restaurant),
+    OTHER(R.string.held_filter_other),
+    ;
+
+    fun matches(bill: HeldBillSummary): Boolean = when (this) {
+        ALL -> true
+        RESTAURANT -> bill.tableNumber != null
+        OTHER -> bill.tableNumber == null
     }
 }
 

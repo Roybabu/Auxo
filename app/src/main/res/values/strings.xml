@@ -1833,4 +1833,8 @@ in %2$s</string>
     <string name="shop_tables_title">Tables</string>
     <string name="shop_tables_body">How many tables your restaurant has. A parked restaurant bill is put against one of them.</string>
     <string name="shop_tables_field">Number of tables</string>
+    <string name="held_filter_all">All</string>
+    <string name="held_filter_restaurant">Restaurant</string>
+    <string name="held_filter_other">Other</string>
+    <string name="held_filter_empty">No bills of this kind.</string>
 </resources>
