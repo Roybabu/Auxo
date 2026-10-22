@@ -67,6 +67,19 @@ enum class StockUnit(
         else -> "$base $baseSymbol"
     }
 
+    /**
+     * What [base] units come to when [pricePerEntryUnit] is the price of one piece, kilogram or litre, rounded to the
+     * paisa. For pieces this is exactly price times count, so counted goods are billed as they always were.
+     */
+    fun amountFor(base: Int, pricePerEntryUnit: Money): Money =
+        if (this == UNIT) pricePerEntryUnit * base else costOf(base, pricePerEntryUnit)
+
+    /** How much the plus and minus buttons change a quantity by: one piece, or a tenth of a kilogram or litre. */
+    val buttonStep: Int get() = if (scale == 1) 1 else scale / 10
+
+    /** The quantity a loose item starts at when it is added to a bill: one kilogram or litre. */
+    val startingSaleQuantity: Int get() = scale
+
     /** Cost of [base] units when [costPerEntryUnit] is the price of one piece, kilogram or litre. */
     fun costOf(base: Int, costPerEntryUnit: Money): Money {
         val value = Rounding.halfUp(costPerEntryUnit.minorUnits * abs(base.toLong()), scale.toLong())

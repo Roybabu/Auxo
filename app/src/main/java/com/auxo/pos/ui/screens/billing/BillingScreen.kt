@@ -99,6 +99,8 @@ import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.ExpiredStockBanner
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.screens.inventory.sanitizeDecimal
+import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.components.LoadingState
 import com.auxo.pos.ui.components.QrCode
@@ -130,6 +132,7 @@ interface BillingActions {
     fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean = false
     fun onIncrement(lineKey: Long) = Unit
     fun onDecrement(lineKey: Long) = Unit
+    fun onTypedQuantity(lineKey: Long, text: String) = Unit
     fun onRemove(lineKey: Long) = Unit
     fun onToggleLineDiscount(lineKey: Long) = Unit
     fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) = Unit
@@ -261,6 +264,7 @@ fun BillingScreen(
                 viewModel.addCustomItem(name, price, quantity, gstBasisPoints)
             override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
             override fun onDecrement(lineKey: Long) = viewModel.decrement(lineKey)
+            override fun onTypedQuantity(lineKey: Long, text: String) = viewModel.setTypedQuantity(lineKey, text)
             override fun onRemove(lineKey: Long) = viewModel.removeLine(lineKey)
             override fun onToggleLineDiscount(lineKey: Long) = viewModel.toggleLineDiscountEditor(lineKey)
             override fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) =
@@ -566,9 +570,16 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 CartLineCard(
                     name = line.productName,
                     variant = line.variantLabel,
-                    unitPrice = formatter.format(line.unitPrice),
+                    unitPrice = if (line.stockUnit == StockUnit.UNIT) {
+                        formatter.format(line.unitPrice)
+                    } else {
+                        stringResource(R.string.price_per_unit, formatter.format(line.unitPrice), line.stockUnit.entrySymbol)
+                    },
                     quantity = line.quantity,
-                    lineTotal = formatter.format(amounts?.let { it.gross - it.lineDiscount } ?: (line.unitPrice * line.quantity)),
+                    stockUnit = line.stockUnit,
+                    step = line.step,
+                    onTypedQuantity = { actions.onTypedQuantity(line.variantId, it) },
+                    lineTotal = formatter.format(amounts?.let { it.gross - it.lineDiscount } ?: line.gross),
                     hasDiscount = amounts?.lineDiscount?.isZero == false,
                     issue = state.check.lineIssues[line.variantId]?.let { lineIssueText(it) },
                     discountOpen = state.editingDiscountFor == line.variantId,
@@ -678,7 +689,14 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
             )
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(formatter.format(result.variant.sellingPrice), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = if (result.product.stockUnit == StockUnit.UNIT) {
+                    formatter.format(result.variant.sellingPrice)
+                } else {
+                    stringResource(R.string.price_per_unit, formatter.format(result.variant.sellingPrice), result.product.stockUnit.entrySymbol)
+                },
+                style = MaterialTheme.typography.titleSmall,
+            )
             // An item sold without a stock count shows no figure; it is only flagged while switched off.
             val note = when {
                 !result.product.available -> stringResource(R.string.menu_unavailable)
@@ -732,6 +750,9 @@ private fun CartLineCard(
     variant: String,
     unitPrice: String,
     quantity: Int,
+    stockUnit: StockUnit,
+    step: Int,
+    onTypedQuantity: (String) -> Unit,
     lineTotal: String,
     hasDiscount: Boolean,
     issue: String?,
@@ -755,7 +776,9 @@ private fun CartLineCard(
                     if (variant.isNotEmpty()) {
                         Text(variant, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text("$quantity × $unitPrice", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = if (stockUnit == StockUnit.UNIT) "$quantity × $unitPrice" else "${stockUnit.format(quantity)} × $unitPrice",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(end = Spacing.sm)) {
                     Text(lineTotal, style = MaterialTheme.typography.titleSmall)
@@ -769,10 +792,25 @@ private fun CartLineCard(
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDecrement, enabled = quantity > 1) {
+                IconButton(onClick = onDecrement, enabled = quantity > step) {
                     AuxoIcon(R.drawable.ic_remove, stringResource(R.string.action_decrease), size = AuxoIconSize.Compact)
                 }
-                Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
+                if (stockUnit == StockUnit.UNIT) {
+                    Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
+                } else {
+                    // Typed in kilograms or litres; an entry that is not a valid amount is ignored until it is.
+                    var typed by remember(quantity) { mutableStateOf(stockUnit.toEntryText(quantity)) }
+                    AuxoTextField(
+                        value = typed,
+                        onValueChange = {
+                            typed = sanitizeDecimal(it, 3)
+                            onTypedQuantity(typed)
+                        },
+                        label = stockUnit.entrySymbol,
+                        keyboardType = KeyboardType.Decimal,
+                        modifier = Modifier.width(104.dp).testTag("line_weight"),
+                    )
+                }
                 IconButton(onClick = onIncrement, enabled = canIncrease, modifier = Modifier.testTag("line_increase")) {
                     AuxoIcon(R.drawable.ic_add, stringResource(R.string.action_increase), size = AuxoIconSize.Compact)
                 }

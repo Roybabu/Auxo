@@ -48,6 +48,10 @@ data class ProductEntity(
     @ColumnInfo(name = "warranty_months") val warrantyMonths: Int? = null,
     /** True for a medicine sold only against a prescription. Added in version 22. */
     @ColumnInfo(name = "prescription_required", defaultValue = "0") val prescriptionRequired: Boolean = false,
+    /** [com.auxo.pos.domain.jewellery.JewelleryMetal] name for jewellery. Added in version 23. */
+    val metal: String? = null,
+    /** Making charge in basis points of the metal value, for jewellery. Added in version 23. */
+    @ColumnInfo(name = "making_charge_bp") val makingChargeBasisPoints: Int? = null,
 )
 
 @Entity(

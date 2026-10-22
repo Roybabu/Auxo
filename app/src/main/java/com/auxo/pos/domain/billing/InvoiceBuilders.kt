@@ -41,6 +41,7 @@ object SaleBuilder {
                 barcode = line.barcode,
                 hsnCode = line.hsnCode,
                 quantity = line.quantity,
+                stockUnit = line.stockUnit,
                 unitPrice = line.unitPrice,
                 mrp = line.mrp,
                 discount = amounts.discount,
@@ -129,7 +130,7 @@ object ReturnBuilder {
 
         val units = selected.associate { it.id to quantities.getValue(it.id) }
         val lines = selected.map { line -> returnLine(line, units.getValue(line.id)) }
-        val subtotal = sum(lines.map { it.unitPrice * it.quantity })
+        val subtotal = sum(lines.map { it.gross })
         val linesTotal = sum(lines.map { it.total })
         val returnedBefore = original.lines.associate { it.id to it.returnedQuantity }
         val returnedAfter = original.lines.associate { it.id to it.returnedQuantity + (units[it.id] ?: 0) }

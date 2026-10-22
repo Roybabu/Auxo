@@ -81,6 +81,7 @@ fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
     originalLineId = originalLineId,
     menuItemId = menuItemId,
     discountReason = discountReason,
+    stockUnit = stockUnitOf(stockUnit),
 )
 
 fun PaymentEntity.toDomain(invoiceNumber: String? = null): PaymentRecord = PaymentRecord(
@@ -166,6 +167,7 @@ fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity
     originalLineId = originalLineId,
     menuItemId = menuItemId,
     discountReason = discountReason,
+    stockUnit = stockUnit.takeIf { it != com.auxo.pos.domain.model.StockUnit.UNIT }?.name,
 )
 
 fun PaymentRecord.toEntity(invoiceId: Long): PaymentEntity = PaymentEntity(

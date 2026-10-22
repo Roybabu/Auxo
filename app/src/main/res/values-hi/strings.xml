@@ -1800,4 +1800,28 @@
     <string name="update_permission_hint">पूछे जाने पर Auxo को ऐप इंस्टॉल करने की अनुमति दें, फिर दोबारा इंस्टॉल दबाएँ।</string>
     <string name="update_prompt_title">अपडेट उपलब्ध है</string>
     <string name="update_later">बाद में</string>
+    <string name="category_loose">खुला सामान</string>
+    <string name="category_jewellery">ज्वेलरी</string>
+    <string name="insights_dept_loose">खुला सामान</string>
+    <string name="insights_dept_jewellery">ज्वेलरी</string>
+    <string name="editor_metal">धातु</string>
+    <string name="editor_making_charge">मेकिंग चार्ज (धातु के मूल्य का %)</string>
+    <string name="error_invalid_making_charge">0 से 100 के बीच प्रतिशत लिखें</string>
+    <string name="metal_gold_24k">सोना 24K</string>
+    <string name="metal_gold_22k">सोना 22K</string>
+    <string name="metal_gold_18k">सोना 18K</string>
+    <string name="metal_silver">चाँदी</string>
+    <string name="metal_platinum">प्लैटिनम</string>
+    <string name="detail_metal_making">%1$s · मेकिंग चार्ज %2$s%%</string>
+    <string name="per_unit">प्रति %1$s</string>
+    <string name="price_per_unit">%1$s/%2$s</string>
+    <string name="return_sold_measure">बिका %1$s · पहले वापस हुआ %2$s</string>
+    <string name="metal_rates_title">आज के धातु भाव</string>
+    <string name="metal_rates_body">ज्वेलरी की कीमत इन्हीं से तय होती है: वज़न गुणा भाव, साथ में मेकिंग चार्ज और GST। सामान की कीमत तभी बदलती है जब आप उसे अपडेट करें।</string>
+    <string name="metal_rates_save">भाव सहेजें</string>
+    <string name="metal_rates_update">सहेजें और कीमतें अपडेट करें</string>
+    <plurals name="metal_rates_repriced">
+        <item quantity="one">%1$d सामान की कीमत बदली</item>
+        <item quantity="other">%1$d सामान की कीमतें बदलीं</item>
+    </plurals>
 </resources>

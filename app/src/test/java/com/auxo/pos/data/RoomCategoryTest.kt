@@ -45,13 +45,14 @@ class RoomCategoryTest {
         assertEquals(
             listOf(
                 ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE,
-                ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS, ProductCategory.RESTAURANT,
+                ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+                ProductCategory.LOOSE, ProductCategory.JEWELLERY, ProductCategory.RESTAURANT,
             ),
             all.map { it.profile },
         )
         assertTrue(all.all { it.builtIn && it.name == null })
-        // Restaurant and the four newer categories start off; the owner switches on what the shop sells.
-        assertEquals(listOf(true, true, true, true, true, false, false, false, false, false), all.map { it.enabled })
+        // Restaurant and the six newer categories start off; the owner switches on what the shop sells.
+        assertEquals(listOf(true, true, true, true, true, false, false, false, false, false, false, false), all.map { it.enabled })
     }
 
     @Test

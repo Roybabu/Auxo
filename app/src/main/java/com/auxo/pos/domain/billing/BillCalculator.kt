@@ -2,6 +2,7 @@ package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Rounding
+import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.domain.model.basisPointsFor
 
 /** How tax is applied to a bill. */
@@ -84,7 +85,7 @@ object BillCalculator {
     fun calculate(cart: Cart, mode: TaxMode): BillTotals {
         if (cart.lines.isEmpty()) return BillTotals.EMPTY
 
-        val gross = cart.lines.map { it.unitPrice * it.quantity }
+        val gross = cart.lines.map { it.gross }
         val lineDiscounts = cart.lines.mapIndexed { i, line -> line.discount?.amountOn(gross[i]) ?: Money.ZERO }
         val afterLineDiscount = gross.mapIndexed { i, value -> value - lineDiscounts[i] }
         val base = afterLineDiscount.fold(Money.ZERO) { acc, m -> acc + m }
@@ -100,7 +101,12 @@ object BillCalculator {
                 !mode.gstRegistered -> 0
                 line.gstRate == null -> 0
                 else -> {
-                    val perPiece = Money(Rounding.halfUp(net.minorUnits, line.quantity.toLong()))
+                    // The apparel slab depends on the price of one piece; for loose goods it is the price of a kilogram or litre.
+                    val perPiece = if (line.stockUnit == StockUnit.UNIT) {
+                        Money(Rounding.halfUp(net.minorUnits, line.quantity.toLong()))
+                    } else {
+                        Money(Rounding.halfUp(net.minorUnits * line.stockUnit.scale, line.quantity.toLong()))
+                    }
                     line.gstRate.basisPointsFor(perPiece, mode.pricesIncludeTax)
                 }
             }
@@ -113,7 +119,7 @@ object BillCalculator {
 
         val mrpLines = cart.lines.indices.filter { cart.lines[it].mrp != null }
         val savings = if (mode.pricesIncludeTax || !mode.gstRegistered) {
-            val mrpTotal = sum(mrpLines.map { cart.lines[it].mrp!! * cart.lines[it].quantity })
+            val mrpTotal = sum(mrpLines.map { cart.lines[it].mrpGross!! })
             val paid = sum(mrpLines.map { lines[it].total })
             (mrpTotal - paid).takeIf { it > Money.ZERO } ?: Money.ZERO
         } else {

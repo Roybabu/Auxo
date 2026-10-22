@@ -261,7 +261,7 @@ private fun PreviewStage(state: ProductImportUiState, actions: ProductImportActi
                             modifier = Modifier.testTag("import_default_none"),
                         )
                         // Restaurant items have no stock count and are added one at a time, not imported.
-                        ProductCategory.entries.filter { it != ProductCategory.RESTAURANT }.forEach { category ->
+                        ProductCategory.entries.filter { it != ProductCategory.RESTAURANT && !it.soldByMeasure && !it.usesMetal }.forEach { category ->
                             FilterChip(
                                 selected = state.defaultCategory == category,
                                 onClick = { actions.onDefaultCategoryChange(category) },

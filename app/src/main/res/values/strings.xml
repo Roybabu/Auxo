@@ -1800,4 +1800,28 @@ in %2$s</string>
     <string name="update_permission_hint">Allow Auxo to install apps when asked, then tap Install again.</string>
     <string name="update_prompt_title">Update available</string>
     <string name="update_later">Later</string>
+    <string name="category_loose">Loose goods</string>
+    <string name="category_jewellery">Jewellery</string>
+    <string name="insights_dept_loose">Loose goods</string>
+    <string name="insights_dept_jewellery">Jewellery</string>
+    <string name="editor_metal">Metal</string>
+    <string name="editor_making_charge">Making charge (% of metal value)</string>
+    <string name="error_invalid_making_charge">Enter a percentage from 0 to 100</string>
+    <string name="metal_gold_24k">Gold 24K</string>
+    <string name="metal_gold_22k">Gold 22K</string>
+    <string name="metal_gold_18k">Gold 18K</string>
+    <string name="metal_silver">Silver</string>
+    <string name="metal_platinum">Platinum</string>
+    <string name="detail_metal_making">%1$s · making charge %2$s%%</string>
+    <string name="per_unit">per %1$s</string>
+    <string name="price_per_unit">%1$s/%2$s</string>
+    <string name="return_sold_measure">Sold %1$s · already returned %2$s</string>
+    <string name="metal_rates_title">Today\'s metal rates</string>
+    <string name="metal_rates_body">Jewellery is priced from these: weight times the rate, plus the making charge, plus GST. Prices on items change only when you update them.</string>
+    <string name="metal_rates_save">Save rates</string>
+    <string name="metal_rates_update">Save and update prices</string>
+    <plurals name="metal_rates_repriced">
+        <item quantity="one">%1$d item re-priced</item>
+        <item quantity="other">%1$d items re-priced</item>
+    </plurals>
 </resources>

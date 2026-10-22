@@ -1800,4 +1800,28 @@
     <string name="update_permission_hint">জিজ্ঞাসা করলে Auxo-কে অ্যাপ ইনস্টল করার অনুমতি দিন, তারপর আবার ইনস্টল চাপুন।</string>
     <string name="update_prompt_title">আপডেট পাওয়া যাচ্ছে</string>
     <string name="update_later">পরে</string>
+    <string name="category_loose">খোলা পণ্য</string>
+    <string name="category_jewellery">গয়না</string>
+    <string name="insights_dept_loose">খোলা পণ্য</string>
+    <string name="insights_dept_jewellery">গয়না</string>
+    <string name="editor_metal">ধাতু</string>
+    <string name="editor_making_charge">মেকিং চার্জ (ধাতুর দামের %)</string>
+    <string name="error_invalid_making_charge">০ থেকে ১০০-এর মধ্যে শতাংশ লিখুন</string>
+    <string name="metal_gold_24k">সোনা 24K</string>
+    <string name="metal_gold_22k">সোনা 22K</string>
+    <string name="metal_gold_18k">সোনা 18K</string>
+    <string name="metal_silver">রুপো</string>
+    <string name="metal_platinum">প্ল্যাটিনাম</string>
+    <string name="detail_metal_making">%1$s · মেকিং চার্জ %2$s%%</string>
+    <string name="per_unit">প্রতি %1$s</string>
+    <string name="price_per_unit">%1$s/%2$s</string>
+    <string name="return_sold_measure">বিক্রি %1$s · আগেই ফেরত %2$s</string>
+    <string name="metal_rates_title">আজকের ধাতুর দর</string>
+    <string name="metal_rates_body">গয়নার দাম এখান থেকে ঠিক হয়: ওজন গুণ দর, সঙ্গে মেকিং চার্জ ও GST। পণ্যের দাম তখনই বদলায় যখন আপনি আপডেট করেন।</string>
+    <string name="metal_rates_save">দর সংরক্ষণ করুন</string>
+    <string name="metal_rates_update">সংরক্ষণ করে দাম আপডেট করুন</string>
+    <plurals name="metal_rates_repriced">
+        <item quantity="one">%1$d পণ্যের দাম বদলেছে</item>
+        <item quantity="other">%1$d পণ্যের দাম বদলেছে</item>
+    </plurals>
 </resources>

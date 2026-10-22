@@ -314,6 +314,8 @@ object Reports {
         ProductCategory.ELECTRONICS -> "Electronics"
         ProductCategory.PHARMACY -> "Pharmacy"
         ProductCategory.COSMETICS -> "Cosmetics"
+        ProductCategory.LOOSE -> "Loose goods"
+        ProductCategory.JEWELLERY -> "Jewellery"
         ProductCategory.RESTAURANT -> "Restaurant"
     }
 

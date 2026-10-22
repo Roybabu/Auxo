@@ -34,6 +34,12 @@ interface ShopPreferences {
     val onboardingSeen: StateFlow<Boolean>
 
     fun setOnboardingSeen(seen: Boolean)
+
+    /** Today's rate per gram for each metal, as the shop last entered them. Empty until the shop enters some. */
+    val metalRates: StateFlow<com.auxo.pos.domain.jewellery.MetalRates>
+        get() = MutableStateFlow(com.auxo.pos.domain.jewellery.MetalRates())
+
+    fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) = Unit
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -73,7 +79,16 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         onboardingState.value = seen
     }
 
+    private val metalRatesState = MutableStateFlow(com.auxo.pos.domain.jewellery.MetalRates.decode(prefs.getString(KEY_METAL_RATES, null)))
+    override val metalRates: StateFlow<com.auxo.pos.domain.jewellery.MetalRates> = metalRatesState.asStateFlow()
+
+    override fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) {
+        prefs.edit { putString(KEY_METAL_RATES, rates.encode()) }
+        metalRatesState.value = rates
+    }
+
     companion object {
+        const val KEY_METAL_RATES = "metal_rates"
         const val FILE = "shop"
         const val KEY_ONBOARDING_SEEN = "onboarding_seen"
         const val KEY_CATEGORY_SETUP = "category_setup_done"

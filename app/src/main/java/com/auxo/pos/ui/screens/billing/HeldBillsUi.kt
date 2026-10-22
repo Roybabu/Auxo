@@ -230,7 +230,11 @@ private fun HeldBillReviewDialog(
                                             }
                                         }
                                         Text(
-                                            "${line.quantity} × ${formatter.format(line.unitPrice)}",
+                                            if (line.stockUnit == com.auxo.pos.domain.model.StockUnit.UNIT) {
+                                                "${line.quantity} × ${formatter.format(line.unitPrice)}"
+                                            } else {
+                                                "${line.quantityText} × ${formatter.format(line.unitPrice)}/${line.stockUnit.entrySymbol}"
+                                            },
                                             style = MaterialTheme.typography.bodyMedium,
                                         )
                                     }

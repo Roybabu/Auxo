@@ -46,6 +46,8 @@ fun ProductWithVariants.toDomain(): Product = Product(
     tracksStock = product.tracksStock,
     warrantyMonths = product.warrantyMonths,
     prescriptionRequired = product.prescriptionRequired,
+    metal = product.metal?.let { name -> com.auxo.pos.domain.jewellery.JewelleryMetal.entries.firstOrNull { it.name == name } },
+    makingChargeBasisPoints = product.makingChargeBasisPoints,
 )
 
 fun VariantWithBatches.toDomain(): ProductVariant = variant.toDomain().copy(
@@ -113,6 +115,8 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     tracksStock = tracksStock,
     warrantyMonths = warrantyMonths.takeIf { category.usesWarranty },
     prescriptionRequired = prescriptionRequired && category.usesPrescription,
+    metal = metal?.name.takeIf { category.usesMetal },
+    makingChargeBasisPoints = makingChargeBasisPoints.takeIf { category.usesMetal },
 )
 
 fun ProductVariant.toEntity(productId: Long): ProductVariantEntity = ProductVariantEntity(

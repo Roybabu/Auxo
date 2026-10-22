@@ -147,9 +147,14 @@ class ProductEditorViewModel(
             category != ProductCategory.RESTAURANT && base.hsnCode == ProductCategory.RESTAURANT_SAC -> ""
             else -> base.hsnCode
         }
+        // Jewellery carries 3% GST, which is not one of the standard slabs, so it starts as a custom rate.
+        val jewelleryGst = category == ProductCategory.JEWELLERY && gst == GstChoice.NotSet
         return base.copy(
             category = category,
             sizes = sizes,
+            metal = base.metal.takeIf { category.usesMetal },
+            makingChargePercent = base.makingChargePercent.takeIf { category.usesMetal }.orEmpty(),
+            customGstRate = if (jewelleryGst) "3" else base.customGstRate,
             variants = variants,
             dietType = base.dietType.takeIf { category.usesDietType },
             warrantyMonths = base.warrantyMonths.takeIf { category.usesWarranty }.orEmpty(),
@@ -159,7 +164,7 @@ class ProductEditorViewModel(
             // A restaurant item starts without a stock count; everything else always keeps one.
             tracksStock = !category.canSkipStock,
             hsnCode = hsnCode,
-            gst = gst,
+            gst = if (jewelleryGst) GstChoice.Custom else gst,
             stockUnit = base.stockUnit.takeIf { it in category.allowedStockUnits } ?: category.allowedStockUnits.first(),
         )
     }
@@ -201,6 +206,11 @@ class ProductEditorViewModel(
     fun onDietTypeChange(dietType: DietType?) = editForm { it.copy(dietType = dietType) }
 
     fun onWarrantyChange(value: String) = editForm { it.copy(warrantyMonths = value.filter(Char::isDigit).take(3)) }
+
+    fun onMetalChange(metal: com.auxo.pos.domain.jewellery.JewelleryMetal) = editForm { it.copy(metal = metal) }
+
+    fun onMakingChargeChange(value: String) =
+        editForm { it.copy(makingChargePercent = value.filter { c -> c.isDigit() || c == '.' }.take(6)) }
 
     fun onPrescriptionChange(required: Boolean) = editForm { it.copy(prescriptionRequired = required) }
 

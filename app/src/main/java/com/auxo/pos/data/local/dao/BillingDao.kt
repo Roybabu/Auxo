@@ -51,7 +51,7 @@ abstract class BillingDao {
     @Query(
         "SELECT i.id AS id, i.number AS number, i.type AS type, i.created_at AS created_at, i.buyer_name AS buyer_name, " +
             "i.buyer_phone AS buyer_phone, i.grand_total_minor AS grand_total_minor, " +
-            "(SELECT COALESCE(SUM(l.quantity), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
+            "(SELECT COALESCE(SUM(CASE WHEN l.stock_unit IS NULL THEN l.quantity ELSE 1 END), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
             "FROM invoices i WHERE i.created_at >= :fromMillis AND i.created_at < :toMillis " +
             "ORDER BY i.created_at DESC, i.id DESC",
     )
@@ -60,7 +60,7 @@ abstract class BillingDao {
     @Query(
         "SELECT i.id AS id, i.number AS number, i.type AS type, i.created_at AS created_at, i.buyer_name AS buyer_name, " +
             "i.buyer_phone AS buyer_phone, i.grand_total_minor AS grand_total_minor, " +
-            "(SELECT COALESCE(SUM(l.quantity), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
+            "(SELECT COALESCE(SUM(CASE WHEN l.stock_unit IS NULL THEN l.quantity ELSE 1 END), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
             "FROM invoices i WHERE i.original_invoice_id = :invoiceId ORDER BY i.created_at, i.id",
     )
     abstract fun observeCreditNotesFor(invoiceId: Long): Flow<List<InvoiceSummaryRow>>
@@ -87,7 +87,7 @@ abstract class BillingDao {
     @Query(
         "SELECT i.id AS id, i.number AS number, i.type AS type, i.created_at AS created_at, i.buyer_name AS buyer_name, " +
             "i.buyer_phone AS buyer_phone, i.grand_total_minor AS grand_total_minor, " +
-            "(SELECT COALESCE(SUM(l.quantity), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
+            "(SELECT COALESCE(SUM(CASE WHEN l.stock_unit IS NULL THEN l.quantity ELSE 1 END), 0) FROM invoice_lines l WHERE l.invoice_id = i.id) AS item_count " +
             "FROM invoices i WHERE i.customer_id = :customerId ORDER BY i.created_at DESC, i.id DESC",
     )
     abstract fun observeInvoicesForCustomer(customerId: Long): Flow<List<InvoiceSummaryRow>>

@@ -75,6 +75,7 @@ object QuotationRepricing {
                     unitPrice = now.unitPrice,
                     mrp = now.mrp,
                     gstRate = now.gstRate,
+                    stockUnit = now.stockUnit,
                 )
             }
         }

@@ -105,8 +105,13 @@ object ThermalReceiptBuilder {
         for (line in invoice.lines) {
             val name = listOf(line.productName, line.variantLabel).filter { it.isNotBlank() }.joinToString(" ")
             left(name)
-            val gross = line.unitPrice * line.quantity
-            pair("  " + fillIn(labels.qtyTimesPrice, line.quantity, IndianNumberFormat.amount(line.unitPrice)), IndianNumberFormat.amount(gross))
+            val gross = line.gross
+            val quantityAndPrice = if (line.stockUnit == com.auxo.pos.domain.model.StockUnit.UNIT) {
+                fillIn(labels.qtyTimesPrice, line.quantity, IndianNumberFormat.amount(line.unitPrice))
+            } else {
+                "${line.quantityText} x ${IndianNumberFormat.amount(line.unitPrice)}/${line.stockUnit.entrySymbol}"
+            }
+            pair("  " + quantityAndPrice, IndianNumberFormat.amount(gross))
             ReceiptText.mrpDiscount(line)?.let { pair("  " + fillIn(labels.mrpDiscountLine, IndianNumberFormat.amount(line.mrp!!)), "-" + IndianNumberFormat.amount(it)) }
             if (!line.discount.isZero) {
                 pair("  " + labels.discount + (line.discountReason?.let { " ($it)" } ?: ""), "-" + IndianNumberFormat.amount(line.discount))

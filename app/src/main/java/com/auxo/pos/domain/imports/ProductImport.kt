@@ -444,7 +444,7 @@ object ProductImport {
     private fun FormField.column(): ImportColumn = when (this) {
         // Restaurant items are not imported, so a subcategory error cannot come from a file; point it at the name.
         // A warranty is not an import column either, so it cannot come from a file; point it at the name.
-        FormField.NAME, FormField.VARIANTS, FormField.SUBCATEGORY, FormField.WARRANTY -> ImportColumn.NAME
+        FormField.NAME, FormField.VARIANTS, FormField.SUBCATEGORY, FormField.WARRANTY, FormField.METAL, FormField.MAKING_CHARGE -> ImportColumn.NAME
         FormField.BRAND -> ImportColumn.BRAND
         FormField.DESCRIPTION -> ImportColumn.DESCRIPTION
         FormField.MATERIAL -> ImportColumn.MATERIAL

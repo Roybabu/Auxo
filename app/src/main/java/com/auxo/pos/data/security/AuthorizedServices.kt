@@ -30,6 +30,11 @@ class AuthorizedShopPreferences(private val inner: ShopPreferences, private val 
         auth.require(Permission.MANAGE_SETTINGS)
         inner.setCategorySetupDone(done)
     }
+
+    override fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setMetalRates(rates)
+    }
 }
 
 /** The logo is shown to everyone; only the Super Admin can change it. */

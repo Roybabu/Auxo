@@ -28,6 +28,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.input.KeyboardType
+import com.auxo.pos.domain.model.StockUnit
+import com.auxo.pos.ui.screens.inventory.sanitizeDecimal
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -148,17 +154,39 @@ fun ReturnContent(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            stringResource(R.string.return_sold, line.quantity, line.returnedQuantity),
+                            if (line.stockUnit == StockUnit.UNIT) {
+                                stringResource(R.string.return_sold, line.quantity, line.returnedQuantity)
+                            } else {
+                                stringResource(R.string.return_sold_measure, line.quantityText, line.stockUnit.format(line.returnedQuantity))
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(formatter.format(line.total), style = MaterialTheme.typography.bodySmall)
                     }
-                    QuantityStepper(
-                        value = state.quantities[line.id] ?: 0,
-                        onValueChange = { onQuantityChange(line.id, it) },
-                        max = line.returnableQuantity,
-                    )
+                    if (line.stockUnit == StockUnit.UNIT) {
+                        QuantityStepper(
+                            value = state.quantities[line.id] ?: 0,
+                            onValueChange = { onQuantityChange(line.id, it) },
+                            max = line.returnableQuantity,
+                        )
+                    } else {
+                        // Goods sold by weight come back by weight, typed in kilograms or litres.
+                        val returning = state.quantities[line.id] ?: 0
+                        var typed by remember(line.id, returning) {
+                            mutableStateOf(if (returning > 0) line.stockUnit.toEntryText(returning) else "")
+                        }
+                        AuxoTextField(
+                            value = typed,
+                            onValueChange = {
+                                typed = sanitizeDecimal(it, 3)
+                                onQuantityChange(line.id, line.stockUnit.parse(typed) ?: 0)
+                            },
+                            label = line.stockUnit.entrySymbol,
+                            keyboardType = KeyboardType.Decimal,
+                            modifier = Modifier.width(112.dp).testTag("return_weight_${line.id}"),
+                        )
+                    }
                 }
             }
         }

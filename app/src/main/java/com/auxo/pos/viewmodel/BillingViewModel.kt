@@ -384,11 +384,13 @@ class BillingViewModel(
                 return
             }
             // All the stock is already on the bill: nothing more to add, and no message.
-            inCart + 1 > available -> return
+            inCart >= available -> return
         }
         recalculate { state ->
             state.copy(
-                cart = state.cart.add(CartLine.from(product, variant, today = today)),
+                cart = state.cart.add(
+                    CartLine.from(product, variant, today = today).let { it.copy(quantity = it.withinStock(it.quantity)) },
+                ),
                 searchText = if (clearSearch) "" else state.searchText,
                 searchResults = if (clearSearch) emptyList() else state.searchResults,
             )
@@ -411,12 +413,19 @@ class BillingViewModel(
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
         // The "+" button is off at the limit; this keeps the rule in the billing logic too.
         if (!line.canIncrease) return
-        setQuantity(lineKey, line.quantity + 1)
+        setQuantity(lineKey, line.quantity + line.step)
     }
 
     fun decrement(lineKey: Long) {
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
-        if (line.quantity > 1) setQuantity(lineKey, line.quantity - 1)
+        if (line.quantity > line.step) setQuantity(lineKey, line.quantity - line.step)
+    }
+
+    /** A weight or volume typed in for a loose item, such as "1.25" kilograms. Ignored when it is not a valid amount. */
+    fun setTypedQuantity(lineKey: Long, text: String) {
+        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
+        val base = line.stockUnit.parse(text) ?: return
+        setQuantity(lineKey, base)
     }
 
     fun setQuantity(lineKey: Long, quantity: Int) = recalculate { it.copy(cart = it.cart.setQuantity(lineKey, quantity)) }
