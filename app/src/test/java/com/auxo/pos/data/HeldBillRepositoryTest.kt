@@ -51,9 +51,16 @@ class HeldBillRepositoryTest {
     @After
     fun tearDown() = database.close()
 
+    private var savedShirtId: Long? = null
+
     private suspend fun cartOfShirt(quantity: Int = 2): Cart {
+        savedShirtId?.let { id ->
+            val product = inventory.getProduct(id)!!
+            return Cart(lines = listOf(CartLine.from(product, product.variants[0], quantity)))
+        }
         val fresh = TestData.tShirt().let { it.copy(id = 0, variants = it.variants.map { v -> v.copy(id = 0, productId = 0) }) }
         val id = (inventory.saveProduct(fresh) as SaveProductResult.Saved).productId
+        savedShirtId = id
         val product = inventory.getProduct(id)!!
         return Cart(lines = listOf(CartLine.from(product, product.variants[0], quantity)))
     }

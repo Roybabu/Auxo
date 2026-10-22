@@ -410,7 +410,9 @@ class DatabaseMigrationTest {
             val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
                 generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
             }
-            assertTrue("$table no longer has table_number or service_type", "table_number" !in columns && "service_type" !in columns)
+            // Version 23 gives parked bills a table_number again, with a new meaning (the restaurant table they belong to).
+            assertTrue("$table no longer has service_type", "service_type" !in columns)
+            if (table == "invoices") assertTrue("invoices no longer has table_number", "table_number" !in columns)
         }
 
         // Stock counts: the table exists and starts empty; a count can be started, filled and cancelled with no
@@ -582,7 +584,7 @@ class DatabaseMigrationTest {
         database = db
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
         assertEquals(
-            listOf(true, true, true, true, true, false, false, false, false, false),
+            listOf(true, true, true, true, true, false, false, false, false, false, false, false),
             categories.map { it.enabled },
         )
     }
@@ -648,7 +650,7 @@ class DatabaseMigrationTest {
         for (table in listOf("held_bills", "invoices")) {
             val names = columns(table)
             assertTrue("$table has no service_type", "service_type" !in names)
-            assertTrue("$table has no table_number", "table_number" !in names)
+            if (table == "invoices") assertTrue("invoices has no table_number", "table_number" !in names)
         }
         assertTrue("kot_sent" !in columns("held_bills") && "kot_count" !in columns("held_bills"))
 
