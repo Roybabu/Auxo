@@ -40,6 +40,12 @@ interface ShopPreferences {
         get() = MutableStateFlow(com.auxo.pos.domain.jewellery.MetalRates())
 
     fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) = Unit
+
+    /** How many tables the restaurant has; parked restaurant bills are filed against one of them. */
+    val tableCount: StateFlow<Int>
+        get() = MutableStateFlow(com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES)
+
+    fun setTableCount(count: Int) = Unit
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -87,7 +93,17 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         metalRatesState.value = rates
     }
 
+    private val tableCountState = MutableStateFlow(prefs.getInt(KEY_TABLE_COUNT, com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES))
+    override val tableCount: StateFlow<Int> = tableCountState.asStateFlow()
+
+    override fun setTableCount(count: Int) {
+        val clean = count.coerceIn(1, com.auxo.pos.domain.billing.HeldBills.MAX_TABLES)
+        prefs.edit { putInt(KEY_TABLE_COUNT, clean) }
+        tableCountState.value = clean
+    }
+
     companion object {
+        const val KEY_TABLE_COUNT = "table_count"
         const val KEY_METAL_RATES = "metal_rates"
         const val FILE = "shop"
         const val KEY_ONBOARDING_SEEN = "onboarding_seen"

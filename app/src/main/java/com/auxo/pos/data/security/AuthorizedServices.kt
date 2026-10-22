@@ -31,6 +31,11 @@ class AuthorizedShopPreferences(private val inner: ShopPreferences, private val 
         inner.setCategorySetupDone(done)
     }
 
+    override fun setTableCount(count: Int) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setTableCount(count)
+    }
+
     override fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) {
         auth.require(Permission.MANAGE_SETTINGS)
         inner.setMetalRates(rates)

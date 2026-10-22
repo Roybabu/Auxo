@@ -1474,7 +1474,7 @@
     <string name="receipt_discount_reason">ছাড়ের কারণ: %1$s</string>
     <string name="hold_title">এই বিল হোল্ড করুন</string>
     <string name="hold_body">এই বিল আলাদা রেখে নতুন বিল শুরু করুন। বিল শেষ না হওয়া পর্যন্ত স্টক থেকে কিছু কমে না।</string>
-    <string name="hold_label">নাম বা টেবিল (ঐচ্ছিক)</string>
+    <string name="hold_label">গ্রাহকের নাম (ঐচ্ছিক)</string>
     <string name="hold_action">হোল্ড করুন</string>
     <string name="hold_icon">বিল হোল্ড করুন</string>
     <string name="held_icon">হোল্ড করা বিল (%1$d)</string>
@@ -1824,4 +1824,13 @@
         <item quantity="one">%1$d পণ্যের দাম বদলেছে</item>
         <item quantity="other">%1$d পণ্যের দাম বদলেছে</item>
     </plurals>
+    <string name="hold_choose_table">টেবিল বেছে নিন</string>
+    <string name="hold_tables_busy">যে টেবিলে আগে থেকেই আটকে রাখা বিল আছে সেগুলো ধূসর। তাতে যোগ করতে আটকে রাখা বিল থেকে সেই বিল খুলুন।</string>
+    <string name="hold_number">এই বিলের নম্বর হবে %1$d</string>
+    <string name="hold_phone">গ্রাহকের ফোন (ঐচ্ছিক)</string>
+    <string name="held_table">টেবিল %1$d</string>
+    <string name="held_bill_number">বিল %1$d</string>
+    <string name="shop_tables_title">টেবিল</string>
+    <string name="shop_tables_body">আপনার রেস্তোরাঁয় কতগুলো টেবিল আছে। আটকে রাখা রেস্তোরাঁর বিল এর একটি টেবিলের নামে রাখা হয়।</string>
+    <string name="shop_tables_field">টেবিলের সংখ্যা</string>
 </resources>

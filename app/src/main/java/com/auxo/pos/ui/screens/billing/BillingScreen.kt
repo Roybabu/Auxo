@@ -101,6 +101,7 @@ import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.screens.inventory.sanitizeDecimal
 import com.auxo.pos.domain.model.StockUnit
+import com.auxo.pos.domain.billing.HeldBills
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.components.LoadingState
 import com.auxo.pos.ui.components.QrCode
@@ -308,7 +309,16 @@ fun BillingScreen(
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
-                            ActionIcon(R.drawable.ic_pause, stringResource(R.string.hold_icon), { showHold = true }, Modifier.testTag("hold_open"))
+                            ActionIcon(
+                                R.drawable.ic_pause,
+                                stringResource(R.string.hold_icon),
+                                {
+                                    // A resumed table bill goes back to its table without being asked again.
+                                    val resumed = uiState.heldBills.firstOrNull { it.id == uiState.resumedHeldId }
+                                    if (uiState.cart.needsTable && resumed?.tableNumber != null) viewModel.holdAgain() else showHold = true
+                                },
+                                Modifier.testTag("hold_open"),
+                            )
                         }
                         if (uiState.canHold && (uiState.heldBills.isNotEmpty() || uiState.resumedHeldId != null)) {
                             IconButton(onClick = { showHeld = true }, modifier = Modifier.testTag("held_open")) {
@@ -355,9 +365,14 @@ fun BillingScreen(
     if (showHold) {
         HoldBillDialog(
             suggestion = uiState.cart.customer.name,
-            onHold = { label ->
+            needsTable = uiState.cart.needsTable,
+            tableCount = uiState.tableCount,
+            busyTables = HeldBills.busyTables(uiState.heldBills, uiState.resumedHeldId),
+            token = uiState.heldBills.firstOrNull { it.id == uiState.resumedHeldId }?.tokenNumber
+                ?: HeldBills.nextToken(uiState.heldBills.mapNotNull { it.tokenNumber }),
+            onHold = { label, phone, table ->
                 showHold = false
-                viewModel.holdBill(label)
+                viewModel.holdBill(label, table, phone)
             },
             onDismiss = { showHold = false },
         )

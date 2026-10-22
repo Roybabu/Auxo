@@ -31,6 +31,7 @@ import com.auxo.pos.domain.billing.CreditAccount
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.billing.HeldBillSummary
+import com.auxo.pos.domain.billing.HeldBills
 import com.auxo.pos.data.repository.QuotationRepository
 import com.auxo.pos.domain.billing.QuotationRepricing
 import com.auxo.pos.domain.billing.QuotationStatus
@@ -137,6 +138,8 @@ data class BillingUiState(
     val canHold: Boolean = false,
     /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
     val resumedHeldId: Long? = null,
+    /** How many tables the restaurant has; the table picker offers 1 to this. */
+    val tableCount: Int = HeldBills.DEFAULT_TABLES,
     /** Quotations, newest first. */
     val quotations: List<QuotationSummary> = emptyList(),
     /** True when the shop can make quotations at all. */
@@ -315,6 +318,9 @@ class BillingViewModel(
                 }
             }
         }
+        val tablesJob = shop?.let { prefs ->
+            viewModelScope.launch { prefs.tableCount.collect { count -> _uiState.update { it.copy(tableCount = count) } } }
+        }
         val heldJob = heldBills?.let { repository ->
             viewModelScope.launch {
                 repository.observeHeld()
@@ -329,7 +335,7 @@ class BillingViewModel(
                     .collect { list -> _uiState.update { it.copy(quotations = list, canQuote = true) } }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, shopJob, customersJob, loyaltyJob, heldJob, quotationJob)
+        loadJobs = listOfNotNull(settingsJob, productsJob, shopJob, tablesJob, customersJob, loyaltyJob, heldJob, quotationJob)
     }
 
     // Search and adding items
@@ -572,6 +578,7 @@ class BillingViewModel(
                 quickSection = it.quickSection,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
+                tableCount = it.tableCount,
                 quotations = it.quotations,
                 canQuote = it.canQuote,
             )
@@ -677,13 +684,29 @@ class BillingViewModel(
 
     // Held bills
 
-    /** Parks the bill on the counter under an optional [label] (a customer name, a table) and starts a new one. */
-    fun holdBill(label: String) {
+    /**
+     * Parks the bill on the counter under an optional [label] (a customer name) and starts a new one. A bill with a
+     * restaurant dish needs a [tableNumber] that no other parked bill is using; any other bill is given a number by the
+     * app. A [phone] typed for the customer is kept on the bill.
+     */
+    fun holdBill(label: String, tableNumber: Int? = null, phone: String = "") {
         val store = heldBills ?: return
         val state = _uiState.value
         if (state.cart.isEmpty || state.isSaving) return
+        if (state.cart.needsTable) {
+            val free = tableNumber != null && tableNumber in 1..state.tableCount &&
+                tableNumber !in HeldBills.busyTables(state.heldBills, state.resumedHeldId)
+            if (!free) return
+        }
+        val table = tableNumber.takeIf { state.cart.needsTable }
+        val digits = phone.filter(Char::isDigit).takeLast(10)
+        val cart = if (digits.isNotEmpty() && state.cart.customer.phone.isBlank()) {
+            state.cart.copy(customer = state.cart.customer.copy(phone = digits))
+        } else {
+            state.cart
+        }
         viewModelScope.launch {
-            val saved = runCatching { store.hold(state.cart, state.totals.grandTotal, label, state.resumedHeldId) }
+            val saved = runCatching { store.hold(cart, state.totals.grandTotal, label, state.resumedHeldId, table) }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 .isSuccess
             if (saved) {
@@ -693,6 +716,17 @@ class BillingViewModel(
                 eventChannel.send(BillingEvent.SaveFailed)
             }
         }
+    }
+
+    /**
+     * Parks a resumed restaurant bill again, against the table it already has and under the name it already had, so
+     * nothing is asked a second time. Does nothing for a bill that did not come from a table.
+     */
+    fun holdAgain() {
+        val state = _uiState.value
+        val held = state.heldBills.firstOrNull { it.id == state.resumedHeldId } ?: return
+        val table = held.tableNumber ?: return
+        holdBill(held.label, table)
     }
 
     /**

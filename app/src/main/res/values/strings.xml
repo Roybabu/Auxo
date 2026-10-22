@@ -1474,7 +1474,7 @@ in %2$s</string>
     <string name="receipt_discount_reason">Discount reason: %1$s</string>
     <string name="hold_title">Hold this bill</string>
     <string name="hold_body">Park this bill and start a new one. Nothing is taken out of stock until it is finished.</string>
-    <string name="hold_label">Name or table (optional)</string>
+    <string name="hold_label">Customer name (optional)</string>
     <string name="hold_action">Hold</string>
     <string name="hold_icon">Hold bill</string>
     <string name="held_icon">Held bills (%1$d)</string>
@@ -1824,4 +1824,13 @@ in %2$s</string>
         <item quantity="one">%1$d item re-priced</item>
         <item quantity="other">%1$d items re-priced</item>
     </plurals>
+    <string name="hold_choose_table">Choose the table</string>
+    <string name="hold_tables_busy">Tables that already have a parked bill are greyed out. Open that bill from Held bills to add to it.</string>
+    <string name="hold_number">This bill will be number %1$d</string>
+    <string name="hold_phone">Customer phone (optional)</string>
+    <string name="held_table">Table %1$d</string>
+    <string name="held_bill_number">Bill %1$d</string>
+    <string name="shop_tables_title">Tables</string>
+    <string name="shop_tables_body">How many tables your restaurant has. A parked restaurant bill is put against one of them.</string>
+    <string name="shop_tables_field">Number of tables</string>
 </resources>

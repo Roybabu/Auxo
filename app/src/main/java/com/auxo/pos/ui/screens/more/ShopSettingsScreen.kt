@@ -14,6 +14,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -47,7 +48,7 @@ fun ShopSettingsScreen(
     viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories, viewModel::saveMetalRates)
+    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories, viewModel::saveMetalRates, viewModel::onTableCountChange)
 }
 
 @Composable
@@ -58,6 +59,7 @@ fun ShopSettingsContent(
     onOpenStoreDetails: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
     onSaveMetalRates: (Map<JewelleryMetal, String>, Boolean) -> Unit = { _, _ -> },
+    onTableCountChange: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
@@ -118,6 +120,7 @@ fun ShopSettingsContent(
                     )
                 }
             }
+            TablesCard(state.tableCount, onTableCountChange)
             MetalRatesCard(state, onSaveMetalRates)
         }
     }
@@ -169,6 +172,32 @@ private fun MetalRatesCard(state: ShopUiState, onSave: (Map<JewelleryMetal, Stri
                     Text(stringResource(R.string.metal_rates_update))
                 }
             }
+        }
+    }
+}
+
+/** How many tables the restaurant has. Parking a restaurant bill asks for one of them. */
+@Composable
+private fun TablesCard(tableCount: Int, onChange: (String) -> Unit) {
+    var text by remember(tableCount) { androidx.compose.runtime.mutableStateOf(tableCount.toString()) }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("tables_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.shop_tables_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.shop_tables_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuxoTextField(
+                value = text,
+                onValueChange = {
+                    text = it.filter(Char::isDigit).take(2)
+                    onChange(text)
+                },
+                label = stringResource(R.string.shop_tables_field),
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.fillMaxWidth().testTag("tables_field"),
+            )
         }
     }
 }

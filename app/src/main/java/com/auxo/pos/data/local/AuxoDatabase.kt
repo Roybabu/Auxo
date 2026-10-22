@@ -92,7 +92,8 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  *     by hand ([MIGRATION_21_22]).
  * 23. Loose goods and Jewellery: two built-in rows are added to shop_categories, off, at the end of the list;
  *     invoice_lines.stock_unit (lines sold by weight or volume); products.metal and products.making_charge_bp
- *     (jewellery). Written by hand ([MIGRATION_22_23]).
+ *     (jewellery); held_bills.table_number and held_bills.token_number (parked bills belong to a restaurant table or
+ *     get a number). Written by hand ([MIGRATION_22_23]).
  */
 @Database(
     entities = [
@@ -414,6 +415,8 @@ abstract class AuxoDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE invoice_lines ADD COLUMN stock_unit TEXT")
                 db.execSQL("ALTER TABLE products ADD COLUMN metal TEXT")
                 db.execSQL("ALTER TABLE products ADD COLUMN making_charge_bp INTEGER")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN table_number INTEGER")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN token_number INTEGER")
                 listOf("LOOSE", "JEWELLERY").forEach { profile ->
                     db.execSQL(
                         "INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) " +

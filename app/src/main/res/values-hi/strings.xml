@@ -1474,7 +1474,7 @@
     <string name="receipt_discount_reason">छूट का कारण: %1$s</string>
     <string name="hold_title">इस बिल को होल्ड करें</string>
     <string name="hold_body">इस बिल को अलग रखें और नया बिल शुरू करें। बिल पूरा होने तक स्टॉक से कुछ नहीं घटता।</string>
-    <string name="hold_label">नाम या टेबल (वैकल्पिक)</string>
+    <string name="hold_label">ग्राहक का नाम (वैकल्पिक)</string>
     <string name="hold_action">होल्ड करें</string>
     <string name="hold_icon">बिल होल्ड करें</string>
     <string name="held_icon">होल्ड किए गए बिल (%1$d)</string>
@@ -1824,4 +1824,13 @@
         <item quantity="one">%1$d सामान की कीमत बदली</item>
         <item quantity="other">%1$d सामान की कीमतें बदलीं</item>
     </plurals>
+    <string name="hold_choose_table">टेबल चुनें</string>
+    <string name="hold_tables_busy">जिन टेबलों पर पहले से रुका हुआ बिल है वे धूसर हैं। उसमें जोड़ने के लिए रुके हुए बिल से वह बिल खोलें।</string>
+    <string name="hold_number">इस बिल का नंबर %1$d होगा</string>
+    <string name="hold_phone">ग्राहक का फ़ोन (वैकल्पिक)</string>
+    <string name="held_table">टेबल %1$d</string>
+    <string name="held_bill_number">बिल %1$d</string>
+    <string name="shop_tables_title">टेबल</string>
+    <string name="shop_tables_body">आपके रेस्तरां में कितनी टेबल हैं। रुका हुआ रेस्तरां बिल इनमें से किसी एक टेबल के नाम पर रखा जाता है।</string>
+    <string name="shop_tables_field">टेबलों की संख्या</string>
 </resources>

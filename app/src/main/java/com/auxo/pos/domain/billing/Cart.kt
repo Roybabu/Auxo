@@ -40,6 +40,8 @@ data class CartLine(
      * [unitPrice] is the price of a kilogram or litre.
      */
     val stockUnit: StockUnit = StockUnit.UNIT,
+    /** A dish from the restaurant menu. A bill with one is parked against a table. */
+    val isRestaurantItem: Boolean = false,
 ) {
     /** What the line comes to before any discount: price times quantity, or price per kilogram times the grams. */
     val gross: Money get() = stockUnit.amountFor(quantity, unitPrice)
@@ -102,6 +104,7 @@ data class CartLine(
             gstRate = product.gstRate,
             quantity = quantity,
             stockUnit = product.stockUnit,
+            isRestaurantItem = product.category == ProductCategory.RESTAURANT,
             availableStock = when {
                 !product.available -> null
                 !product.tracksStock -> UNLIMITED
@@ -133,6 +136,9 @@ data class Cart(
     val placeOfSupplyStateCode: String? = null,
 ) {
     val isEmpty: Boolean get() = lines.isEmpty()
+
+    /** True when the bill has a restaurant dish, so parking it needs a table. */
+    val needsTable: Boolean get() = lines.any { it.isRestaurantItem }
     /** Pieces on the bill; a loose item sold by weight counts as one item, not as its grams. */
     val itemCount: Int get() = lines.sumOf { if (it.stockUnit == StockUnit.UNIT) it.quantity else 1 }
 

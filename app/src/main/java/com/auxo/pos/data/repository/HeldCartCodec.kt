@@ -62,6 +62,7 @@ object HeldCartCodec {
         line.discount?.let { put("discount", encodeDiscount(it)) }
         put("discountReason", line.discountReason)
         put("custom", line.isCustom)
+        if (line.isRestaurantItem) put("restaurant", true)
     }
 
     private fun decodeLine(o: JSONObject): CartLine = CartLine(
@@ -82,6 +83,7 @@ object HeldCartCodec {
         // no stock of their own.
         availableStock = if (o.optBoolean("custom", false)) CartLine.UNLIMITED else null,
         isCustom = o.optBoolean("custom", false),
+        isRestaurantItem = o.optBoolean("restaurant", false),
     )
 
     private fun encodeRate(rate: GstRate): String = when (rate) {

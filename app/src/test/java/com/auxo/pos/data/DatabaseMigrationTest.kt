@@ -806,6 +806,11 @@ class DatabaseMigrationTest {
             c.isNull(0) to c.isNull(1)
         }
         assertEquals(true to true, product)
+        // Parked bills get the two columns that tie them to a table or a number.
+        val heldColumns = sql.query("PRAGMA table_info(held_bills)").use { c ->
+            generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+        }
+        assertTrue("table_number" in heldColumns && "token_number" in heldColumns)
         // Bill lines already saved count as pieces: they have no unit.
         sql.query("SELECT stock_unit FROM invoice_lines").use { assertEquals(0, it.count) }
     }

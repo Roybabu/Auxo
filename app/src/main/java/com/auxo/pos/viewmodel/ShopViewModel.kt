@@ -25,6 +25,8 @@ data class ShopUiState(
     val suppliers: Boolean = true,
     /** Today's metal rates, per gram. */
     val metalRates: com.auxo.pos.domain.jewellery.MetalRates = com.auxo.pos.domain.jewellery.MetalRates(),
+    /** Tables in the restaurant. */
+    val tableCount: Int = com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES,
     /** How many jewellery items the last price update changed; null until one has run. */
     val repricedCount: Int? = null,
 )
@@ -41,15 +43,15 @@ class ShopViewModel(
         settings.observeSettings().map { it.storeName.trim().ifEmpty { null } }.catch { emit(null) },
         shop.restaurantMenu,
         shop.suppliers,
-        shop.metalRates,
-        repriced,
-    ) { name, menu, suppliers, rates, repricedCount ->
+        combine(shop.metalRates, repriced, shop.tableCount) { rates, repricedCount, tables -> Triple(rates, repricedCount, tables) },
+    ) { name, menu, suppliers, extras ->
         ShopUiState(
             shopName = name,
             restaurantMenu = menu,
             suppliers = suppliers,
-            metalRates = rates,
-            repricedCount = repricedCount,
+            metalRates = extras.first,
+            repricedCount = extras.second,
+            tableCount = extras.third,
         )
     }
         .stateIn(
@@ -86,6 +88,11 @@ class ShopViewModel(
             }
             repriced.value = changed
         }
+    }
+
+    /** The number of tables as typed; anything that is not 1 to 99 is ignored. */
+    fun onTableCountChange(text: String) {
+        com.auxo.pos.domain.billing.HeldBills.parseTableCount(text)?.let { shop.setTableCount(it) }
     }
 
     fun dismissRepriced() {
