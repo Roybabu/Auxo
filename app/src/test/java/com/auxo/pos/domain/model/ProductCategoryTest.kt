@@ -41,8 +41,43 @@ class ProductCategoryTest {
     @Test
     fun foodAndBeverages_stillTrackExpiry() {
         assertEquals(
-            setOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE),
+            setOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.PHARMACY, ProductCategory.COSMETICS),
             ProductCategory.entries.filter { it.tracksExpiry }.toSet(),
         )
+    }
+
+    @Test
+    fun generalItems_haveNoSizeColourPackSizeOrExpiry() {
+        val category = ProductCategory.GENERAL
+        assertFalse(category.usesSizeAndColour)
+        assertFalse(category.usesMaterial)
+        assertFalse(category.usesNetQuantity)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.usesApparelGst)
+        assertTrue(category.allowedUnits.isEmpty())
+    }
+
+    @Test
+    fun electronics_useSizeAndColourAndAWarranty_butNoMaterial() {
+        val category = ProductCategory.ELECTRONICS
+        assertTrue(category.usesSizeAndColour)
+        assertFalse(category.usesMaterial)
+        assertTrue(category.usesWarranty)
+        assertFalse(category.tracksExpiry)
+        assertTrue(category.presetSizes.isEmpty())
+    }
+
+    @Test
+    fun pharmacyAndCosmetics_areSoldInPacksWithBatchAndExpiry() {
+        for (category in listOf(ProductCategory.PHARMACY, ProductCategory.COSMETICS)) {
+            assertTrue(category.usesNetQuantity)
+            assertTrue(category.tracksExpiry)
+            assertFalse(category.usesSizeAndColour)
+            assertFalse(category.usesDietType)
+            assertTrue(category.allowedUnits.isNotEmpty())
+        }
+        assertTrue(ProductCategory.PHARMACY.usesPrescription)
+        assertFalse(ProductCategory.COSMETICS.usesPrescription)
+        assertEquals(setOf(ProductCategory.ELECTRONICS), ProductCategory.entries.filter { it.usesWarranty }.toSet())
     }
 }

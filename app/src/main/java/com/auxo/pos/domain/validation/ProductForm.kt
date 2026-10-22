@@ -78,6 +78,10 @@ data class ProductForm(
     val description: String = "",
     val material: String = "",
     val dietType: DietType? = null,
+    /** Warranty period in months, as typed; electronics only. */
+    val warrantyMonths: String = "",
+    /** Sold only against a prescription; pharmacy only. */
+    val prescriptionRequired: Boolean = false,
     /** Grouping inside the category, such as a menu section; restaurant items only. */
     val subcategory: String = "",
     /** The shop category row this product is listed under; null until one is chosen. */
@@ -112,6 +116,8 @@ data class ProductForm(
             description = product.description.orEmpty(),
             material = product.material.orEmpty(),
             dietType = product.dietType,
+            warrantyMonths = product.warrantyMonths?.toString().orEmpty(),
+            prescriptionRequired = product.prescriptionRequired,
             subcategory = product.subcategory.orEmpty(),
             categoryId = product.categoryId,
             available = product.available,

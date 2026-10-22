@@ -68,11 +68,15 @@
 
     <!-- Categories, filters and statuses -->
     <string name="category_garment">कपड़ा</string>
-    <string name="category_footwear">à¤à¥à¤¤à¥-à¤à¤ªà¥à¤ªà¤²</string>
-    <string name="category_accessories">à¤à¤à¥à¤¸à¥à¤¸à¤°à¥à¤à¤¼</string>
+    <string name="category_footwear">जूते-चप्पल</string>
+    <string name="category_accessories">एक्सेसरीज़</string>
     <string name="category_packaged_food">पैकेट वाला खाना</string>
     <string name="category_beverage">पेय</string>
     <string name="category_restaurant">रेस्टोरेंट</string>
+    <string name="category_general">सामान्य सामान</string>
+    <string name="category_electronics">इलेक्ट्रॉनिक्स</string>
+    <string name="category_pharmacy">दवाइयाँ</string>
+    <string name="category_cosmetics">कॉस्मेटिक्स</string>
     <string name="filter_all">सभी</string>
     <string name="stock_filter_low">कम स्टॉक</string>
     <string name="stock_filter_out">स्टॉक खत्म</string>
@@ -117,6 +121,8 @@
     <string name="detail_not_found">यह उत्पाद अब मौजूद नहीं है।</string>
     <string name="detail_brand">ब्रांड: %1$s</string>
     <string name="detail_material">सामग्री: %1$s</string>
+    <string name="detail_warranty">वारंटी: %1$d महीने</string>
+    <string name="detail_prescription">पर्चा ज़रूरी</string>
     <string name="detail_variant_standard">सामान्य</string>
     <string name="detail_mrp">एमआरपी %1$s</string>
     <string name="detail_cost">लागत %1$s</string>
@@ -170,6 +176,8 @@
     <string name="editor_brand">ब्रांड</string>
     <string name="editor_description">विवरण</string>
     <string name="editor_material">सामग्री या कपड़ा</string>
+    <string name="editor_warranty">वारंटी (महीने)</string>
+    <string name="editor_prescription">पर्चा ज़रूरी (दवा)</string>
     <string name="editor_diet">शाकाहारी या मांसाहारी</string>
     <string name="editor_sizes">साइज़</string>
     <string name="editor_colours">रंग</string>
@@ -234,6 +242,7 @@
     <string name="error_quantity_too_large">यह संख्या बहुत बड़ी है</string>
     <string name="error_invalid_net_quantity">500 या 1.5 जैसी मात्रा लिखें</string>
     <string name="error_invalid_amount">2 या 1.25 जैसी राशि लिखें</string>
+    <string name="error_invalid_warranty">1 से 120 के बीच पूरे महीने लिखें</string>
     <string name="error_unit_required">इकाई चुनें</string>
     <string name="error_barcode_check_digit">आखिरी अंक मेल नहीं खाता। बारकोड जाँचें।</string>
     <string name="error_barcode_characters">केवल अक्षर, अंक और - . _ / इस्तेमाल करें</string>
@@ -993,12 +1002,16 @@
     <string name="insights_departments_empty">इस अवधि में सामान की कोई बिक्री नहीं।</string>
     <string name="insights_departments_description">विभाग के अनुसार शुद्ध बिक्री: %1$s।</string>
     <string name="insights_dept_garments">कपड़े</string>
-    <string name="insights_dept_footwear">à¤à¥à¤¤à¥-à¤à¤ªà¥à¤ªà¤²</string>
-    <string name="insights_dept_accessories">à¤à¤à¥à¤¸à¥à¤¸à¤°à¥à¤à¤¼</string>
+    <string name="insights_dept_footwear">जूते-चप्पल</string>
+    <string name="insights_dept_accessories">एक्सेसरीज़</string>
     <string name="insights_dept_food">पैकेट वाला खाना</string>
     <string name="insights_dept_beverages">पेय</string>
     <string name="insights_dept_restaurant">रेस्टोरेंट के पकवान</string>
     <string name="insights_dept_other">अन्य</string>
+    <string name="insights_dept_general">सामान्य सामान</string>
+    <string name="insights_dept_electronics">इलेक्ट्रॉनिक्स</string>
+    <string name="insights_dept_pharmacy">दवाइयाँ</string>
+    <string name="insights_dept_cosmetics">कॉस्मेटिक्स</string>
     <string name="insights_top_title">सबसे ज़्यादा बिकने वाले उत्पाद</string>
     <string name="insights_top_sold" tools:ignore="PluralsCandidate">%1$d बिके</string>
     <string name="insights_top_empty">इस अवधि में कोई उत्पाद नहीं बिका।</string>

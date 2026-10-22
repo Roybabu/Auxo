@@ -73,6 +73,10 @@
     <string name="category_packaged_food">Packaged food</string>
     <string name="category_beverage">Beverage</string>
     <string name="category_restaurant">Restaurant</string>
+    <string name="category_general">General items</string>
+    <string name="category_electronics">Electronics</string>
+    <string name="category_pharmacy">Pharmacy</string>
+    <string name="category_cosmetics">Cosmetics</string>
     <string name="filter_all">All</string>
     <string name="stock_filter_low">Low stock</string>
     <string name="stock_filter_out">Out of stock</string>
@@ -117,6 +121,8 @@
     <string name="detail_not_found">This product no longer exists.</string>
     <string name="detail_brand">Brand: %1$s</string>
     <string name="detail_material">Material: %1$s</string>
+    <string name="detail_warranty">Warranty: %1$d months</string>
+    <string name="detail_prescription">Prescription required</string>
     <string name="detail_variant_standard">Standard</string>
     <string name="detail_mrp">MRP %1$s</string>
     <string name="detail_cost">Cost %1$s</string>
@@ -170,6 +176,8 @@
     <string name="editor_brand">Brand</string>
     <string name="editor_description">Description</string>
     <string name="editor_material">Material or fabric</string>
+    <string name="editor_warranty">Warranty (months)</string>
+    <string name="editor_prescription">Prescription required (medicine)</string>
     <string name="editor_diet">Veg or non-veg</string>
     <string name="editor_sizes">Sizes</string>
     <string name="editor_colours">Colours</string>
@@ -234,6 +242,7 @@
     <string name="error_quantity_too_large">That number is too large</string>
     <string name="error_invalid_net_quantity">Enter an amount like 500 or 1.5</string>
     <string name="error_invalid_amount">Enter an amount like 2 or 1.25</string>
+    <string name="error_invalid_warranty">Enter whole months from 1 to 120</string>
     <string name="error_unit_required">Choose a unit</string>
     <string name="error_barcode_check_digit">The last digit doesn\'t match. Check the barcode.</string>
     <string name="error_barcode_characters">Use letters, numbers and - . _ / only</string>
@@ -1000,6 +1009,10 @@ in %2$s</string>
     <string name="insights_dept_beverages">Beverages</string>
     <string name="insights_dept_restaurant">Restaurant dishes</string>
     <string name="insights_dept_other">Other</string>
+    <string name="insights_dept_general">General items</string>
+    <string name="insights_dept_electronics">Electronics</string>
+    <string name="insights_dept_pharmacy">Pharmacy</string>
+    <string name="insights_dept_cosmetics">Cosmetics</string>
     <string name="insights_top_title">Top selling products</string>
     <string name="insights_top_sold" tools:ignore="PluralsCandidate">%1$d sold</string>
     <string name="insights_top_empty">No products sold in this period.</string>

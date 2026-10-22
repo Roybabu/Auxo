@@ -12,15 +12,27 @@ enum class ProductCategory {
     PACKAGED_FOOD,
     BEVERAGE,
 
+    /** Anything that needs no size, colour or expiry: stationery, toys, hardware, household goods, gifts. One price and one stock count. */
+    GENERAL,
+
+    /** Phones, TVs, appliances and the like. Sold by model or capacity and colour, with a warranty period. */
+    ELECTRONICS,
+
+    /** Medicines and health products. Sold in packs (strips, bottles) with batch and expiry, and a prescription flag. */
+    PHARMACY,
+
+    /** Skin, hair and make-up products. Sold in packs with batch and expiry. */
+    COSMETICS,
+
     /** Dishes and drinks made or served to order. Stock is optional, per item. */
     RESTAURANT,
     ;
 
     /** Garments, footwear and accessories are sold in size and colour variants. */
-    val usesSizeAndColour: Boolean get() = this == GARMENT || this == FOOTWEAR || this == ACCESSORIES
+    val usesSizeAndColour: Boolean get() = this == GARMENT || this == FOOTWEAR || this == ACCESSORIES || this == ELECTRONICS
 
     /** Wearable goods carry a material (cotton, leather, ...). */
-    val usesMaterial: Boolean get() = usesSizeAndColour
+    val usesMaterial: Boolean get() = this == GARMENT || this == FOOTWEAR || this == ACCESSORIES
 
     /** The 5% / 18% apparel and footwear GST rule. Accessories are taxed at their own rate. */
     val usesApparelGst: Boolean get() = this == GARMENT || this == FOOTWEAR
@@ -35,10 +47,16 @@ enum class ProductCategory {
         }
 
     /** Packaged food and beverages carry a net quantity (weight or volume) on each pack. */
-    val usesNetQuantity: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE
+    val usesNetQuantity: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE || this == PHARMACY || this == COSMETICS
 
     /** Food and beverages are kept in batches with expiry dates. Clothing and restaurant items are not. */
-    val tracksExpiry: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE
+    val tracksExpiry: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE || this == PHARMACY || this == COSMETICS
+
+    /** Electronics carry a warranty period in months. */
+    val usesWarranty: Boolean get() = this == ELECTRONICS
+
+    /** Medicines can be marked as needing a prescription. */
+    val usesPrescription: Boolean get() = this == PHARMACY
 
     /** Restaurant items can be sold without a stock count; every other category always keeps stock. */
     val canSkipStock: Boolean get() = this == RESTAURANT
@@ -48,7 +66,9 @@ enum class ProductCategory {
 
     val allowedUnits: List<QuantityUnit>
         get() = when (this) {
-            GARMENT, FOOTWEAR, ACCESSORIES, RESTAURANT -> emptyList()
+            GARMENT, FOOTWEAR, ACCESSORIES, ELECTRONICS, GENERAL, RESTAURANT -> emptyList()
+            PHARMACY -> listOf(QuantityUnit.PIECE, QuantityUnit.MILLILITRE, QuantityUnit.GRAM)
+            COSMETICS -> listOf(QuantityUnit.MILLILITRE, QuantityUnit.GRAM, QuantityUnit.PIECE)
             PACKAGED_FOOD -> listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.PIECE)
             BEVERAGE -> listOf(QuantityUnit.MILLILITRE, QuantityUnit.LITRE)
         }

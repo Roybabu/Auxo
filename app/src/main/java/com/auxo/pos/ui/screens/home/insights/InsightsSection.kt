@@ -320,6 +320,10 @@ private fun departmentName(department: Department): String = stringResource(
         Department.PACKAGED_FOOD -> R.string.insights_dept_food
         Department.BEVERAGES -> R.string.insights_dept_beverages
         Department.RESTAURANT -> R.string.insights_dept_restaurant
+        Department.GENERAL -> R.string.insights_dept_general
+        Department.ELECTRONICS -> R.string.insights_dept_electronics
+        Department.PHARMACY -> R.string.insights_dept_pharmacy
+        Department.COSMETICS -> R.string.insights_dept_cosmetics
         Department.OTHER -> R.string.insights_dept_other
     },
 )

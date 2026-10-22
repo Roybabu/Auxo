@@ -108,6 +108,8 @@ interface ProductEditorActions {
     fun onDescriptionChange(value: String)
     fun onMaterialChange(value: String)
     fun onDietTypeChange(dietType: DietType?)
+    fun onWarrantyChange(value: String) = Unit
+    fun onPrescriptionChange(required: Boolean) = Unit
     fun onSubcategoryChange(value: String) = Unit
     fun onAvailableChange(available: Boolean) = Unit
     fun onTracksStockChange(tracks: Boolean) = Unit
@@ -189,6 +191,8 @@ fun ProductEditorScreen(
             override fun onDescriptionChange(value: String) = viewModel.onDescriptionChange(value)
             override fun onMaterialChange(value: String) = viewModel.onMaterialChange(value)
             override fun onDietTypeChange(dietType: DietType?) = viewModel.onDietTypeChange(dietType)
+            override fun onWarrantyChange(value: String) = viewModel.onWarrantyChange(value)
+            override fun onPrescriptionChange(required: Boolean) = viewModel.onPrescriptionChange(required)
             override fun onSubcategoryChange(value: String) = viewModel.onSubcategoryChange(value)
             override fun onAvailableChange(available: Boolean) = viewModel.onAvailableChange(available)
             override fun onTracksStockChange(tracks: Boolean) = viewModel.onTracksStockChange(tracks)
@@ -503,6 +507,32 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                             label = { Text(stringResource(diet.labelRes())) },
                         )
                     }
+                }
+            }
+            if (form.category.usesWarranty) {
+                AuxoTextField(
+                    value = form.warrantyMonths,
+                    onValueChange = actions::onWarrantyChange,
+                    label = stringResource(R.string.editor_warranty),
+                    error = errors.fields[FormField.WARRANTY]?.let { stringResource(it.messageRes()) },
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("editor_warranty"),
+                )
+            }
+            if (form.category.usesPrescription) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.editor_prescription),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = form.prescriptionRequired,
+                        onCheckedChange = actions::onPrescriptionChange,
+                        modifier = Modifier.testTag("editor_prescription"),
+                    )
                 }
             }
             AuxoTextField(

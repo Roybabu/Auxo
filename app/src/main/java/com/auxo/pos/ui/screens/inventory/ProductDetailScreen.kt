@@ -255,6 +255,10 @@ private fun ProductHeader(product: Product) {
             product.brand?.let { Text(stringResource(R.string.detail_brand, it), style = MaterialTheme.typography.bodyMedium) }
             product.material?.let { Text(stringResource(R.string.detail_material, it), style = MaterialTheme.typography.bodyMedium) }
             product.subcategory?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            product.warrantyMonths?.let { Text(stringResource(R.string.detail_warranty, it), style = MaterialTheme.typography.bodyMedium) }
+            if (product.prescriptionRequired) {
+                Text(stringResource(R.string.detail_prescription), style = MaterialTheme.typography.bodyMedium)
+            }
             if (product.category.usesDietType) {
                 Text(stringResource(product.dietType.labelRes()), style = MaterialTheme.typography.bodyMedium)
             }

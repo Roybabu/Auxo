@@ -78,7 +78,7 @@ class RoomCategoryRepository(private val database: AuxoDatabase) : CategoryRepos
         CategoryRules.builtInOrder.forEachIndexed { index, profile ->
             dao.insertCategory(
                 ShopCategoryEntity(
-                    name = null, profile = profile.name, enabled = profile != ProductCategory.RESTAURANT,
+                    name = null, profile = profile.name, enabled = profile !in CategoryRules.startsOff,
                     sortOrder = index, builtIn = true,
                 ),
             )

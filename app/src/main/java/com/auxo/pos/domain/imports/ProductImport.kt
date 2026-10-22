@@ -406,6 +406,10 @@ object ProductImport {
         "accessory", "accessories", "bag", "bags", "belt", "belts", "cap", "caps", "wallet", "wallets" -> ProductCategory.ACCESSORIES
         "packagedfood", "packaged", "food", "grocery", "snack", "snacks" -> ProductCategory.PACKAGED_FOOD
         "beverage", "beverages", "drink", "drinks" -> ProductCategory.BEVERAGE
+        "general", "generalitem", "generalitems", "stationery", "toy", "toys", "hardware", "household", "gift", "gifts" -> ProductCategory.GENERAL
+        "electronics", "electronic", "mobile", "mobiles", "phone", "phones", "appliance", "appliances" -> ProductCategory.ELECTRONICS
+        "pharmacy", "medicine", "medicines", "medical", "drug", "drugs" -> ProductCategory.PHARMACY
+        "cosmetics", "cosmetic", "beauty", "personalcare", "skincare", "haircare", "makeup" -> ProductCategory.COSMETICS
         else -> null
     }
 

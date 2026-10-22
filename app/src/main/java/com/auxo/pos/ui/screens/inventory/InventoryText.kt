@@ -32,6 +32,10 @@ fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.ACCESSORIES -> R.string.category_accessories
     ProductCategory.PACKAGED_FOOD -> R.string.category_packaged_food
     ProductCategory.BEVERAGE -> R.string.category_beverage
+    ProductCategory.GENERAL -> R.string.category_general
+    ProductCategory.ELECTRONICS -> R.string.category_electronics
+    ProductCategory.PHARMACY -> R.string.category_pharmacy
+    ProductCategory.COSMETICS -> R.string.category_cosmetics
     ProductCategory.RESTAURANT -> R.string.category_restaurant
 }
 
@@ -42,6 +46,10 @@ fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.ACCESSORIES -> R.drawable.ic_accessories
     ProductCategory.PACKAGED_FOOD -> R.drawable.ic_food
     ProductCategory.BEVERAGE -> R.drawable.ic_beverage
+    ProductCategory.GENERAL -> R.drawable.ic_general
+    ProductCategory.ELECTRONICS -> R.drawable.ic_electronics
+    ProductCategory.PHARMACY -> R.drawable.ic_pharmacy
+    ProductCategory.COSMETICS -> R.drawable.ic_cosmetics
     ProductCategory.RESTAURANT -> R.drawable.ic_restaurant
 }
 
@@ -137,6 +145,7 @@ fun FieldError.messageRes(): Int = when (this) {
     FieldError.INVALID_HSN -> R.string.error_invalid_hsn
     FieldError.APPAREL_RULE_GARMENTS_ONLY -> R.string.error_apparel_rule_garments
     FieldError.INVALID_AMOUNT -> R.string.error_invalid_amount
+    FieldError.INVALID_WARRANTY -> R.string.error_invalid_warranty
 }
 
 @StringRes

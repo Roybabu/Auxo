@@ -44,6 +44,8 @@ fun ProductWithVariants.toDomain(): Product = Product(
     categoryId = product.categoryId,
     available = product.available,
     tracksStock = product.tracksStock,
+    warrantyMonths = product.warrantyMonths,
+    prescriptionRequired = product.prescriptionRequired,
 )
 
 fun VariantWithBatches.toDomain(): ProductVariant = variant.toDomain().copy(
@@ -109,6 +111,8 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     categoryId = categoryId,
     available = available,
     tracksStock = tracksStock,
+    warrantyMonths = warrantyMonths.takeIf { category.usesWarranty },
+    prescriptionRequired = prescriptionRequired && category.usesPrescription,
 )
 
 fun ProductVariant.toEntity(productId: Long): ProductVariantEntity = ProductVariantEntity(

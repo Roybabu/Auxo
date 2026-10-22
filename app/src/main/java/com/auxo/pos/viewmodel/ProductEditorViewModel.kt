@@ -152,6 +152,8 @@ class ProductEditorViewModel(
             sizes = sizes,
             variants = variants,
             dietType = base.dietType.takeIf { category.usesDietType },
+            warrantyMonths = base.warrantyMonths.takeIf { category.usesWarranty }.orEmpty(),
+            prescriptionRequired = base.prescriptionRequired && category.usesPrescription,
             subcategory = base.subcategory,
             available = true,
             // A restaurant item starts without a stock count; everything else always keeps one.
@@ -197,6 +199,10 @@ class ProductEditorViewModel(
     fun onMaterialChange(value: String) = editForm { it.copy(material = value.take(ProductFormValidator.MATERIAL_MAX + 20)) }
 
     fun onDietTypeChange(dietType: DietType?) = editForm { it.copy(dietType = dietType) }
+
+    fun onWarrantyChange(value: String) = editForm { it.copy(warrantyMonths = value.filter(Char::isDigit).take(3)) }
+
+    fun onPrescriptionChange(required: Boolean) = editForm { it.copy(prescriptionRequired = required) }
 
     fun onSubcategoryChange(value: String) = editForm { it.copy(subcategory = value.take(ProductFormValidator.SUBCATEGORY_MAX + 10)) }
 

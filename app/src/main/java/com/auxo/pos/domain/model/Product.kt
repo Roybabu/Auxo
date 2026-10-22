@@ -100,6 +100,10 @@ data class Product(
      * has no photo. Only the name is kept here; the picture itself is not in the database.
      */
     val photoFile: String? = null,
+    /** Warranty period in months; electronics only. Null when none is given. */
+    val warrantyMonths: Int? = null,
+    /** True for a medicine that is sold only against a prescription; pharmacy items only. */
+    val prescriptionRequired: Boolean = false,
     val createdAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
 ) {
