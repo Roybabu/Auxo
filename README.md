@@ -23,12 +23,19 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 
 ## Screenshots
 
-<!-- Add real screenshots to docs/screenshots/ and list them here as a three-column table, for example:
-| New bill | Held bills | Inventory |
+| Sign in | Home | New bill |
 |---|---|---|
-| <img src="docs/screenshots/new-bill.png" width="240"> | <img src="docs/screenshots/held-bills.png" width="240"> | <img src="docs/screenshots/inventory.png" width="240"> |
--->
-Screenshots are coming. The app has so far run only on an emulator (see Honest status below).
+| <img src="docs/screenshots/sign-in.jpg" width="240" alt="Sign in"> | <img src="docs/screenshots/home.jpg" width="240" alt="Home"> | <img src="docs/screenshots/new-bill.jpg" width="240" alt="New bill"> |
+
+| Inventory | Add product | Customers |
+|---|---|---|
+| <img src="docs/screenshots/inventory.jpg" width="240" alt="Inventory"> | <img src="docs/screenshots/add-product.jpg" width="240" alt="Add product"> | <img src="docs/screenshots/customers.jpg" width="240" alt="Customers"> |
+
+| Invoices and payments | Day end | Backup and restore |
+|---|---|---|
+| <img src="docs/screenshots/invoices.jpg" width="240" alt="Invoices and payments"> | <img src="docs/screenshots/day-end.jpg" width="240" alt="Day end"> | <img src="docs/screenshots/backup.jpg" width="240" alt="Backup and restore"> |
+
+Taken on a real Android phone.
 
 ## Brand assets
 
