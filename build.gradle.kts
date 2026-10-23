@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 // Top-level build file. Module configuration lives in app/build.gradle.kts.
 
 buildscript {

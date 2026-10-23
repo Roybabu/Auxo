@@ -1855,4 +1855,5 @@ in %2$s</string>
     <string name="import_guide_cosmetics">Needs net_quantity and unit (ml, g or pcs). Add batch and expiry_date when you have them. A different pack size is its own row.</string>
     <string name="billing_browse_title">Browse items</string>
     <string name="billing_browse_more">Showing %1$d of %2$d. Search to find others.</string>
+    <string name="update_licence">Auxo is free software under the GNU General Public License v3.0. Source code: github.com/Roybabu/Auxo</string>
 </resources>

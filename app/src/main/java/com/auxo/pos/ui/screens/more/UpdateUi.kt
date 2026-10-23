@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.more
 
 import android.content.ActivityNotFoundException
@@ -63,6 +66,12 @@ fun UpdateCard(modifier: Modifier = Modifier) {
                 stringResource(R.string.update_version, updater.currentVersion),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(R.string.update_licence),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("update_licence"),
             )
             Text(
                 stringResource(R.string.update_privacy_note),

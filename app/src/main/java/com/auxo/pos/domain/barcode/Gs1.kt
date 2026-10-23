@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.barcode
 
 /** GS1 modulo-10 check digits used by EAN-8, UPC-A, EAN-13 and GTIN-14. */

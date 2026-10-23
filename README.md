@@ -3,6 +3,7 @@
 <p align="center">
 <img src="https://img.shields.io/badge/platform-Android%208.0%2B-3DDC84" alt="Android 8.0+">
 <img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF" alt="Kotlin and Jetpack Compose">
+<img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0 license">
 <img src="https://img.shields.io/badge/data-stays%20on%20device-informational" alt="Data stays on the device">
 <img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali-blue" alt="English, Hindi, Bengali">
 </p>
@@ -132,3 +133,9 @@ Permissions the app declares:
 | Storage (Android 9 and older only) | Save backups in Documents/Auxo, where they survive uninstalling the app. |
 
 Things that happen outside the app's own network use: sending a customer a reminder opens WhatsApp or the messages app, which then does its own sending, and the barcode scanner is Google Play services' scanner, which Google may download once.
+
+## License
+
+Auxo is free software under the [GNU General Public License v3.0](LICENSE) (GPL-3.0-or-later). You can use, study, change and share it. If you distribute a modified version, you must share its source code under the same license.
+
+The name **Auxo**, its logo and its artwork are not covered by that license. Forks may reuse the code but not the name or the logo.

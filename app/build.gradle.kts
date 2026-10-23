@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 import java.util.Base64
 import java.util.Properties
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension

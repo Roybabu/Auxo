@@ -1855,4 +1855,5 @@
     <string name="import_guide_cosmetics">net_quantity और unit (ml, g या pcs) चाहिए। जब हों तो batch और expiry_date जोड़ें। दूसरा पैक साइज़ अलग पंक्ति है।</string>
     <string name="billing_browse_title">आइटम देखें</string>
     <string name="billing_browse_more">%2$d में से %1$d दिख रहे हैं। बाकी खोज से मिलेंगे।</string>
+    <string name="update_licence">Auxo GNU जनरल पब्लिक लाइसेंस v3.0 के तहत मुफ़्त सॉफ़्टवेयर है। सोर्स कोड: github.com/Roybabu/Auxo</string>
 </resources>

@@ -1855,4 +1855,5 @@
     <string name="import_guide_cosmetics">net_quantity ও unit (ml, g বা pcs) লাগে। থাকলে batch ও expiry_date দিন। অন্য প্যাক মাপ আলাদা সারি।</string>
     <string name="billing_browse_title">আইটেম দেখুন</string>
     <string name="billing_browse_more">%2$d এর মধ্যে %1$d দেখানো হচ্ছে। বাকিগুলো খুঁজে নিন।</string>
+    <string name="update_licence">Auxo হলো GNU জেনারেল পাবলিক লাইসেন্স v3.0 এর অধীনে মুক্ত সফটওয়্যার। সোর্স কোড: github.com/Roybabu/Auxo</string>
 </resources>
