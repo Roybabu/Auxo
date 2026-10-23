@@ -32,6 +32,11 @@ data class ProductVariant(
     val expiryDate: LocalDate? = null,
     /** Quantity to order when restocking; 0 means work it out from the low-stock level. */
     val reorderQuantity: Int = 0,
+    /**
+     * Name of the photo of this variant's colour (see ProductPhotoStore), shared by every size of that colour; null
+     * when the colour has none and the product photo is used.
+     */
+    val photoFile: String? = null,
     /** Batches with stock, earliest expiry first. Empty for items not kept in batches. */
     val batches: List<StockBatch> = emptyList(),
 ) {
@@ -115,6 +120,12 @@ data class Product(
     val updatedAtMillis: Long = 0,
 ) {
     val totalStock: Int get() = variants.sumOf { it.stockQuantity }
+
+    /** The photo to show for the product as a whole: its own, else the first colour photo. */
+    val displayPhotoFile: String? get() = photoFile ?: variants.firstNotNullOfOrNull { it.photoFile }
+
+    /** The photo to show for one variant: its colour's photo, else the product's. */
+    fun photoFor(variant: ProductVariant): String? = variant.photoFile ?: photoFile
 
     /** Out of stock only when every variant is; low when any variant needs restocking. */
     val stockStatus: StockStatus

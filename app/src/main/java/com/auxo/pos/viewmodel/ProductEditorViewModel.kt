@@ -92,6 +92,12 @@ class ProductEditorViewModel(
 
     /** A photo chosen in this editor that is not saved with the product yet; deleted if the editor is left unsaved. */
     private var pendingPhotoFile: String? = null
+
+    /** Every photo file the product and its colours had when it was opened. */
+    private var originalPhotoFiles: Set<String> = emptySet()
+
+    /** Colour photos chosen in this editor that are not saved yet; deleted if replaced, or if the editor is left unsaved. */
+    private val pendingColourPhotos = mutableSetOf<String>()
     private var savedProduct = false
 
     init {
@@ -121,6 +127,7 @@ class ProductEditorViewModel(
             } else {
                 originalVariants = product.variants
                 originalPhotoFile = product.photoFile
+                originalPhotoFiles = (listOfNotNull(product.photoFile) + product.variants.mapNotNull { it.photoFile }).toSet()
                 _uiState.update { it.copy(isLoading = false) }
                 setForm(ProductForm.fromProduct(product))
             }
@@ -238,14 +245,26 @@ class ProductEditorViewModel(
 
     // Photo
 
-    /** Reads, upright-turns, shrinks and stores the picture at [source], and makes it the product's photo. */
-    fun onPhotoPicked(source: Uri) {
+    /**
+     * Reads, upright-turns, shrinks and stores the picture at [source], and makes it the product's photo, or the photo
+     * of [colour] when one is given.
+     */
+    fun onPhotoPicked(source: Uri, colour: String? = null) {
         val store = photos ?: return
         if (_uiState.value.photoBusy) return
         _uiState.update { it.copy(photoBusy = true) }
         viewModelScope.launch {
             when (val result = store.save(source)) {
-                is PhotoSaveResult.Saved -> {
+                is PhotoSaveResult.Saved -> if (colour != null) {
+                    val key = colour.trim().lowercase()
+                    // A photo chosen earlier in this editor and never saved is replaced, so it must not pile up.
+                    _uiState.value.form.colourPhotos[key]?.takeIf { it in pendingColourPhotos }?.let {
+                        pendingColourPhotos.remove(it)
+                        store.delete(it)
+                    }
+                    pendingColourPhotos += result.fileName
+                    editForm { it.copy(colourPhotos = it.colourPhotos + (key to result.fileName)) }
+                } else {
                     // A photo chosen earlier in this editor and never saved is replaced, so it must not pile up.
                     pendingPhotoFile?.let(store::delete)
                     pendingPhotoFile = result.fileName
@@ -269,8 +288,21 @@ class ProductEditorViewModel(
         editForm { it.copy(photoFile = null) }
     }
 
+    /** Takes the photo off a colour. The saved file is deleted only when the product is saved. */
+    fun onColourPhotoRemoved(colour: String) {
+        val key = colour.trim().lowercase()
+        _uiState.value.form.colourPhotos[key]?.takeIf { it in pendingColourPhotos }?.let {
+            pendingColourPhotos.remove(it)
+            photos?.delete(it)
+        }
+        editForm { it.copy(colourPhotos = it.colourPhotos - key) }
+    }
+
     override fun onCleared() {
-        if (!savedProduct) pendingPhotoFile?.let { photos?.delete(it) }
+        if (!savedProduct) {
+            pendingPhotoFile?.let { photos?.delete(it) }
+            pendingColourPhotos.forEach { photos?.delete(it) }
+        }
     }
 
     // Garment sizes and colours
@@ -362,9 +394,13 @@ class ProductEditorViewModel(
                 is SaveProductResult.Saved -> {
                     savedProduct = true
                     // The photo that was replaced or removed is no longer wanted.
-                    originalPhotoFile?.takeIf { it != product.photoFile }?.let { photos?.delete(it) }
+                    val kept = (listOfNotNull(product.photoFile) + product.variants.mapNotNull { it.photoFile }).toSet()
+                    (originalPhotoFiles + pendingColourPhotos + listOfNotNull(originalPhotoFile))
+                        .filter { it !in kept }.forEach { photos?.delete(it) }
                     originalPhotoFile = product.photoFile
+                    originalPhotoFiles = kept
                     pendingPhotoFile = null
+                    pendingColourPhotos.clear()
                     _uiState.update { it.copy(isSaving = false) }
                     eventChannel.send(ProductEditorEvent.Saved(result.productId))
                 }

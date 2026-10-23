@@ -689,9 +689,10 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (result.product.photoFile != null) {
+        val photoFile = result.product.photoFor(result.variant)
+        if (photoFile != null) {
             ProductPhoto(
-                photoFile = result.product.photoFile,
+                photoFile = photoFile,
                 contentDescription = result.product.name,
                 modifier = Modifier
                     .size(44.dp)
@@ -745,6 +746,9 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
 /** The most items the browse card lists at once; the search box finds the rest. */
 private const val BROWSE_LIMIT = 60
 
+/** Size of an item's photo on its browse button. */
+private val BROWSE_PHOTO_SIZE = 28.dp
+
 /**
  * Everything that is not a restaurant dish, by kind of goods, for adding with one tap (no scanner or typing). An
  * item with several sizes, colours or packs asks which one first. Items with no stock are greyed out.
@@ -796,6 +800,18 @@ private fun BrowseItemsCard(state: BillingUiState, actions: BillingActions) {
                         enabled = inStock,
                         modifier = Modifier.testTag("browse_item_${product.id}"),
                     ) {
+                        val photoFile = if (product.variants.size == 1) product.photoFor(first) else product.displayPhotoFile
+                        if (photoFile != null) {
+                            ProductPhoto(
+                                photoFile = photoFile,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(BROWSE_PHOTO_SIZE)
+                                    .clip(RoundedCornerShape(6.dp)),
+                                maxSidePx = 96,
+                            ) {}
+                            Spacer(Modifier.width(Spacing.sm))
+                        }
                         Text(if (product.variants.size == 1) "${product.name} · $price" else product.name)
                     }
                 }
@@ -829,7 +845,22 @@ private fun BrowseItemsCard(state: BillingUiState, actions: BillingActions) {
                             enabled = inStock,
                             modifier = Modifier.fillMaxWidth().testTag("browse_variant_${variant.id}"),
                         ) {
-                            Text(listOf(variant.attributesLabel.ifBlank { variant.barcode }, price).joinToString(" · "))
+                            val photoFile = product.photoFor(variant)
+                            if (photoFile != null) {
+                                ProductPhoto(
+                                    photoFile = photoFile,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(BROWSE_PHOTO_SIZE)
+                                        .clip(RoundedCornerShape(6.dp)),
+                                    maxSidePx = 96,
+                                ) {}
+                                Spacer(Modifier.width(Spacing.sm))
+                            }
+                            Text(
+                                text = listOf(variant.attributesLabel.ifBlank { variant.barcode }, price).joinToString(" · "),
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }

@@ -136,6 +136,9 @@ interface ProductEditorActions {
     fun onTakePhoto() = Unit
     fun onChoosePhoto() = Unit
     fun onRemovePhoto() = Unit
+    fun onTakeColourPhoto(colour: String) = Unit
+    fun onChooseColourPhoto(colour: String) = Unit
+    fun onRemoveColourPhoto(colour: String) = Unit
 }
 
 @Composable
@@ -166,13 +169,19 @@ fun ProductEditorScreen(
 
     val context = LocalContext.current
     var captureUri by rememberSaveable { mutableStateOf<String?>(null) }
+    // The colour the photo being picked is for; null for the product photo.
+    var photoColour by rememberSaveable { mutableStateOf<String?>(null) }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) viewModel.onPhotoPicked(uri)
+        val colour = photoColour
+        photoColour = null
+        if (uri != null) viewModel.onPhotoPicked(uri, colour)
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
         val target = captureUri
         captureUri = null
-        if (taken && target != null) viewModel.onPhotoPicked(target.toUri())
+        val colour = photoColour
+        photoColour = null
+        if (taken && target != null) viewModel.onPhotoPicked(target.toUri(), colour)
     }
 
     val scan = rememberBarcodeScanner { outcome ->
@@ -224,9 +233,25 @@ fun ProductEditorScreen(
                 expiryTarget = key
             }
             override fun onSave() = viewModel.save()
-            override fun onChoosePhoto() = gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            override fun onChoosePhoto() {
+                photoColour = null
+                gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
             override fun onRemovePhoto() = viewModel.onPhotoRemoved()
+            override fun onChooseColourPhoto(colour: String) {
+                photoColour = colour
+                gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+            override fun onRemoveColourPhoto(colour: String) = viewModel.onColourPhotoRemoved(colour)
+            override fun onTakeColourPhoto(colour: String) {
+                photoColour = colour
+                launchCamera()
+            }
             override fun onTakePhoto() {
+                photoColour = null
+                launchCamera()
+            }
+            private fun launchCamera() {
                 try {
                     // The camera app writes the picture into this file through a one-time permission to its address.
                     val file = File(File(context.cacheDir, "capture").apply { mkdirs() }, "photo.jpg").apply { createNewFile() }
@@ -365,7 +390,7 @@ fun ProductEditorContent(
 
         if (form.category.usesSizeAndColour) {
             item(key = "sizes") { SizesSection(form, errors, actions) }
-            item(key = "colours") { ColoursSection(form, errors, actions) }
+            item(key = "colours") { ColoursSection(form, errors, uiState.photoBusy, actions) }
             item(key = "defaults") { DefaultsSection(form.defaults, actions) }
         }
 
@@ -824,7 +849,7 @@ private fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColoursSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+private fun ColoursSection(form: ProductForm, errors: ProductFormErrors, busy: Boolean, actions: ProductEditorActions) {
     var colour by rememberSaveable { mutableStateOf("") }
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -871,6 +896,59 @@ private fun ColoursSection(form: ProductForm, errors: ProductFormErrors, actions
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                 )
+            }
+            if (form.colours.isNotEmpty()) {
+                Text(stringResource(R.string.editor_colour_photos), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    stringResource(R.string.editor_colour_photos_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                form.colours.forEach { name -> ColourPhotoRow(form, name, busy, actions) }
+            }
+        }
+    }
+}
+
+/** One colour's photo with the buttons to take, choose or remove it. Every size of the colour shows this photo. */
+@Composable
+private fun ColourPhotoRow(form: ProductForm, colour: String, busy: Boolean, actions: ProductEditorActions) {
+    val photo = form.colourPhoto(colour)
+    Row(
+        modifier = Modifier.fillMaxWidth().testTag("editor_colour_photo_$colour"),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            ProductPhoto(
+                photoFile = photo ?: form.photoFile,
+                contentDescription = colour,
+                modifier = Modifier.fillMaxSize(),
+                maxSidePx = 200,
+            ) {
+                AuxoIcon(form.category.iconRes(), contentDescription = null, size = AuxoIconSize.Medium)
+            }
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(colour, style = MaterialTheme.typography.bodyLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                OutlinedButton(onClick = { actions.onTakeColourPhoto(colour) }, enabled = !busy, modifier = Modifier.testTag("editor_colour_photo_take_$colour")) {
+                    Text(stringResource(R.string.editor_photo_take))
+                }
+                OutlinedButton(onClick = { actions.onChooseColourPhoto(colour) }, enabled = !busy, modifier = Modifier.testTag("editor_colour_photo_choose_$colour")) {
+                    Text(stringResource(R.string.editor_photo_choose))
+                }
+                if (photo != null) {
+                    TextButton(onClick = { actions.onRemoveColourPhoto(colour) }, enabled = !busy, modifier = Modifier.testTag("editor_colour_photo_remove_$colour")) {
+                        Text(stringResource(R.string.editor_photo_remove))
+                    }
+                }
             }
         }
     }

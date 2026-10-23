@@ -193,7 +193,11 @@ object ProductFormValidator {
             dietType = if (form.category.usesDietType) form.dietType else null,
             hsnCode = hsn.ifEmpty { null },
             gstRate = gstRate,
-            variants = validVariants,
+            variants = if (form.category.usesSizeAndColour) {
+                validVariants.map { it.copy(photoFile = form.colourPhoto(it.colour.orEmpty())) }
+            } else {
+                validVariants
+            },
             subcategory = form.subcategory.trim().ifEmpty { null },
             categoryId = form.categoryId,
             available = form.available || form.category != ProductCategory.RESTAURANT,

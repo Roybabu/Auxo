@@ -89,6 +89,7 @@ fun ProductVariantEntity.toDomain(): ProductVariant {
         batchNumber = batchNumber,
         expiryDate = expiryEpochDay?.let(LocalDate::ofEpochDay),
         reorderQuantity = reorderQuantity,
+        photoFile = photoFile,
     )
 }
 
@@ -139,6 +140,7 @@ fun ProductVariant.toEntity(productId: Long): ProductVariantEntity = ProductVari
     batchNumber = batchNumber,
     expiryEpochDay = expiryDate?.toEpochDay(),
     reorderQuantity = reorderQuantity,
+    photoFile = photoFile,
 )
 
 fun StockMovementEntity.toDomain(): StockMovement = StockMovement(

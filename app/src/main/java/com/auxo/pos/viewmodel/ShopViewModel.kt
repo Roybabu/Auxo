@@ -24,8 +24,8 @@ data class ShopUiState(
     /** The shop's name from the store details, or null until it has loaded. */
     val shopName: String? = null,
     val restaurantMenu: Boolean = false,
-    /** Suppliers, purchase orders and receiving stock are shown. */
-    val suppliers: Boolean = true,
+    /** Suppliers, purchase orders and receiving stock are shown. Off until the shop turns them on. */
+    val suppliers: Boolean = false,
     /** Today's metal rates, per gram. */
     val metalRates: com.auxo.pos.domain.jewellery.MetalRates = com.auxo.pos.domain.jewellery.MetalRates(),
     /** Tables in the restaurant. */

@@ -49,10 +49,8 @@ import com.auxo.pos.R
 import com.auxo.pos.core.export.ExportFile
 import com.auxo.pos.core.export.FileExport
 import com.auxo.pos.domain.imports.ImportColumn
-import com.auxo.pos.domain.imports.ProductImportGuide
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.text.font.FontFamily
 import com.auxo.pos.domain.imports.ImportIssue
 import com.auxo.pos.domain.imports.ImportItem
 import com.auxo.pos.domain.imports.ImportParseError
@@ -209,7 +207,7 @@ private fun PickStage(state: ProductImportUiState, actions: ProductImportActions
     }
 }
 
-/** The rules for filling the file, then an example for every category that can be imported. */
+/** The rules for filling the file. The example rows for every category are in the downloaded template. */
 @Composable
 private fun ImportGuide() {
     AuxoCard(Modifier.fillMaxWidth().testTag("import_guide")) {
@@ -218,45 +216,11 @@ private fun ImportGuide() {
             Text(stringResource(R.string.import_guide_general), style = MaterialTheme.typography.bodyMedium)
         }
     }
-    SectionHeader(stringResource(R.string.import_guide_examples_title))
-    Text(
-        stringResource(R.string.import_guide_examples_hint),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    ProductImportGuide.examples.forEach { example ->
-        AuxoCard(Modifier.fillMaxWidth().testTag("import_guide_${example.category.name}")) {
-            Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Text(stringResource(example.category.labelRes()), style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(example.category.importGuideRes()), style = MaterialTheme.typography.bodyMedium)
-                example.rows.forEach { row ->
-                    Text(
-                        text = ImportColumn.entries.filter { row[it] != null }.joinToString("  ·  ") { "${it.key}: ${row.getValue(it)}" },
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
     Text(
         stringResource(R.string.import_guide_not_importable),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-private fun ProductCategory.importGuideRes(): Int = when (this) {
-    ProductCategory.GARMENT -> R.string.import_guide_garment
-    ProductCategory.FOOTWEAR -> R.string.import_guide_footwear
-    ProductCategory.ACCESSORIES -> R.string.import_guide_accessories
-    ProductCategory.PACKAGED_FOOD -> R.string.import_guide_packaged_food
-    ProductCategory.BEVERAGE -> R.string.import_guide_beverage
-    ProductCategory.ELECTRONICS -> R.string.import_guide_electronics
-    ProductCategory.PHARMACY -> R.string.import_guide_pharmacy
-    ProductCategory.COSMETICS -> R.string.import_guide_cosmetics
-    else -> R.string.import_guide_general_category
 }
 
 private fun ImportReadError.messageRes(): Int = when (this) {

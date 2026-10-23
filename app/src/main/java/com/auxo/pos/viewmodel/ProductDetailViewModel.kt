@@ -223,7 +223,8 @@ class ProductDetailViewModel(
                     adjustStock = container.adjustStock,
                     clock = container.clock,
                     deleteProduct = DeleteProductUseCase(container.inventoryRepository) { product ->
-                        product.photoFile?.let { container.productPhotos.delete(it) }
+                        (listOfNotNull(product.photoFile) + product.variants.mapNotNull { it.photoFile }).distinct()
+                            .forEach { container.productPhotos.delete(it) }
                     },
                 )
             }
