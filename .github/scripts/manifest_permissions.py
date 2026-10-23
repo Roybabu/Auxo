@@ -14,6 +14,7 @@ EXPECTED = {
     "android.permission.FOREGROUND_SERVICE",
     "android.permission.BLUETOOTH",  # the app's own: Bluetooth receipt printer on Android 11 and older (maxSdk 30)
     "android.permission.BLUETOOTH_CONNECT",  # the app's own: Bluetooth receipt printer on Android 12 and newer
+    "android.permission.WRITE_EXTERNAL_STORAGE",  # the app's own, Android 9 and older only (maxSdk 28): save backups in Documents/Auxo
     "android.permission.RECEIVE_BOOT_COMPLETED",  # added by WorkManager (scheduled backups)
     "android.permission.USE_BIOMETRIC",  # added by the AndroidX biometric library
     "android.permission.USE_FINGERPRINT",  # added by the AndroidX biometric library
