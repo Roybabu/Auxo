@@ -13,6 +13,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.auxo.pos.testutil.testFileUri
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
@@ -25,14 +26,14 @@ class WhatsAppShareTest {
         val dir = File(context.cacheDir, "receipts").apply { mkdirs() }
         val file = File(dir, "INV-1.pdf").apply { writeText("%PDF") }
         val invoice = SampleSales.shirtsAndBiscuits()
-        val intent = WhatsAppShare.invoiceIntent(context, file, invoice, "Invoice INV from Shop", "com.whatsapp")
+        val intent = WhatsAppShare.invoiceIntent(context, file, invoice, "Invoice INV from Shop", "com.whatsapp", testFileUri(context))
         assertEquals(Intent.ACTION_SEND, intent.action)
         assertEquals("application/pdf", intent.type)
         assertEquals("com.whatsapp", intent.`package`)
         assertEquals("Invoice INV from Shop", intent.getStringExtra(Intent.EXTRA_TEXT))
         assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         assertTrue(androidx.core.content.IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, android.net.Uri::class.java).toString().endsWith("INV-1.pdf"))
-        assertNull(WhatsAppShare.invoiceIntent(context, file, invoice, "x", null).`package`)
+        assertNull(WhatsAppShare.invoiceIntent(context, file, invoice, "x", null, testFileUri(context)).`package`)
     }
 
     @Test
