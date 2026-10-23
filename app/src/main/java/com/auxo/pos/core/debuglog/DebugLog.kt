@@ -131,6 +131,11 @@ object DebugLog {
         override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
     }
 
+    private val keyLike = Regex("[0-9a-fA-F]{64}")
+
+    /** SQLite logs the text of a failed statement, which can hold the database key. Never write a key into a log file. */
+    private fun hideKeys(line: String): String = keyLike.replace(line, "<key hidden>")
+
     /** Copies the phone's log lines for this app into the open file, from the start of the process onward. */
     private fun startPhoneLogReader(log: SessionLogger) {
         if (readerStarted) return
@@ -140,7 +145,7 @@ object DebugLog {
                 val process = ProcessBuilder("logcat", "-v", "threadtime", "--pid=${Process.myPid()}")
                     .redirectErrorStream(true)
                     .start()
-                process.inputStream.bufferedReader().useLines { lines -> lines.forEach { log.raw(it) } }
+                process.inputStream.bufferedReader().useLines { lines -> lines.forEach { log.raw(hideKeys(it)) } }
             }.onFailure { log.write("W", "DebugLog", "The phone's log could not be read: ${it.message}") }
         }, "debug-log-reader").apply { isDaemon = true }.start()
     }
