@@ -49,9 +49,10 @@ android {
             enableUnitTestCoverage = providers.gradleProperty("coverage").isPresent
         }
         release {
-            // Deliberately off for now. Enable R8 only after release signing exists and a signed release has been
-            // checked on a real phone (see "Honest status" in the README).
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates the code and removes unused resources, which makes the app much smaller.
+            // Keep rules for libraries that look classes up by name are in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
