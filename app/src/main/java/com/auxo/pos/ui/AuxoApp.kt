@@ -44,8 +44,15 @@ fun AuxoApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val onHome = currentDestination?.route == TopLevelDestination.HOME.route
-    LaunchedEffect(currentDestination?.route) {
-        currentDestination?.route?.let { com.auxo.pos.core.debuglog.DebugLog.event("Screen", it) }
+    LaunchedEffect(backStackEntry) {
+        val entry = backStackEntry ?: return@LaunchedEffect
+        val route = entry.destination.route ?: return@LaunchedEffect
+        // Fill the {placeholders} with the real values so the log says which product, bill, etc.
+        val shown = Regex("\\{(\\w+)\\}").replace(route) { m ->
+            @Suppress("DEPRECATION")
+            entry.arguments?.get(m.groupValues[1])?.toString() ?: m.value
+        }
+        com.auxo.pos.core.debuglog.DebugLog.event("Screen", shown)
     }
     val capabilities = LocalCapabilities.current
     val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
