@@ -107,10 +107,12 @@ class BackupScreenTest {
     }
 
     @Test
-    fun lockingIsNotOffered_whenBackupsAreNotLocked() {
+    fun lockingIsOffByDefault_andTheCardSaysSo() {
         show(BackupUiState())
-        composeRule.onNodeWithTag("backup_protection").assertDoesNotExist()
-        composeRule.onNodeWithText("Lock backups with a passphrase").assertDoesNotExist()
+        composeRule.onNodeWithText("Lock backups with a passphrase").assertIsDisplayed()
+        composeRule.onNodeWithText("Backups are not locked.", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_protect_set").performClick()
+        assertEquals(listOf("choose passphrase"), log)
     }
 
     @Test
