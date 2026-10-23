@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import java.time.Clock
-import java.time.LocalDate
 
 sealed interface CheckoutResult {
     data class Completed(val invoiceId: Long, val number: String, val change: Money) : CheckoutResult

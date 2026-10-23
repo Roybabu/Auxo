@@ -4,7 +4,6 @@
 package com.auxo.pos.ui.screens.inventory
 
 import android.content.ActivityNotFoundException
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -75,7 +74,6 @@ import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.domain.model.Supplier
 import com.auxo.pos.domain.validation.FieldError
 import com.auxo.pos.domain.validation.FormField
-import com.auxo.pos.domain.validation.GarmentVariants
 import com.auxo.pos.domain.validation.GstChoice
 import com.auxo.pos.domain.model.GstRate
 import com.auxo.pos.domain.model.formatRatePercent

@@ -3,7 +3,6 @@
 
 package com.auxo.pos.core.receipt
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import com.auxo.pos.core.label.LabelSheetLayout

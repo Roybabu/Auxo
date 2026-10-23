@@ -16,7 +16,6 @@ import com.auxo.pos.data.local.entity.PurchaseReceiptWithLines
 import com.auxo.pos.data.local.entity.SupplierEntity
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.CustomerAccount
-import com.auxo.pos.domain.model.DietType
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money

@@ -4,7 +4,6 @@
 package com.auxo.pos.viewmodel
 
 import com.auxo.pos.domain.model.Money
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockBatch
 import com.auxo.pos.domain.model.StockChangeReason
 import com.auxo.pos.domain.model.StockMovement

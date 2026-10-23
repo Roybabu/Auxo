@@ -11,9 +11,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.unit.sp
 import androidx.compose.material3.HorizontalDivider
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateDpAsState
@@ -113,14 +111,6 @@ fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
                     .background(if (active) AuthEmerald else AuthDotIdle),
             )
         }
-    }
-}
-
-/** The thin progress line on the splash page: [fraction] of it is green. */
-@Composable
-fun AuthProgressBar(fraction: Float, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.height(4.dp).clip(CircleShape).background(AuthDotIdle)) {
-        Box(modifier = Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(4.dp).clip(CircleShape).background(AuthEmerald))
     }
 }
 

@@ -87,9 +87,7 @@ import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.components.OrDivider
 import com.auxo.pos.ui.components.crystalGlass
 import com.auxo.pos.ui.theme.AuthEmerald
-import com.auxo.pos.ui.theme.AuthEmeraldBright
 import com.auxo.pos.ui.theme.AuthInk
-import com.auxo.pos.ui.theme.AuthInkMuted
 import com.auxo.pos.ui.theme.AuthCream
 import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.Spacing
