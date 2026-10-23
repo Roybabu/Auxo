@@ -121,6 +121,8 @@
     <string name="detail_not_found">This product no longer exists.</string>
     <string name="detail_brand">Brand: %1$s</string>
     <string name="detail_material">Material: %1$s</string>
+    <string name="detail_sizes">Sizes: %1$s</string>
+    <string name="detail_colours">Colours: %1$s</string>
     <string name="detail_warranty">Warranty: %1$d months</string>
     <string name="detail_prescription">Prescription required</string>
     <string name="detail_variant_standard">Standard</string>
@@ -1153,6 +1155,8 @@ in %2$s</string>
     <string name="lock_body">Signed in as %1$s. Unlock to carry on where you left off.</string>
     <string name="lock_field_pin">PIN</string>
     <string name="lock_unlock">Unlock</string>
+    <string name="lock_slide_unlock">Slide to unlock</string>
+    <string name="lock_unlocking">Unlocking…</string>
     <string name="lock_use_fingerprint">Use fingerprint</string>
     <string name="lock_or_password">Or use your password</string>
     <string name="lock_quick_off">Too many wrong PINs. The PIN and fingerprint are off until you unlock with your password.</string>

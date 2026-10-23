@@ -327,6 +327,10 @@ private fun InventoryFilters(
 /** Size of a product photo in the product list. */
 private val PHOTO_SIZE = 44.dp
 
+/** Size of each small colour photo under a product's name in the list, and how many are shown before "+N". */
+private val ROW_PHOTO_SIZE = 24.dp
+private const val ROW_PHOTO_LIMIT = 5
+
 @Composable
 fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val formatter = LocalMoneyFormatter.current
@@ -386,6 +390,31 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // A product with photos for several colours shows a small thumbnail of each.
+                val photos = product.allPhotoFiles
+                if (photos.size > 1) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.testTag("product_row_photos_${product.id}"),
+                    ) {
+                        photos.take(ROW_PHOTO_LIMIT).forEach { file ->
+                            ProductPhoto(
+                                photoFile = file,
+                                contentDescription = null,
+                                modifier = Modifier.size(ROW_PHOTO_SIZE).clip(RoundedCornerShape(5.dp)),
+                                maxSidePx = 96,
+                            ) {}
+                        }
+                        if (photos.size > ROW_PHOTO_LIMIT) {
+                            Text(
+                                text = "+${photos.size - ROW_PHOTO_LIMIT}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (chipText != null) StatusChip(text = chipText, tone = chipTone)

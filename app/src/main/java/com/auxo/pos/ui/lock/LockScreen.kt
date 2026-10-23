@@ -57,6 +57,7 @@ import com.auxo.pos.ui.components.OrDivider
 import com.auxo.pos.ui.theme.AuthEmerald
 import com.auxo.pos.ui.theme.AuthInk
 import com.auxo.pos.ui.screens.auth.PasswordToggle
+import com.auxo.pos.ui.screens.auth.SlideToSignIn
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.LockMessage
 import com.auxo.pos.viewmodel.LockUiState
@@ -206,10 +207,13 @@ fun LockContent(
             fieldHeight = LOCK_FIELD_HEIGHT,
             modifier = Modifier.testTag("lock_password"),
         )
-        UnlockButton(
-            enabled = !state.busy && state.password.isNotEmpty(),
-            busy = state.busy,
-            onClick = onUnlockWithPassword,
+        // The same slider as the fingerprint button above and the sign-in page: slide to the end to unlock.
+        SlideToSignIn(
+            isSigningIn = state.busy,
+            onSignIn = onUnlockWithPassword,
+            label = stringResource(R.string.lock_slide_unlock),
+            workingLabel = stringResource(R.string.lock_unlocking),
+            enabled = state.password.isNotEmpty(),
             modifier = Modifier.testTag("lock_password_unlock"),
         )
 

@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -23,6 +23,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -406,6 +409,7 @@ internal fun SlideToSignIn(
     label: String = stringResource(R.string.auth_login_slide),
     workingLabel: String = stringResource(R.string.auth_login_working),
     thumbIcon: Int = R.drawable.ic_arrow_forward,
+    enabled: Boolean = true,
 ) {
     val scope = rememberCoroutineScope()
     val offset = remember { Animatable(0f) }
@@ -424,8 +428,8 @@ internal fun SlideToSignIn(
             .height(SLIDER_HEIGHT + SLIDER_DEPTH)
             .semantics(mergeDescendants = true) {
                 role = Role.Button
-                if (isSigningIn) disabled()
-                onClick { if (!signingIn) signIn(); true }
+                if (isSigningIn || !enabled) disabled()
+                onClick { if (!signingIn && enabled) signIn(); true }
             },
     ) {
         val travel = with(density) { (maxWidth - THUMB_SIZE - THUMB_INSET * 2).toPx() }.coerceAtLeast(1f)
@@ -436,57 +440,68 @@ internal fun SlideToSignIn(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(SLIDER_HEIGHT)
+                // A slider that cannot be used yet (nothing typed) is dimmed and does not move.
+                .alpha(if (enabled || isSigningIn) 1f else 0.5f)
                 // Liquid glass, like the other sign-in buttons: the body, highlight and rim are drawn behind the sliding thumb.
                 .liquidGlass(shape)
                 .clip(shape)
-                .pointerInput(travel, isSigningIn) {
+                .pointerInput(travel, isSigningIn, enabled) {
                     if (isSigningIn) return@pointerInput
-                    // The sign-in fires the moment the thumb reaches the end (or is released past the threshold), not after the settle animation.
-                    var fired = false
-                    var position = offset.value
-                    fun fire() {
-                        if (fired) return
-                        fired = true
-                        signIn()
-                        scope.launch {
-                            offset.animateTo(travel, tween(80))
-                            delay(400)
-                            // While the sign-in runs the thumb waits at the end; the effect above brings it back when it stops.
-                            if (!signingIn) offset.animateTo(0f, bounce)
-                        }
-                    }
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            fired = false
-                            position = offset.value
-                        },
-                        onDragEnd = {
-                            when {
-                                fired -> Unit // already on its way back, see fire()
-                                position >= travel * SLIDE_THRESHOLD -> fire()
-                                else -> scope.launch { offset.animateTo(0f, bounce) }
+                    // The slider takes the whole gesture. It looks at the finger in the Initial pass, before the page's
+                    // vertical scrolling can see it, and keeps every move once the finger has gone past the touch slop in
+                    // any direction. Left to the usual horizontal-drag detector, a slightly slanted slide was taken over by
+                    // the scrolling page and the thumb sprang back, so it took several tries.
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        if (!enabled) return@awaitEachGesture
+                        var position = offset.value
+                        var moved = false
+                        var fired = false
+                        var travelled = Offset.Zero
+                        // The sign-in fires the moment the thumb reaches the end (or is released past the threshold), not after the settle animation.
+                        fun fire() {
+                            if (fired) return
+                            fired = true
+                            signIn()
+                            scope.launch {
+                                offset.animateTo(travel, tween(80))
+                                delay(400)
+                                // While the sign-in runs the thumb waits at the end; the effect above brings it back when it stops.
+                                if (!signingIn) offset.animateTo(0f, bounce)
                             }
-                        },
-                        onDragCancel = { if (!fired) scope.launch { offset.animateTo(0f, bounce) } },
-                        onHorizontalDrag = { change, dx ->
+                        }
+                        while (true) {
+                            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id }
+                            if (change == null) {
+                                if (!fired) scope.launch { offset.animateTo(0f, bounce) }
+                                break
+                            }
+                            if (!change.pressed) {
+                                when {
+                                    // A tap nudges the thumb as a hint.
+                                    !moved -> scope.launch {
+                                        offset.animateTo(travel * 0.25f, tween(120))
+                                        offset.animateTo(0f, bounce)
+                                    }
+                                    fired -> Unit // already on its way back, see fire()
+                                    position >= travel * SLIDE_THRESHOLD -> fire()
+                                    else -> scope.launch { offset.animateTo(0f, bounce) }
+                                }
+                                break
+                            }
+                            val delta = change.positionChange()
+                            travelled += delta
+                            if (!moved && travelled.getDistance() <= viewConfiguration.touchSlop) continue
+                            moved = true
                             change.consume()
                             // Once the sign-in has fired, a finger still moving must not drag the thumb: that would cancel
                             // the animation that returns it, and it would stay stuck on the right.
-                            if (fired) return@detectHorizontalDragGestures
-                            position = (position + dx).coerceIn(0f, travel)
+                            if (fired) continue
+                            position = (position + delta.x).coerceIn(0f, travel)
                             scope.launch { offset.snapTo(position) }
                             if (position >= travel) fire()
-                        },
-                    )
-                }
-                .pointerInput(travel, isSigningIn) {
-                    if (isSigningIn) return@pointerInput
-                    detectTapGestures(onTap = {
-                        scope.launch {
-                            offset.animateTo(travel * 0.25f, tween(120))
-                            offset.animateTo(0f, bounce)
                         }
-                    })
+                    }
                 },
         ) {
             Text(

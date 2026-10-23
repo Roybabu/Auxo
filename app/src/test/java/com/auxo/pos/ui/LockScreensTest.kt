@@ -176,7 +176,7 @@ class LockScreensTest {
         val taps = Taps()
         lockScreen(LockInfo(locked = true, hasPin = true), LockUiState(pin = "4829", password = "x"), taps = taps)
         composeRule.onNodeWithTag("lock_pin_unlock").assertIsEnabled()
-        composeRule.onNodeWithTag("lock_password_unlock").performScrollTo().performClick()
+        composeRule.onNodeWithTag("lock_password_unlock").performScrollTo().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         assertEquals(1, taps.passwordUnlock)
     }
 

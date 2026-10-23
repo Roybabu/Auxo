@@ -121,6 +121,8 @@
     <string name="detail_not_found">এই পণ্যটি আর নেই।</string>
     <string name="detail_brand">ব্র্যান্ড: %1$s</string>
     <string name="detail_material">উপাদান: %1$s</string>
+    <string name="detail_sizes">সাইজ: %1$s</string>
+    <string name="detail_colours">রং: %1$s</string>
     <string name="detail_warranty">ওয়ারেন্টি: %1$d মাস</string>
     <string name="detail_prescription">প্রেসক্রিপশন প্রয়োজন</string>
     <string name="detail_variant_standard">সাধারণ</string>
@@ -1152,6 +1154,8 @@
     <string name="lock_body">%1$s হিসেবে সাইন ইন আছে। যেখানে ছেড়েছিলেন সেখান থেকে এগোতে আনলক করুন।</string>
     <string name="lock_field_pin">পিন</string>
     <string name="lock_unlock">আনলক করুন</string>
+    <string name="lock_slide_unlock">আনলক করতে স্লাইড করুন</string>
+    <string name="lock_unlocking">আনলক হচ্ছে…</string>
     <string name="lock_use_fingerprint">ফিঙ্গারপ্রিন্ট ব্যবহার করুন</string>
     <string name="lock_or_password">অথবা আপনার পাসওয়ার্ড ব্যবহার করুন</string>
     <string name="lock_quick_off">অনেকবার ভুল পিন দেওয়া হয়েছে। পাসওয়ার্ড দিয়ে আনলক না করা পর্যন্ত পিন ও ফিঙ্গারপ্রিন্ট বন্ধ।</string>
