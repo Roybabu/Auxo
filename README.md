@@ -1,4 +1,9 @@
-<p align="center"><img src="app/src/main/res/drawable-nodpi/auxo_logo_horizontal.png" alt="Auxo: Built to grow." width="420"></p>
+<p align="center">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="design/auxo/auxo-logo-horizontal-dark.png">
+<img src="design/auxo/auxo-logo-horizontal.png" alt="Auxo: Built to grow." width="420">
+</picture>
+</p>
 
 <p align="center">
 <img src="https://img.shields.io/badge/platform-Android%208.0%2B-3DDC84" alt="Android 8.0+">
@@ -104,17 +109,6 @@ app/src/main/java/com/auxo/pos/
 ## Database upgrades
 
 No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 23). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
-
-## Honest status
-
-Version 0.4.0. The logic is well tested and the app has run on a real Android phone (see the screenshots), but it has had little real-shop use.
-
-- ❌ Never tried on a real Bluetooth printer.
-- ❌ Hindi and Bengali text hasn't been checked by a native speaker.
-- ⚠️ The database file on the phone is locked with SQLCipher (AES-256), its key kept in the Android Keystore. This is new and has not yet been tried on a real phone, including converting an existing unlocked database. Backups are locked only if the owner sets a passphrase; without one, a backup carries the database key and is as readable as the data. Keep backups somewhere other than the phone.
-- ⚠️ No supplier balances, and a bill that totals zero can't be completed.
-- ⚠️ A refund isn't tied to the original payment method, and a cash refund on an account sale doesn't change the customer's ledger.
-- ⚠️ The release build isn't minified or signed. Turning on minification (R8) is planned for after release signing is set up, because it has to be tested on a signed release on a real phone: sign in, sale, receipt print, barcode scan, backup and restore, fingerprint. Until then the release file is larger and its code is easy to read.
 
 ## Privacy and permissions
 
