@@ -223,8 +223,8 @@
     <string name="field_cost_per">Cost per %1$s</string>
     <string name="field_with_unit">%1$s (%2$s)</string>
     <string name="field_barcode">Barcode</string>
-    <string name="field_barcode_hint">Leave blank to generate one</string>
-    <string name="field_sku">SKU</string>
+    <string name="field_barcode_hint">Leave blank and the app makes one</string>
+    <string name="field_sku">Your own item code (optional)</string>
     <string name="field_batch">Batch number</string>
     <string name="field_expiry">Expiry date</string>
     <string name="field_expiry_none">No expiry date</string>
@@ -1838,7 +1838,7 @@ in %2$s</string>
     <string name="held_filter_other">Other</string>
     <string name="held_filter_empty">No bills of this kind.</string>
     <string name="import_guide_title">How to fill the file</string>
-    <string name="import_guide_general">• One row for each thing you sell. Rows with the same name and category become one product (for example, one row per size and colour).\n• Only name is always needed. selling_price is needed for everything you sell.\n• Write prices as plain numbers like 499 or 499.50, without the rupee sign.\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy or Cosmetics. If you leave it blank, the category chosen below is used.\n• gst_rate: a percentage such as 0, 5, 12, 18 or 40, or Apparel for clothes and footwear.\n• net_quantity and unit: the pack size, such as 200 and g. Units: g, kg, ml, L or pcs.\n• expiry_date: 31/12/2026 or 2026-12-31. batch is the batch number printed on the pack.\n• opening_stock blank means 0. barcode blank means the app makes one for you.\n• A barcode or sku that already exists is skipped, so importing the same file twice is safe.\n• Up to 1000 rows and 1 MB in one file.</string>
+    <string name="import_guide_general">• barcode is what a scanner reads; sku is your own item code. They are different columns and both can be left blank.\n• One row for each thing you sell. Rows with the same name and category become one product (for example, one row per size and colour).\n• Only name is always needed. selling_price is needed for everything you sell.\n• Write prices as plain numbers like 499 or 499.50, without the rupee sign.\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy or Cosmetics. If you leave it blank, the category chosen below is used.\n• gst_rate: a percentage such as 0, 5, 12, 18 or 40, or Apparel for clothes and footwear.\n• net_quantity and unit: the pack size, such as 200 and g. Units: g, kg, ml, L or pcs.\n• expiry_date: 31/12/2026 or 2026-12-31. batch is the batch number printed on the pack.\n• opening_stock blank means 0. barcode blank means the app makes one for you.\n• A barcode or sku that already exists is skipped, so importing the same file twice is safe.\n• Up to 1000 rows and 1 MB in one file.</string>
     <string name="import_guide_examples_title">Examples by category</string>
     <string name="import_guide_examples_hint">Each example shows column: value. The template file has all of them as ready rows.</string>
     <string name="import_guide_not_importable">Loose goods, Jewellery and Restaurant dishes cannot be imported. Add them in the product screen.</string>

@@ -223,8 +223,8 @@
     <string name="field_cost_per">প্রতি %1$s ক্রয়মূল্য</string>
     <string name="field_with_unit">%1$s (%2$s)</string>
     <string name="field_barcode">বারকোড</string>
-    <string name="field_barcode_hint">ফাঁকা রাখলে একটি তৈরি হবে</string>
-    <string name="field_sku">SKU</string>
+    <string name="field_barcode_hint">ফাঁকা রাখলে অ্যাপ একটি বানিয়ে দেবে</string>
+    <string name="field_sku">আপনার নিজের আইটেম কোড (ঐচ্ছিক)</string>
     <string name="field_batch">ব্যাচ নম্বর</string>
     <string name="field_expiry">মেয়াদের তারিখ</string>
     <string name="field_expiry_none">মেয়াদের তারিখ নেই</string>
@@ -1838,7 +1838,7 @@
     <string name="held_filter_other">অন্যান্য</string>
     <string name="held_filter_empty">এই ধরনের কোনো বিল নেই।</string>
     <string name="import_guide_title">ফাইল কীভাবে ভরবেন</string>
-    <string name="import_guide_general">• আপনি যা যা বিক্রি করেন তার প্রতিটির জন্য একটি সারি। একই নাম ও বিভাগের সারিগুলো একটি পণ্য হয়ে যায় (যেমন প্রতিটি মাপ ও রঙের জন্য একটি সারি)।\n• শুধু name সবসময় লাগে। যা বিক্রি করেন তার জন্য selling_price লাগে।\n• দাম সাধারণ সংখ্যায় লিখুন, যেমন 499 বা 499.50, টাকার চিহ্ন ছাড়া।\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy বা Cosmetics। ফাঁকা রাখলে নিচে বেছে নেওয়া বিভাগ ধরা হবে।\n• gst_rate: 0, 5, 12, 18 বা 40-এর মতো শতাংশ, অথবা পোশাক ও জুতোর জন্য Apparel।\n• net_quantity ও unit: প্যাকের মাপ, যেমন 200 ও g। একক: g, kg, ml, L বা pcs।\n• expiry_date: 31/12/2026 বা 2026-12-31। batch হলো প্যাকে ছাপা ব্যাচ নম্বর।\n• opening_stock ফাঁকা থাকলে 0। barcode ফাঁকা থাকলে অ্যাপ নিজেই বানিয়ে দেয়।\n• যে barcode বা sku আগে থেকেই আছে তা বাদ যায়, তাই একই ফাইল দুবার দিলেও সমস্যা নেই।\n• একটি ফাইলে সর্বোচ্চ 1000 সারি ও 1 MB।</string>
+    <string name="import_guide_general">• barcode হলো যা স্ক্যানার পড়ে; sku আপনার নিজের আইটেম কোড। এ দুটি আলাদা কলাম এবং দুটোই ফাঁকা রাখা যায়।\n• আপনি যা যা বিক্রি করেন তার প্রতিটির জন্য একটি সারি। একই নাম ও বিভাগের সারিগুলো একটি পণ্য হয়ে যায় (যেমন প্রতিটি মাপ ও রঙের জন্য একটি সারি)।\n• শুধু name সবসময় লাগে। যা বিক্রি করেন তার জন্য selling_price লাগে।\n• দাম সাধারণ সংখ্যায় লিখুন, যেমন 499 বা 499.50, টাকার চিহ্ন ছাড়া।\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy বা Cosmetics। ফাঁকা রাখলে নিচে বেছে নেওয়া বিভাগ ধরা হবে।\n• gst_rate: 0, 5, 12, 18 বা 40-এর মতো শতাংশ, অথবা পোশাক ও জুতোর জন্য Apparel।\n• net_quantity ও unit: প্যাকের মাপ, যেমন 200 ও g। একক: g, kg, ml, L বা pcs।\n• expiry_date: 31/12/2026 বা 2026-12-31। batch হলো প্যাকে ছাপা ব্যাচ নম্বর।\n• opening_stock ফাঁকা থাকলে 0। barcode ফাঁকা থাকলে অ্যাপ নিজেই বানিয়ে দেয়।\n• যে barcode বা sku আগে থেকেই আছে তা বাদ যায়, তাই একই ফাইল দুবার দিলেও সমস্যা নেই।\n• একটি ফাইলে সর্বোচ্চ 1000 সারি ও 1 MB।</string>
     <string name="import_guide_examples_title">বিভাগ অনুযায়ী উদাহরণ</string>
     <string name="import_guide_examples_hint">প্রতিটি উদাহরণে কলাম: মান দেখানো হয়েছে। টেমপ্লেট ফাইলে এগুলো সবই তৈরি সারি হিসেবে আছে।</string>
     <string name="import_guide_not_importable">খোলা পণ্য, গয়না ও রেস্তোরাঁর পদ ইমপোর্ট করা যায় না। এগুলো পণ্য স্ক্রিনে যোগ করুন।</string>
