@@ -129,6 +129,8 @@ class OperationsDeviceFlowTest {
             Triple(productId, saved.orderId, saved.number)
         }
 
+        // Suppliers are off until the shop turns them on.
+        container.shopPreferences.setSuppliers(true)
         clickTab("More")
         // Purchase orders now live inside Suppliers.
         waitFor(hasText("Suppliers") and hasClickAction(), "Suppliers entry")
