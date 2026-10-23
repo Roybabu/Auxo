@@ -87,6 +87,13 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  * 21. Whether each bill was rounded to the rupee (invoices.rounded_to_rupee), so partial refunds follow the bill's own
  *     rounding. Existing bills count as rounded when their total is whole rupees, as before. Written by hand
  *     ([MIGRATION_20_21]).
+ * 22. General item, Electronics, Pharmacy and Cosmetics: four built-in rows are added to shop_categories, off, at the
+ *     end of the list; products.warranty_months (electronics) and products.prescription_required (pharmacy). Written
+ *     by hand ([MIGRATION_21_22]).
+ * 23. Loose goods and Jewellery: two built-in rows are added to shop_categories, off, at the end of the list;
+ *     invoice_lines.stock_unit (lines sold by weight or volume); products.metal and products.making_charge_bp
+ *     (jewellery); held_bills.table_number and held_bills.token_number (parked bills belong to a restaurant table or
+ *     get a number). Written by hand ([MIGRATION_22_23]).
  */
 @Database(
     entities = [
@@ -201,7 +208,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 21
+        const val VERSION = 23
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -379,14 +386,71 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Version 22: four more built-in categories (General item, Electronics, Pharmacy, Cosmetics), added off at the
+         * end of a shop's list so nothing it sells changes until the owner switches them on, and the two product
+         * columns they use. A shop with no category rows yet is seeded with them later.
+         */
+        val MIGRATION_21_22: Migration = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE products ADD COLUMN warranty_months INTEGER")
+                db.execSQL("ALTER TABLE products ADD COLUMN prescription_required INTEGER NOT NULL DEFAULT 0")
+                listOf("GENERAL", "ELECTRONICS", "PHARMACY", "COSMETICS").forEachIndexed { index, profile ->
+                    db.execSQL(
+                        "INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) " +
+                            "SELECT NULL, '$profile', 0, (SELECT MAX(sort_order) FROM shop_categories) + 1, 1 " +
+                            "WHERE EXISTS (SELECT 1 FROM shop_categories) " +
+                            "AND NOT EXISTS (SELECT 1 FROM shop_categories WHERE profile = '$profile' AND built_in = 1)",
+                    )
+                }
+            }
+        }
+
+        /**
+         * Loose goods and Jewellery join the category list, off and at the end like the four before them, with the
+         * columns they need: the unit a bill line was weighed in, and a piece of jewellery's metal and making charge.
+         */
+        val MIGRATION_22_23: Migration = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE invoice_lines ADD COLUMN stock_unit TEXT")
+                db.execSQL("ALTER TABLE products ADD COLUMN metal TEXT")
+                db.execSQL("ALTER TABLE products ADD COLUMN making_charge_bp INTEGER")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN table_number INTEGER")
+                db.execSQL("ALTER TABLE held_bills ADD COLUMN token_number INTEGER")
+                listOf("LOOSE", "JEWELLERY").forEach { profile ->
+                    db.execSQL(
+                        "INSERT INTO shop_categories (name, profile, enabled, sort_order, built_in) " +
+                            "SELECT NULL, '$profile', 0, (SELECT MAX(sort_order) FROM shop_categories) + 1, 1 " +
+                            "WHERE EXISTS (SELECT 1 FROM shop_categories) " +
+                            "AND NOT EXISTS (SELECT 1 FROM shop_categories WHERE profile = '$profile' AND built_in = 1)",
+                    )
+                }
+            }
+        }
+
         // Upgrades are guaranteed only from version 15 (nothing was released before it). Versions 6 to 14 have no
         // exported schema and are tested only through the 4 to 15 chain; see "Database upgrades" in the README.
 
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
+                .addCallback(object : RoomDatabase.Callback() {
+                    // Debug builds only record this (any upgrade has already run by now).
+                    override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        com.auxo.pos.core.debuglog.DebugLog.event("Database", "Opened, schema version ${db.version}")
+                    }
+                })
 
-        fun create(context: Context): AuxoDatabase = builder(context).build()
+        /**
+         * The database the app runs on. The file is locked with the key from [keys] (see [DatabaseEncryption]); a plain
+         * file left by an earlier version is converted first. [builder] stays unlocked, for tests.
+         */
+        fun create(context: Context, keys: DatabaseKeyStore = KeystoreDatabaseKeyStore(context)): AuxoDatabase {
+            val key = DatabaseEncryption.prepare(context, keys)
+            val room = builder(context)
+            if (key != null) room.openHelperFactory(DatabaseEncryption.openHelperFactory(key))
+            return room.build()
+        }
     }
 }

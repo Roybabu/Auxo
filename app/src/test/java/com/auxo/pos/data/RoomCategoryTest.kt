@@ -43,11 +43,16 @@ class RoomCategoryTest {
     fun aNewShop_startsWithTheBuiltInCategories_andRestaurantOff() = runTest {
         val all = categories.getCategories()
         assertEquals(
-            listOf(ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT),
+            listOf(
+                ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE,
+                ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+                ProductCategory.LOOSE, ProductCategory.JEWELLERY, ProductCategory.RESTAURANT,
+            ),
             all.map { it.profile },
         )
         assertTrue(all.all { it.builtIn && it.name == null })
-        assertEquals(listOf(true, true, true, true, true, false), all.map { it.enabled })
+        // Restaurant and the six newer categories start off; the owner switches on what the shop sells.
+        assertEquals(listOf(true, true, true, true, true, false, false, false, false, false, false, false), all.map { it.enabled })
     }
 
     @Test

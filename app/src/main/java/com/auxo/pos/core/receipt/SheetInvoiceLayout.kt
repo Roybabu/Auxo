@@ -96,11 +96,11 @@ object SheetInvoiceLayout {
         val wide = paper == ReceiptPaper.A4
         val columns = buildList {
             add(SheetColumn("#", 0.05f, alignRight = false) { i, _ -> (i + 1).toString() })
-            add(SheetColumn(labels.item, if (wide) 0.30f else 0.34f, alignRight = false, isItem = true) { _, l ->
+            add(SheetColumn(labels.item, if (wide) 0.27f else 0.31f, alignRight = false, isItem = true) { _, l ->
                 listOf(l.productName, l.variantLabel).filter { it.isNotBlank() }.joinToString(" · ")
             })
             if (showHsn) add(SheetColumn(labels.hsnHeading, 0.10f, alignRight = false) { _, l -> l.hsnCode.orEmpty() })
-            add(SheetColumn(labels.qtyHeading, 0.07f, alignRight = true) { _, l -> l.quantity.toString() })
+            add(SheetColumn(labels.qtyHeading, 0.10f, alignRight = true) { _, l -> l.quantityText })
             add(SheetColumn(labels.rateHeading, 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.unitPrice) })
             if (wide) add(SheetColumn(labels.discHeading, 0.10f, alignRight = true) { _, l -> if (l.discount.isZero) "" else IndianNumberFormat.amount(l.discount) })
             if (gst && wide) add(SheetColumn(labels.taxableHeading, 0.12f, alignRight = true) { _, l -> IndianNumberFormat.amount(l.taxable) })

@@ -161,6 +161,7 @@ class ReportsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("ReportsViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(isLoading = false, loadFailed = true, table = null) }
             }
         }

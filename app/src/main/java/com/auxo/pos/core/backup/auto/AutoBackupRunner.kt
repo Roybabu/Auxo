@@ -1,5 +1,6 @@
 package com.auxo.pos.core.backup.auto
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.core.audit.AuditAction
 import com.auxo.pos.core.audit.AuditDraft
 import com.auxo.pos.core.audit.AuditEntity
@@ -82,10 +83,12 @@ class AutoBackupRunner(
                 )
             }
             log(AuditDraft(AuditAction.AUTO_BACKUP_SAVED, AuditEntity.BACKUP, null, "Automatic backup saved as ${saved.fileName}"))
+            DebugLog.event("Backup", "Automatic backup saved (${saved.fileName}), $removed old removed")
             AutoBackupResult.Saved(saved.fileName, removed)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("AutoBackupRunner", "Failed and showed an error", e)
             val reason = if (e is FolderUnavailableException) AutoBackupFailure.FOLDER_UNAVAILABLE else AutoBackupFailure.SAVE_FAILED
             val alreadyFailing = AutoBackupPolicy.status(settings, clock.millis()) == AutoBackupStatus.FAILED
             store.update { it.copy(lastFailureMillis = clock.millis(), lastFailure = reason) }
@@ -94,6 +97,7 @@ class AutoBackupRunner(
                     log(AuditDraft(AuditAction.AUTO_BACKUP_FAILED, AuditEntity.BACKUP, null, "Automatic backup failed: " + reason.describe()))
                 }
             }
+            DebugLog.warn("Backup", "Automatic backup failed: $reason")
             AutoBackupResult.Failed(reason)
         }
     }

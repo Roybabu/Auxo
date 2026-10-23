@@ -78,6 +78,14 @@ data class ProductForm(
     val description: String = "",
     val material: String = "",
     val dietType: DietType? = null,
+    /** Warranty period in months, as typed; electronics only. */
+    val warrantyMonths: String = "",
+    /** What the piece is made of; jewellery only. */
+    val metal: com.auxo.pos.domain.jewellery.JewelleryMetal? = null,
+    /** Making charge in percent of the metal value, as typed; jewellery only. */
+    val makingChargePercent: String = "",
+    /** Sold only against a prescription; pharmacy only. */
+    val prescriptionRequired: Boolean = false,
     /** Grouping inside the category, such as a menu section; restaurant items only. */
     val subcategory: String = "",
     /** The shop category row this product is listed under; null until one is chosen. */
@@ -112,6 +120,10 @@ data class ProductForm(
             description = product.description.orEmpty(),
             material = product.material.orEmpty(),
             dietType = product.dietType,
+            warrantyMonths = product.warrantyMonths?.toString().orEmpty(),
+            prescriptionRequired = product.prescriptionRequired,
+            metal = product.metal,
+            makingChargePercent = product.makingChargeBasisPoints?.let { formatRatePercent(it) }.orEmpty(),
             subcategory = product.subcategory.orEmpty(),
             categoryId = product.categoryId,
             available = product.available,

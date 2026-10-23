@@ -98,6 +98,7 @@ class DayEndViewModel(private val repository: DayEndRepository) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("DayEndViewModels", "Failed and showed an error", e)
                 _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             }
         }
@@ -147,6 +148,7 @@ class DayEndViewModel(private val repository: DayEndRepository) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("DayEndViewModels", "Failed and showed an error", e)
                 null
             }
             _uiState.update { it.copy(isSaving = false) }
@@ -194,6 +196,7 @@ class DayClosingViewModel(private val closingId: Long, private val repository: D
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("DayEndViewModels", "Failed and showed an error", e)
                 _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             }
         }

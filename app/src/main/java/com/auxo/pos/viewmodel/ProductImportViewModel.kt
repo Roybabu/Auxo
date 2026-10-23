@@ -93,6 +93,7 @@ class ProductImportViewModel(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
+        com.auxo.pos.core.debuglog.DebugLog.error("ProductImportViewModel", "Failed and showed an error", e)
         null
     }
 

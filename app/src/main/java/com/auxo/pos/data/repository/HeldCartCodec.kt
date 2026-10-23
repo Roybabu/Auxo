@@ -58,9 +58,11 @@ object HeldCartCodec {
         line.mrp?.let { put("mrp", it.minorUnits) }
         line.gstRate?.let { put("gst", encodeRate(it)) }
         put("qty", line.quantity)
+        if (line.stockUnit != com.auxo.pos.domain.model.StockUnit.UNIT) put("unit", line.stockUnit.name)
         line.discount?.let { put("discount", encodeDiscount(it)) }
         put("discountReason", line.discountReason)
         put("custom", line.isCustom)
+        if (line.isRestaurantItem) put("restaurant", true)
     }
 
     private fun decodeLine(o: JSONObject): CartLine = CartLine(
@@ -74,12 +76,14 @@ object HeldCartCodec {
         mrp = if (o.has("mrp")) Money(o.getLong("mrp")) else null,
         gstRate = if (o.has("gst")) decodeRate(o.getString("gst")) else null,
         quantity = o.getInt("qty"),
+        stockUnit = com.auxo.pos.domain.model.StockUnit.entries.firstOrNull { it.name == o.optString("unit", "") } ?: com.auxo.pos.domain.model.StockUnit.UNIT,
         discount = o.optJSONObject("discount")?.let(::decodeDiscount),
         discountReason = o.optString("discountReason", ""),
         // Products are looked up again from the shop's stock when the bill is resumed; one-off items have
         // no stock of their own.
         availableStock = if (o.optBoolean("custom", false)) CartLine.UNLIMITED else null,
         isCustom = o.optBoolean("custom", false),
+        isRestaurantItem = o.optBoolean("restaurant", false),
     )
 
     private fun encodeRate(rate: GstRate): String = when (rate) {

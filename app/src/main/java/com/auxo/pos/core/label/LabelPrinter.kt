@@ -1,5 +1,6 @@
 package com.auxo.pos.core.label
 
+import com.auxo.pos.core.debuglog.DebugLog
 import android.content.Context
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
@@ -24,6 +25,7 @@ object LabelPrinter {
             .setMediaSize(mediaSizeFor(template))
             .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
             .build()
+        DebugLog.event("Printer", "Label print started: ${labels.size} labels")
         printManager.print(jobName, LabelPrintAdapter(template, labels), attributes)
     }
 

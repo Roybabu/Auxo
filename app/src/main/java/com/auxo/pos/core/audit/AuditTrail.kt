@@ -1,5 +1,6 @@
 package com.auxo.pos.core.audit
 
+import com.auxo.pos.core.debuglog.DebugLog
 import androidx.room.withTransaction
 import com.auxo.pos.core.auth.Authorizer
 import com.auxo.pos.core.auth.Permission
@@ -123,14 +124,28 @@ class RoomAuditTrail(
     private val dao = database.auditDao()
 
     override suspend fun <T> recording(block: suspend () -> T, describe: (T) -> AuditDraft?): T =
-        database.withTransaction {
-            val result = block()
-            describe(result)?.let { insert(it) }
+        run {
+            var saved: AuditDraft? = null
+            val result = database.withTransaction {
+                val value = block()
+                describe(value)?.let {
+                    insert(it)
+                    saved = it
+                }
+                value
+            }
+            saved?.let { noteInDebugLog(it, actor.user) }
             result
         }
 
     override suspend fun record(draft: AuditDraft, actor: SessionUser?) {
         insert(draft, actor)
+        noteInDebugLog(draft, actor ?: this.actor.user)
+    }
+
+    /** Debug builds only. The wording of the line is left out because it can hold names; the action and record are enough. */
+    private fun noteInDebugLog(draft: AuditDraft, user: SessionUser?) {
+        DebugLog.event("Activity", "${draft.action.name} ${draft.entityType}${draft.entityId?.let { " #$it" }.orEmpty()} by user ${user?.id ?: 0} (${user?.role?.name ?: "none"})")
     }
 
     private suspend fun insert(draft: AuditDraft, namedActor: SessionUser? = null) {

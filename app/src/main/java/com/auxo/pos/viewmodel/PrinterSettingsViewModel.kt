@@ -92,7 +92,8 @@ class PrinterSettingsViewModel(
                 printing.printTest(shop.storeName, shop.receipt.language)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("PrinterSettingsViewModel", "Failed and showed an error", e)
                 PrintResult.WRITE_FAILED
             }
             local.value = Local(testing = false, testResult = result)

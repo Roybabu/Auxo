@@ -128,46 +128,140 @@ data class ImportPreview(val items: List<ImportItem>, val rowCount: Int) {
     val canImport: Boolean get() = ready.isNotEmpty()
 }
 
-/** The file people fill in: its heading row and a few example rows to copy the style from. */
+/** One category's example in the guide: the rows to copy the style from. Several rows are the variants of one product. */
+class ImportExample(val category: ProductCategory, val rows: List<Map<ImportColumn, String>>)
+
+/**
+ * What the import screen teaches and the template file shows: an example for every category that can be imported.
+ * (Loose goods, Jewellery and Restaurant dishes are added in the product screen.)
+ */
+object ProductImportGuide {
+
+    private fun row(vararg values: Pair<ImportColumn, String>): Map<ImportColumn, String> = values.toMap()
+
+    val examples: List<ImportExample> = listOf(
+        ImportExample(
+            ProductCategory.GARMENT,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
+                    ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
+                    ImportColumn.SIZE to "M", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
+                    ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "10",
+                    ImportColumn.LOW_STOCK to "3", ImportColumn.SKU to "TS-BLU-M",
+                ),
+                row(
+                    ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
+                    ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
+                    ImportColumn.SIZE to "L", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
+                    ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "8",
+                    ImportColumn.LOW_STOCK to "3", ImportColumn.SKU to "TS-BLU-L",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.FOOTWEAR,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Running Shoes", ImportColumn.CATEGORY to "Footwear", ImportColumn.BRAND to "Stride",
+                    ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6404", ImportColumn.SIZE to "8",
+                    ImportColumn.COLOUR to "Black", ImportColumn.SELLING_PRICE to "1299", ImportColumn.MRP to "1599",
+                    ImportColumn.OPENING_STOCK to "6", ImportColumn.LOW_STOCK to "2",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.ACCESSORIES,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Leather Belt", ImportColumn.CATEGORY to "Accessories", ImportColumn.BRAND to "Acme",
+                    ImportColumn.GST_RATE to "18", ImportColumn.SIZE to "Free size", ImportColumn.COLOUR to "Brown",
+                    ImportColumn.SELLING_PRICE to "350", ImportColumn.MRP to "450", ImportColumn.OPENING_STOCK to "15",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.PACKAGED_FOOD,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Glucose Biscuits", ImportColumn.CATEGORY to "Packaged food", ImportColumn.BRAND to "Tasty",
+                    ImportColumn.DIET to "Veg", ImportColumn.GST_RATE to "18", ImportColumn.HSN to "1905",
+                    ImportColumn.NET_QUANTITY to "200", ImportColumn.UNIT to "g", ImportColumn.SELLING_PRICE to "20",
+                    ImportColumn.MRP to "22", ImportColumn.COST_PRICE to "16", ImportColumn.OPENING_STOCK to "48",
+                    ImportColumn.LOW_STOCK to "12", ImportColumn.BATCH to "B-101", ImportColumn.EXPIRY_DATE to "2027-03-31",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.BEVERAGE,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Mango Juice", ImportColumn.CATEGORY to "Beverage", ImportColumn.GST_RATE to "12",
+                    ImportColumn.NET_QUANTITY to "1", ImportColumn.UNIT to "L", ImportColumn.SELLING_PRICE to "95",
+                    ImportColumn.MRP to "99", ImportColumn.OPENING_STOCK to "24", ImportColumn.EXPIRY_DATE to "31/12/2026",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.GENERAL,
+            listOf(
+                row(
+                    ImportColumn.NAME to "A4 Notebook", ImportColumn.CATEGORY to "General", ImportColumn.BRAND to "Paper Co",
+                    ImportColumn.GST_RATE to "12", ImportColumn.HSN to "4820", ImportColumn.SELLING_PRICE to "60",
+                    ImportColumn.MRP to "70", ImportColumn.COST_PRICE to "42", ImportColumn.OPENING_STOCK to "40",
+                    ImportColumn.LOW_STOCK to "10", ImportColumn.SKU to "NB-A4",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.ELECTRONICS,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Smartphone X1", ImportColumn.CATEGORY to "Electronics", ImportColumn.BRAND to "Techno",
+                    ImportColumn.GST_RATE to "18", ImportColumn.HSN to "8517", ImportColumn.SIZE to "128 GB",
+                    ImportColumn.COLOUR to "Black", ImportColumn.SELLING_PRICE to "15999", ImportColumn.MRP to "17999",
+                    ImportColumn.COST_PRICE to "13500", ImportColumn.OPENING_STOCK to "5", ImportColumn.LOW_STOCK to "2",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.PHARMACY,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Cough Syrup", ImportColumn.CATEGORY to "Pharmacy", ImportColumn.BRAND to "HealWell",
+                    ImportColumn.GST_RATE to "12", ImportColumn.HSN to "3004", ImportColumn.NET_QUANTITY to "100",
+                    ImportColumn.UNIT to "ml", ImportColumn.SELLING_PRICE to "85", ImportColumn.MRP to "90",
+                    ImportColumn.COST_PRICE to "65", ImportColumn.OPENING_STOCK to "30", ImportColumn.LOW_STOCK to "8",
+                    ImportColumn.BATCH to "CS-2207", ImportColumn.EXPIRY_DATE to "2028-06-30",
+                ),
+            ),
+        ),
+        ImportExample(
+            ProductCategory.COSMETICS,
+            listOf(
+                row(
+                    ImportColumn.NAME to "Face Wash", ImportColumn.CATEGORY to "Cosmetics", ImportColumn.BRAND to "Glow",
+                    ImportColumn.GST_RATE to "18", ImportColumn.HSN to "3304", ImportColumn.NET_QUANTITY to "100",
+                    ImportColumn.UNIT to "ml", ImportColumn.SELLING_PRICE to "180", ImportColumn.MRP to "199",
+                    ImportColumn.COST_PRICE to "120", ImportColumn.OPENING_STOCK to "20", ImportColumn.LOW_STOCK to "5",
+                    ImportColumn.BATCH to "FW-0412", ImportColumn.EXPIRY_DATE to "2028-04-30",
+                ),
+            ),
+        ),
+    )
+}
+
+/** The file people fill in: its heading row and an example row (or rows) for every category that can be imported. */
 object ProductImportTemplate {
     const val FILE_NAME = "auxo-products-template.csv"
 
     val header: String get() = ImportColumn.entries.joinToString(",") { it.key }
 
-    private fun row(vararg values: Pair<ImportColumn, String>): String {
-        val byColumn = values.toMap()
-        return ImportColumn.entries.joinToString(",") { csvCell(byColumn[it].orEmpty()) }
-    }
+    private fun line(values: Map<ImportColumn, String>): String =
+        ImportColumn.entries.joinToString(",") { csvCell(values[it].orEmpty()) }
 
-    fun csv(): String = listOf(
-        header,
-        row(
-            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
-            ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
-            ImportColumn.SIZE to "M", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
-            ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "10",
-            ImportColumn.LOW_STOCK to "3", ImportColumn.SKU to "TS-BLU-M",
-        ),
-        row(
-            ImportColumn.NAME to "Cotton T-Shirt", ImportColumn.CATEGORY to "Clothing", ImportColumn.BRAND to "Acme",
-            ImportColumn.MATERIAL to "Cotton", ImportColumn.GST_RATE to "Apparel", ImportColumn.HSN to "6109",
-            ImportColumn.SIZE to "L", ImportColumn.COLOUR to "Blue", ImportColumn.SELLING_PRICE to "499",
-            ImportColumn.MRP to "599", ImportColumn.COST_PRICE to "250", ImportColumn.OPENING_STOCK to "8",
-            ImportColumn.LOW_STOCK to "3", ImportColumn.SKU to "TS-BLU-L",
-        ),
-        row(
-            ImportColumn.NAME to "Glucose Biscuits", ImportColumn.CATEGORY to "Packaged food", ImportColumn.BRAND to "Tasty",
-            ImportColumn.DIET to "Veg", ImportColumn.GST_RATE to "18", ImportColumn.HSN to "1905",
-            ImportColumn.NET_QUANTITY to "200", ImportColumn.UNIT to "g", ImportColumn.SELLING_PRICE to "20",
-            ImportColumn.MRP to "22", ImportColumn.COST_PRICE to "16", ImportColumn.OPENING_STOCK to "48",
-            ImportColumn.LOW_STOCK to "12", ImportColumn.BATCH to "B-101", ImportColumn.EXPIRY_DATE to "2027-03-31",
-        ),
-        row(
-            ImportColumn.NAME to "Mango Juice", ImportColumn.CATEGORY to "Beverage", ImportColumn.GST_RATE to "12",
-            ImportColumn.NET_QUANTITY to "1", ImportColumn.UNIT to "L", ImportColumn.SELLING_PRICE to "95",
-            ImportColumn.MRP to "99", ImportColumn.OPENING_STOCK to "24", ImportColumn.EXPIRY_DATE to "31/12/2026",
-        ),
-    ).joinToString("\r\n") + "\r\n"
+    fun csv(): String = (listOf(header) + ProductImportGuide.examples.flatMap { example -> example.rows.map(::line) })
+        .joinToString("\r\n") + "\r\n"
 
     /** Quotes a cell when it holds a comma, quote or line break. */
     fun csvCell(value: String): String =
@@ -406,6 +500,10 @@ object ProductImport {
         "accessory", "accessories", "bag", "bags", "belt", "belts", "cap", "caps", "wallet", "wallets" -> ProductCategory.ACCESSORIES
         "packagedfood", "packaged", "food", "grocery", "snack", "snacks" -> ProductCategory.PACKAGED_FOOD
         "beverage", "beverages", "drink", "drinks" -> ProductCategory.BEVERAGE
+        "general", "generalitem", "generalitems", "stationery", "toy", "toys", "hardware", "household", "gift", "gifts" -> ProductCategory.GENERAL
+        "electronics", "electronic", "mobile", "mobiles", "phone", "phones", "appliance", "appliances" -> ProductCategory.ELECTRONICS
+        "pharmacy", "medicine", "medicines", "medical", "drug", "drugs" -> ProductCategory.PHARMACY
+        "cosmetics", "cosmetic", "beauty", "personalcare", "skincare", "haircare", "makeup" -> ProductCategory.COSMETICS
         else -> null
     }
 
@@ -439,7 +537,8 @@ object ProductImport {
 
     private fun FormField.column(): ImportColumn = when (this) {
         // Restaurant items are not imported, so a subcategory error cannot come from a file; point it at the name.
-        FormField.NAME, FormField.VARIANTS, FormField.SUBCATEGORY -> ImportColumn.NAME
+        // A warranty is not an import column either, so it cannot come from a file; point it at the name.
+        FormField.NAME, FormField.VARIANTS, FormField.SUBCATEGORY, FormField.WARRANTY, FormField.METAL, FormField.MAKING_CHARGE -> ImportColumn.NAME
         FormField.BRAND -> ImportColumn.BRAND
         FormField.DESCRIPTION -> ImportColumn.DESCRIPTION
         FormField.MATERIAL -> ImportColumn.MATERIAL

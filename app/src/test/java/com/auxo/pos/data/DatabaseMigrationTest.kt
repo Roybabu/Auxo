@@ -410,7 +410,9 @@ class DatabaseMigrationTest {
             val columns = db.openHelper.readableDatabase.query("PRAGMA table_info($table)").use { c ->
                 generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
             }
-            assertTrue("$table no longer has table_number or service_type", "table_number" !in columns && "service_type" !in columns)
+            // Version 23 gives parked bills a table_number again, with a new meaning (the restaurant table they belong to).
+            assertTrue("$table no longer has service_type", "service_type" !in columns)
+            if (table == "invoices") assertTrue("invoices no longer has table_number", "table_number" !in columns)
         }
 
         // Stock counts: the table exists and starts empty; a count can be started, filled and cancelled with no
@@ -554,9 +556,18 @@ class DatabaseMigrationTest {
         assertEquals(AuxoDatabase.VERSION, db.openHelper.readableDatabase.version)
 
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
-        // The Ingredient category that version 17 added is removed again by version 19; version 20 adds Footwear and Accessories.
-        assertEquals(6, categories.size)
-        assertTrue(categories.all { it.builtIn && it.enabled })
+        // The Ingredient category that version 17 added is removed again by version 19; version 20 adds Footwear and
+        // Accessories (on), version 22 adds General item, Electronics, Pharmacy and Cosmetics (off) and version 23
+        // adds Loose goods and Jewellery (off).
+        assertEquals(12, categories.size)
+        assertTrue(categories.all { it.builtIn })
+        val newer = setOf(
+            com.auxo.pos.domain.model.ProductCategory.GENERAL, com.auxo.pos.domain.model.ProductCategory.ELECTRONICS,
+            com.auxo.pos.domain.model.ProductCategory.PHARMACY, com.auxo.pos.domain.model.ProductCategory.COSMETICS,
+            com.auxo.pos.domain.model.ProductCategory.LOOSE, com.auxo.pos.domain.model.ProductCategory.JEWELLERY,
+        )
+        assertTrue(categories.filter { it.profile !in newer }.all { it.enabled })
+        assertTrue(categories.filter { it.profile in newer }.none { it.enabled })
 
         val inventory = RoomInventoryRepository(db, TestData.clock)
         val garment = categories.first { it.profile == com.auxo.pos.domain.model.ProductCategory.GARMENT }
@@ -573,7 +584,7 @@ class DatabaseMigrationTest {
         database = db
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories()
         assertEquals(
-            listOf(true, true, true, true, true, false),
+            listOf(true, true, true, true, true, false, false, false, false, false, false, false),
             categories.map { it.enabled },
         )
     }
@@ -639,7 +650,7 @@ class DatabaseMigrationTest {
         for (table in listOf("held_bills", "invoices")) {
             val names = columns(table)
             assertTrue("$table has no service_type", "service_type" !in names)
-            assertTrue("$table has no table_number", "table_number" !in names)
+            if (table == "invoices") assertTrue("invoices has no table_number", "table_number" !in names)
         }
         assertTrue("kot_sent" !in columns("held_bills") && "kot_count" !in columns("held_bills"))
 
@@ -655,7 +666,8 @@ class DatabaseMigrationTest {
         assertEquals(0, count("SELECT COUNT(*) FROM stock_batches"))
         assertEquals(1, count("SELECT COUNT(*) FROM stock_movements"))
         assertEquals(1, count("SELECT COUNT(*) FROM product_variants WHERE id = 12"))
-        assertEquals(3, count("SELECT COUNT(*) FROM shop_categories"))
+        // Garment and the two that version 20 adds, the four that version 22 adds and the two that version 23 adds.
+        assertEquals(9, count("SELECT COUNT(*) FROM shop_categories"))
         assertEquals(listOf("Cotton Shirt"), RoomInventoryRepository(db, TestData.clock).observeProducts().first().map { it.name })
     }
 
@@ -674,10 +686,14 @@ class DatabaseMigrationTest {
 
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories().sortedBy { it.sortOrder }
         assertEquals(
-            listOf(ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT),
+            listOf(
+                ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.RESTAURANT,
+                ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+                ProductCategory.LOOSE, ProductCategory.JEWELLERY,
+            ),
             categories.map { it.profile },
         )
-        assertEquals(listOf(true, true, true, false, true, true), categories.map { it.enabled })
+        assertEquals(listOf(true, true, true, false, true, true, false, false, false, false, false, false), categories.map { it.enabled })
         assertTrue(categories.all { it.builtIn })
     }
 
@@ -694,7 +710,11 @@ class DatabaseMigrationTest {
         database = db
         val categories = com.auxo.pos.data.repository.RoomCategoryRepository(db).getCategories().sortedBy { it.sortOrder }
         assertEquals(
-            listOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES),
+            listOf(
+                ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES,
+                ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+                ProductCategory.LOOSE, ProductCategory.JEWELLERY,
+            ),
             categories.map { it.profile },
         )
     }
@@ -718,5 +738,94 @@ class DatabaseMigrationTest {
             buildList { while (c.moveToNext()) add(c.getLong(0) to c.getInt(1)) }
         }
         assertEquals(listOf(1L to 1, 2L to 0), rows)
+    }
+
+    @Test
+    fun migrate21To22_addsFourCategoriesOff_andTheTwoProductColumns() = runTest {
+        createFromSchema(21).also {
+            it.execSQL("INSERT INTO shop_categories (id, name, profile, enabled, sort_order, built_in) VALUES (1, NULL, 'GARMENT', 1, 0, 1)")
+            it.execSQL("INSERT INTO shop_categories (id, name, profile, enabled, sort_order, built_in) VALUES (2, NULL, 'RESTAURANT', 0, 1, 1)")
+            it.execSQL(
+                "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at, stock_unit, " +
+                    "preferred_supplier_id, photo_file, subcategory, available, tracks_stock, category_id) " +
+                    "VALUES (1, 'Shirt', NULL, 'GARMENT', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, 1, 1, 1)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val sql = db.openHelper.readableDatabase
+        val rows = sql.query("SELECT profile, enabled, sort_order FROM shop_categories ORDER BY sort_order, id").use { c ->
+            buildList { while (c.moveToNext()) add(Triple(c.getString(0), c.getInt(1), c.getInt(2))) }
+        }
+        assertEquals(
+            listOf(
+                Triple("GARMENT", 1, 0), Triple("RESTAURANT", 0, 1),
+                Triple("GENERAL", 0, 2), Triple("ELECTRONICS", 0, 3), Triple("PHARMACY", 0, 4), Triple("COSMETICS", 0, 5),
+                Triple("LOOSE", 0, 6), Triple("JEWELLERY", 0, 7),
+            ),
+            rows,
+        )
+        val product = sql.query("SELECT warranty_months, prescription_required FROM products WHERE id = 1").use { c ->
+            c.moveToFirst()
+            c.isNull(0) to c.getInt(1)
+        }
+        assertEquals(true to 0, product)
+    }
+
+    @Test
+    fun migrate21To22_leavesAShopWithNoCategoryRowsToBeSeededLater() = runTest {
+        createFromSchema(21).close()
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val count = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM shop_categories").use { c ->
+            c.moveToFirst()
+            c.getInt(0)
+        }
+        assertEquals(0, count)
+    }
+
+    @Test
+    fun migrate22To23_addsTwoCategoriesOff_andTheThreeColumns() = runTest {
+        createFromSchema(22).also {
+            it.execSQL("INSERT INTO shop_categories (id, name, profile, enabled, sort_order, built_in) VALUES (1, NULL, 'GARMENT', 1, 0, 1)")
+            it.execSQL(
+                "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at, stock_unit, " +
+                    "preferred_supplier_id, photo_file, subcategory, available, tracks_stock, category_id) " +
+                    "VALUES (1, 'Shirt', NULL, 'GARMENT', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, 1, 1, 1)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val sql = db.openHelper.readableDatabase
+        val rows = sql.query("SELECT profile, enabled, sort_order FROM shop_categories ORDER BY sort_order, id").use { c ->
+            buildList { while (c.moveToNext()) add(Triple(c.getString(0), c.getInt(1), c.getInt(2))) }
+        }
+        assertEquals(listOf(Triple("GARMENT", 1, 0), Triple("LOOSE", 0, 1), Triple("JEWELLERY", 0, 2)), rows)
+        val product = sql.query("SELECT metal, making_charge_bp FROM products WHERE id = 1").use { c ->
+            c.moveToFirst()
+            c.isNull(0) to c.isNull(1)
+        }
+        assertEquals(true to true, product)
+        // Parked bills get the two columns that tie them to a table or a number.
+        val heldColumns = sql.query("PRAGMA table_info(held_bills)").use { c ->
+            generateSequence { if (c.moveToNext()) c.getString(c.getColumnIndexOrThrow("name")) else null }.toList()
+        }
+        assertTrue("table_number" in heldColumns && "token_number" in heldColumns)
+        // Bill lines already saved count as pieces: they have no unit.
+        sql.query("SELECT stock_unit FROM invoice_lines").use { assertEquals(0, it.count) }
+    }
+
+    @Test
+    fun migrate22To23_leavesAShopWithNoCategoryRowsToBeSeededLater() = runTest {
+        createFromSchema(22).close()
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val count = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM shop_categories").use { c ->
+            c.moveToFirst()
+            c.getInt(0)
+        }
+        assertEquals(0, count)
     }
 }

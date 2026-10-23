@@ -32,6 +32,7 @@ class ImportProductsUseCase(private val saveProduct: SaveProductUseCase) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("ProductImportUseCases", "Failed and showed an error", e)
                 null
             }
             when (result) {
@@ -40,6 +41,7 @@ class ImportProductsUseCase(private val saveProduct: SaveProductUseCase) {
                 null -> failed += product.name
             }
         }
+        com.auxo.pos.core.debuglog.DebugLog.event("Import", "Products imported: $imported saved, ${conflicts.size} in conflict, ${failed.size} failed")
         return ImportOutcome(imported, conflicts, failed)
     }
 }

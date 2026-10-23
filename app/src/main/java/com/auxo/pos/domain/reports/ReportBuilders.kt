@@ -310,6 +310,12 @@ object Reports {
         ProductCategory.ACCESSORIES -> "Accessories"
         ProductCategory.PACKAGED_FOOD -> "Packaged food"
         ProductCategory.BEVERAGE -> "Beverage"
+        ProductCategory.GENERAL -> "General items"
+        ProductCategory.ELECTRONICS -> "Electronics"
+        ProductCategory.PHARMACY -> "Pharmacy"
+        ProductCategory.COSMETICS -> "Cosmetics"
+        ProductCategory.LOOSE -> "Loose goods"
+        ProductCategory.JEWELLERY -> "Jewellery"
         ProductCategory.RESTAURANT -> "Restaurant"
     }
 

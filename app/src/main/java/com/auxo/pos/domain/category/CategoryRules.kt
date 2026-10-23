@@ -21,7 +21,19 @@ object CategoryRules {
         ProductCategory.ACCESSORIES,
         ProductCategory.PACKAGED_FOOD,
         ProductCategory.BEVERAGE,
+        ProductCategory.GENERAL,
+        ProductCategory.ELECTRONICS,
+        ProductCategory.PHARMACY,
+        ProductCategory.COSMETICS,
+        ProductCategory.LOOSE,
+        ProductCategory.JEWELLERY,
         ProductCategory.RESTAURANT,
+    )
+
+    /** Built-in categories a new shop starts with switched off; the owner switches on the ones it sells. */
+    val startsOff: Set<ProductCategory> = setOf(
+        ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+        ProductCategory.LOOSE, ProductCategory.JEWELLERY, ProductCategory.RESTAURANT,
     )
 
     /** Names are trimmed, single-spaced and compared without regard to case. [others] are the names already in use. */

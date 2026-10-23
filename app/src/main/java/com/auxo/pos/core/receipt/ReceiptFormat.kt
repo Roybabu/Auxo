@@ -95,7 +95,7 @@ internal object ReceiptText {
     fun mrpDiscount(line: InvoiceLine): Money? {
         val mrp = line.mrp ?: return null
         val perUnit = mrp - line.unitPrice
-        return if (perUnit > Money.ZERO) perUnit * line.quantity else null
+        return if (perUnit > Money.ZERO) line.stockUnit.amountFor(line.quantity, perUnit) else null
     }
 
     fun rate(basisPoints: Int): String = com.auxo.pos.domain.model.formatRatePercent(basisPoints) + "%"

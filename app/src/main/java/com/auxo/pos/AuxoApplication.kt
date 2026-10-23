@@ -1,6 +1,7 @@
 package com.auxo.pos
 
 import android.app.Application
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.core.di.AppContainer
 
 class AuxoApplication : Application() {
@@ -10,6 +11,8 @@ class AuxoApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Debug builds only: records this run to a file so problems can be read afterwards.
+        DebugLog.install(this)
         container = AppContainer(this)
     }
 }

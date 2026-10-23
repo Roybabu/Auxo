@@ -34,6 +34,18 @@ interface ShopPreferences {
     val onboardingSeen: StateFlow<Boolean>
 
     fun setOnboardingSeen(seen: Boolean)
+
+    /** Today's rate per gram for each metal, as the shop last entered them. Empty until the shop enters some. */
+    val metalRates: StateFlow<com.auxo.pos.domain.jewellery.MetalRates>
+        get() = MutableStateFlow(com.auxo.pos.domain.jewellery.MetalRates())
+
+    fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) = Unit
+
+    /** How many tables the restaurant has; parked restaurant bills are filed against one of them. */
+    val tableCount: StateFlow<Int>
+        get() = MutableStateFlow(com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES)
+
+    fun setTableCount(count: Int) = Unit
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -73,7 +85,26 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         onboardingState.value = seen
     }
 
+    private val metalRatesState = MutableStateFlow(com.auxo.pos.domain.jewellery.MetalRates.decode(prefs.getString(KEY_METAL_RATES, null)))
+    override val metalRates: StateFlow<com.auxo.pos.domain.jewellery.MetalRates> = metalRatesState.asStateFlow()
+
+    override fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) {
+        prefs.edit { putString(KEY_METAL_RATES, rates.encode()) }
+        metalRatesState.value = rates
+    }
+
+    private val tableCountState = MutableStateFlow(prefs.getInt(KEY_TABLE_COUNT, com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES))
+    override val tableCount: StateFlow<Int> = tableCountState.asStateFlow()
+
+    override fun setTableCount(count: Int) {
+        val clean = count.coerceIn(1, com.auxo.pos.domain.billing.HeldBills.MAX_TABLES)
+        prefs.edit { putInt(KEY_TABLE_COUNT, clean) }
+        tableCountState.value = clean
+    }
+
     companion object {
+        const val KEY_TABLE_COUNT = "table_count"
+        const val KEY_METAL_RATES = "metal_rates"
         const val FILE = "shop"
         const val KEY_ONBOARDING_SEEN = "onboarding_seen"
         const val KEY_CATEGORY_SETUP = "category_setup_done"

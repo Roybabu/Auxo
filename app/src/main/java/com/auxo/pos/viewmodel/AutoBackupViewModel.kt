@@ -90,6 +90,7 @@ class AutoBackupViewModel(private val service: AutoBackupService, private val cl
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("AutoBackupViewModel", "Failed and showed an error", e)
                 null
             }
             _uiState.update { it.copy(isWorking = false, lastResult = result) }
@@ -103,6 +104,7 @@ class AutoBackupViewModel(private val service: AutoBackupService, private val cl
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("AutoBackupViewModel", "Failed and showed an error", e)
                 // A refused change leaves the saved settings as they were, which the screen already shows.
             }
         }

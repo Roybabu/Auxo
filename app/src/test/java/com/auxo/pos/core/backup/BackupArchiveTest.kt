@@ -53,6 +53,38 @@ class BackupArchiveTest {
         assertEquals(mapOf("accent" to "violet", "dark_mode" to "true"), read.preferences)
     }
 
+    private val goodKey = "0123456789abcdef".repeat(4)
+
+    @Test
+    fun aDatabaseKey_isWrittenAndReadBack() {
+        val database = folder.newFile("source.db").apply { writeBytes(ByteArray(64) { it.toByte() }) }
+        val out = ByteArrayOutputStream()
+        BackupArchive.write(out, manifest, database, emptyMap(), databaseKey = goodKey)
+
+        val read = BackupArchive.read(ByteArrayInputStream(out.toByteArray()), folder.newFolder())
+
+        assertEquals(goodKey, read.databaseKey)
+    }
+
+    @Test
+    fun aBackupWithoutAKey_readsWithNone() {
+        val database = folder.newFile("source.db").apply { writeBytes(ByteArray(64)) }
+        val out = ByteArrayOutputStream()
+        BackupArchive.write(out, manifest, database, emptyMap())
+
+        assertEquals(null, BackupArchive.read(ByteArrayInputStream(out.toByteArray()), folder.newFolder()).databaseKey)
+    }
+
+    @Test
+    fun aMalformedDatabaseKey_isRejectedAsCorrupt() {
+        val bytes = zipOf(
+            BackupArchive.MANIFEST_ENTRY to goodManifest,
+            BackupArchive.DATABASE_ENTRY to "x",
+            BackupArchive.DATABASE_KEY_ENTRY to "not a key",
+        )
+        assertEquals(BackupProblem.CORRUPT, problemOf(bytes))
+    }
+
     private val photoName = "0123456789abcdef0123456789abcdef.jpg"
 
     @Test

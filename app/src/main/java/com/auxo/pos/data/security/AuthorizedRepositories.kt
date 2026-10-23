@@ -459,9 +459,9 @@ class AuthorizedHeldBillRepository(
     override fun observeHeld(): Flow<List<com.auxo.pos.domain.billing.HeldBillSummary>> =
         auth.guarded(Permission.SELL) { inner.observeHeld() }
 
-    override suspend fun hold(cart: com.auxo.pos.domain.billing.Cart, total: Money, label: String, replacingId: Long?): Long {
+    override suspend fun hold(cart: com.auxo.pos.domain.billing.Cart, total: Money, label: String, replacingId: Long?, tableNumber: Int?): Long {
         auth.require(Permission.SELL)
-        return inner.hold(cart, total, label, replacingId)
+        return inner.hold(cart, total, label, replacingId, tableNumber)
     }
 
     override suspend fun get(id: Long): com.auxo.pos.domain.billing.HeldBill? {

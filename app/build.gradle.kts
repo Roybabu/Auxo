@@ -135,6 +135,8 @@ dependencies {
     implementation(libs.androidx.exifinterface)
 
     implementation(libs.tink.android)
+    // Encrypts the database file on the phone; its key is kept in the Android Keystore.
+    implementation(libs.sqlcipher.android)
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)
 

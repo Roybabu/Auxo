@@ -32,6 +32,12 @@ fun ProductCategory.labelRes(): Int = when (this) {
     ProductCategory.ACCESSORIES -> R.string.category_accessories
     ProductCategory.PACKAGED_FOOD -> R.string.category_packaged_food
     ProductCategory.BEVERAGE -> R.string.category_beverage
+    ProductCategory.GENERAL -> R.string.category_general
+    ProductCategory.ELECTRONICS -> R.string.category_electronics
+    ProductCategory.PHARMACY -> R.string.category_pharmacy
+    ProductCategory.COSMETICS -> R.string.category_cosmetics
+    ProductCategory.LOOSE -> R.string.category_loose
+    ProductCategory.JEWELLERY -> R.string.category_jewellery
     ProductCategory.RESTAURANT -> R.string.category_restaurant
 }
 
@@ -42,6 +48,12 @@ fun ProductCategory.iconRes(): Int = when (this) {
     ProductCategory.ACCESSORIES -> R.drawable.ic_accessories
     ProductCategory.PACKAGED_FOOD -> R.drawable.ic_food
     ProductCategory.BEVERAGE -> R.drawable.ic_beverage
+    ProductCategory.GENERAL -> R.drawable.ic_general
+    ProductCategory.ELECTRONICS -> R.drawable.ic_electronics
+    ProductCategory.PHARMACY -> R.drawable.ic_pharmacy
+    ProductCategory.COSMETICS -> R.drawable.ic_cosmetics
+    ProductCategory.LOOSE -> R.drawable.ic_loose
+    ProductCategory.JEWELLERY -> R.drawable.ic_jewellery
     ProductCategory.RESTAURANT -> R.drawable.ic_restaurant
 }
 
@@ -137,6 +149,8 @@ fun FieldError.messageRes(): Int = when (this) {
     FieldError.INVALID_HSN -> R.string.error_invalid_hsn
     FieldError.APPAREL_RULE_GARMENTS_ONLY -> R.string.error_apparel_rule_garments
     FieldError.INVALID_AMOUNT -> R.string.error_invalid_amount
+    FieldError.INVALID_WARRANTY -> R.string.error_invalid_warranty
+    FieldError.INVALID_MAKING_CHARGE -> R.string.error_invalid_making_charge
 }
 
 @StringRes
@@ -157,4 +171,12 @@ fun gstLabel(rate: GstRate?): String = when (rate) {
     null -> androidx.compose.ui.res.stringResource(R.string.gst_not_set)
     GstRate.Apparel -> androidx.compose.ui.res.stringResource(R.string.gst_apparel)
     is GstRate.Fixed -> formatRatePercent(rate.basisPoints) + "%"
+}
+
+fun com.auxo.pos.domain.jewellery.JewelleryMetal.labelRes(): Int = when (this) {
+    com.auxo.pos.domain.jewellery.JewelleryMetal.GOLD_24K -> R.string.metal_gold_24k
+    com.auxo.pos.domain.jewellery.JewelleryMetal.GOLD_22K -> R.string.metal_gold_22k
+    com.auxo.pos.domain.jewellery.JewelleryMetal.GOLD_18K -> R.string.metal_gold_18k
+    com.auxo.pos.domain.jewellery.JewelleryMetal.SILVER -> R.string.metal_silver
+    com.auxo.pos.domain.jewellery.JewelleryMetal.PLATINUM -> R.string.metal_platinum
 }

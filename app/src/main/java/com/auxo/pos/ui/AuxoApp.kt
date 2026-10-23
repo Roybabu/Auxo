@@ -11,6 +11,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,6 +41,9 @@ fun AuxoApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val onHome = currentDestination?.route == TopLevelDestination.HOME.route
+    LaunchedEffect(currentDestination?.route) {
+        currentDestination?.route?.let { com.auxo.pos.core.debuglog.DebugLog.event("Screen", it) }
+    }
     val capabilities = LocalCapabilities.current
     val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
     val imeVisible = WindowInsets.isImeVisible

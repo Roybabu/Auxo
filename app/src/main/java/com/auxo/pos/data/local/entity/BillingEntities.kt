@@ -102,6 +102,8 @@ data class InvoiceLineEntity(
     @ColumnInfo(name = "menu_item_id") val menuItemId: Long? = null,
     /** Why this line was discounted. Added in version 9. */
     @ColumnInfo(name = "discount_reason") val discountReason: String? = null,
+    /** [com.auxo.pos.domain.model.StockUnit] name for a line sold by weight or volume; null means pieces. Added in version 23. */
+    @ColumnInfo(name = "stock_unit") val stockUnit: String? = null,
 )
 
 @Entity(

@@ -224,6 +224,21 @@ fun MoreScreen(
             if (can(Permission.BACKUP_AND_RESTORE)) {
                 MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
             }
+            if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                MoreItem(
+                    R.drawable.ic_activity,
+                    stringResource(R.string.debug_logs_title),
+                    stringResource(R.string.debug_logs_body),
+                    {
+                        val send = com.auxo.pos.core.debuglog.DebugLog.shareIntent(context)
+                        if (send != null) {
+                            runCatching { context.startActivity(android.content.Intent.createChooser(send, null)) }
+                        }
+                    },
+                    modifier = Modifier.testTag("more_debug_logs"),
+                )
+            }
             MoreItem(
                 R.drawable.ic_logout,
                 stringResource(R.string.sign_out_title),

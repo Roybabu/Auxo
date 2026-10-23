@@ -17,4 +17,8 @@ data class HeldBillEntity(
     @ColumnInfo(name = "item_count") val itemCount: Int,
     @ColumnInfo(name = "total_minor") val totalMinor: Long,
     val payload: String,
+    /** The restaurant table the bill is parked against. Added in version 23. */
+    @ColumnInfo(name = "table_number") val tableNumber: Int? = null,
+    /** The number given to a bill that is not for a table. Added in version 23. */
+    @ColumnInfo(name = "token_number") val tokenNumber: Int? = null,
 )

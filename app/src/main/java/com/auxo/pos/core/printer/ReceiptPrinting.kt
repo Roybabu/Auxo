@@ -1,5 +1,6 @@
 package com.auxo.pos.core.printer
 
+import com.auxo.pos.core.debuglog.DebugLog
 import android.content.Context
 import android.graphics.Bitmap
 import com.auxo.pos.R
@@ -46,7 +47,7 @@ class ThermalReceiptPrinter(
     override val printer: StateFlow<SavedPrinter?> get() = preferences.printer
 
     override suspend fun printInvoice(invoice: Invoice, options: ReceiptOptions, logo: Bitmap?): PrintResult {
-        val printer = preferences.printer.value ?: return PrintResult.NO_PRINTER
+        val printer = preferences.printer.value ?: return PrintResult.NO_PRINTER.logged("Receipt")
         val bytes = prepare {
             val withPaper = options.copy(paper = printer.paper)
             val pages = ReceiptRenderer.pages(
@@ -54,20 +55,25 @@ class ThermalReceiptPrinter(
                 ReceiptLabels.from(context, withPaper.language), ReceiptFonts.from(context),
             )
             makeJob(pages.firstOrNull(), printer)
-        } ?: return PrintResult.UNSUPPORTED_PAPER
-        if (bytes === Failed) return PrintResult.RENDER_FAILED
-        return transport.send(printer.address, bytes)
+        } ?: return PrintResult.UNSUPPORTED_PAPER.logged("Receipt")
+        if (bytes === Failed) return PrintResult.RENDER_FAILED.logged("Receipt")
+        return transport.send(printer.address, bytes).logged("Receipt")
     }
 
     override suspend fun printTest(shopName: String, language: Language): PrintResult {
-        val printer = preferences.printer.value ?: return PrintResult.NO_PRINTER
+        val printer = preferences.printer.value ?: return PrintResult.NO_PRINTER.logged("Test receipt")
         val bytes = prepare {
             val receipt = testReceipt(LocaleContext.wrap(context, language), shopName, printer)
             val page = ReceiptRenderer.thermalPages(receipt, printer.paper, ReceiptFonts.from(context)).firstOrNull()
             makeJob(page, printer)
-        } ?: return PrintResult.UNSUPPORTED_PAPER
-        if (bytes === Failed) return PrintResult.RENDER_FAILED
-        return transport.send(printer.address, bytes)
+        } ?: return PrintResult.UNSUPPORTED_PAPER.logged("Test receipt")
+        if (bytes === Failed) return PrintResult.RENDER_FAILED.logged("Test receipt")
+        return transport.send(printer.address, bytes).logged("Test receipt")
+    }
+
+    private fun PrintResult.logged(what: String): PrintResult {
+        if (this == PrintResult.PRINTED) DebugLog.event("Printer", "$what printed") else DebugLog.warn("Printer", "$what not printed: $this")
+        return this
     }
 
     /** Runs [block] off the main thread. A drawing error (or no memory left for a long receipt) gives [Failed], not a crash. */
@@ -76,7 +82,8 @@ class ThermalReceiptPrinter(
             block()
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("ReceiptPrinting", "Failed and showed an error", e)
             Failed
         } catch (_: OutOfMemoryError) {
             Failed

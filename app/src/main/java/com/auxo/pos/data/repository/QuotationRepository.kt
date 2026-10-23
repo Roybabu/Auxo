@@ -1,5 +1,6 @@
 package com.auxo.pos.data.repository
 
+import com.auxo.pos.core.debuglog.DebugLog
 import androidx.room.withTransaction
 import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.local.entity.QuotationEntity
@@ -61,19 +62,26 @@ class RoomQuotationRepository(private val database: AuxoDatabase, private val cl
                 payload = HeldCartCodec.encode(cart),
                 status = QuotationStatus.OPEN.name,
             )
-            entity.copy(id = dao.insert(entity)).toSummary()
+            entity.copy(id = dao.insert(entity)).toSummary().also { DebugLog.event("Quotation", "Quotation ${it.number} saved: ${cart.itemCount} items") }
         }
     }
 
     override suspend fun get(id: Long): Quotation? {
         val row = dao.get(id) ?: return null
-        val cart = HeldCartCodec.decode(row.payload) ?: return null
+        val cart = HeldCartCodec.decode(row.payload) ?: run {
+            DebugLog.error("Quotation", "Quotation $id could not be read back (damaged data)")
+            return null
+        }
         return Quotation(row.toSummary(), cart)
     }
 
-    override suspend fun delete(id: Long) = dao.delete(id)
+    override suspend fun delete(id: Long) {
+        dao.delete(id)
+        DebugLog.event("Quotation", "Quotation $id deleted")
+    }
 
-    override suspend fun markConverted(id: Long, invoiceId: Long): Boolean = dao.markConverted(id, invoiceId) > 0
+    override suspend fun markConverted(id: Long, invoiceId: Long): Boolean =
+        (dao.markConverted(id, invoiceId) > 0).also { DebugLog.event("Quotation", "Quotation $id turned into invoice $invoiceId: $it") }
 
     private fun QuotationEntity.toSummary() = QuotationSummary(
         id = id,

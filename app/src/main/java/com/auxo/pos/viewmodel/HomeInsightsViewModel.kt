@@ -92,6 +92,7 @@ class HomeInsightsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("HomeInsightsViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(collectedToday = null) }
             }
         }
@@ -128,6 +129,7 @@ class HomeInsightsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                com.auxo.pos.core.debuglog.DebugLog.error("HomeInsightsViewModel", "Failed and showed an error", e)
                 _uiState.update { it.copy(isLoading = false, failed = true, insights = null) }
             }
         }

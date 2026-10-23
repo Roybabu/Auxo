@@ -1,6 +1,6 @@
 <p align="center"><img src="app/src/main/res/drawable-nodpi/auxo_logo_horizontal.png" alt="Auxo: Built to grow." width="420"></p>
 
-**Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee. The name comes from the Greek *auxō*, "to increase or grow".
+**Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. It works offline, with no server and no monthly fee. The only time it uses the internet is to check for and download app updates. The name comes from the Greek *auxō*, "to increase or grow".
 
 Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
 
@@ -32,7 +32,7 @@ Money is stored in whole paise, never as decimals. A sale saves the invoice, pay
 - Android Studio recent enough for Android Gradle Plugin 9.4
 - Android SDK Platform 37 and Build Tools 36.0.0 or newer (install from Android Studio's SDK Manager)
 - A phone (Android 8.0+) with USB debugging, or an emulator. Camera scanning needs Google Play services.
-- Internet on the first build, so Gradle can download itself and the libraries. The app itself needs none.
+- Internet on the first build, so Gradle can download itself and the libraries. The app works offline; it uses the internet only to look for updates (see Privacy and permissions).
 
 **Clone and run**
 ```bash
@@ -74,9 +74,25 @@ Version 0.4.0. The logic is well tested, but the app has only run on an emulator
 
 - ❌ Never tried on a real Bluetooth printer or a physical phone.
 - ❌ Hindi and Bengali text hasn't been checked by a native speaker.
-- ❌ The database and backup files aren't encrypted. Keep backups somewhere other than the phone.
+- ⚠️ The database file on the phone is locked with SQLCipher (AES-256), its key kept in the Android Keystore. This is new and has not yet been tried on a real phone, including converting an existing unlocked database. Backups are locked only if the owner sets a passphrase; without one, a backup carries the database key and is as readable as the data. Keep backups somewhere other than the phone.
 - ⚠️ No supplier balances, and a bill that totals zero can't be completed.
 - ⚠️ A refund isn't tied to the original payment method, and a cash refund on an account sale doesn't change the customer's ledger.
 - ⚠️ The release build isn't minified or signed. Turning on minification (R8) is planned for after release signing is set up, because it has to be tested on a signed release on a real phone: sign in, sale, receipt print, barcode scan, backup and restore, fingerprint. Until then the release file is larger and its code is easy to read.
 
-Everything stays on the device. The app makes no network calls, and its only permission is Bluetooth (for the printer).
+## Privacy and permissions
+
+Your shop's data (products, bills, customers, settings) stays on the device. The app has no server and no account, and it sends none of that data anywhere. The only thing it does over the network is update itself:
+
+- **Update check.** When the app opens, and when you tap Check for updates, it asks GitHub (`api.github.com`, the project's latest release) whether a newer version exists. The request carries no shop data. If one exists it offers to download it. Downloading and installing only happen when you tap them.
+- **Install permission.** To install a downloaded update, Android asks you to allow Auxo to install apps. This is the `REQUEST_INSTALL_PACKAGES` permission, used only for updates.
+
+Permissions the app declares:
+
+| Permission | Why |
+| --- | --- |
+| Internet | Check for and download app updates (above). Nothing else. |
+| Install unknown apps | Install a downloaded update, after you allow it. |
+| Bluetooth (connect) | Print receipts on a paired Bluetooth printer. No scanning and no location. |
+| Storage (Android 9 and older only) | Save backups in Documents/Auxo, where they survive uninstalling the app. |
+
+Things that happen outside the app's own network use: sending a customer a reminder opens WhatsApp or the messages app, which then does its own sending, and the barcode scanner is Google Play services' scanner, which Google may download once.

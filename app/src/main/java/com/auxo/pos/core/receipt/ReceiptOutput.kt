@@ -1,5 +1,6 @@
 package com.auxo.pos.core.receipt
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.domain.billing.BusinessTime
 import android.content.ActivityNotFoundException
 import android.content.ClipData
@@ -103,14 +104,18 @@ object ReceiptOutput {
     suspend fun share(context: Context, invoice: Invoice, options: ReceiptOptions, chooserTitle: String, logo: Bitmap? = null): Boolean {
         val file = runCatching { withContext(Dispatchers.IO) { writePdfFile(context, invoice, options, logo = logo) } }
             .onFailure { if (it is CancellationException) throw it }
+            .onFailure { DebugLog.error("Receipt", "PDF receipt could not be written", it) }
             .getOrNull() ?: return false
         return try {
             context.startActivity(shareIntent(context, file, invoice, chooserTitle))
+            DebugLog.event("Receipt", "PDF receipt shared")
             true
         } catch (e: ActivityNotFoundException) {
+            DebugLog.warn("Receipt", "PDF receipt not shared: no app can take it")
             false
         } catch (e: IllegalArgumentException) {
             // The file is outside the paths the FileProvider shares.
+            DebugLog.error("Receipt", "PDF receipt not shared: file outside the shared folders", e)
             false
         }
     }
@@ -139,9 +144,11 @@ object ReceiptOutput {
             .build()
         return try {
             printManager.print(invoice.number.ifEmpty { "Receipt" }, ReceiptPrintAdapter(pages, fileName(invoice)), attributes)
+            DebugLog.event("Receipt", "Receipt sent to the print system")
             true
         } catch (e: IllegalStateException) {
             // For example when the screen is closing.
+            DebugLog.warn("Receipt", "Receipt not sent to the print system: ${e.message}")
             false
         }
     }

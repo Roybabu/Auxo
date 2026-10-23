@@ -83,6 +83,16 @@ class ProductImportUiTest {
     }
 
     @Test
+    fun beforeAFileIsChosen_theGuideShowsAnExampleForEveryImportableCategory() {
+        show(ProductImportUiState())
+        composeRule.onNodeWithTag("import_guide").assertExists()
+        com.auxo.pos.domain.imports.ProductImportGuide.examples.forEach { example ->
+            composeRule.onNodeWithTag("import_guide_${example.category.name}").assertExists()
+        }
+        composeRule.onNodeWithText("name: Smartphone X1", substring = true).assertExists()
+    }
+
+    @Test
     fun aFileThatCannotBeUsed_saysWhy() {
         show(ProductImportUiState(readError = ImportReadError.TOO_LARGE))
         composeRule.onNodeWithText("This file is too large. Keep it under 1 MB.").assertIsDisplayed()

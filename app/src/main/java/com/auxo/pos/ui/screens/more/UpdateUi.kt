@@ -64,6 +64,12 @@ fun UpdateCard(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                stringResource(R.string.update_privacy_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("update_privacy_note"),
+            )
             val status = when (val s = state) {
                 UpdateState.Checking -> stringResource(R.string.update_checking)
                 UpdateState.UpToDate -> stringResource(R.string.update_up_to_date)

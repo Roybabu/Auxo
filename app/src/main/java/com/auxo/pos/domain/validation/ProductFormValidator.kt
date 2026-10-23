@@ -38,9 +38,15 @@ enum class FieldError {
 
     /** Weight or volume quantity that isn't a number with up to 3 decimals. */
     INVALID_AMOUNT,
+
+    /** Warranty that isn't a whole number of months from 1 to 120. */
+    INVALID_WARRANTY,
+
+    /** Making charge that isn't a percentage from 0 to 100. */
+    INVALID_MAKING_CHARGE,
 }
 
-enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SUBCATEGORY, SIZES, COLOURS, VARIANTS, GST_RATE, HSN }
+enum class FormField { NAME, BRAND, DESCRIPTION, MATERIAL, SUBCATEGORY, SIZES, COLOURS, VARIANTS, GST_RATE, HSN, WARRANTY, METAL, MAKING_CHARGE }
 
 enum class VariantField {
     SIZE, COLOUR, NET_QUANTITY, UNIT, SELLING_PRICE, MRP, COST_PRICE,
@@ -75,6 +81,7 @@ object ProductFormValidator {
     const val BRAND_MAX = 60
     const val DESCRIPTION_MAX = 500
     const val MATERIAL_MAX = 60
+    const val WARRANTY_MAX_MONTHS = 120
     const val SUBCATEGORY_MAX = 40
     const val SIZE_MAX = 12
     const val COLOUR_MAX = 30
@@ -105,8 +112,29 @@ object ProductFormValidator {
         if (form.description.trim().length > DESCRIPTION_MAX) fieldErrors[FormField.DESCRIPTION] = FieldError.TOO_LONG
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
         if (form.subcategory.trim().length > SUBCATEGORY_MAX) fieldErrors[FormField.SUBCATEGORY] = FieldError.TOO_LONG
+        val warranty = form.warrantyMonths.trim()
+        val warrantyMonths = if (form.category.usesWarranty && warranty.isNotEmpty()) {
+            warranty.toIntOrNull()?.takeIf { it in 1..WARRANTY_MAX_MONTHS && warranty.all(Char::isDigit) }
+                ?: run {
+                    fieldErrors[FormField.WARRANTY] = FieldError.INVALID_WARRANTY
+                    null
+                }
+        } else {
+            null
+        }
 
-        val unit = form.stockUnit.takeIf { it in form.category.allowedStockUnits } ?: StockUnit.UNIT
+        if (form.category.usesMetal && form.metal == null) fieldErrors[FormField.METAL] = FieldError.REQUIRED
+        val makingText = form.makingChargePercent.trim()
+        val makingChargeBasisPoints = if (form.category.usesMetal && makingText.isNotEmpty()) {
+            parseMakingCharge(makingText) ?: run {
+                fieldErrors[FormField.MAKING_CHARGE] = FieldError.INVALID_MAKING_CHARGE
+                null
+            }
+        } else {
+            null
+        }
+
+        val unit = form.stockUnit.takeIf { it in form.category.allowedStockUnits } ?: form.category.allowedStockUnits.first()
         // Only restaurant items can be sold without a stock count.
         val tracksStock = !form.category.canSkipStock || form.tracksStock
 
@@ -171,8 +199,18 @@ object ProductFormValidator {
             stockUnit = unit,
             preferredSupplierId = form.preferredSupplierId,
             photoFile = form.photoFile,
+            warrantyMonths = warrantyMonths,
+            prescriptionRequired = form.prescriptionRequired && form.category.usesPrescription,
+            metal = form.metal.takeIf { form.category.usesMetal },
+            makingChargeBasisPoints = makingChargeBasisPoints,
         )
         return ProductValidation.Valid(product)
+    }
+
+    /** A making charge such as "12" or "8.5" in percent, as basis points; 0 to 100%. */
+    private fun parseMakingCharge(text: String): Int? {
+        if (!Regex("""\d{1,3}(\.\d{1,2})?""").matches(text)) return null
+        return text.toBigDecimal().movePointRight(2).toInt().takeIf { it in 0..com.auxo.pos.domain.jewellery.JewelleryPricing.MAKING_MAX_BASIS_POINTS }
     }
 
     private fun validateVariant(

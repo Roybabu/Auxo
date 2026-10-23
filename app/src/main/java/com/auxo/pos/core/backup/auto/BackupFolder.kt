@@ -50,6 +50,7 @@ class FolderBackupStorage(private val folder: BackupFolder) : BackupStorage {
         } catch (e: FolderUnavailableException) {
             throw e
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
             throw FolderUnavailableException(cause = e)
         }
         val name = uniqueName(fileName, existing)
@@ -60,6 +61,7 @@ class FolderBackupStorage(private val folder: BackupFolder) : BackupStorage {
         } catch (e: BackupException) {
             throw e
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
             throw BackupException(BackupProblem.SAVE_FAILED, cause = e)
         }
         lastSavedName = saved.fileName
@@ -130,6 +132,7 @@ class DocumentTreeFolder(private val context: Context, private val tree: Uri) : 
         } catch (e: FolderUnavailableException) {
             throw e
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
             throw FolderUnavailableException(cause = e)
         }
     }
@@ -138,6 +141,7 @@ class DocumentTreeFolder(private val context: Context, private val tree: Uri) : 
         val made: Uri? = try {
             DocumentsContract.createDocument(resolver, rootDocument, DocumentsBackupStorage.mimeTypeFor(fileName), fileName)
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
             throw FolderUnavailableException(cause = e)
         }
         val created = made ?: throw FolderUnavailableException("The folder would not create the backup file.")
@@ -145,6 +149,7 @@ class DocumentTreeFolder(private val context: Context, private val tree: Uri) : 
             val out = resolver.openOutputStream(created, "w") ?: throw IOException("Could not open the backup file for writing.")
             out.use(write)
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
             runCatching { DocumentsContract.deleteDocument(resolver, created) }
             if (e is BackupException) throw e
             throw BackupException(BackupProblem.SAVE_FAILED, cause = e)

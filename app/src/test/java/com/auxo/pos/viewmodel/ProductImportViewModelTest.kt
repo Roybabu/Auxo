@@ -128,7 +128,7 @@ class ProductImportViewModelTest {
     @Test
     fun theImportButton_doesNothingWhenNothingIsReady() = runTest {
         val vm = viewModel()
-        pick(vm, "name,category,selling_price\nToy,Toys,10")
+        pick(vm, "name,category,selling_price\nToy,Scrap,10")
         assertFalse(vm.uiState.value.canImport)
         vm.onImport()
         assertFalse(vm.uiState.value.confirmOpen)
@@ -189,10 +189,10 @@ class ProductImportViewModelTest {
         val empty = FakeInventoryRepository()
         val vm = viewModel(empty)
         pick(vm, ProductImportTemplate.csv())
-        assertEquals(3, vm.uiState.value.preview!!.ready.size)
+        assertEquals(9, vm.uiState.value.preview!!.ready.size)
         vm.onImport()
         vm.onConfirmImport()
-        assertEquals(3, vm.uiState.value.outcome!!.imported)
+        assertEquals(9, vm.uiState.value.outcome!!.imported)
         assertNotNull(empty.products.value.firstOrNull { it.name == "Mango Juice" })
     }
 

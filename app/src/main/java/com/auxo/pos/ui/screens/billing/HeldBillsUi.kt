@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,25 +46,95 @@ import java.util.Locale
 
 private val HELD_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM, hh:mm a", Locale.ENGLISH)
 
-/** Asks what to call the bill being parked (a customer name, a table). The name is optional. */
+/**
+ * Parks the bill being held. A bill with a restaurant dish must be put against a table; any other bill gets the next
+ * free number from the app. The customer's name and phone are optional either way.
+ */
 @Composable
-fun HoldBillDialog(suggestion: String, onHold: (String) -> Unit, onDismiss: () -> Unit) {
+fun HoldBillDialog(
+    suggestion: String,
+    needsTable: Boolean,
+    tableCount: Int,
+    busyTables: Set<Int>,
+    token: Int?,
+    onHold: (label: String, phone: String, table: Int?) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var label by rememberSaveable { mutableStateOf(suggestion) }
+    var phone by rememberSaveable { mutableStateOf("") }
+    var table by rememberSaveable { mutableStateOf<Int?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hold_title)) },
-        text = { HoldBillForm(label = label, onLabelChange = { label = it }) },
+        text = {
+            HoldBillForm(
+                label = label,
+                onLabelChange = { label = it },
+                phone = phone,
+                onPhoneChange = { phone = it.filter(Char::isDigit).take(10) },
+                needsTable = needsTable,
+                tableCount = tableCount,
+                busyTables = busyTables,
+                selectedTable = table,
+                onTableChange = { table = it },
+                token = token,
+            )
+        },
         confirmButton = {
-            TextButton(onClick = { onHold(label) }, modifier = Modifier.testTag("hold_confirm")) { Text(stringResource(R.string.hold_action)) }
+            TextButton(
+                onClick = { onHold(label, phone, table) },
+                enabled = !needsTable || table != null,
+                modifier = Modifier.testTag("hold_confirm"),
+            ) { Text(stringResource(R.string.hold_action)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
 /** What the hold dialog asks for. Kept apart from the dialog window so it can be tested on its own. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HoldBillForm(label: String, onLabelChange: (String) -> Unit) {
+fun HoldBillForm(
+    label: String,
+    onLabelChange: (String) -> Unit,
+    phone: String = "",
+    onPhoneChange: (String) -> Unit = {},
+    needsTable: Boolean = false,
+    tableCount: Int = 0,
+    busyTables: Set<Int> = emptySet(),
+    selectedTable: Int? = null,
+    onTableChange: (Int) -> Unit = {},
+    token: Int? = null,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        if (needsTable) {
+            Text(stringResource(R.string.hold_choose_table), style = MaterialTheme.typography.titleSmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), modifier = Modifier.testTag("hold_tables")) {
+                (1..tableCount).forEach { number ->
+                    FilterChip(
+                        selected = selectedTable == number,
+                        onClick = { onTableChange(number) },
+                        enabled = number !in busyTables,
+                        label = { Text(number.toString()) },
+                        modifier = Modifier.testTag("hold_table_$number"),
+                    )
+                }
+            }
+            if (busyTables.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.hold_tables_busy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else if (token != null) {
+            Text(
+                stringResource(R.string.hold_number, token),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("hold_number"),
+            )
+        }
         Text(stringResource(R.string.hold_body), style = MaterialTheme.typography.bodyMedium)
         AuxoTextField(
             value = label,
@@ -69,6 +144,52 @@ fun HoldBillForm(label: String, onLabelChange: (String) -> Unit) {
                 .fillMaxWidth()
                 .testTag("hold_label"),
         )
+        if (!needsTable) {
+            AuxoTextField(
+                value = phone,
+                onValueChange = onPhoneChange,
+                label = stringResource(R.string.hold_phone),
+                keyboardType = KeyboardType.Phone,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("hold_phone"),
+            )
+        }
+    }
+}
+
+/** What a parked bill is called: "Table 5", "Table 5 · Asha", "Bill 3 · Asha", or the name alone for older bills. */
+@Composable
+fun HeldBillSummary.displayTitle(): String {
+    val prefix = when {
+        tableNumber != null -> stringResource(R.string.held_table, tableNumber)
+        tokenNumber != null -> stringResource(R.string.held_bill_number, tokenNumber)
+        else -> null
+    }
+    return when {
+        prefix == null -> label.ifBlank { stringResource(R.string.held_unnamed) }
+        label.isBlank() -> prefix
+        else -> "$prefix · $label"
+    }
+}
+
+/** The bold table or bill number that heads a parked bill in the list, followed by the customer's name. */
+@Composable
+private fun HeldBillHeading(bill: HeldBillSummary) {
+    val prefix = when {
+        bill.tableNumber != null -> stringResource(R.string.held_table, bill.tableNumber)
+        bill.tokenNumber != null -> stringResource(R.string.held_bill_number, bill.tokenNumber)
+        else -> null
+    }
+    if (prefix == null) {
+        Text(bill.label.ifBlank { stringResource(R.string.held_unnamed) }, style = MaterialTheme.typography.titleSmall)
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(prefix, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.testTag("held_heading_${bill.id}"))
+            if (bill.label.isNotBlank()) {
+                Text(" · ${bill.label}", style = MaterialTheme.typography.titleSmall)
+            }
+        }
     }
 }
 
@@ -90,6 +211,8 @@ fun HeldBillsDialog(
     val formatter = LocalMoneyFormatter.current
     var reviewing by remember { mutableStateOf<HeldBillSummary?>(null) }
     var confirming by remember { mutableStateOf<HeldBillSummary?>(null) }
+    var filter by rememberSaveable { mutableStateOf(HeldFilter.ALL) }
+    val shown = bills.filter { filter.matches(it) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.held_title)) },
@@ -104,13 +227,25 @@ fun HeldBillsDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = 360.dp).testTag("held_list")) {
-                    items(bills, key = { it.id }) { bill ->
-                        Column(modifier = Modifier.fillMaxWidth().testTag("held_${bill.id}")) {
-                            Text(
-                                bill.label.ifBlank { stringResource(R.string.held_unnamed) },
-                                style = MaterialTheme.typography.titleSmall,
+                if (bills.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        HeldFilter.entries.forEach { option ->
+                            FilterChip(
+                                selected = filter == option,
+                                onClick = { filter = option },
+                                label = { Text(stringResource(option.labelRes)) },
+                                modifier = Modifier.testTag("held_filter_${option.name}"),
                             )
+                        }
+                    }
+                    if (shown.isEmpty()) {
+                        Text(stringResource(R.string.held_filter_empty), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                LazyColumn(modifier = Modifier.heightIn(max = 360.dp).testTag("held_list")) {
+                    items(shown, key = { it.id }) { bill ->
+                        Column(modifier = Modifier.fillMaxWidth().testTag("held_${bill.id}")) {
+                            HeldBillHeading(bill)
                             Text(
                                 pluralStringResource(R.plurals.held_items, bill.itemCount, bill.itemCount) + " · " +
                                     formatter.format(bill.total) + " · " +
@@ -156,7 +291,7 @@ fun HeldBillsDialog(
     confirming?.let { bill ->
         ConfirmDialog(
             title = stringResource(R.string.held_discard_title),
-            message = stringResource(R.string.held_discard_body, bill.label.ifBlank { stringResource(R.string.held_unnamed) }),
+            message = stringResource(R.string.held_discard_body, bill.displayTitle()),
             confirmLabel = stringResource(R.string.held_discard),
             onConfirm = {
                 confirming = null
@@ -166,6 +301,20 @@ fun HeldBillsDialog(
             onDismiss = { confirming = null },
             destructive = true,
         )
+    }
+}
+
+/** Which parked bills the list shows: all, those for a restaurant table, or the rest. */
+enum class HeldFilter(val labelRes: Int) {
+    ALL(R.string.held_filter_all),
+    RESTAURANT(R.string.held_filter_restaurant),
+    OTHER(R.string.held_filter_other),
+    ;
+
+    fun matches(bill: HeldBillSummary): Boolean = when (this) {
+        ALL -> true
+        RESTAURANT -> bill.tableNumber != null
+        OTHER -> bill.tableNumber == null
     }
 }
 
@@ -192,7 +341,7 @@ private fun HeldBillReviewDialog(
     val loaded by produceState<ReviewLoad>(ReviewLoad.Loading, summary.id) { value = ReviewLoad.Loaded(onLoad(summary.id)) }
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text(summary.label.ifBlank { stringResource(R.string.held_unnamed) }) },
+        title = { Text(summary.displayTitle()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm), modifier = Modifier.testTag("held_review_${summary.id}")) {
                 Text(
@@ -230,7 +379,11 @@ private fun HeldBillReviewDialog(
                                             }
                                         }
                                         Text(
-                                            "${line.quantity} × ${formatter.format(line.unitPrice)}",
+                                            if (line.stockUnit == com.auxo.pos.domain.model.StockUnit.UNIT) {
+                                                "${line.quantity} × ${formatter.format(line.unitPrice)}"
+                                            } else {
+                                                "${line.quantityText} × ${formatter.format(line.unitPrice)}/${line.stockUnit.entrySymbol}"
+                                            },
                                             style = MaterialTheme.typography.bodyMedium,
                                         )
                                     }

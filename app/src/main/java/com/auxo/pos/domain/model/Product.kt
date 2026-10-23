@@ -100,6 +100,14 @@ data class Product(
      * has no photo. Only the name is kept here; the picture itself is not in the database.
      */
     val photoFile: String? = null,
+    /** Warranty period in months; electronics only. Null when none is given. */
+    val warrantyMonths: Int? = null,
+    /** What a piece of jewellery is made of; jewellery only. Its price follows the shop's rate for this metal. */
+    val metal: com.auxo.pos.domain.jewellery.JewelleryMetal? = null,
+    /** Making charge as a share of the metal value, in basis points (1200 = 12%); jewellery only. */
+    val makingChargeBasisPoints: Int? = null,
+    /** True for a medicine that is sold only against a prescription; pharmacy items only. */
+    val prescriptionRequired: Boolean = false,
     val createdAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
 ) {

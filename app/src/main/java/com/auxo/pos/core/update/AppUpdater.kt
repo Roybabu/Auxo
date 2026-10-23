@@ -141,6 +141,7 @@ class AppUpdater(
                 }
             }
         } catch (e: Exception) {
+            com.auxo.pos.core.debuglog.DebugLog.error("AppUpdater", "Failed and showed an error", e)
             target.delete()
             throw e
         } finally {

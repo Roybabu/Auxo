@@ -14,6 +14,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -21,6 +22,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
+import com.auxo.pos.domain.jewellery.JewelleryMetal
+import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.screens.inventory.labelRes
+import com.auxo.pos.ui.screens.inventory.sanitizeDecimal
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.input.KeyboardType
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoIcon
 import com.auxo.pos.ui.components.AuxoIconSize
@@ -38,7 +48,7 @@ fun ShopSettingsScreen(
     viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories)
+    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories, viewModel::saveMetalRates, viewModel::onTableCountChange)
 }
 
 @Composable
@@ -48,6 +58,8 @@ fun ShopSettingsContent(
     onSuppliersChange: (Boolean) -> Unit = {},
     onOpenStoreDetails: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
+    onSaveMetalRates: (Map<JewelleryMetal, String>, Boolean) -> Unit = { _, _ -> },
+    onTableCountChange: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
@@ -108,6 +120,84 @@ fun ShopSettingsContent(
                     )
                 }
             }
+            TablesCard(state.tableCount, onTableCountChange)
+            MetalRatesCard(state, onSaveMetalRates)
+        }
+    }
+}
+
+/**
+ * Today's rate per gram for each metal. Jewellery is priced from these: weight times the rate, plus the making
+ * charge, plus GST. The prices on the tags change only when the owner asks for it.
+ */
+@Composable
+private fun MetalRatesCard(state: ShopUiState, onSave: (Map<JewelleryMetal, String>, Boolean) -> Unit) {
+    val texts = remember(state.metalRates) {
+        mutableStateMapOf<JewelleryMetal, String>().apply {
+            JewelleryMetal.entries.forEach { metal ->
+                put(metal, state.metalRates.rateFor(metal)?.toDecimalString().orEmpty())
+            }
+        }
+    }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("metal_rates_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.metal_rates_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.metal_rates_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            JewelleryMetal.entries.forEach { metal ->
+                AuxoTextField(
+                    value = texts[metal].orEmpty(),
+                    onValueChange = { texts[metal] = sanitizeDecimal(it) },
+                    label = stringResource(R.string.field_with_unit, stringResource(metal.labelRes()), stringResource(R.string.per_unit, "g")),
+                    prefix = stringResource(R.string.currency_prefix),
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier.fillMaxWidth().testTag("metal_rate_${metal.name}"),
+                )
+            }
+            state.repricedCount?.let {
+                Text(
+                    text = androidx.compose.ui.res.pluralStringResource(R.plurals.metal_rates_repriced, it, it),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag("metal_rates_result"),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                OutlinedButton(onClick = { onSave(texts.toMap(), false) }, modifier = Modifier.weight(1f).testTag("metal_rates_save")) {
+                    Text(stringResource(R.string.metal_rates_save))
+                }
+                Button(onClick = { onSave(texts.toMap(), true) }, modifier = Modifier.weight(1f).testTag("metal_rates_update")) {
+                    Text(stringResource(R.string.metal_rates_update))
+                }
+            }
+        }
+    }
+}
+
+/** How many tables the restaurant has. Parking a restaurant bill asks for one of them. */
+@Composable
+private fun TablesCard(tableCount: Int, onChange: (String) -> Unit) {
+    var text by remember(tableCount) { androidx.compose.runtime.mutableStateOf(tableCount.toString()) }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("tables_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.shop_tables_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.shop_tables_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuxoTextField(
+                value = text,
+                onValueChange = {
+                    text = it.filter(Char::isDigit).take(2)
+                    onChange(text)
+                },
+                label = stringResource(R.string.shop_tables_field),
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.fillMaxWidth().testTag("tables_field"),
+            )
         }
     }
 }

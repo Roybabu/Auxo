@@ -41,8 +41,68 @@ class ProductCategoryTest {
     @Test
     fun foodAndBeverages_stillTrackExpiry() {
         assertEquals(
-            setOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE),
+            setOf(ProductCategory.PACKAGED_FOOD, ProductCategory.BEVERAGE, ProductCategory.PHARMACY, ProductCategory.COSMETICS),
             ProductCategory.entries.filter { it.tracksExpiry }.toSet(),
         )
+    }
+
+    @Test
+    fun generalItems_haveNoSizeColourPackSizeOrExpiry() {
+        val category = ProductCategory.GENERAL
+        assertFalse(category.usesSizeAndColour)
+        assertFalse(category.usesMaterial)
+        assertFalse(category.usesNetQuantity)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.usesApparelGst)
+        assertTrue(category.allowedUnits.isEmpty())
+    }
+
+    @Test
+    fun electronics_useSizeAndColourAndAWarranty_butNoMaterial() {
+        val category = ProductCategory.ELECTRONICS
+        assertTrue(category.usesSizeAndColour)
+        assertFalse(category.usesMaterial)
+        assertTrue(category.usesWarranty)
+        assertFalse(category.tracksExpiry)
+        assertTrue(category.presetSizes.isEmpty())
+    }
+
+    @Test
+    fun pharmacyAndCosmetics_areSoldInPacksWithBatchAndExpiry() {
+        for (category in listOf(ProductCategory.PHARMACY, ProductCategory.COSMETICS)) {
+            assertTrue(category.usesNetQuantity)
+            assertTrue(category.tracksExpiry)
+            assertFalse(category.usesSizeAndColour)
+            assertFalse(category.usesDietType)
+            assertTrue(category.allowedUnits.isNotEmpty())
+        }
+        assertTrue(ProductCategory.PHARMACY.usesPrescription)
+        assertFalse(ProductCategory.COSMETICS.usesPrescription)
+        assertEquals(setOf(ProductCategory.ELECTRONICS), ProductCategory.entries.filter { it.usesWarranty }.toSet())
+    }
+
+    @Test
+    fun looseGoods_areSoldByWeightOrVolume_withNoSizePackOrExpiry() {
+        val category = ProductCategory.LOOSE
+        assertTrue(category.soldByMeasure)
+        assertEquals(listOf(StockUnit.GRAM, StockUnit.MILLILITRE), category.allowedStockUnits)
+        assertFalse(category.usesSizeAndColour)
+        assertFalse(category.usesNetQuantity)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.usesMetal)
+        assertEquals(setOf(ProductCategory.LOOSE), ProductCategory.entries.filter { it.soldByMeasure }.toSet())
+    }
+
+    @Test
+    fun jewellery_isPricedFromMetalAndWeight_andCountedInPieces() {
+        val category = ProductCategory.JEWELLERY
+        assertTrue(category.usesMetal)
+        assertTrue(category.usesNetQuantity)
+        assertEquals(listOf(QuantityUnit.GRAM), category.allowedUnits)
+        assertEquals(listOf(StockUnit.UNIT), category.allowedStockUnits)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.soldByMeasure)
+        assertEquals(300, ProductCategory.JEWELLERY_GST_BASIS_POINTS)
+        assertEquals(setOf(ProductCategory.JEWELLERY), ProductCategory.entries.filter { it.usesMetal }.toSet())
     }
 }

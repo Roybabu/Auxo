@@ -1,5 +1,6 @@
 package com.auxo.pos.data.repository
 
+import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.local.entity.HeldBillEntity
 import com.auxo.pos.domain.billing.Cart
@@ -21,9 +22,11 @@ interface HeldBillRepository {
 
     /**
      * Parks [cart]. With [replacingId] the bill already parked under that id is updated (a resumed bill held
-     * again); if it is gone a new one is made. Returns the id.
+     * again); if it is gone a new one is made. A bill for a restaurant table passes its [tableNumber]; any other bill is
+     * given the next free number (a bill that is parked again keeps the number it had). A table can hold only one parked
+     * bill: parking against a table another bill is using fails. Returns the id.
      */
-    suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long? = null): Long
+    suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long? = null, tableNumber: Int? = null): Long
 
     /** The parked bill, or null if it was finished or discarded meanwhile (or cannot be read). */
     suspend fun get(id: Long): HeldBill?
@@ -36,10 +39,18 @@ class RoomHeldBillRepository(private val database: AuxoDatabase, private val clo
 
     override fun observeHeld(): Flow<List<HeldBillSummary>> = dao.observeAll().map { rows -> rows.map { it.toSummary() } }
 
-    override suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long?): Long {
+    override suspend fun hold(cart: Cart, total: Money, label: String, replacingId: Long?, tableNumber: Int?): Long {
         require(!cart.isEmpty) { "Nothing to hold" }
         val now = clock.millis()
         val existing = replacingId?.let { dao.get(it) }
+        if (tableNumber != null) {
+            check(dao.tableTakenCount(tableNumber, existing?.id ?: 0) == 0) { "Table $tableNumber already has a parked bill" }
+        }
+        val token = when {
+            tableNumber != null -> null
+            existing?.tokenNumber != null -> existing.tokenNumber
+            else -> HeldBills.nextToken(dao.usedTokens())
+        }
         val entity = HeldBillEntity(
             id = existing?.id ?: 0,
             label = HeldBills.cleanLabel(label),
@@ -48,22 +59,31 @@ class RoomHeldBillRepository(private val database: AuxoDatabase, private val clo
             itemCount = cart.itemCount,
             totalMinor = total.minorUnits,
             payload = HeldCartCodec.encode(cart),
+            tableNumber = tableNumber,
+            tokenNumber = token,
         )
         return if (existing != null) {
             dao.update(entity)
+            DebugLog.event("HeldBill", "Held bill ${existing.id} updated: ${cart.itemCount} items")
             existing.id
         } else {
-            dao.insert(entity)
+            dao.insert(entity).also { DebugLog.event("HeldBill", "Bill held as $it: ${cart.itemCount} items") }
         }
     }
 
     override suspend fun get(id: Long): HeldBill? {
         val row = dao.get(id) ?: return null
-        val cart = HeldCartCodec.decode(row.payload) ?: return null
+        val cart = HeldCartCodec.decode(row.payload) ?: run {
+            DebugLog.error("HeldBill", "Held bill $id could not be read back (damaged data)")
+            return null
+        }
         return HeldBill(row.toSummary(), cart)
     }
 
-    override suspend fun discard(id: Long) = dao.delete(id)
+    override suspend fun discard(id: Long) {
+        dao.delete(id)
+        DebugLog.event("HeldBill", "Held bill $id discarded")
+    }
 
     private fun HeldBillEntity.toSummary() = HeldBillSummary(
         id = id,
@@ -72,5 +92,7 @@ class RoomHeldBillRepository(private val database: AuxoDatabase, private val clo
         updatedAtMillis = updatedAt,
         itemCount = itemCount,
         total = Money(totalMinor),
+        tableNumber = tableNumber,
+        tokenNumber = tokenNumber,
     )
 }

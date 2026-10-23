@@ -107,8 +107,13 @@ class CategoriesTest {
     fun theViewModel_listsAddedCategories_andExplainsRefusals() = runTest {
         val viewModel = CategoriesViewModel(RoomCategoryRepository(database))
         keepActive(viewModel.uiState)
-        awaitUntil { viewModel.uiState.value.categories.size == 6 }
-        assertEquals(6, viewModel.uiState.value.categories.size)
+        awaitUntil { viewModel.uiState.value.categories.size == 12 }
+        assertEquals(12, viewModel.uiState.value.categories.size)
+        // A new shop starts with the six newer categories off, and Restaurant off.
+        assertEquals(
+            setOf(ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS, ProductCategory.LOOSE, ProductCategory.JEWELLERY, ProductCategory.RESTAURANT),
+            viewModel.uiState.value.categories.filter { !it.enabled }.map { it.profile }.toSet(),
+        )
 
         viewModel.onAdd("Sweets", ProductCategory.PACKAGED_FOOD)
         awaitUntil { viewModel.uiState.value.categories.any { it.name == "Sweets" } }
