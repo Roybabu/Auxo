@@ -134,7 +134,7 @@ object DebugLog {
     private val keyLike = Regex("[0-9a-fA-F]{64}")
 
     /** SQLite logs the text of a failed statement, which can hold the database key. Never write a key into a log file. */
-    private fun hideKeys(line: String): String = keyLike.replace(line, "<key hidden>")
+    internal fun hideKeys(line: String): String = keyLike.replace(line, "<key hidden>")
 
     /** Copies the phone's log lines for this app into the open file, from the start of the process onward. */
     private fun startPhoneLogReader(log: SessionLogger) {
