@@ -1789,6 +1789,7 @@
     <string name="resume_try_again">फिर कोशिश करें</string>
     <string name="resume_use_password">इसके बजाय पासवर्ड का उपयोग करें</string>
     <string name="update_title">ऐप अपडेट</string>
+    <string name="update_privacy_note">जाँच करने पर ऐप नए संस्करण के लिए GitHub से संपर्क करता है। आपकी दुकान का कोई डेटा नहीं भेजा जाता।</string>
     <string name="update_version">संस्करण %1$s</string>
     <string name="update_check">अपडेट जाँचें</string>
     <string name="update_checking">जाँच हो रही है…</string>
