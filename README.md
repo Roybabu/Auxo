@@ -1,5 +1,12 @@
 <p align="center"><img src="app/src/main/res/drawable-nodpi/auxo_logo_horizontal.png" alt="Auxo: Built to grow." width="420"></p>
 
+<p align="center">
+<img src="https://img.shields.io/badge/platform-Android%208.0%2B-3DDC84" alt="Android 8.0+">
+<img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF" alt="Kotlin and Jetpack Compose">
+<img src="https://img.shields.io/badge/data-stays%20on%20device-informational" alt="Data stays on the device">
+<img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali-blue" alt="English, Hindi, Bengali">
+</p>
+
 **Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. It works offline, with no server and no monthly fee. The only time it uses the internet is to check for and download app updates. The name comes from the Greek *auxō*, "to increase or grow".
 
 Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
@@ -13,6 +20,15 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 - **See the numbers.** Twelve reports, day-end cash closing, a GST report, CSV export.
 - **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, activity log, backup and restore.
 - **Print anywhere.** PDF, Android printing, or straight to a Bluetooth receipt printer (58, 76 or 80 mm).
+
+## Screenshots
+
+<!-- Add real screenshots to docs/screenshots/ and list them here as a three-column table, for example:
+| New bill | Held bills | Inventory |
+|---|---|---|
+| <img src="docs/screenshots/new-bill.png" width="240"> | <img src="docs/screenshots/held-bills.png" width="240"> | <img src="docs/screenshots/inventory.png" width="240"> |
+-->
+Screenshots are coming. The app has so far run only on an emulator (see Honest status below).
 
 ## Brand assets
 
@@ -53,6 +69,19 @@ Before you commit, run `python3 .github/scripts/security_check.py` (the same sec
 
 Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.github/workflows/android-ci.yml`) builds, tests, lints and runs device tests on an emulator.
 
+## Tech stack
+
+| Layer | Used |
+|---|---|
+| Language | Kotlin |
+| UI | Jetpack Compose, Material 3, Navigation Compose |
+| Architecture | MVVM, with plain-Kotlin domain logic |
+| Database | Room (SQLite) locked with SQLCipher, with exported schemas and migration tests |
+| Barcodes | Camera and hardware scanners, ZXing |
+| Printing | PDF, Android printing, Bluetooth receipt printers |
+| Languages | English, Hindi, Bengali |
+| CI | GitHub Actions: build, unit tests, lint, security check, emulator tests |
+
 ## Where things live
 
 ```
@@ -66,7 +95,7 @@ app/src/main/java/com/auxo/pos/
 
 ## Database upgrades
 
-No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 17). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
+No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 23). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
 
 ## Honest status
 
