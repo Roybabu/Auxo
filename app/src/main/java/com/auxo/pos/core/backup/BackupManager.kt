@@ -6,6 +6,8 @@ import android.net.Uri
 import com.auxo.pos.core.appearance.AppAccent
 import com.auxo.pos.core.appearance.AppearanceRepository
 import com.auxo.pos.data.local.AuxoDatabase
+import com.auxo.pos.data.local.DatabaseEncryption
+import com.auxo.pos.data.local.DatabaseKeyStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -52,6 +54,7 @@ class BackupManager(
     private val shop: com.auxo.pos.core.shop.ShopPreferences? = null,
     private val photos: com.auxo.pos.core.photos.ProductPhotoStore? = null,
     private val passphrases: BackupPassphraseStore? = null,
+    private val databaseKeys: DatabaseKeyStore? = null,
 ) : BackupService {
 
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -95,6 +98,9 @@ class BackupManager(
         try {
             val snapshot = File(work, BackupArchive.DATABASE_ENTRY)
             snapshotDatabase(snapshot)
+            // A locked database file is only useful with its key, so the key travels inside the backup (which is
+            // itself locked when a passphrase is set).
+            val databaseKey = if (databaseKeys != null && !DatabaseEncryption.isPlaintext(snapshot)) databaseKeys.key() else null
             val now = clock.millis()
             val manifest = BackupManifest(
                 createdAtMillis = now,
@@ -107,6 +113,7 @@ class BackupManager(
                     out = passphrase?.let { BackupCrypto.encrypt(out, it) } ?: out,
                     manifest = manifest,
                     database = snapshot,
+                    databaseKey = databaseKey,
                     photos = photos?.files().orEmpty(),
                     preferences = buildMap {
                         put(PREF_ACCENT, settings.accent.id)
@@ -141,7 +148,7 @@ class BackupManager(
         val work = workDir()
         try {
             val backup = BackupArchive.read(unlocked(input, passphrase), work)
-            DatabaseCheck.verify(backup.database, AuxoDatabase.VERSION)
+            DatabaseCheck.verify(backup.database, AuxoDatabase.VERSION, backup.databaseKey)
 
             // Keep what is on the phone now until the new data is in place.
             val current = context.getDatabasePath(AuxoDatabase.NAME)
@@ -155,6 +162,10 @@ class BackupManager(
             try {
                 deleteDatabaseFiles(current)
                 backup.database.copyTo(current, overwrite = true)
+                // The restored file opens only with the key it came with. A plain file needs none: it is locked
+                // with this phone's own key the next time the app opens.
+                val restoredKey = backup.databaseKey
+                if (restoredKey != null && !DatabaseEncryption.isPlaintext(current)) databaseKeys?.replace(restoredKey)
             } catch (e: Exception) {
                 com.auxo.pos.core.debuglog.DebugLog.error("BackupManager", "Failed and showed an error", e)
                 runCatching {

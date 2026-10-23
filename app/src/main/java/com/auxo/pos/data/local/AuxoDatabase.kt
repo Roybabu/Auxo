@@ -442,6 +442,15 @@ abstract class AuxoDatabase : RoomDatabase() {
                     }
                 })
 
-        fun create(context: Context): AuxoDatabase = builder(context).build()
+        /**
+         * The database the app runs on. The file is locked with the key from [keys] (see [DatabaseEncryption]); a plain
+         * file left by an earlier version is converted first. [builder] stays unlocked, for tests.
+         */
+        fun create(context: Context, keys: DatabaseKeyStore = KeystoreDatabaseKeyStore(context)): AuxoDatabase {
+            val key = DatabaseEncryption.prepare(context, keys)
+            val room = builder(context)
+            if (key != null) room.openHelperFactory(DatabaseEncryption.openHelperFactory(key))
+            return room.build()
+        }
     }
 }
