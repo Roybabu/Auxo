@@ -160,7 +160,11 @@ object DatabaseEncryption {
         val locked = File(file.path + ".locked")
         locked.delete()
         try {
-            val plain = SQLiteDatabase.openDatabase(file.path, "", null, SQLiteDatabase.OPEN_READWRITE, null)
+            // ATTACH makes the new locked file with the main connection's open flags, so CREATE is needed or it fails with
+            // "unable to open database". The plain file already exists, so nothing else is created.
+            val plain = SQLiteDatabase.openDatabase(
+                file.path, "", null, SQLiteDatabase.OPEN_READWRITE or SQLiteDatabase.CREATE_IF_NECESSARY, null,
+            )
             val (version, counts) = try {
                 val schemaVersion = plain.version
                 val counts = CHECKED_TABLES.associateWith { count(plain, it) }
