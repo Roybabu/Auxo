@@ -1654,7 +1654,7 @@ in %2$s</string>
     <string name="import_status_exists">Already exists</string>
     <string name="import_row_unnamed">Row %1$d</string>
     <string name="import_issue_row">Row %1$d · %2$s: %3$s</string>
-    <string name="import_parse_unknown_category">Category not recognised. Use Clothing, Footwear, Accessories, Packaged food or Beverage.</string>
+    <string name="import_parse_unknown_category">Category not recognised. Use Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy or Cosmetics.</string>
     <string name="import_parse_unknown_diet">Use Veg or Non-veg.</string>
     <string name="import_parse_unknown_unit">Unit not recognised. Use g, kg, ml, L or pcs.</string>
     <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">Date not recognised. Use 31/12/2026 or 2026-12-31.</string>
@@ -1837,4 +1837,18 @@ in %2$s</string>
     <string name="held_filter_restaurant">Restaurant</string>
     <string name="held_filter_other">Other</string>
     <string name="held_filter_empty">No bills of this kind.</string>
+    <string name="import_guide_title">How to fill the file</string>
+    <string name="import_guide_general">• One row for each thing you sell. Rows with the same name and category become one product (for example, one row per size and colour).\n• Only name is always needed. selling_price is needed for everything you sell.\n• Write prices as plain numbers like 499 or 499.50, without the rupee sign.\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy or Cosmetics. If you leave it blank, the category chosen below is used.\n• gst_rate: a percentage such as 0, 5, 12, 18 or 40, or Apparel for clothes and footwear.\n• net_quantity and unit: the pack size, such as 200 and g. Units: g, kg, ml, L or pcs.\n• expiry_date: 31/12/2026 or 2026-12-31. batch is the batch number printed on the pack.\n• opening_stock blank means 0. barcode blank means the app makes one for you.\n• A barcode or sku that already exists is skipped, so importing the same file twice is safe.\n• Up to 1000 rows and 1 MB in one file.</string>
+    <string name="import_guide_examples_title">Examples by category</string>
+    <string name="import_guide_examples_hint">Each example shows column: value. The template file has all of them as ready rows.</string>
+    <string name="import_guide_not_importable">Loose goods, Jewellery and Restaurant dishes cannot be imported. Add them in the product screen.</string>
+    <string name="import_guide_garment">Clothing. Needs name, size, colour and selling_price. Every size and colour is its own row; repeat the name on each row so they join up as one product. Use material for the fabric and Apparel for gst_rate.</string>
+    <string name="import_guide_footwear">Footwear. Same as clothing: one row for each size and colour. Sizes are numbers such as 6, 7, 8. Use Apparel for gst_rate.</string>
+    <string name="import_guide_accessories">Bags, belts, caps, wallets. Needs size and colour too; write Free size when the item has no size.</string>
+    <string name="import_guide_packaged_food">Needs net_quantity and unit for the pack. Add diet (Veg or Non-veg), batch and expiry_date when you have them. A different pack size of the same product goes on its own row.</string>
+    <string name="import_guide_beverage">Needs net_quantity and unit (ml or L). Add batch and expiry_date when you have them. A different bottle size is its own row.</string>
+    <string name="import_guide_general_category">No size, colour or pack size. One row for each product, with name, selling_price and opening_stock. The same name on two rows is flagged as a mistake.</string>
+    <string name="import_guide_electronics">Use size for the model variant (for example 128 GB) and colour for the colour. One row for each variant. Warranty cannot be imported; add it in the product screen.</string>
+    <string name="import_guide_pharmacy">Needs net_quantity and unit (ml, g or pcs), batch and expiry_date. A medicine that is sold only against a prescription must be marked in the product screen after importing.</string>
+    <string name="import_guide_cosmetics">Needs net_quantity and unit (ml, g or pcs). Add batch and expiry_date when you have them. A different pack size is its own row.</string>
 </resources>

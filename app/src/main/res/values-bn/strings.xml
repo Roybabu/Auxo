@@ -1654,7 +1654,7 @@
     <string name="import_status_exists">আগে থেকেই আছে</string>
     <string name="import_row_unnamed">সারি %1$d</string>
     <string name="import_issue_row">সারি %1$d · %2$s: %3$s</string>
-    <string name="import_parse_unknown_category">ক্যাটাগরি চেনা গেল না। Garment, Packaged food বা Beverage লিখুন।</string>
+    <string name="import_parse_unknown_category">বিভাগ চেনা যায়নি। Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy বা Cosmetics লিখুন।</string>
     <string name="import_parse_unknown_diet">Veg বা Non-veg লিখুন।</string>
     <string name="import_parse_unknown_unit">একক চেনা গেল না। g, kg, ml, L বা pcs লিখুন।</string>
     <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">তারিখ চেনা গেল না। 31/12/2026 বা 2026-12-31 লিখুন।</string>
@@ -1837,4 +1837,18 @@
     <string name="held_filter_restaurant">রেস্তোরাঁ</string>
     <string name="held_filter_other">অন্যান্য</string>
     <string name="held_filter_empty">এই ধরনের কোনো বিল নেই।</string>
+    <string name="import_guide_title">ফাইল কীভাবে ভরবেন</string>
+    <string name="import_guide_general">• আপনি যা যা বিক্রি করেন তার প্রতিটির জন্য একটি সারি। একই নাম ও বিভাগের সারিগুলো একটি পণ্য হয়ে যায় (যেমন প্রতিটি মাপ ও রঙের জন্য একটি সারি)।\n• শুধু name সবসময় লাগে। যা বিক্রি করেন তার জন্য selling_price লাগে।\n• দাম সাধারণ সংখ্যায় লিখুন, যেমন 499 বা 499.50, টাকার চিহ্ন ছাড়া।\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy বা Cosmetics। ফাঁকা রাখলে নিচে বেছে নেওয়া বিভাগ ধরা হবে।\n• gst_rate: 0, 5, 12, 18 বা 40-এর মতো শতাংশ, অথবা পোশাক ও জুতোর জন্য Apparel।\n• net_quantity ও unit: প্যাকের মাপ, যেমন 200 ও g। একক: g, kg, ml, L বা pcs।\n• expiry_date: 31/12/2026 বা 2026-12-31। batch হলো প্যাকে ছাপা ব্যাচ নম্বর।\n• opening_stock ফাঁকা থাকলে 0। barcode ফাঁকা থাকলে অ্যাপ নিজেই বানিয়ে দেয়।\n• যে barcode বা sku আগে থেকেই আছে তা বাদ যায়, তাই একই ফাইল দুবার দিলেও সমস্যা নেই।\n• একটি ফাইলে সর্বোচ্চ 1000 সারি ও 1 MB।</string>
+    <string name="import_guide_examples_title">বিভাগ অনুযায়ী উদাহরণ</string>
+    <string name="import_guide_examples_hint">প্রতিটি উদাহরণে কলাম: মান দেখানো হয়েছে। টেমপ্লেট ফাইলে এগুলো সবই তৈরি সারি হিসেবে আছে।</string>
+    <string name="import_guide_not_importable">খোলা পণ্য, গয়না ও রেস্তোরাঁর পদ ইমপোর্ট করা যায় না। এগুলো পণ্য স্ক্রিনে যোগ করুন।</string>
+    <string name="import_guide_garment">পোশাক। name, size, colour ও selling_price লাগে। প্রতিটি মাপ ও রঙের আলাদা সারি; প্রতি সারিতে নাম আবার লিখুন যাতে সব একটি পণ্য হয়। কাপড়ের জন্য material আর gst_rate-এ Apparel লিখুন।</string>
+    <string name="import_guide_footwear">জুতো-চপ্পল। পোশাকের মতোই: প্রতিটি মাপ ও রঙের একটি সারি। মাপ সংখ্যায়, যেমন 6, 7, 8। gst_rate-এ Apparel লিখুন।</string>
+    <string name="import_guide_accessories">ব্যাগ, বেল্ট, টুপি, মানিব্যাগ। এতেও size ও colour লাগে; মাপ না থাকলে Free size লিখুন।</string>
+    <string name="import_guide_packaged_food">প্যাকের জন্য net_quantity ও unit লাগে। থাকলে diet (Veg বা Non-veg), batch ও expiry_date দিন। একই পণ্যের অন্য প্যাক মাপ আলাদা সারিতে যাবে।</string>
+    <string name="import_guide_beverage">net_quantity ও unit (ml বা L) লাগে। থাকলে batch ও expiry_date দিন। বোতলের অন্য মাপ আলাদা সারি।</string>
+    <string name="import_guide_general_category">কোনো মাপ, রং বা প্যাক মাপ নেই। প্রতিটি পণ্যের একটি সারি, name, selling_price ও opening_stock সহ। দুই সারিতে একই নাম থাকলে সেটি ভুল ধরা হয়।</string>
+    <string name="import_guide_electronics">মডেলের ধরনের জন্য size (যেমন 128 GB) আর রঙের জন্য colour লিখুন। প্রতিটি ধরনের একটি সারি। ওয়ারেন্টি ইমপোর্ট হয় না; পণ্য স্ক্রিনে যোগ করুন।</string>
+    <string name="import_guide_pharmacy">net_quantity ও unit (ml, g বা pcs), batch ও expiry_date লাগে। যে ওষুধ শুধু প্রেসক্রিপশনে বিক্রি হয় তা ইমপোর্টের পর পণ্য স্ক্রিনে চিহ্নিত করুন।</string>
+    <string name="import_guide_cosmetics">net_quantity ও unit (ml, g বা pcs) লাগে। থাকলে batch ও expiry_date দিন। অন্য প্যাক মাপ আলাদা সারি।</string>
 </resources>

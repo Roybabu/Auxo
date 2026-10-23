@@ -1654,7 +1654,7 @@
     <string name="import_status_exists">पहले से मौजूद</string>
     <string name="import_row_unnamed">पंक्ति %1$d</string>
     <string name="import_issue_row">पंक्ति %1$d · %2$s: %3$s</string>
-    <string name="import_parse_unknown_category">श्रेणी पहचानी नहीं गई। Garment, Packaged food या Beverage लिखें।</string>
+    <string name="import_parse_unknown_category">श्रेणी पहचानी नहीं गई। Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy या Cosmetics में से लिखें।</string>
     <string name="import_parse_unknown_diet">Veg या Non-veg लिखें।</string>
     <string name="import_parse_unknown_unit">इकाई पहचानी नहीं गई। g, kg, ml, L या pcs लिखें।</string>
     <string name="import_parse_invalid_date" tools:ignore="TypographyDashes">तारीख पहचानी नहीं गई। 31/12/2026 या 2026-12-31 लिखें।</string>
@@ -1837,4 +1837,18 @@
     <string name="held_filter_restaurant">रेस्तरां</string>
     <string name="held_filter_other">अन्य</string>
     <string name="held_filter_empty">इस तरह का कोई बिल नहीं।</string>
+    <string name="import_guide_title">फ़ाइल कैसे भरें</string>
+    <string name="import_guide_general">• आप जो भी बेचते हैं उसकी एक पंक्ति। एक ही नाम और श्रेणी वाली पंक्तियाँ एक उत्पाद बन जाती हैं (जैसे हर साइज़ और रंग की एक पंक्ति)।\n• केवल name हमेशा ज़रूरी है। बेचे जाने वाले हर सामान के लिए selling_price ज़रूरी है।\n• कीमत सीधी संख्या में लिखें, जैसे 499 या 499.50, रुपये के चिह्न के बिना।\n• category: Clothing, Footwear, Accessories, Packaged food, Beverage, General, Electronics, Pharmacy या Cosmetics। खाली छोड़ने पर नीचे चुनी गई श्रेणी लगेगी।\n• gst_rate: 0, 5, 12, 18 या 40 जैसा प्रतिशत, या कपड़ों और जूतों के लिए Apparel।\n• net_quantity और unit: पैक का आकार, जैसे 200 और g। इकाइयाँ: g, kg, ml, L या pcs।\n• expiry_date: 31/12/2026 या 2026-12-31। batch पैक पर छपा बैच नंबर है।\n• opening_stock खाली हो तो 0। barcode खाली हो तो ऐप खुद बना देता है।\n• जो barcode या sku पहले से है उसे छोड़ दिया जाता है, इसलिए एक ही फ़ाइल दो बार डालना सुरक्षित है।\n• एक फ़ाइल में अधिकतम 1000 पंक्तियाँ और 1 MB।</string>
+    <string name="import_guide_examples_title">श्रेणी के अनुसार उदाहरण</string>
+    <string name="import_guide_examples_hint">हर उदाहरण में कॉलम: मान दिखाया गया है। टेम्पलेट फ़ाइल में ये सभी तैयार पंक्तियों के रूप में हैं।</string>
+    <string name="import_guide_not_importable">खुला सामान, ज्वेलरी और रेस्तरां के व्यंजन इम्पोर्ट नहीं हो सकते। इन्हें उत्पाद स्क्रीन में जोड़ें।</string>
+    <string name="import_guide_garment">कपड़े। name, size, colour और selling_price चाहिए। हर साइज़ और रंग की अलग पंक्ति; हर पंक्ति में नाम दोहराएँ ताकि वे एक उत्पाद बनें। कपड़े के लिए material और gst_rate में Apparel लिखें।</string>
+    <string name="import_guide_footwear">जूते-चप्पल। कपड़ों जैसा ही: हर साइज़ और रंग की एक पंक्ति। साइज़ संख्या में, जैसे 6, 7, 8। gst_rate में Apparel लिखें।</string>
+    <string name="import_guide_accessories">बैग, बेल्ट, टोपी, बटुए। इनमें भी size और colour चाहिए; साइज़ न हो तो Free size लिखें।</string>
+    <string name="import_guide_packaged_food">पैक के लिए net_quantity और unit चाहिए। जब हों तो diet (Veg या Non-veg), batch और expiry_date जोड़ें। उसी उत्पाद का दूसरा पैक साइज़ अलग पंक्ति में जाए।</string>
+    <string name="import_guide_beverage">net_quantity और unit (ml या L) चाहिए। जब हों तो batch और expiry_date जोड़ें। बोतल का दूसरा साइज़ अलग पंक्ति है।</string>
+    <string name="import_guide_general_category">कोई साइज़, रंग या पैक साइज़ नहीं। हर उत्पाद की एक पंक्ति, name, selling_price और opening_stock के साथ। दो पंक्तियों में एक ही नाम हो तो उसे गलती माना जाता है।</string>
+    <string name="import_guide_electronics">मॉडल के प्रकार के लिए size (जैसे 128 GB) और रंग के लिए colour लिखें। हर प्रकार की एक पंक्ति। वारंटी इम्पोर्ट नहीं होती; उसे उत्पाद स्क्रीन में जोड़ें।</string>
+    <string name="import_guide_pharmacy">net_quantity और unit (ml, g या pcs), batch और expiry_date चाहिए। जो दवा केवल पर्चे पर बिकती है उसे इम्पोर्ट के बाद उत्पाद स्क्रीन में चिह्नित करें।</string>
+    <string name="import_guide_cosmetics">net_quantity और unit (ml, g या pcs) चाहिए। जब हों तो batch और expiry_date जोड़ें। दूसरा पैक साइज़ अलग पंक्ति है।</string>
 </resources>

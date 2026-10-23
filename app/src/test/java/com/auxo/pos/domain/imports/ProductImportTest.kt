@@ -71,19 +71,37 @@ class ProductImportTest {
     // The template
 
     @Test
-    fun theTemplate_importsAsThreeProducts() {
+    fun theTemplate_hasAnExampleForEveryImportableCategory_andImportsCleanly() {
         val result = preview(table(*ProductImportTemplate.csv().trim().lines().toTypedArray()))
-        assertEquals(listOf("Cotton T-Shirt", "Glucose Biscuits", "Mango Juice"), result.items.map { it.name })
+        assertEquals(
+            listOf("Cotton T-Shirt", "Running Shoes", "Leather Belt", "Glucose Biscuits", "Mango Juice", "A4 Notebook", "Smartphone X1", "Cough Syrup", "Face Wash"),
+            result.items.map { it.name },
+        )
         assertTrue(result.items.all { it.status == ImportStatus.READY })
-        assertEquals(4, result.rowCount)
-        assertEquals(4, result.readyVariants)
+        assertEquals(10, result.rowCount)
+        assertEquals(10, result.readyVariants)
+        assertEquals(
+            listOf(
+                ProductCategory.GARMENT, ProductCategory.FOOTWEAR, ProductCategory.ACCESSORIES, ProductCategory.PACKAGED_FOOD,
+                ProductCategory.BEVERAGE, ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS,
+            ),
+            result.ready.map { it.product!!.category },
+        )
+        assertEquals(ProductImportGuide.examples.map { it.category }, result.ready.map { it.product!!.category })
+    }
+
+    @Test
+    fun theGuide_coversEveryCategoryTheImportCanRead() {
+        val importable = ProductCategory.entries.filter { it != ProductCategory.LOOSE && it != ProductCategory.JEWELLERY && it != ProductCategory.RESTAURANT }
+        assertEquals(importable.toSet(), ProductImportGuide.examples.map { it.category }.toSet())
+        assertEquals(importable.size, ProductImportGuide.examples.size)
     }
 
     @Test
     fun theTemplateProducts_carryTheValuesInTheFile() {
         val products = preview(table(*ProductImportTemplate.csv().trim().lines().toTypedArray())).ready.map { it.product!! }
 
-        val shirt = products[0]
+        val shirt = products.first { it.name == "Cotton T-Shirt" }
         assertEquals(ProductCategory.GARMENT, shirt.category)
         assertEquals(GstRate.Apparel, shirt.gstRate)
         assertEquals("6109", shirt.hsnCode)
@@ -94,7 +112,7 @@ class ProductImportTest {
         assertEquals(Money(25_000), shirt.variants[0].costPrice)
         assertEquals("TS-BLU-M", shirt.variants[0].sku)
 
-        val biscuits = products[1]
+        val biscuits = products.first { it.name == "Glucose Biscuits" }
         assertEquals(DietType.VEG, biscuits.dietType)
         assertEquals(GstRate.Fixed(1_800), biscuits.gstRate)
         assertEquals(200_000L, biscuits.variants[0].netQuantity!!.amountMilli)
@@ -102,10 +120,28 @@ class ProductImportTest {
         assertEquals(LocalDate.of(2027, 3, 31), biscuits.variants[0].expiryDate)
         assertEquals("B-101", biscuits.variants[0].batchNumber)
 
-        val juice = products[2]
+        val juice = products.first { it.name == "Mango Juice" }
         assertEquals(GstRate.Fixed(1_200), juice.gstRate)
         assertEquals(LocalDate.of(2026, 12, 31), juice.variants[0].expiryDate)
         assertEquals(QuantityUnit.LITRE, juice.variants[0].netQuantity!!.unit)
+
+        val phone = products.first { it.name == "Smartphone X1" }
+        assertEquals(ProductCategory.ELECTRONICS, phone.category)
+        assertEquals("128 GB", phone.variants[0].size)
+        assertEquals("Black", phone.variants[0].colour)
+
+        val syrup = products.first { it.name == "Cough Syrup" }
+        assertEquals(QuantityUnit.MILLILITRE, syrup.variants[0].netQuantity!!.unit)
+        assertEquals(LocalDate.of(2028, 6, 30), syrup.variants[0].expiryDate)
+        assertEquals("CS-2207", syrup.variants[0].batchNumber)
+
+        val shoes = products.first { it.name == "Running Shoes" }
+        assertEquals("8", shoes.variants[0].size)
+        assertEquals(GstRate.Apparel, shoes.gstRate)
+
+        val notebook = products.first { it.name == "A4 Notebook" }
+        assertEquals(ProductCategory.GENERAL, notebook.category)
+        assertEquals(40, notebook.variants[0].stockQuantity)
     }
 
     // Grouping and reading cells
