@@ -881,6 +881,7 @@
     <string name="backup_saved_title">Backup saved</string>
     <string name="backup_saved_where">%1$s
 in %2$s</string>
+    <string name="backup_saved_app_only">Storage access was not allowed, so this backup is only inside the app. It is erased if the app is uninstalled. Share it, or allow storage access and back up again.</string>
     <string name="backup_share">Share or send</string>
     <string name="backup_share_title">Send backup</string>
     <string name="backup_restore_title">Restore from a backup</string>

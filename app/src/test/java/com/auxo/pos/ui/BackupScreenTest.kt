@@ -1,6 +1,7 @@
 package com.auxo.pos.ui
 
 import android.net.Uri
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -91,6 +92,20 @@ class BackupScreenTest {
         composeRule.onNodeWithText("That file is not an Auxo backup.").assertIsDisplayed()
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(listOf("dismiss"), log)
+    }
+
+    @Test
+    fun aBackupOnlyInTheAppFolder_warnsItIsErasedOnUninstall() {
+        val saved = SavedBackup("b.zip", "Android/data/com.auxo.pos/files/Auxo", Uri.parse("content://x/y"), appFolderOnly = true)
+        show(BackupUiState(saved = saved))
+        composeRule.onNodeWithTag("backup_app_only_warning").assertIsDisplayed()
+    }
+
+    @Test
+    fun aBackupInDocuments_showsNoWarning() {
+        val saved = SavedBackup("b.zip", "Documents/Auxo", Uri.parse("content://x/y"))
+        show(BackupUiState(saved = saved))
+        composeRule.onNodeWithTag("backup_app_only_warning").assertDoesNotExist()
     }
 
     @Test

@@ -880,6 +880,7 @@
     <string name="backup_never">इस फ़ोन पर अभी कोई बैकअप नहीं बना</string>
     <string name="backup_saved_title">बैकअप सहेजा गया</string>
     <string name="backup_saved_where">%1$s\n%2$s में</string>
+    <string name="backup_saved_app_only">स्टोरेज की अनुमति नहीं मिली, इसलिए यह बैकअप सिर्फ़ ऐप के अंदर है। ऐप हटाने पर यह मिट जाएगा। इसे शेयर करें, या स्टोरेज की अनुमति देकर दोबारा बैकअप लें।</string>
     <string name="backup_share">साझा करें या भेजें</string>
     <string name="backup_share_title">बैकअप भेजें</string>
     <string name="backup_restore_title">बैकअप से रिस्टोर करें</string>

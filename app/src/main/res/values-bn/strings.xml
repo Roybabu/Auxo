@@ -880,6 +880,7 @@
     <string name="backup_never">এই ফোনে এখনও কোনো ব্যাকআপ নেওয়া হয়নি</string>
     <string name="backup_saved_title">ব্যাকআপ সংরক্ষিত হয়েছে</string>
     <string name="backup_saved_where">%1$s\n%2$s-এ</string>
+    <string name="backup_saved_app_only">স্টোরেজের অনুমতি দেওয়া হয়নি, তাই এই ব্যাকআপ শুধু অ্যাপের ভেতরে আছে। অ্যাপ আনইনস্টল করলে এটি মুছে যাবে। এটি শেয়ার করুন, বা স্টোরেজের অনুমতি দিয়ে আবার ব্যাকআপ নিন।</string>
     <string name="backup_share">শেয়ার করুন বা পাঠান</string>
     <string name="backup_share_title">ব্যাকআপ পাঠান</string>
     <string name="backup_restore_title">ব্যাকআপ থেকে রিস্টোর করুন</string>
