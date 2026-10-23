@@ -572,7 +572,7 @@
     <string name="language_chip_description">Change language</string>
     <string name="language_phone">Same as the phone</string>
     <string name="appearance_title">Appearance</string>
-    <string name="appearance_row_body">Theme and app colors</string>
+    <string name="appearance_row_body">Language, theme and app colors</string>
     <string name="store_logo_title">Store logo</string>
     <string name="store_logo_body">Shown beside your shop name on Home and printed at the top of invoices and receipts.</string>
     <string name="store_logo_choose">Choose logo</string>
@@ -1689,6 +1689,8 @@ in %2$s</string>
     <string name="editor_photo_take">Take photo</string>
     <string name="editor_photo_choose">Choose from gallery</string>
     <string name="editor_photo_remove">Remove photo</string>
+    <string name="editor_colour_photos">Photo for each colour</string>
+    <string name="editor_colour_photos_hint">Every size of a colour shows its photo. A colour without one shows the product photo above.</string>
     <string name="editor_photo_failed">That picture could not be used. Try another, or check that a camera app is installed.</string>
 
     <!-- Bluetooth printer -->

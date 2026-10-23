@@ -61,13 +61,13 @@ class AppearanceScreenTest {
         }
         composeRule.onNodeWithTag("more_list").performScrollToNode(hasTestTag("more_appearance"))
         composeRule.onAllNodesWithText("Appearance").assertCountEquals(1)
-        composeRule.onNodeWithText("Theme and app colors").assertIsDisplayed()
+        composeRule.onNodeWithText("Language, theme and app colors").assertIsDisplayed()
         composeRule.onNodeWithTag("dark_mode_switch").assertDoesNotExist()
         composeRule.onNodeWithTag("accent_ocean").assertDoesNotExist()
         composeRule.onNodeWithText("App colour").assertDoesNotExist()
 
         // The whole row opens the screen, not just its icon.
-        composeRule.onNodeWithText("Theme and app colors").performClick()
+        composeRule.onNodeWithText("Language, theme and app colors").performClick()
         assertEquals(1, opened)
         composeRule.onNodeWithTag("more_appearance").performClick()
         assertEquals(2, opened)

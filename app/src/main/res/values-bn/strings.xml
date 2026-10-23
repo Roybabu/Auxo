@@ -572,7 +572,7 @@
     <string name="language_chip_description">ভাষা পরিবর্তন করুন</string>
     <string name="language_phone">ফোনের মতোই</string>
     <string name="appearance_title">চেহারা</string>
-    <string name="appearance_row_body">থিম ও অ্যাপের রং</string>
+    <string name="appearance_row_body">ভাষা, থিম ও অ্যাপের রং</string>
     <string name="store_logo_title">দোকানের লোগো</string>
     <string name="store_logo_body">হোমে আপনার দোকানের নামের পাশে দেখানো হয় এবং বিল ও রসিদের মাথায় ছাপা হয়।</string>
     <string name="store_logo_choose">লোগো বাছুন</string>
@@ -1689,6 +1689,8 @@
     <string name="editor_photo_take">ছবি তুলুন</string>
     <string name="editor_photo_choose">গ্যালারি থেকে বেছে নিন</string>
     <string name="editor_photo_remove">ছবি সরান</string>
+    <string name="editor_colour_photos">প্রতিটি রঙের ছবি</string>
+    <string name="editor_colour_photos_hint">একটি রঙের প্রতিটি সাইজে সেই রঙের ছবি দেখা যায়। যে রঙের ছবি নেই, তাতে উপরের পণ্যের ছবি দেখা যায়।</string>
     <string name="editor_photo_failed">এই ছবিটি ব্যবহার করা গেল না। অন্য একটি বেছে নিন, অথবা দেখুন ক্যামেরা অ্যাপ ইনস্টল করা আছে কি না।</string>
 
     <!-- Bluetooth printer -->

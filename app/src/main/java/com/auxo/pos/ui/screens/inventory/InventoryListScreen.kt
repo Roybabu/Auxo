@@ -358,7 +358,7 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             ProductPhoto(
-                photoFile = product.photoFile,
+                photoFile = product.displayPhotoFile,
                 contentDescription = product.name,
                 modifier = Modifier
                     .size(PHOTO_SIZE)

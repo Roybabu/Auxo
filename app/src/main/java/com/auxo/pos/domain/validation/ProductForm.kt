@@ -111,8 +111,12 @@ data class ProductForm(
     val preferredSupplierId: Long? = null,
     /** The product photo's file name (see [Product.photoFile]); null for none. */
     val photoFile: String? = null,
+    /** Photo file names by colour (the colour in lower case), for categories with sizes and colours. */
+    val colourPhotos: Map<String, String> = emptyMap(),
 ) {
     val isNew: Boolean get() = productId == 0L
+
+    fun colourPhoto(colour: String): String? = colourPhotos[colour.trim().lowercase()]
 
     companion object {
         fun fromProduct(product: Product): ProductForm = ProductForm(
@@ -152,6 +156,13 @@ data class ProductForm(
             stockUnit = product.stockUnit,
             preferredSupplierId = product.preferredSupplierId,
             photoFile = product.photoFile,
+            colourPhotos = buildMap {
+                product.variants.forEach { variant ->
+                    val colour = variant.colour?.trim()?.lowercase()
+                    val photo = variant.photoFile
+                    if (!colour.isNullOrEmpty() && photo != null) putIfAbsent(colour, photo)
+                }
+            },
         )
     }
 }

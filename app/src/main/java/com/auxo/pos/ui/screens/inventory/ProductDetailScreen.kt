@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -234,7 +235,7 @@ private fun ProductHeader(product: Product) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             // Nothing is shown (not even a placeholder) for a product with no photo.
             ProductPhoto(
-                photoFile = product.photoFile,
+                photoFile = product.displayPhotoFile,
                 contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -309,6 +310,18 @@ private fun VariantCard(
     val status = AuxoThemeExtras.statusColors
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            // Only a variant whose colour has its own photo shows one; the others show the product photo above.
+            if (variant.photoFile != null) {
+                ProductPhoto(
+                    photoFile = variant.photoFile,
+                    contentDescription = variant.attributesLabel.ifEmpty { null },
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .testTag("detail_variant_photo"),
+                    maxSidePx = 300,
+                ) {}
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = variant.attributesLabel.ifEmpty { stringResource(R.string.detail_variant_standard) },

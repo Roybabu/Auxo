@@ -86,13 +86,13 @@ class ProductImportUiTest {
     }
 
     @Test
-    fun beforeAFileIsChosen_theGuideShowsAnExampleForEveryImportableCategory() {
+    fun beforeAFileIsChosen_theGuideShowsTheRulesButNoCategoryExamples() {
         show(ProductImportUiState())
         composeRule.onNodeWithTag("import_guide").assertExists()
         com.auxo.pos.domain.imports.ProductImportGuide.examples.forEach { example ->
-            composeRule.onNodeWithTag("import_guide_${example.category.name}").assertExists()
+            composeRule.onNodeWithTag("import_guide_${example.category.name}").assertDoesNotExist()
         }
-        composeRule.onNodeWithText("name: Smartphone X1", substring = true).assertExists()
+        composeRule.onNodeWithText("name: Smartphone X1", substring = true).assertDoesNotExist()
     }
 
     @Test

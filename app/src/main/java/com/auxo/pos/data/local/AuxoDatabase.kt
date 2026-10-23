@@ -97,6 +97,8 @@ import com.auxo.pos.data.local.entity.SupplierEntity
  *     invoice_lines.stock_unit (lines sold by weight or volume); products.metal and products.making_charge_bp
  *     (jewellery); held_bills.table_number and held_bills.token_number (parked bills belong to a restaurant table or
  *     get a number). Written by hand ([MIGRATION_22_23]).
+ * 24. Colour photos: product_variants.photo_file, the photo of the variant's colour (null for existing variants, which
+ *     show the product photo). Written by hand ([MIGRATION_23_24]).
  */
 @Database(
     entities = [
@@ -211,7 +213,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 23
+        const val VERSION = 24
 
         /**
          * Version 6 adds loyalty points. Existing ledger rows get 0 points, so no balance changes, and loyalty
@@ -431,13 +433,20 @@ abstract class AuxoDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 24: the photo of a variant's colour. Existing variants have none and show the product photo. */
+        val MIGRATION_23_24: Migration = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE product_variants ADD COLUMN photo_file TEXT")
+            }
+        }
+
         // Upgrades are guaranteed only from version 15 (nothing was released before it). Versions 6 to 14 have no
         // exported schema and are tested only through the 4 to 15 chain; see "Database upgrades" in the README.
 
         /** A builder with every migration added. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
-                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
+                .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24)
                 .addCallback(object : RoomDatabase.Callback() {
                     // Debug builds only record this (any upgrade has already run by now).
                     override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {

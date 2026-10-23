@@ -124,7 +124,9 @@ fun ShopSettingsContent(
                 }
             }
             TablesCard(state.tableCount, onTableCountChange)
-            MetalRatesCard(state, onSaveMetalRates)
+            if (com.auxo.pos.ui.visibleCategories().contains(com.auxo.pos.domain.model.ProductCategory.JEWELLERY)) {
+                MetalRatesCard(state, onSaveMetalRates)
+            }
         }
     }
 }

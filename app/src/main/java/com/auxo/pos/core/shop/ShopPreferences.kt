@@ -19,7 +19,7 @@ interface ShopPreferences {
 
     /**
      * True when the shop buys from suppliers: Suppliers, Purchase orders, Receive stock and every
-     * supplier detail and figure are shown. Off hides all of it; nothing is deleted. On unless the shop turns it off.
+     * supplier detail and figure are shown. Off hides all of it; nothing is deleted. Off unless the shop turns it on.
      */
     val suppliers: StateFlow<Boolean>
 
@@ -64,7 +64,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         state.value = enabled
     }
 
-    private val suppliersState = MutableStateFlow(prefs.getBoolean(KEY_SUPPLIERS, true))
+    private val suppliersState = MutableStateFlow(prefs.getBoolean(KEY_SUPPLIERS, false))
     override val suppliers: StateFlow<Boolean> = suppliersState.asStateFlow()
 
     override fun setSuppliers(enabled: Boolean) {

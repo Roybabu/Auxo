@@ -831,4 +831,34 @@ class DatabaseMigrationTest {
         }
         assertEquals(0, count)
     }
+
+    @Test
+    fun migrate23To24_addsAColourPhotoToVariants_andLeavesExistingOnesWithNone() = runTest {
+        createFromSchema(23).also {
+            it.execSQL(
+                "INSERT INTO products (id, name, brand, category, description, material, diet_type, hsn_code, gst_rule, gst_rate_bp, created_at, updated_at, stock_unit, " +
+                    "preferred_supplier_id, photo_file, subcategory, available, tracks_stock, category_id) " +
+                    "VALUES (1, 'Shirt', NULL, 'GARMENT', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, 'shirt.jpg', NULL, 1, 1, NULL)",
+            )
+            it.execSQL(
+                "INSERT INTO product_variants (id, product_id, sku, barcode, size, colour, net_quantity_milli, net_quantity_unit, price_minor, mrp_minor, cost_minor, " +
+                    "stock_quantity, low_stock_threshold, batch_number, expiry_epoch_day, reorder_quantity) " +
+                    "VALUES (1, 1, NULL, '${TestData.EAN[0]}', 'M', 'Navy', NULL, NULL, 49900, NULL, NULL, 5, 1, NULL, NULL, 0)",
+            )
+            it.close()
+        }
+        val db = AuxoDatabase.builder(context, name).allowMainThreadQueries().build()
+        database = db
+        val sql = db.openHelper.readableDatabase
+        assertEquals(AuxoDatabase.VERSION, sql.version)
+        sql.query("SELECT photo_file FROM product_variants WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertTrue(c.isNull(0))
+        }
+        // The product keeps its own photo.
+        sql.query("SELECT photo_file FROM products WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("shirt.jpg", c.getString(0))
+        }
+    }
 }

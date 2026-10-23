@@ -572,7 +572,7 @@
     <string name="language_chip_description">भाषा बदलें</string>
     <string name="language_phone">फ़ोन के जैसी</string>
     <string name="appearance_title">रूप-रंग</string>
-    <string name="appearance_row_body">थीम और ऐप के रंग</string>
+    <string name="appearance_row_body">भाषा, थीम और ऐप के रंग</string>
     <string name="store_logo_title">दुकान का लोगो</string>
     <string name="store_logo_body">होम पर आपकी दुकान के नाम के पास दिखता है और बिलों व रसीदों के ऊपर छपता है।</string>
     <string name="store_logo_choose">लोगो चुनें</string>
@@ -1689,6 +1689,8 @@
     <string name="editor_photo_take">फ़ोटो खींचें</string>
     <string name="editor_photo_choose">गैलरी से चुनें</string>
     <string name="editor_photo_remove">फ़ोटो हटाएँ</string>
+    <string name="editor_colour_photos">हर रंग की फ़ोटो</string>
+    <string name="editor_colour_photos_hint">किसी रंग के हर साइज़ में उसी रंग की फ़ोटो दिखती है। जिस रंग की फ़ोटो नहीं है, उसमें ऊपर की उत्पाद फ़ोटो दिखती है।</string>
     <string name="editor_photo_failed">यह तस्वीर इस्तेमाल नहीं हो सकी। दूसरी चुनें, या देखें कि कैमरा ऐप इंस्टॉल है।</string>
 
     <!-- Bluetooth printer -->
