@@ -1851,4 +1851,6 @@
     <string name="import_guide_electronics">মডেলের ধরনের জন্য size (যেমন 128 GB) আর রঙের জন্য colour লিখুন। প্রতিটি ধরনের একটি সারি। ওয়ারেন্টি ইমপোর্ট হয় না; পণ্য স্ক্রিনে যোগ করুন।</string>
     <string name="import_guide_pharmacy">net_quantity ও unit (ml, g বা pcs), batch ও expiry_date লাগে। যে ওষুধ শুধু প্রেসক্রিপশনে বিক্রি হয় তা ইমপোর্টের পর পণ্য স্ক্রিনে চিহ্নিত করুন।</string>
     <string name="import_guide_cosmetics">net_quantity ও unit (ml, g বা pcs) লাগে। থাকলে batch ও expiry_date দিন। অন্য প্যাক মাপ আলাদা সারি।</string>
+    <string name="billing_browse_title">আইটেম দেখুন</string>
+    <string name="billing_browse_more">%2$d এর মধ্যে %1$d দেখানো হচ্ছে। বাকিগুলো খুঁজে নিন।</string>
 </resources>

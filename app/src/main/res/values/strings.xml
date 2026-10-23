@@ -1851,4 +1851,6 @@ in %2$s</string>
     <string name="import_guide_electronics">Use size for the model variant (for example 128 GB) and colour for the colour. One row for each variant. Warranty cannot be imported; add it in the product screen.</string>
     <string name="import_guide_pharmacy">Needs net_quantity and unit (ml, g or pcs), batch and expiry_date. A medicine that is sold only against a prescription must be marked in the product screen after importing.</string>
     <string name="import_guide_cosmetics">Needs net_quantity and unit (ml, g or pcs). Add batch and expiry_date when you have them. A different pack size is its own row.</string>
+    <string name="billing_browse_title">Browse items</string>
+    <string name="billing_browse_more">Showing %1$d of %2$d. Search to find others.</string>
 </resources>

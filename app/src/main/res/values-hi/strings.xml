@@ -1851,4 +1851,6 @@
     <string name="import_guide_electronics">मॉडल के प्रकार के लिए size (जैसे 128 GB) और रंग के लिए colour लिखें। हर प्रकार की एक पंक्ति। वारंटी इम्पोर्ट नहीं होती; उसे उत्पाद स्क्रीन में जोड़ें।</string>
     <string name="import_guide_pharmacy">net_quantity और unit (ml, g या pcs), batch और expiry_date चाहिए। जो दवा केवल पर्चे पर बिकती है उसे इम्पोर्ट के बाद उत्पाद स्क्रीन में चिह्नित करें।</string>
     <string name="import_guide_cosmetics">net_quantity और unit (ml, g या pcs) चाहिए। जब हों तो batch और expiry_date जोड़ें। दूसरा पैक साइज़ अलग पंक्ति है।</string>
+    <string name="billing_browse_title">आइटम देखें</string>
+    <string name="billing_browse_more">%2$d में से %1$d दिख रहे हैं। बाकी खोज से मिलेंगे।</string>
 </resources>

@@ -90,6 +90,10 @@ import com.auxo.pos.domain.billing.IndianStates
 import com.auxo.pos.domain.billing.Upi
 import com.auxo.pos.domain.loyalty.LoyaltyMath
 import com.auxo.pos.domain.model.CustomerAccount
+import androidx.compose.material3.AlertDialog
+import com.auxo.pos.domain.model.Product
+import com.auxo.pos.domain.model.ProductCategory
+import com.auxo.pos.ui.screens.inventory.labelRes
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.ui.components.ActionIcon
@@ -130,6 +134,7 @@ interface BillingActions {
     fun onSearchSubmitted() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
     fun onQuickSectionChange(section: String?) = Unit
+    fun onBrowseCategoryChange(category: ProductCategory?) = Unit
     fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean = false
     fun onIncrement(lineKey: Long) = Unit
     fun onDecrement(lineKey: Long) = Unit
@@ -261,6 +266,7 @@ fun BillingScreen(
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
             override fun onQuickSectionChange(section: String?) = viewModel.onQuickSectionChange(section)
+            override fun onBrowseCategoryChange(category: ProductCategory?) = viewModel.onBrowseCategoryChange(category)
             override fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int) =
                 viewModel.addCustomItem(name, price, quantity, gstBasisPoints)
             override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
@@ -563,9 +569,12 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         if (state.searchText.isBlank() && state.quickItems.isNotEmpty()) {
             item(key = "quick_menu") { QuickMenuCard(state, actions) }
         }
+        if (state.searchText.isBlank() && state.browseProducts.isNotEmpty()) {
+            item(key = "browse_items") { BrowseItemsCard(state, actions) }
+        }
 
         if (state.cart.isEmpty) {
-            if (state.searchText.isBlank() && state.quickItems.isEmpty()) {
+            if (state.searchText.isBlank() && state.quickItems.isEmpty() && state.browseProducts.isEmpty()) {
                 item(key = "empty") {
                     val noProducts = state.productCount == 0
                     EmptyState(
@@ -727,6 +736,103 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+/** The most items the browse card lists at once; the search box finds the rest. */
+private const val BROWSE_LIMIT = 60
+
+/**
+ * Everything that is not a restaurant dish, by kind of goods, for adding with one tap (no scanner or typing). An
+ * item with several sizes, colours or packs asks which one first. Items with no stock are greyed out.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BrowseItemsCard(state: BillingUiState, actions: BillingActions) {
+    val formatter = LocalMoneyFormatter.current
+    val categories = state.browseCategories
+    val category = state.browseCategory?.takeIf { it in categories }
+    val matching = state.browseProducts.filter { category == null || it.category == category }
+    val shown = matching
+        .sortedBy { product -> !(product.variants.any { it.stockQuantity > 0 } || !product.tracksStock) }
+        .take(BROWSE_LIMIT)
+    var choosing by remember { mutableStateOf<Product?>(null) }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("browse_items")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.billing_browse_title), style = MaterialTheme.typography.titleSmall)
+            if (categories.size > 1) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    FilterChip(
+                        selected = category == null,
+                        onClick = { actions.onBrowseCategoryChange(null) },
+                        label = { Text(stringResource(R.string.held_filter_all)) },
+                        modifier = Modifier.testTag("browse_all"),
+                    )
+                    categories.forEach { option ->
+                        FilterChip(
+                            selected = category == option,
+                            onClick = { actions.onBrowseCategoryChange(option) },
+                            label = { Text(stringResource(option.labelRes())) },
+                            modifier = Modifier.testTag("browse_${option.name}"),
+                        )
+                    }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                shown.forEach { product ->
+                    val inStock = product.variants.any { it.stockQuantity > 0 } || !product.tracksStock
+                    val unit = product.stockUnit
+                    val first = product.variants.first()
+                    val price = formatter.format(first.sellingPrice).let {
+                        if (unit == StockUnit.UNIT) it else stringResource(R.string.price_per_unit, it, unit.entrySymbol)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            if (product.variants.size == 1) actions.onAddResult(ProductSearchResult(product, first)) else choosing = product
+                        },
+                        enabled = inStock,
+                        modifier = Modifier.testTag("browse_item_${product.id}"),
+                    ) {
+                        Text(if (product.variants.size == 1) "${product.name} · $price" else product.name)
+                    }
+                }
+            }
+            if (matching.size > shown.size) {
+                Text(
+                    stringResource(R.string.billing_browse_more, shown.size, matching.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+    choosing?.let { product ->
+        AlertDialog(
+            onDismissRequest = { choosing = null },
+            title = { Text(product.name) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    product.variants.forEach { variant ->
+                        val unit = product.stockUnit
+                        val price = formatter.format(variant.sellingPrice).let {
+                            if (unit == StockUnit.UNIT) it else stringResource(R.string.price_per_unit, it, unit.entrySymbol)
+                        }
+                        val inStock = variant.stockQuantity > 0 || !product.tracksStock
+                        TextButton(
+                            onClick = {
+                                choosing = null
+                                actions.onAddResult(ProductSearchResult(product, variant))
+                            },
+                            enabled = inStock,
+                            modifier = Modifier.fillMaxWidth().testTag("browse_variant_${variant.id}"),
+                        ) {
+                            Text(listOf(variant.attributesLabel.ifBlank { variant.barcode }, price).joinToString(" · "))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { choosing = null }) { Text(stringResource(R.string.action_cancel)) } },
+        )
     }
 }
 

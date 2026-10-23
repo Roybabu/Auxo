@@ -102,6 +102,10 @@ data class BillingUiState(
     val quickItems: List<ProductSearchResult> = emptyList(),
     /** Subcategory shown in the quick-add card; null shows the first one. */
     val quickSection: String? = null,
+    /** Everything that is not a restaurant dish, by name, for browsing on the new bill page. */
+    val browseProducts: List<Product> = emptyList(),
+    /** The kind of goods the browse card shows; null shows all of them. */
+    val browseCategory: ProductCategory? = null,
     val lineDiscounts: Map<Long, DiscountInput> = emptyMap(),
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
@@ -182,6 +186,9 @@ data class BillingUiState(
 
     /** Subcategories that have available restaurant items; an empty name means no subcategory. */
     val quickSections: List<String> get() = quickItems.map { it.product.subcategory.orEmpty() }.distinct()
+
+    /** The kinds of goods the browse card has chips for: those with at least one product. */
+    val browseCategories: List<ProductCategory> get() = browseProducts.map { it.category }.distinct().sortedBy { it.ordinal }
 }
 
 enum class CustomerSaveError { NAME_REQUIRED, INVALID_PHONE, INVALID_DETAILS, PHONE_IN_USE, FAILED }
@@ -285,6 +292,7 @@ class BillingViewModel(
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
                             quickItems = quickItems(),
+                            browseProducts = browseProducts(),
                         )
                     }
                 }
@@ -412,6 +420,8 @@ class BillingViewModel(
     }
 
     fun onQuickSectionChange(section: String?) = _uiState.update { it.copy(quickSection = section) }
+
+    fun onBrowseCategoryChange(category: ProductCategory?) = _uiState.update { it.copy(browseCategory = category) }
 
     // Cart lines, keyed by CartLine.variantId
 
@@ -576,6 +586,8 @@ class BillingViewModel(
                 productCount = it.productCount,
                 quickItems = it.quickItems,
                 quickSection = it.quickSection,
+                browseProducts = it.browseProducts,
+                browseCategory = it.browseCategory,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
                 tableCount = it.tableCount,
@@ -995,6 +1007,10 @@ class BillingViewModel(
             .sortedWith(compareBy({ it.subcategory.isNullOrBlank() }, { it.subcategory.orEmpty().lowercase() }, { it.name.lowercase() }))
             .flatMap { product -> product.variants.map { ProductSearchResult(product, it) } }
     }
+
+    /** Every product that is not a restaurant dish (dishes have their own menu card), by name. */
+    private fun browseProducts(): List<Product> =
+        products.filter { it.category != ProductCategory.RESTAURANT && it.variants.isNotEmpty() }.sortedBy { it.name.lowercase() }
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
         // Items saved without a barcode have an empty one, so an empty scan must never match them.
