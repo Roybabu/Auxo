@@ -246,7 +246,8 @@ private fun ProductHeader(product: Product) {
                     horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
                     photos.forEach { file ->
-                        val colours = product.variants.filter { it.photoFile == file }.mapNotNull { it.colour }.distinct()
+                        val colours = // A colour without its own photo is shown with the product photo, so that photo carries its name too.
+                        product.variants.filter { product.photoFor(it) == file }.mapNotNull { it.colour }.distinct()
                         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                             ProductPhoto(
                                 photoFile = file,
