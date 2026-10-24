@@ -1919,7 +1919,8 @@
     <string name="find_w_back">वापस जाएँ</string>
     <string name="find_unknown_shop">इन बैकअप में दुकान का नाम सहेजा नहीं गया है</string>
     <string name="find_counts">%1$d उत्पाद · %2$d ग्राहक · %3$d बिल</string>
-    <string name="find_locked_hint">पासफ़्रेज़ से लॉक है। खोलने के बाद दुकान का नाम दिखेगा।</string>
+    <string name="find_locked_hint">पासफ़्रेज़ से लॉक है। आगे इसे पूछा जाएगा, फिर दुकान का नाम दिखेगा।</string>
+    <string name="find_unlock_action">बैकअप खोलें</string>
     <string name="find_divider">पहले Auxo इस्तेमाल किया है?</string>
     <string name="find_none_short">उस फ़ोल्डर में कोई बैकअप नहीं मिला।</string>
     <string name="auth_restored_title">बैकअप बहाल हो गया</string>

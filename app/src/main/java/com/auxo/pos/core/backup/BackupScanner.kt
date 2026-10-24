@@ -40,6 +40,12 @@ class BackupScanner(private val context: Context) {
         return found.sortedByDescending { it.takenAtMillis }
     }
 
+    /** The manifest of a locked backup, read with its [passphrase]; throws [BackupProblem.WRONG_PASSPHRASE] if it does not open. */
+    fun peekLocked(uri: Uri, passphrase: String): BackupManifest {
+        val input = runCatching { context.contentResolver.openInputStream(uri) }.getOrNull() ?: throw BackupException(BackupProblem.UNREADABLE)
+        return input.use { BackupArchive.readManifest(BackupCrypto.decrypt(BufferedInputStream(it), passphrase)) }
+    }
+
     private fun walk(tree: Uri, parentId: String, depth: Int, into: MutableList<FoundBackup>) {
         val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentId)
         val columns = arrayOf(

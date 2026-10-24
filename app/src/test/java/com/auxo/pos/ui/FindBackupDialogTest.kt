@@ -13,8 +13,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.BackupManifest
+import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupService
 import com.auxo.pos.core.backup.FoundBackup
 import com.auxo.pos.core.backup.SavedBackup
@@ -37,10 +41,11 @@ class FindBackupDialogTest {
     val composeRule = createComposeRule()
 
     private val restored = mutableListOf<Uri>()
+    private val passphrases = mutableListOf<String?>()
 
     private val service = object : BackupService {
         override suspend fun backUp(): SavedBackup = error("not used")
-        override suspend fun restore(source: Uri, passphrase: String?) { restored += source }
+        override suspend fun restore(source: Uri, passphrase: String?) { restored += source; passphrases += passphrase }
         override fun isProtected() = false
         override fun setPassphrase(passphrase: String) = Unit
         override fun clearPassphrase() = Unit
@@ -140,5 +145,37 @@ class FindBackupDialogTest {
         assertEquals(emptyList<Uri>(), restored)
         assertEquals(false, viewModel.uiState.value.restoring)
         assertEquals(com.auxo.pos.core.backup.BackupProblem.RESTORE_FAILED, viewModel.uiState.value.problem)
+    }
+
+    @Test
+    fun aLockedBackup_asksForItsPassphraseAtRestoreShop_thenNamesTheShopBeforeRestoring() {
+        val locked = backup("a.auxobak", "", 2_000).copy(locked = true, manifest = null)
+        val manifest = backup("x", "Roy Stores", 2_000).manifest!!
+        val viewModel = FindBackupViewModel(
+            { listOf(locked) }, service, kotlinx.coroutines.Dispatchers.Unconfined,
+            peek = { _, pass -> if (pass == "right-pass-123") manifest else throw BackupException(BackupProblem.WRONG_PASSPHRASE) },
+        )
+        composeRule.setContent {
+            AuxoTheme { FindBackupDialog(viewModel, onSetUpNewShop = {}, onChooseAnother = {}) }
+        }
+        viewModel.onFolderChosen(Uri.parse("content://tree"))
+        composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.found != null }
+        composeRule.onNodeWithTag("find_backup_a.auxobak").performClick()
+        composeRule.onNodeWithTag("find_restore").performClick()
+        // The passphrase is asked for first, and a wrong one opens nothing.
+        composeRule.onNodeWithTag("backup_unlock_field").performTextInput("wrong-pass")
+        composeRule.onNodeWithTag("backup_unlock_action").performClick()
+        composeRule.onNodeWithTag("backup_unlock_error").assertIsDisplayed()
+        assertEquals(emptyList<Uri>(), restored)
+        composeRule.onNodeWithTag("backup_unlock_field").performTextReplacement("right-pass-123")
+        composeRule.onNodeWithTag("backup_unlock_action").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.selected != null }
+        // The shop's name is shown on the confirmation, and the backup is restored with the same passphrase.
+        composeRule.onNodeWithText("Roy Stores").assertIsDisplayed()
+        assertEquals(emptyList<Uri>(), restored)
+        composeRule.onNodeWithTag("find_confirm").performClick()
+        composeRule.onNodeWithTag("find_warn_confirm").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { restored.isNotEmpty() }
+        assertEquals(listOf<String?>("right-pass-123"), passphrases)
     }
 }

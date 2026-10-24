@@ -1919,7 +1919,8 @@
     <string name="find_w_back">ফিরে যান</string>
     <string name="find_unknown_shop">এই ব্যাকআপগুলিতে দোকানের নাম সংরক্ষিত নেই</string>
     <string name="find_counts">%1$d পণ্য · %2$d গ্রাহক · %3$d বিল</string>
-    <string name="find_locked_hint">পাসফ্রেজ দিয়ে লক করা। খোলার পর দোকানের নাম দেখা যাবে।</string>
+    <string name="find_locked_hint">পাসফ্রেজ দিয়ে লক করা। পরের ধাপে এটি চাওয়া হবে, তারপর দোকানের নাম দেখা যাবে।</string>
+    <string name="find_unlock_action">ব্যাকআপ খুলুন</string>
     <string name="find_divider">আগে Auxo ব্যবহার করেছেন?</string>
     <string name="find_none_short">ওই ফোল্ডারে কোনো ব্যাকআপ পাওয়া যায়নি।</string>
     <string name="auth_restored_title">ব্যাকআপ পুনরুদ্ধার হয়েছে</string>

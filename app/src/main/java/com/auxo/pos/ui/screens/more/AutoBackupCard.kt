@@ -13,12 +13,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +37,7 @@ import com.auxo.pos.core.backup.auto.BackupSchedule
 import com.auxo.pos.core.backup.auto.DocumentTreeFolder
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.components.DropdownField
 import com.auxo.pos.ui.format.DateFormats
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.AutoBackupUiState
@@ -114,19 +112,14 @@ fun AutoBackupCardContent(
             }
 
             // When
-            Text(stringResource(R.string.auto_backup_when), style = MaterialTheme.typography.labelLarge)
-            BackupSchedule.entries.forEach { option ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(selected = settings.schedule == option, role = Role.RadioButton, onClick = { onSchedule(option) })
-                        .testTag("auto_schedule_${option.name}"),
-                ) {
-                    RadioButton(selected = settings.schedule == option, onClick = null)
-                    Text(stringResource(option.labelRes()), modifier = Modifier.padding(start = Spacing.sm))
-                }
-            }
+            DropdownField(
+                label = stringResource(R.string.auto_backup_when),
+                value = stringResource(settings.schedule.labelRes()),
+                options = BackupSchedule.entries,
+                optionText = { stringResource(it.labelRes()) },
+                onSelect = onSchedule,
+                modifier = Modifier.fillMaxWidth().testTag("auto_schedule_picker"),
+            )
             if (settings.schedule == BackupSchedule.EVERY_N_INVOICES) {
                 AuxoTextField(
                     value = state.intervalText,

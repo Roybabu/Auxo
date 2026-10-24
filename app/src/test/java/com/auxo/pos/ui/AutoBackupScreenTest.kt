@@ -81,11 +81,17 @@ class AutoBackupScreenTest {
     }
 
     @Test
-    fun everyScheduleIsOffered_andPickingOneIsReported() {
+    fun everyScheduleIsInOnePicker_andPickingOneIsReported() {
         card(AutoBackupUiState(settings = withFolder))
-        for (schedule in BackupSchedule.entries) composeRule.onNodeWithTag("auto_schedule_${schedule.name}").assertIsDisplayed()
-        composeRule.onNodeWithTag("auto_schedule_WEEKLY").performClick()
-        composeRule.onNodeWithTag("auto_schedule_EVERY_N_INVOICES").performClick()
+        composeRule.onNodeWithTag("auto_schedule_picker").assertIsDisplayed()
+        composeRule.onNodeWithText("Every day").assertIsDisplayed()
+        composeRule.onNodeWithTag("auto_schedule_picker").performClick()
+        for (label in listOf("Off", "Every 15 minutes", "Every 30 minutes", "Every hour", "Every 2 hours", "Every 3 hours", "Every 6 hours", "Every 12 hours", "Every week", "After a number of invoices")) {
+            composeRule.onNodeWithText(label).assertExists()
+        }
+        composeRule.onNodeWithText("Every week").performClick()
+        composeRule.onNodeWithTag("auto_schedule_picker").performClick()
+        composeRule.onNodeWithText("After a number of invoices").performClick()
         assertEquals(listOf("schedule WEEKLY", "schedule EVERY_N_INVOICES"), log)
     }
 

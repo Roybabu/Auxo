@@ -368,7 +368,7 @@ private fun UnlockDialog(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
 
 /** The contents of the box above, on its own so it can be tested without a dialog window. */
 @Composable
-internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
+internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit, error: String? = null, actionLabel: String? = null) {
     var passphrase by remember { mutableStateOf("") }
     Column(
         modifier = Modifier.padding(Spacing.xl).verticalScroll(rememberScrollState()),
@@ -385,10 +385,13 @@ internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth().testTag("backup_unlock_field"),
         )
+        if (error != null) {
+            Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("backup_unlock_error"))
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
             TextButton(onClick = { onUnlock(passphrase) }, enabled = passphrase.isNotEmpty(), modifier = Modifier.testTag("backup_unlock_action")) {
-                Text(stringResource(R.string.backup_unlock_action))
+                Text(actionLabel ?: stringResource(R.string.backup_unlock_action))
             }
         }
     }
