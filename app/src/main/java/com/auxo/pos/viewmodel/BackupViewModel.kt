@@ -24,7 +24,7 @@ data class BackupUiState(
     /** A backup or restore is running. */
     val isWorking: Boolean = false,
     val lastBackupMillis: Long? = null,
-    /** The backup just made, so it can be shared. */
+    /** The backup just made, so the screen can say where it went. */
     val saved: SavedBackup? = null,
     val problem: BackupProblem? = null,
     /** A file the person picked, waiting for them to confirm replacing their data. */
@@ -35,8 +35,6 @@ data class BackupUiState(
     val isProtected: Boolean = false,
     /** The box for choosing a passphrase is open. */
     val choosingPassphrase: Boolean = false,
-    /** The question "stop locking backups?" is open. */
-    val confirmingTurnOff: Boolean = false,
     /** The chosen file is locked, so its passphrase is being asked for. */
     val unlocking: Uri? = null,
 )
@@ -118,8 +116,6 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
         }
     }
 
-    fun onChoosePassphrase() = _uiState.update { it.copy(choosingPassphrase = true) }
-
     fun onChoosePassphraseCancelled() {
         backUpAfterPassphrase = false
         _uiState.update { it.copy(choosingPassphrase = false) }
@@ -140,15 +136,6 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             backUpAfterPassphrase = false
             _uiState.update { it.copy(choosingPassphrase = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
         }
-    }
-
-    fun onAskTurnOff() = _uiState.update { it.copy(confirmingTurnOff = true) }
-
-    fun onTurnOffCancelled() = _uiState.update { it.copy(confirmingTurnOff = false) }
-
-    fun onTurnOffConfirmed() {
-        service.clearPassphrase()
-        _uiState.update { it.copy(confirmingTurnOff = false, isProtected = service.isProtected()) }
     }
 
     fun onProblemDismissed() = _uiState.update { it.copy(problem = null) }

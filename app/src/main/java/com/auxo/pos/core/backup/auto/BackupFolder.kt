@@ -4,14 +4,18 @@
 package com.auxo.pos.core.backup.auto
 
 import android.content.Context
+import android.content.ContentUris
 import android.net.Uri
-import android.provider.DocumentsContract
+import android.os.Build
+import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import com.auxo.pos.core.backup.BackupCrypto
 import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupStorage
 import com.auxo.pos.core.backup.DocumentsBackupStorage
 import com.auxo.pos.core.backup.SavedBackup
+import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 
@@ -96,71 +100,53 @@ class FolderBackupStorage(private val folder: BackupFolder) : BackupStorage {
 
 
 /**
- * A folder picked with the phone's own folder picker (SD card, USB drive, Google Drive). The app only ever
- * receives access to that one folder, and nothing else on the phone.
+ * The Auxo folder inside Documents on this phone, which is created the first time a backup is saved. Saving goes
+ * through [DocumentsBackupStorage], so it behaves like a backup made by hand on every Android version. The app can
+ * list and delete only the backups it made itself, which is all the clean-up needs.
  */
-class DocumentTreeFolder(private val context: Context, private val tree: Uri) : BackupFolder {
+class DocumentsAutoFolder(
+    private val context: Context,
+    private val storage: DocumentsBackupStorage = DocumentsBackupStorage(context),
+) : BackupFolder {
 
-    private val resolver get() = context.contentResolver
+    override val label: String get() = "Documents/${DocumentsBackupStorage.FOLDER}"
 
-    private val rootDocument: Uri
-        get() = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+    // Saving falls back to the app's own folder when shared storage is not available, so there is always somewhere.
+    override fun canWrite(): Boolean = true
 
-    override val label: String
-        get() = runCatching {
-            resolver.query(rootDocument, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use {
-                if (it.moveToFirst()) it.getString(0) else null
-            }
-        }.getOrNull().orEmpty()
-
-    override fun canWrite(): Boolean {
-        val holdsAccess = resolver.persistedUriPermissions.any { it.uri == tree && it.isWritePermission }
-        if (!holdsAccess) return false
-        return runCatching {
-            resolver.query(rootDocument, arrayOf(DocumentsContract.Document.COLUMN_FLAGS), null, null, null)?.use {
-                it.moveToFirst() && (it.getInt(0) and DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE) != 0
-            } ?: false
-        }.getOrDefault(false)
+    override fun list(): List<FolderFile> = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) listInMediaStore() else listInFolders()
+    } catch (e: Exception) {
+        com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
+        throw FolderUnavailableException(cause = e)
     }
 
-    override fun list(): List<FolderFile> {
-        val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
-        val columns = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME)
-        return try {
-            resolver.query(children, columns, null, null, null)?.use { cursor ->
-                buildList {
-                    while (cursor.moveToNext()) add(FolderFile(cursor.getString(0), cursor.getString(1).orEmpty()))
-                }
-            } ?: throw FolderUnavailableException()
-        } catch (e: FolderUnavailableException) {
-            throw e
-        } catch (e: Exception) {
-            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
-            throw FolderUnavailableException(cause = e)
-        }
-    }
-
-    override fun create(fileName: String, write: (OutputStream) -> Unit): SavedBackup {
-        val made: Uri? = try {
-            DocumentsContract.createDocument(resolver, rootDocument, DocumentsBackupStorage.mimeTypeFor(fileName), fileName)
-        } catch (e: Exception) {
-            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
-            throw FolderUnavailableException(cause = e)
-        }
-        val created = made ?: throw FolderUnavailableException("The folder would not create the backup file.")
-        try {
-            val out = resolver.openOutputStream(created, "w") ?: throw IOException("Could not open the backup file for writing.")
-            out.use(write)
-        } catch (e: Exception) {
-            com.auxo.pos.core.debuglog.DebugLog.error("BackupFolder", "Failed and showed an error", e)
-            runCatching { DocumentsContract.deleteDocument(resolver, created) }
-            if (e is BackupException) throw e
-            throw BackupException(BackupProblem.SAVE_FAILED, cause = e)
-        }
-        return SavedBackup(fileName, label.ifEmpty { fileName }, created)
-    }
+    override fun create(fileName: String, write: (OutputStream) -> Unit): SavedBackup = storage.save(fileName, write)
 
     override fun delete(file: FolderFile): Boolean = runCatching {
-        DocumentsContract.deleteDocument(resolver, DocumentsContract.buildDocumentUriUsingTree(tree, file.id))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.contentResolver.delete(ContentUris.withAppendedId(filesUri(), file.id.toLong()), null, null) > 0
+        } else {
+            File(file.id).delete()
+        }
     }.getOrDefault(false)
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun filesUri(): Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun listInMediaStore(): List<FolderFile> {
+        val columns = arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME)
+        val selection = "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ?"
+        val args = arrayOf("Documents/${DocumentsBackupStorage.FOLDER}%")
+        return context.contentResolver.query(filesUri(), columns, selection, args, null)?.use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) add(FolderFile(cursor.getLong(0).toString(), cursor.getString(1).orEmpty()))
+            }
+        } ?: throw FolderUnavailableException()
+    }
+
+    /** Android 9 and older: the plain folders, both the shared one and the app's own fallback. */
+    private fun listInFolders(): List<FolderFile> =
+        storage.legacyFolders().flatMap { dir -> dir.listFiles()?.filter { it.isFile }.orEmpty() }.map { FolderFile(it.path, it.name) }
 }

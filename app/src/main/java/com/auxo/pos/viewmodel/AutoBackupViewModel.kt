@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.backup.auto.AutoBackupPolicy
-import com.auxo.pos.core.backup.auto.AutoBackupResult
 import com.auxo.pos.core.backup.auto.AutoBackupSettings
 import com.auxo.pos.core.backup.auto.AutoBackupStatus
 import com.auxo.pos.core.backup.auto.BackupSchedule
@@ -28,12 +27,6 @@ data class AutoBackupUiState(
     /** What is typed in the two number boxes. A box that holds nothing usable is not saved. */
     val intervalText: String = AutoBackupSettings.DEFAULT_INVOICE_INTERVAL.toString(),
     val keepText: String = AutoBackupSettings.DEFAULT_KEEP.toString(),
-    /** A backup to the chosen folder is running. */
-    val isWorking: Boolean = false,
-    /** What the last "Back up now" came to, shown until the next one. */
-    val lastResult: AutoBackupResult? = null,
-    /** The picked folder could not be kept: the phone would not give lasting access to it. */
-    val folderAccessProblem: Boolean = false,
 ) {
     val intervalValid: Boolean get() = intervalText.toIntOrNull()?.let { it in AutoBackupSettings.MIN_INVOICE_INTERVAL..AutoBackupSettings.MAX_INVOICE_INTERVAL } == true
     val keepValid: Boolean get() = keepText.toIntOrNull()?.let { it in AutoBackupSettings.MIN_KEEP..AutoBackupSettings.MAX_KEEP } == true
@@ -61,13 +54,6 @@ class AutoBackupViewModel(private val service: AutoBackupService, private val cl
         }
     }
 
-    fun onFolderPicked(folderUri: String, folderName: String) {
-        _uiState.update { it.copy(folderAccessProblem = false, lastResult = null) }
-        launchChange { service.chooseFolder(folderUri, folderName) }
-    }
-
-    fun onFolderAccessProblem() = _uiState.update { it.copy(folderAccessProblem = true) }
-
     fun onScheduleChange(schedule: BackupSchedule) = launchChange { service.setSchedule(schedule) }
 
     fun onIntervalChange(text: String) {
@@ -82,22 +68,6 @@ class AutoBackupViewModel(private val service: AutoBackupService, private val cl
         _uiState.update { it.copy(keepText = digits) }
         digits.toIntOrNull()?.takeIf { it in AutoBackupSettings.MIN_KEEP..AutoBackupSettings.MAX_KEEP }
             ?.let { n -> launchChange { service.setKeep(n) } }
-    }
-
-    fun onBackUpNow() {
-        if (_uiState.value.isWorking) return
-        _uiState.update { it.copy(isWorking = true, lastResult = null) }
-        viewModelScope.launch {
-            val result = try {
-                service.backUpNow()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                com.auxo.pos.core.debuglog.DebugLog.error("AutoBackupViewModel", "Failed and showed an error", e)
-                null
-            }
-            _uiState.update { it.copy(isWorking = false, lastResult = result) }
-        }
     }
 
     private fun launchChange(change: suspend () -> Unit) {

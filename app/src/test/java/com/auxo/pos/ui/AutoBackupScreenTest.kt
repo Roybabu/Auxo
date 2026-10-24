@@ -41,18 +41,16 @@ class AutoBackupScreenTest {
     val composeRule = createComposeRule()
 
     private val log = mutableListOf<String>()
-    private val withFolder = AutoBackupSettings(folderUri = "content://tree/sd", folderName = "SD card", schedule = BackupSchedule.DAILY)
+    private val withFolder = AutoBackupSettings(schedule = BackupSchedule.DAILY)
 
     private fun card(state: AutoBackupUiState) {
         composeRule.setContent {
             AuxoTheme {
                 AutoBackupCardContent(
                     state = state,
-                    onChooseFolder = { log += "folder" },
                     onSchedule = { log += "schedule ${it.name}" },
                     onInterval = { log += "interval $it" },
                     onKeep = { log += "keep $it" },
-                    onBackUpNow = { log += "now" },
                 )
             }
         }
@@ -61,23 +59,11 @@ class AutoBackupScreenTest {
     // The settings card
 
     @Test
-    fun withNoFolder_itSaysSo_andOffersToChooseOne_butCannotBackUp() {
-        card(AutoBackupUiState())
-        composeRule.onNodeWithText("No folder chosen yet").assertIsDisplayed()
-        composeRule.onNodeWithText("Choose folder").assertIsDisplayed()
-        composeRule.onNodeWithTag("auto_backup_now").assertIsNotEnabled()
-        composeRule.onNodeWithTag("auto_backup_choose_folder").performClick()
-        assertEquals(listOf("folder"), log)
-    }
-
-    @Test
-    fun afterChoosingAFolder_itShowsTheFolderName_andCanBackUpNow() {
-        card(AutoBackupUiState(settings = withFolder))
-        composeRule.onNodeWithText("SD card").assertIsDisplayed()
-        composeRule.onNodeWithText("Change folder").assertIsDisplayed()
-        composeRule.onNodeWithTag("auto_backup_now").assertIsEnabled()
-        composeRule.onNodeWithTag("auto_backup_now").performClick()
-        assertEquals(listOf("now"), log)
+    fun noFolderIsAskedFor_andNoBackUpNowButton_backupsGoToTheAuxoFolderByThemselves() {
+        card(AutoBackupUiState(settings = AutoBackupSettings()))
+        composeRule.onAllNodesWithTag("auto_backup_choose_folder").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("auto_backup_now").assertCountEquals(0)
+        composeRule.onNodeWithText("Auxo folder in Documents", substring = true).assertIsDisplayed()
     }
 
     @Test
@@ -114,19 +100,6 @@ class AutoBackupScreenTest {
     }
 
     @Test
-    fun aScheduleWithNoFolder_tellsTheSuperAdminWhatIsMissing() {
-        card(AutoBackupUiState(settings = AutoBackupSettings(schedule = BackupSchedule.DAILY)))
-        composeRule.onNodeWithTag("auto_backup_needs_folder").assertIsDisplayed()
-        composeRule.onAllNodesWithTag("auto_backup_needs_folder").assertCountEquals(1)
-    }
-
-    @Test
-    fun noWarning_whenScheduleIsOff() {
-        card(AutoBackupUiState())
-        composeRule.onAllNodesWithTag("auto_backup_needs_folder").assertCountEquals(0)
-    }
-
-    @Test
     fun showsTheLastBackupTime_orThatThereHasBeenNone() {
         card(AutoBackupUiState(settings = withFolder))
         composeRule.onNodeWithText("No automatic backup yet").assertIsDisplayed()
@@ -144,25 +117,7 @@ class AutoBackupScreenTest {
     fun aFailure_isExplained() {
         card(AutoBackupUiState(settings = withFolder.copy(lastFailureMillis = 5L, lastFailure = AutoBackupFailure.FOLDER_UNAVAILABLE)))
         composeRule.onNodeWithTag("auto_backup_failure").assertIsDisplayed()
-        composeRule.onNodeWithText("The backup folder is not available", substring = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun theResultOfBackUpNow_isShown() {
-        card(AutoBackupUiState(settings = withFolder, lastResult = AutoBackupResult.Saved("Auxo-backup-2026-10-12_0900.zip", 0)))
-        composeRule.onNodeWithText("Saved Auxo-backup-2026-10-12_0900.zip").assertIsDisplayed()
-    }
-
-    @Test
-    fun aFolderAccessProblem_isShown() {
-        card(AutoBackupUiState(folderAccessProblem = true))
-        composeRule.onNodeWithTag("auto_backup_access_problem").assertIsDisplayed()
-    }
-
-    @Test
-    fun whileBackingUp_theButtonIsOff() {
-        card(AutoBackupUiState(settings = withFolder, isWorking = true))
-        composeRule.onNodeWithTag("auto_backup_now").assertIsNotEnabled()
+        composeRule.onNodeWithText("The Auxo folder in Documents could not be used", substring = true).assertIsDisplayed()
     }
 
     // On the Backup page
@@ -176,11 +131,10 @@ class AutoBackupScreenTest {
                     onBack = {},
                     onBackUp = {},
                     onChooseFile = {},
-                    onShare = {},
                     onConfirmRestore = {},
                     onCancelRestore = {},
                     onDismissProblem = {},
-                    extra = { AutoBackupCardContent(AutoBackupUiState(), {}, {}, {}, {}, {}) },
+                    extra = { AutoBackupCardContent(AutoBackupUiState(), {}, {}, {}) },
                 )
             }
         }
@@ -220,7 +174,7 @@ class AutoBackupScreenTest {
             ),
         )
         composeRule.onNodeWithText("Automatic backup is failing").assertIsDisplayed()
-        composeRule.onNodeWithText("The backup folder is not available", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("The Auxo folder in Documents could not be used", substring = true).assertIsDisplayed()
     }
 
     @Test

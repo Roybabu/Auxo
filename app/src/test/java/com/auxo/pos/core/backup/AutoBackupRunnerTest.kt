@@ -36,7 +36,7 @@ class AutoBackupRunnerTest {
     private var backups = 0
 
     private fun settings(schedule: BackupSchedule = BackupSchedule.DAILY, keep: Int = 3) =
-        AutoBackupSettings(folderUri = "content://tree/sd", folderName = "SD card", schedule = schedule, keep = keep)
+        AutoBackupSettings(schedule = schedule, keep = keep)
 
     /** A runner whose "backup" writes a tiny file named by the clock, like the real one. */
     private fun newRunner(
@@ -46,7 +46,7 @@ class AutoBackupRunnerTest {
         needsPassphrase: Boolean = false,
     ) = AutoBackupRunner(
         store = store,
-        folderFor = { folder },
+        folder = { folder },
         backUpTo = { storage ->
             whileBackingUp()
             failWith?.let { throw it }
@@ -64,11 +64,9 @@ class AutoBackupRunnerTest {
     }
 
     @Test
-    fun whenOff_orWithoutAFolder_nothingIsDone() = runBlocking {
+    fun whenOff_nothingIsDone() = runBlocking {
         val off = FakeAutoBackupStore(settings(BackupSchedule.OFF))
         assertEquals(AutoBackupResult.NotDue, newRunner(off).runIfDue())
-        val noFolder = FakeAutoBackupStore(settings().copy(folderUri = null))
-        assertEquals(AutoBackupResult.NotDue, newRunner(noFolder).runIfDue())
         assertEquals(0, backups)
         assertTrue(folder.files.isEmpty())
     }
@@ -178,7 +176,7 @@ class AutoBackupRunnerTest {
         var failing = true
         val runner = AutoBackupRunner(
             store = store,
-            folderFor = { folder },
+            folder = { folder },
             backUpTo = { storage ->
                 if (failing) throw FolderUnavailableException()
                 storage.save("Auxo-backup-${stamp()}.zip") { it.write(1) }
@@ -246,14 +244,6 @@ class AutoBackupRunnerTest {
     }
 
     // Manual and concurrent
-
-    @Test
-    fun backUpNow_ignoresTheSchedule_butNeedsAFolder() = runBlocking {
-        val off = FakeAutoBackupStore(settings(BackupSchedule.OFF))
-        assertTrue(newRunner(off).runNow() is AutoBackupResult.Saved)
-        val noFolder = FakeAutoBackupStore(AutoBackupSettings())
-        assertEquals(AutoBackupResult.NotDue, newRunner(noFolder).runNow())
-    }
 
     @Test
     fun twoCheckersAtOnce_makeOnlyOneBackup() = runBlocking {

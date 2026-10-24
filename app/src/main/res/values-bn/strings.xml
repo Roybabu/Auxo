@@ -883,12 +883,9 @@
     <string name="backup_saved_title">ব্যাকআপ সংরক্ষিত হয়েছে</string>
     <string name="backup_saved_where">%1$s\n%2$s-এ</string>
     <string name="backup_saved_app_only">স্টোরেজের অনুমতি দেওয়া হয়নি, তাই এই ব্যাকআপ শুধু অ্যাপের ভেতরে আছে। অ্যাপ আনইনস্টল করলে এটি মুছে যাবে। এটি শেয়ার করুন, বা স্টোরেজের অনুমতি দিয়ে আবার ব্যাকআপ নিন।</string>
-    <string name="backup_share">শেয়ার করুন বা পাঠান</string>
-    <string name="backup_share_title">ব্যাকআপ পাঠান</string>
     <string name="backup_restore_title">ব্যাকআপ থেকে রিস্টোর করুন</string>
     <string name="backup_restore_body">নতুন ফোনে অথবা আগের কোনো ব্যাকআপে ফিরে যেতে এটি ব্যবহার করুন। Auxo ফোল্ডার থেকে, বা যেখানে কপি করেছেন সেখান থেকে ব্যাকআপ ফাইল বাছুন।</string>
     <string name="backup_restore_choose">ব্যাকআপ ফাইল বাছুন</string>
-    <string name="backup_privacy">ব্যাকআপ ফাইলে ক্রেতার বিবরণ ও বিক্রি থাকে এবং তা পাসওয়ার্ড দিয়ে তালাবন্ধ নয়। এগুলো গোপন রাখুন।</string>
     <string name="backup_confirm_title">এই ফোনের সবকিছু বদলে দেবেন?</string>
     <string name="backup_confirm_body">এই ফোনের সব পণ্য, বিল, ক্রেতা ও সেটিংস ব্যাকআপে যা আছে তা দিয়ে বদলে যাবে। এটি ফেরানো যাবে না, তাই আজকের ডেটা লাগতে পারে মনে হলে আগে ব্যাকআপ নিন। অ্যাপ আবার চালু হবে।</string>
     <string name="backup_confirm_action">বদলে আবার চালু করুন</string>
@@ -901,12 +898,6 @@
     <string name="backup_error_unreadable">ফাইলটি খোলা যায়নি।</string>
     <string name="backup_error_save">ব্যাকআপ সংরক্ষণ করা যায়নি। ফোনে জায়গা আছে কি না দেখে আবার চেষ্টা করুন।</string>
     <string name="backup_error_restore">রিস্টোর হয়নি এবং এই ফোনের ডেটা যেমন ছিল তেমনই রাখা হয়েছে।</string>
-    <string name="backup_protect_title">ব্যাকআপ পাসফ্রেজ দিয়ে তালাবন্ধ করুন</string>
-    <string name="backup_protect_off_body">ব্যাকআপ তালাবন্ধ নয়। ব্যাকআপ ফাইল যার হাতে যাবে সে আপনার বিক্রি ও ক্রেতার তথ্য পড়তে পারবে। নতুন ব্যাকআপ তালাবন্ধ করতে এটি চালু করুন।</string>
-    <string name="backup_protect_on_body">নতুন ব্যাকআপ তালাবন্ধ। রিস্টোর করতে, নতুন ফোনেও, পাসফ্রেজ লাগবে। ভুলে গেলে সেই ব্যাকআপ আর কখনো খোলা যাবে না।</string>
-    <string name="backup_protect_set">পাসফ্রেজ বেছে নিন</string>
-    <string name="backup_protect_change">পাসফ্রেজ বদলান</string>
-    <string name="backup_protect_turn_off">বন্ধ করুন</string>
     <string name="backup_pass_title">পাসফ্রেজ বেছে নিন</string>
     <string name="backup_pass_warning">এটি লিখে নিরাপদে রাখুন। Auxo এটি ফিরিয়ে দিতে পারে না। ভুলে গেলে তালাবন্ধ ব্যাকআপ আর কখনো খোলা যাবে না।</string>
     <string name="backup_pass_field">পাসফ্রেজ</string>
@@ -918,8 +909,6 @@
     <string name="auto_backup_failed_passphrase">স্বয়ংক্রিয় ব্যাকআপের জন্য একটি পাসফ্রেজ লাগবে। “এই ফোনের ব্যাকআপ” খুলে একটি বেছে নিন।</string>
     <string name="backup_pass_mismatch">দুটি পাসফ্রেজ একই নয়।</string>
     <string name="backup_pass_save">ব্যাকআপ তালাবন্ধ করুন</string>
-    <string name="backup_turn_off_title">ব্যাকআপ তালাবন্ধ করা বন্ধ করবেন?</string>
-    <string name="backup_turn_off_body">নতুন ব্যাকআপ তালাবন্ধ হবে না। আগে তালাবন্ধ হওয়া ব্যাকআপ খুলতে এখনও তার পাসফ্রেজ লাগবে।</string>
     <string name="backup_unlock_title">এই ব্যাকআপ তালাবন্ধ</string>
     <string name="backup_unlock_body">ব্যাকআপ তৈরির সময় যে পাসফ্রেজ বেছেছিলেন সেটি লিখুন।</string>
     <string name="backup_unlock_action">রিস্টোর করুন</string>
@@ -1270,13 +1259,7 @@
 
     <!-- Automatic backup -->
     <string name="auto_backup_title">স্বয়ংক্রিয় ব্যাকআপ</string>
-    <string name="auto_backup_body">আপনার বেছে নেওয়া ফোল্ডারে, যেমন SD কার্ড, USB ড্রাইভ বা Google Drive-এ নিজে থেকে ব্যাকআপ সংরক্ষণ করুন। একটি কপি এই ফোনের বাইরে রাখুন।</string>
-    <string name="auto_backup_folder">ব্যাকআপ ফোল্ডার</string>
-    <string name="auto_backup_no_folder">এখনও কোনো ফোল্ডার বাছা হয়নি</string>
-    <string name="auto_backup_folder_chosen">ফোল্ডার বাছা হয়েছে</string>
-    <string name="auto_backup_choose">ফোল্ডার বাছুন</string>
-    <string name="auto_backup_change">ফোল্ডার বদলান</string>
-    <string name="auto_backup_access_problem">ফোনটি ওই ফোল্ডারের অ্যাক্সেস ধরে রাখেনি। আবার বাছুন।</string>
+    <string name="auto_backup_body">ব্যাকআপ নিজে থেকে এই ফোনের Documents-এর Auxo ফোল্ডারে, আপনার ব্যাকআপ পাসফ্রেজ দিয়ে লক হয়ে সংরক্ষিত হয়। একটি কপি এই ফোনের বাইরে রাখুন।</string>
     <string name="auto_backup_when">কখন</string>
     <string name="auto_backup_off">বন্ধ</string>
     <string name="auto_backup_daily">প্রতিদিন</string>
@@ -1293,13 +1276,9 @@
     <string name="auto_backup_range">%1$d থেকে %2$d-এর মধ্যে একটি সংখ্যা লিখুন।</string>
     <string name="auto_backup_keep">যতগুলো ব্যাকআপ রাখবেন</string>
     <string name="auto_backup_keep_hint">ফোল্ডারে পুরোনো স্বয়ংক্রিয় ব্যাকআপ মুছে ফেলা হয়। অন্য ফাইলে কখনও হাত দেওয়া হয় না।</string>
-    <string name="auto_backup_needs_folder">স্বয়ংক্রিয় ব্যাকআপ শুরু করতে একটি ফোল্ডার বাছুন।</string>
     <string name="auto_backup_last">শেষ স্বয়ংক্রিয় ব্যাকআপ: %1$s</string>
     <string name="auto_backup_never">এখনও কোনো স্বয়ংক্রিয় ব্যাকআপ নেই</string>
-    <string name="auto_backup_now">এখনই এই ফোল্ডারে ব্যাকআপ নিন</string>
-    <string name="auto_backup_saved">%1$s সংরক্ষিত হয়েছে</string>
-    <string name="auto_backup_not_run">কিছুই ব্যাকআপ হয়নি। আগে একটি ফোল্ডার বাছুন।</string>
-    <string name="auto_backup_failed_folder">ব্যাকআপ ফোল্ডার পাওয়া যাচ্ছে না। কার্ড, ড্রাইভ বা অ্যাকাউন্ট দেখুন, অথবা ফোল্ডার আবার বাছুন।</string>
+    <string name="auto_backup_failed_folder">Documents-এর Auxo ফোল্ডার ব্যবহার করা যায়নি। দেখুন ফোনে জায়গা আছে এবং Auxo-কে ফাইল সংরক্ষণের অনুমতি দেওয়া আছে।</string>
     <string name="auto_backup_failed_save">ব্যাকআপ সংরক্ষণ করা যায়নি। ফোল্ডারে জায়গা আছে কি না দেখুন।</string>
     <string name="home_backup_off_title">নিজে থেকে ব্যাকআপ নিন</string>
     <string name="home_backup_off_body">স্বয়ংক্রিয় ব্যাকআপ বন্ধ। চালু করতে ট্যাপ করুন, যাতে ফোন হারালে আপনার রেকর্ড হারিয়ে না যায়।</string>

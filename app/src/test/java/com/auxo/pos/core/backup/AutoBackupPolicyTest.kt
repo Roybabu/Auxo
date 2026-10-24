@@ -27,7 +27,6 @@ class AutoBackupPolicyTest {
     private val now = 1_000 * day
 
     private fun active(schedule: BackupSchedule, lastSuccess: Long? = null, since: Int = 0, interval: Int = 20) = AutoBackupSettings(
-        folderUri = "content://tree/backups",
         schedule = schedule,
         invoiceInterval = interval,
         lastSuccessMillis = lastSuccess,
@@ -37,10 +36,8 @@ class AutoBackupPolicyTest {
     // When a backup is due
 
     @Test
-    fun nothingIsDue_whenOff_orWithoutAFolder() {
+    fun nothingIsDue_whenOff() {
         assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.OFF), now))
-        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY).copy(folderUri = null), now))
-        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY).copy(folderUri = ""), now))
     }
 
     @Test
@@ -186,13 +183,10 @@ class AutoBackupPolicyTest {
         context.getSharedPreferences("auto_backup", android.content.Context.MODE_PRIVATE).edit().clear().commit()
         val first = SharedPrefsAutoBackupStore(context)
         assertEquals(BackupSchedule.OFF, first.settings.value.schedule)
-        assertNull(first.settings.value.folderUri)
         assertFalse(first.settings.value.isActive)
 
         first.update {
             it.copy(
-                folderUri = "content://tree/sd",
-                folderName = "Backups",
                 schedule = BackupSchedule.EVERY_N_INVOICES,
                 invoiceInterval = 50,
                 keep = 10,
@@ -203,8 +197,6 @@ class AutoBackupPolicyTest {
             )
         }
         val restarted = SharedPrefsAutoBackupStore(context).settings.value
-        assertEquals("content://tree/sd", restarted.folderUri)
-        assertEquals("Backups", restarted.folderName)
         assertEquals(BackupSchedule.EVERY_N_INVOICES, restarted.schedule)
         assertEquals(50, restarted.invoiceInterval)
         assertEquals(10, restarted.keep)

@@ -9,7 +9,6 @@ import com.auxo.pos.core.audit.AuditEntity
 import com.auxo.pos.core.audit.AuditTrail
 import com.auxo.pos.core.auth.Authorizer
 import com.auxo.pos.core.auth.Permission
-import com.auxo.pos.core.backup.auto.AutoBackupResult
 import com.auxo.pos.core.backup.auto.AutoBackupRunner
 import com.auxo.pos.core.backup.auto.AutoBackupScheduler
 import com.auxo.pos.core.backup.auto.AutoBackupSettings
@@ -19,21 +18,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/** Choosing where and when backups happen. Everything that changes a choice is Super Admin only. */
+/** Choosing when backups happen. Everything that changes a choice is Super Admin only. */
 interface AutoBackupService {
     val settings: StateFlow<AutoBackupSettings>
-
-    /** Remembers the folder the person picked. The caller has already kept access to it. */
-    suspend fun chooseFolder(folderUri: String, folderName: String)
 
     suspend fun setSchedule(schedule: BackupSchedule)
 
     suspend fun setInvoiceInterval(invoices: Int)
 
     suspend fun setKeep(backups: Int)
-
-    /** Makes a backup in the chosen folder now. */
-    suspend fun backUpNow(): AutoBackupResult
 }
 
 class AuthorizedAutoBackupService(
@@ -46,15 +39,6 @@ class AuthorizedAutoBackupService(
 ) : AutoBackupService {
 
     override val settings: StateFlow<AutoBackupSettings> get() = store.settings
-
-    override suspend fun chooseFolder(folderUri: String, folderName: String) {
-        auth.require(Permission.BACKUP_AND_RESTORE)
-        store.update {
-            // A new folder starts clean: an old failure belongs to the old folder.
-            it.copy(folderUri = folderUri, folderName = folderName, lastFailureMillis = null, lastFailure = null)
-        }
-        changed("Automatic backup folder set to $folderName")
-    }
 
     override suspend fun setSchedule(schedule: BackupSchedule) {
         auth.require(Permission.BACKUP_AND_RESTORE)
@@ -72,11 +56,6 @@ class AuthorizedAutoBackupService(
         auth.require(Permission.BACKUP_AND_RESTORE)
         store.update { it.copy(keep = backups) }
         changed("Automatic backup keeps the last ${store.settings.value.keep} backups")
-    }
-
-    override suspend fun backUpNow(): AutoBackupResult {
-        auth.require(Permission.BACKUP_AND_RESTORE)
-        return runner.runNow()
     }
 
     private suspend fun changed(summary: String) {

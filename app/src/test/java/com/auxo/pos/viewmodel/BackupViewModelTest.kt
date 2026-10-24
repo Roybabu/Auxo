@@ -106,7 +106,6 @@ class BackupViewModelTest {
         assertNull(viewModel.uiState.value.saved)
         assertNull(service.last)
         // Setting one later on its own does not make a backup nobody asked for.
-        viewModel.onChoosePassphrase()
         viewModel.onPassphraseSet("copper river lamp window")
         assertNull(viewModel.uiState.value.saved)
     }
@@ -220,22 +219,15 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun settingAndClearingThePassphrase_switchesLockingOnAndOff() {
+    fun settingThePassphrase_marksBackupsAsLocked() {
         val viewModel = BackupViewModel(service)
         assertFalse(viewModel.uiState.value.isProtected)
 
-        viewModel.onChoosePassphrase()
+        viewModel.onBackUp()
         assertTrue(viewModel.uiState.value.choosingPassphrase)
         viewModel.onPassphraseSet("a long passphrase")
         assertTrue(viewModel.uiState.value.isProtected)
         assertFalse(viewModel.uiState.value.choosingPassphrase)
         assertEquals("a long passphrase", service.storedPassphrase)
-
-        viewModel.onAskTurnOff()
-        assertTrue(viewModel.uiState.value.confirmingTurnOff)
-        viewModel.onTurnOffConfirmed()
-        assertFalse(viewModel.uiState.value.isProtected)
-        assertFalse(viewModel.uiState.value.confirmingTurnOff)
-        assertNull(service.storedPassphrase)
     }
 }

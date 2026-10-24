@@ -43,7 +43,7 @@ class AuthorizedAutoBackupServiceTest {
 
     private val runner = AutoBackupRunner(
         store = store,
-        folderFor = { folder },
+        folder = { folder },
         backUpTo = { storage ->
             backups++
             storage.save("Auxo-backup-2026-10-12_09${"%02d".format(backups)}.zip") { it.write(1) }
@@ -64,14 +64,12 @@ class AuthorizedAutoBackupServiceTest {
     }
 
     @Test
-    fun anEmployee_cannotChangeAnyChoice_orBackUpNow_whateverTheyWereGiven() {
+    fun anEmployee_cannotChangeAnyChoice_whateverTheyWereGiven() {
         val staff = service(Role.EMPLOYEE, Permission.entries.toSet())
         val before = store.settings.value
-        denied { staff.chooseFolder("content://tree/x", "X") }
         denied { staff.setSchedule(BackupSchedule.DAILY) }
         denied { staff.setInvoiceInterval(5) }
         denied { staff.setKeep(2) }
-        denied { staff.backUpNow() }
         assertEquals(before, store.settings.value)
         assertTrue(scheduler.calls.isEmpty())
         assertTrue(audit.drafts.isEmpty())
@@ -79,12 +77,9 @@ class AuthorizedAutoBackupServiceTest {
     }
 
     @Test
-    fun theSuperAdmin_choosesAFolderAndSchedule_andTheChoicesAreSaved() = runBlocking {
+    fun theSuperAdmin_choosesTheSchedule_andTheChoicesAreSaved() = runBlocking {
         val admin = service(Role.SUPER_ADMIN)
-        admin.chooseFolder("content://tree/sd", "SD card")
-        assertEquals("content://tree/sd", store.settings.value.folderUri)
-        assertEquals("SD card", store.settings.value.folderName)
-        assertFalse(store.settings.value.isActive) // still off until a schedule is chosen
+        assertFalse(store.settings.value.isActive) // off until a schedule is chosen
 
         admin.setInvoiceInterval(50)
         admin.setKeep(10)
@@ -107,7 +102,6 @@ class AuthorizedAutoBackupServiceTest {
     @Test
     fun theBackgroundCheck_followsWhetherBackupIsActive() = runBlocking {
         val admin = service(Role.SUPER_ADMIN)
-        admin.chooseFolder("content://tree/sd", "SD card")
         admin.setSchedule(BackupSchedule.DAILY)
         admin.setSchedule(BackupSchedule.OFF)
         assertEquals(listOf(false, true, false), scheduler.calls)
@@ -116,7 +110,6 @@ class AuthorizedAutoBackupServiceTest {
     @Test
     fun switchingASchedulOn_makesTheFirstBackupStraightAway() = runBlocking {
         val admin = service(Role.SUPER_ADMIN)
-        admin.chooseFolder("content://tree/sd", "SD card")
         assertEquals(0, backups)
         admin.setSchedule(BackupSchedule.DAILY)
         assertEquals(1, backups)
@@ -129,10 +122,10 @@ class AuthorizedAutoBackupServiceTest {
     }
 
     @Test
-    fun changingFolder_clearsAnOldFailure() = runBlocking {
+    fun changingTheSchedule_clearsAnOldFailure() = runBlocking {
         val admin = service(Role.SUPER_ADMIN)
         store.update { it.copy(lastFailureMillis = 5L, lastFailure = com.auxo.pos.core.backup.auto.AutoBackupFailure.FOLDER_UNAVAILABLE) }
-        admin.chooseFolder("content://tree/usb", "USB drive")
+        admin.setSchedule(BackupSchedule.OFF)
         assertNull(store.settings.value.lastFailure)
         assertNull(store.settings.value.lastFailureMillis)
     }
@@ -140,17 +133,9 @@ class AuthorizedAutoBackupServiceTest {
     @Test
     fun everyChange_isWrittenToTheActivityLog() = runBlocking {
         val admin = service(Role.SUPER_ADMIN)
-        admin.chooseFolder("content://tree/sd", "SD card")
+        admin.setSchedule(BackupSchedule.OFF)
         admin.setKeep(5)
         assertEquals(List(2) { AuditAction.AUTO_BACKUP_SETTINGS_CHANGED }, audit.drafts.map { it.action })
-        assertTrue(audit.drafts.first().summary.contains("SD card"))
-    }
-
-    @Test
-    fun backUpNow_savesToTheChosenFolder() = runBlocking {
-        val admin = service(Role.SUPER_ADMIN)
-        admin.chooseFolder("content://tree/sd", "SD card")
-        admin.backUpNow()
-        assertEquals(1, folder.files.size)
+        assertTrue(audit.drafts.first().summary.contains("off"))
     }
 }
