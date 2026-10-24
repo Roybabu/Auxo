@@ -135,6 +135,21 @@ def launcher(symbol: np.ndarray, mono: bool) -> np.ndarray:
     return arr
 
 
+def mono_layer(symbol: np.ndarray) -> np.ndarray:
+    """432 px themed icon layer: the symbol centred by its bounding box, every pixel inside the safe circle, black."""
+    ys, xs = np.where(symbol[..., 3] > 8)
+    box = symbol[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    h, w = box.shape[:2]
+    ys, xs = np.where(box[..., 3] > 8)
+    scale = SAFE_RADIUS_PX / np.hypot(ys - h / 2, xs - w / 2).max()
+    img = Image.fromarray(box, "RGBA").resize((round(w * scale), round(h * scale)), Image.LANCZOS)
+    canvas = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    canvas.alpha_composite(img, ((CANVAS - img.width) // 2, (CANVAS - img.height) // 2))
+    arr = np.asarray(canvas).copy()
+    arr[..., :3] = 0                                    # themed icons use only the shape
+    return arr
+
+
 def launcher_tile(tile: np.ndarray) -> np.ndarray:
     """432 px adaptive-icon foreground: the tile, scaled down only, centred with every corner in the safe circle."""
     ys, xs = np.where(tile[..., 3] > 250)                      # the tile itself, not its soft shadow
@@ -168,7 +183,7 @@ def main() -> None:
     save(launcher_tile(tile), RES / "ic_launcher_foreground.png")
     # Themed (monochrome) icons need a plain shape: the supplied black symbol with thin gaps between the folds.
     mono = np.asarray(Image.open(DESIGN / "auxo-icon-mono.png").convert("RGBA"))
-    save(launcher(mono, mono=True), RES / "ic_launcher_monochrome.png")
+    save(mono_layer(mono), RES / "ic_launcher_monochrome.png")
 
 
 if __name__ == "__main__":
