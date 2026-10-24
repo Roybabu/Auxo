@@ -106,6 +106,10 @@ app/src/main/java/com/auxo/pos/
 └── ui/         Compose screens and navigation
 ```
 
+## Crash and problem reports
+
+If the app crashes, it saves a short report on the phone and offers, the next time you open it, to share it. **More → Send a diagnostic report** makes one on demand. Nothing is sent unless you choose to. A report holds the app and phone version, the error and where it happened, and the names of the last screens opened. It holds no customer, sales or shop details, and database keys, email addresses and long numbers are removed. You can share the file with the developer, or use **Report on GitHub**, which opens a new issue on this repository: anything you paste there is public.
+
 ## Database upgrades
 
 The database starts at version 1, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.

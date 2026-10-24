@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 fun CrashReportPrompt() {
     val context = LocalContext.current
     val chooserTitle = stringResource(R.string.crash_prompt_send)
+    val copied = stringResource(R.string.crash_github_copied)
     var report by remember { mutableStateOf(CrashReports.pending(context)) }
     val file = report ?: return
     AlertDialog(
@@ -35,7 +36,23 @@ fun CrashReportPrompt() {
             report = null
         },
         title = { Text(stringResource(R.string.crash_prompt_title)) },
-        text = { Text(stringResource(R.string.crash_prompt_body)) },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                Text(stringResource(R.string.crash_prompt_body))
+                TextButton(
+                    onClick = {
+                        CrashReports.markAsked(context, file)
+                        report = null
+                        runCatching {
+                            val open = CrashReports.issueIntent(context, file)
+                            android.widget.Toast.makeText(context, copied, android.widget.Toast.LENGTH_LONG).show()
+                            context.startActivity(open)
+                        }
+                    },
+                    modifier = Modifier.testTag("crash_prompt_github"),
+                ) { Text(stringResource(R.string.crash_prompt_github)) }
+            }
+        },
         confirmButton = {
             TextButton(
                 onClick = {

@@ -31,6 +31,7 @@ object CrashReports {
     private const val FRAMES_PER_ERROR = 40
     private const val CAUSES = 5
     private const val MESSAGE_LIMIT = 300
+    internal const val ISSUES_URL = "https://github.com/Roybabu/Auxo/issues/new"
     private const val PREFS = "crash_reports"
     private const val ASKED = "asked"
 
@@ -77,14 +78,33 @@ object CrashReports {
     fun shareIntent(context: Context, file: File): Intent? = share(context, file, "Auxo crash report")
 
     /** A report written now, for when something is wrong but nothing crashed: versions, recent screens, the last crash. */
-    fun diagnosticShare(context: Context): Intent? {
+    fun diagnosticShare(context: Context): Intent? = share(context, diagnosticFile(context), "Auxo diagnostic report")
+
+    /**
+     * Opens a new issue on the project's GitHub page, with the versions filled in, after copying the whole report to the
+     * clipboard for the person to paste (it is too long for the web address). Issues there are public.
+     */
+    fun issueIntent(context: Context, report: File): Intent {
+        runCatching {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Auxo report", report.readText()))
+        }
+        val info = header(context).joinToString("\n")
+        val body = "$info\n\nWhat happened:\n\n\nReport (paste it below):\n"
+        val title = "Problem report: ${header(context).first().substringAfter("version ").substringBefore(" (")}"
+        val url = "$ISSUES_URL?title=${Uri.encode(title)}&body=${Uri.encode(body)}"
+        return Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    }
+
+    /** A diagnostic report written to a file now (see [diagnosticShare]). */
+    fun diagnosticFile(context: Context): File {
         val folder = folder(context).apply { mkdirs() }
         folder.listFiles { f -> f.name.startsWith(DIAGNOSTIC_PREFIX) }?.forEach { it.delete() }
         val now = System.currentTimeMillis()
         val file = File(folder, "$DIAGNOSTIC_PREFIX${fileStamp(now)}.txt")
         val lastCrash = crashFiles(folder).firstOrNull()?.let { runCatching { it.readText() }.getOrNull() }
         file.writeText(renderDiagnostic(header(context), now, recentScreens(), lastCrash))
-        return share(context, file, "Auxo diagnostic report")
+        return file
     }
 
     private fun share(context: Context, file: File, subject: String): Intent? {

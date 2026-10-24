@@ -230,6 +230,7 @@ fun MoreScreen(
             run {
                 val helpContext = androidx.compose.ui.platform.LocalContext.current
                 val helpChooserTitle = stringResource(R.string.crash_prompt_send)
+                val helpCopied = stringResource(R.string.crash_github_copied)
                 MoreItem(
                     R.drawable.ic_activity,
                     stringResource(R.string.help_report_title),
@@ -240,6 +241,19 @@ fun MoreScreen(
                         }
                     },
                     modifier = Modifier.testTag("more_help_report"),
+                )
+                MoreItem(
+                    R.drawable.ic_activity,
+                    stringResource(R.string.help_github_title),
+                    stringResource(R.string.help_github_body),
+                    {
+                        runCatching {
+                            val open = com.auxo.pos.core.diagnostics.CrashReports.issueIntent(helpContext, com.auxo.pos.core.diagnostics.CrashReports.diagnosticFile(helpContext))
+                            android.widget.Toast.makeText(helpContext, helpCopied, android.widget.Toast.LENGTH_LONG).show()
+                            helpContext.startActivity(open)
+                        }
+                    },
+                    modifier = Modifier.testTag("more_help_github"),
                 )
             }
             if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {

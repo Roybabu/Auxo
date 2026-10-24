@@ -1868,4 +1868,8 @@ in %2$s</string>
     <string name="crash_prompt_later">Not now</string>
     <string name="help_report_title">Send a diagnostic report</string>
     <string name="help_report_body">Share a short report if something is not working. It has no customer or sales details.</string>
+    <string name="crash_prompt_github">Report on GitHub</string>
+    <string name="crash_github_copied">Report copied. Paste it into the issue.</string>
+    <string name="help_github_title">Report a problem on GitHub</string>
+    <string name="help_github_body">Opens a public page. Do not add customer or shop details.</string>
 </resources>

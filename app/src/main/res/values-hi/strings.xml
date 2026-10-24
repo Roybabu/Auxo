@@ -1868,4 +1868,8 @@
     <string name="crash_prompt_later">अभी नहीं</string>
     <string name="help_report_title">डायग्नोस्टिक रिपोर्ट भेजें</string>
     <string name="help_report_body">कुछ ठीक से काम न करे तो एक छोटी रिपोर्ट साझा करें। इसमें ग्राहक या बिक्री की जानकारी नहीं होती।</string>
+    <string name="crash_prompt_github">GitHub पर रिपोर्ट करें</string>
+    <string name="crash_github_copied">रिपोर्ट कॉपी हो गई। इसे इश्यू में पेस्ट करें।</string>
+    <string name="help_github_title">GitHub पर समस्या बताएँ</string>
+    <string name="help_github_body">यह सार्वजनिक पेज खोलता है। ग्राहक या दुकान की जानकारी न जोड़ें।</string>
 </resources>
