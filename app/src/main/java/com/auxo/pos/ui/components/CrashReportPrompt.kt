@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun CrashReportPrompt() {
     val context = LocalContext.current
+    val chooserTitle = stringResource(R.string.crash_prompt_send)
     var report by remember { mutableStateOf(CrashReports.pending(context)) }
     val file = report ?: return
     AlertDialog(
@@ -41,7 +42,7 @@ fun CrashReportPrompt() {
                     CrashReports.markAsked(context, file)
                     report = null
                     CrashReports.shareIntent(context, file)?.let { send ->
-                        runCatching { context.startActivity(Intent.createChooser(send, context.getString(R.string.crash_prompt_send))) }
+                        runCatching { context.startActivity(Intent.createChooser(send, chooserTitle)) }
                     }
                 },
                 modifier = Modifier.testTag("crash_prompt_send"),

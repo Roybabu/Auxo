@@ -229,13 +229,14 @@ fun MoreScreen(
             }
             run {
                 val helpContext = androidx.compose.ui.platform.LocalContext.current
+                val helpChooserTitle = stringResource(R.string.crash_prompt_send)
                 MoreItem(
                     R.drawable.ic_activity,
                     stringResource(R.string.help_report_title),
                     stringResource(R.string.help_report_body),
                     {
                         com.auxo.pos.core.diagnostics.CrashReports.diagnosticShare(helpContext)?.let { send ->
-                            runCatching { helpContext.startActivity(android.content.Intent.createChooser(send, helpContext.getString(R.string.crash_prompt_send))) }
+                            runCatching { helpContext.startActivity(android.content.Intent.createChooser(send, helpChooserTitle)) }
                         }
                     },
                     modifier = Modifier.testTag("more_help_report"),
