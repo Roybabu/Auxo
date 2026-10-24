@@ -81,7 +81,7 @@ class AutoBackupScreenTest {
     }
 
     @Test
-    fun allFourSchedules_areOffered_andPickingOneIsReported() {
+    fun everyScheduleIsOffered_andPickingOneIsReported() {
         card(AutoBackupUiState(settings = withFolder))
         for (schedule in BackupSchedule.entries) composeRule.onNodeWithTag("auto_schedule_${schedule.name}").assertIsDisplayed()
         composeRule.onNodeWithTag("auto_schedule_WEEKLY").performClick()

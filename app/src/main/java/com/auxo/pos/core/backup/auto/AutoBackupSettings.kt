@@ -4,7 +4,25 @@
 package com.auxo.pos.core.backup.auto
 
 /** When a backup is made without anyone asking. */
-enum class BackupSchedule { OFF, DAILY, WEEKLY, EVERY_N_INVOICES }
+enum class BackupSchedule(
+    /** How long to wait between backups for the schedules that go by the clock; null for the others. */
+    val intervalMillis: Long? = null,
+) {
+    OFF,
+    MINUTES_15(15 * MINUTE),
+    MINUTES_30(30 * MINUTE),
+    HOURS_1(60 * MINUTE),
+    HOURS_2(2 * 60 * MINUTE),
+    HOURS_3(3 * 60 * MINUTE),
+    HOURS_6(6 * 60 * MINUTE),
+    HOURS_12(12 * 60 * MINUTE),
+    DAILY(24 * 60 * MINUTE),
+    WEEKLY(7 * 24 * 60 * MINUTE),
+    MONTHLY(30 * 24 * 60 * MINUTE),
+    EVERY_N_INVOICES,
+}
+
+private const val MINUTE = 60_000L
 
 /** Why the last automatic backup did not happen, for the warning shown to the Super Admin. */
 enum class AutoBackupFailure {

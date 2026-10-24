@@ -251,7 +251,7 @@ class AppContainer(context: Context) {
 
     val autoBackupSettings: AutoBackupSettingsStore by lazy { SharedPrefsAutoBackupStore(appContext) }
 
-    val autoBackupScheduler: AutoBackupScheduler by lazy { WorkManagerAutoBackupScheduler(appContext) }
+    val autoBackupScheduler: AutoBackupScheduler by lazy { WorkManagerAutoBackupScheduler(appContext) { autoBackupSettings.settings.value.schedule } }
 
     /** Makes the scheduled backups. It acts for the app itself, so it needs nobody signed in. */
     val autoBackupRunner: AutoBackupRunner by lazy {

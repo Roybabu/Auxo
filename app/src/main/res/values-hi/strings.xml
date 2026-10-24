@@ -1281,6 +1281,14 @@
     <string name="auto_backup_off">बंद</string>
     <string name="auto_backup_daily">हर दिन</string>
     <string name="auto_backup_weekly">हर हफ़्ते</string>
+    <string name="auto_backup_every_15m">हर 15 मिनट</string>
+    <string name="auto_backup_every_30m">हर 30 मिनट</string>
+    <string name="auto_backup_every_1h">हर घंटे</string>
+    <string name="auto_backup_every_2h">हर 2 घंटे</string>
+    <string name="auto_backup_every_3h">हर 3 घंटे</string>
+    <string name="auto_backup_every_6h">हर 6 घंटे</string>
+    <string name="auto_backup_every_12h">हर 12 घंटे</string>
+    <string name="auto_backup_monthly">हर महीने</string>
     <string name="auto_backup_after_invoices">कुछ बिलों के बाद</string>
     <string name="auto_backup_every_invoices">हर इतने के बाद बैकअप लें</string>
     <string name="auto_backup_range">%1$d से %2$d के बीच की संख्या लिखें।</string>

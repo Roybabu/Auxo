@@ -209,6 +209,14 @@ private fun ResultLine(result: AutoBackupResult) {
 
 private fun BackupSchedule.labelRes(): Int = when (this) {
     BackupSchedule.OFF -> R.string.auto_backup_off
+    BackupSchedule.MINUTES_15 -> R.string.auto_backup_every_15m
+    BackupSchedule.MINUTES_30 -> R.string.auto_backup_every_30m
+    BackupSchedule.HOURS_1 -> R.string.auto_backup_every_1h
+    BackupSchedule.HOURS_2 -> R.string.auto_backup_every_2h
+    BackupSchedule.HOURS_3 -> R.string.auto_backup_every_3h
+    BackupSchedule.HOURS_6 -> R.string.auto_backup_every_6h
+    BackupSchedule.HOURS_12 -> R.string.auto_backup_every_12h
+    BackupSchedule.MONTHLY -> R.string.auto_backup_monthly
     BackupSchedule.DAILY -> R.string.auto_backup_daily
     BackupSchedule.WEEKLY -> R.string.auto_backup_weekly
     BackupSchedule.EVERY_N_INVOICES -> R.string.auto_backup_after_invoices

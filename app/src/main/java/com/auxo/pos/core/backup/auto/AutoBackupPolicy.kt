@@ -9,19 +9,24 @@ import java.time.Duration
 object AutoBackupPolicy {
 
     private val DAY: Long = Duration.ofDays(1).toMillis()
-    private val WEEK: Long = Duration.ofDays(7).toMillis()
+    private val SIX_HOURS: Long = Duration.ofHours(6).toMillis()
+    private val EARLY_ALLOWANCE: Long = Duration.ofMinutes(2).toMillis()
 
     /** Whether an automatic backup should be made now. A first backup is due as soon as it is switched on. */
     fun isDue(settings: AutoBackupSettings, nowMillis: Long): Boolean {
         if (!settings.isActive) return false
         val last = settings.lastSuccessMillis
-        return when (settings.schedule) {
-            BackupSchedule.OFF -> false
-            BackupSchedule.DAILY -> last == null || nowMillis - last >= DAY
-            BackupSchedule.WEEKLY -> last == null || nowMillis - last >= WEEK
-            BackupSchedule.EVERY_N_INVOICES -> last == null || settings.invoicesSinceBackup >= settings.invoiceInterval
-        }
+        if (settings.schedule == BackupSchedule.EVERY_N_INVOICES) return last == null || settings.invoicesSinceBackup >= settings.invoiceInterval
+        val interval = settings.schedule.intervalMillis ?: return false
+        if (last == null) return true
+        // The phone wakes the app a little off schedule, so a short wait is not missed by a minute or two.
+        val early = if (interval < DAY) EARLY_ALLOWANCE else 0L
+        return nowMillis - last >= interval - early
     }
+
+    /** How often the phone is asked to wake the app: as often as the schedule needs, but never under 15 minutes nor over 6 hours. */
+    fun checkEveryMinutes(schedule: BackupSchedule): Long =
+        ((schedule.intervalMillis ?: SIX_HOURS) / 60_000L).coerceIn(15L, SIX_HOURS / 60_000L)
 
     /** A failed attempt is not retried more than once an hour, so a missing card does not keep the app busy. */
     fun mayRetry(settings: AutoBackupSettings, nowMillis: Long): Boolean {
@@ -38,11 +43,11 @@ object AutoBackupPolicy {
         return AutoBackupStatus.OK
     }
 
-    private fun overdue(settings: AutoBackupSettings, succeededAt: Long, nowMillis: Long): Boolean = when (settings.schedule) {
-        BackupSchedule.OFF -> false
-        BackupSchedule.DAILY -> nowMillis - succeededAt > 2 * DAY
-        BackupSchedule.WEEKLY -> nowMillis - succeededAt > 2 * WEEK
-        BackupSchedule.EVERY_N_INVOICES -> settings.invoicesSinceBackup >= 2 * settings.invoiceInterval
+    private fun overdue(settings: AutoBackupSettings, succeededAt: Long, nowMillis: Long): Boolean {
+        if (settings.schedule == BackupSchedule.EVERY_N_INVOICES) return settings.invoicesSinceBackup >= 2 * settings.invoiceInterval
+        val interval = settings.schedule.intervalMillis ?: return false
+        // A phone that is asleep may skip several short rounds, so it is only late after at least six hours.
+        return nowMillis - succeededAt > maxOf(2 * interval, SIX_HOURS)
     }
 
     private val RETRY_AFTER_FAILURE: Long = Duration.ofHours(1).toMillis()

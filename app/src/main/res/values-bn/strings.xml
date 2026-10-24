@@ -1281,6 +1281,14 @@
     <string name="auto_backup_off">বন্ধ</string>
     <string name="auto_backup_daily">প্রতিদিন</string>
     <string name="auto_backup_weekly">প্রতি সপ্তাহে</string>
+    <string name="auto_backup_every_15m">প্রতি ১৫ মিনিটে</string>
+    <string name="auto_backup_every_30m">প্রতি ৩০ মিনিটে</string>
+    <string name="auto_backup_every_1h">প্রতি ঘণ্টায়</string>
+    <string name="auto_backup_every_2h">প্রতি ২ ঘণ্টায়</string>
+    <string name="auto_backup_every_3h">প্রতি ৩ ঘণ্টায়</string>
+    <string name="auto_backup_every_6h">প্রতি ৬ ঘণ্টায়</string>
+    <string name="auto_backup_every_12h">প্রতি ১২ ঘণ্টায়</string>
+    <string name="auto_backup_monthly">প্রতি মাসে</string>
     <string name="auto_backup_after_invoices">কয়েকটি বিলের পর</string>
     <string name="auto_backup_every_invoices">প্রতি এতগুলোর পর ব্যাকআপ নিন</string>
     <string name="auto_backup_range">%1$d থেকে %2$d-এর মধ্যে একটি সংখ্যা লিখুন।</string>

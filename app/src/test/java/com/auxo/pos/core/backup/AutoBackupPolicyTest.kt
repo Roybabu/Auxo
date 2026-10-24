@@ -57,6 +57,43 @@ class AutoBackupPolicyTest {
     }
 
     @Test
+    fun timedSchedules_areDueAfterTheirInterval_withASmallAllowanceForAnEarlyWakeUp() {
+        val minute = 60_000L
+        val cases = mapOf(
+            BackupSchedule.MINUTES_15 to 15 * minute, BackupSchedule.MINUTES_30 to 30 * minute, BackupSchedule.HOURS_1 to hour,
+            BackupSchedule.HOURS_2 to 2 * hour, BackupSchedule.HOURS_3 to 3 * hour, BackupSchedule.HOURS_6 to 6 * hour, BackupSchedule.HOURS_12 to 12 * hour,
+        )
+        for ((schedule, interval) in cases) {
+            assertFalse(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval + 5 * minute), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval + minute), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule), now))
+        }
+    }
+
+    @Test
+    fun monthly_isDueAfterThirtyDays_notBefore() {
+        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.MONTHLY, lastSuccess = now - 29 * day), now))
+        assertTrue(AutoBackupPolicy.isDue(active(BackupSchedule.MONTHLY, lastSuccess = now - 30 * day), now))
+    }
+
+    @Test
+    fun thePhoneIsWokenAsOftenAsTheScheduleNeeds_between15MinutesAndSixHours() {
+        assertEquals(15L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_15))
+        assertEquals(30L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_30))
+        assertEquals(180L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.HOURS_3))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.HOURS_12))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.DAILY))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.EVERY_N_INVOICES))
+    }
+
+    @Test
+    fun aShortSchedule_isOnlyOverdueAfterSixHours() {
+        assertEquals(AutoBackupStatus.OK, AutoBackupPolicy.status(active(BackupSchedule.MINUTES_15, lastSuccess = now - 5 * hour), now))
+        assertEquals(AutoBackupStatus.OVERDUE, AutoBackupPolicy.status(active(BackupSchedule.MINUTES_15, lastSuccess = now - 7 * hour), now))
+    }
+
+    @Test
     fun weekly_isDueAfterSevenDays_notBefore() {
         assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.WEEKLY, lastSuccess = now - 6 * day), now))
         assertTrue(AutoBackupPolicy.isDue(active(BackupSchedule.WEEKLY, lastSuccess = now - 7 * day), now))
