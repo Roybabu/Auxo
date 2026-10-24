@@ -18,7 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -57,7 +57,7 @@ private fun rememberInstall(updater: AppUpdater, onNeedsPermission: () -> Unit):
 fun UpdateCard(modifier: Modifier = Modifier) {
     val updater = LocalContext.current.appUpdater()
     val state by updater.state.collectAsStateWithLifecycle()
-    var permissionHint by remember { mutableStateOf(false) }
+    var permissionHint by rememberSaveable { mutableStateOf(false) }
     val install = rememberInstall(updater) { permissionHint = true }
     AuxoCard(modifier = modifier.fillMaxWidth().testTag("update_card")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {

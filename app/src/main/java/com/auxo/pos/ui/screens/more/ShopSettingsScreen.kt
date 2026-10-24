@@ -17,6 +17,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -184,7 +185,7 @@ private fun MetalRatesCard(state: ShopUiState, onSave: (Map<JewelleryMetal, Stri
 /** How many tables the restaurant has. Parking a restaurant bill asks for one of them. */
 @Composable
 private fun TablesCard(tableCount: Int, onChange: (String) -> Unit) {
-    var text by remember(tableCount) { androidx.compose.runtime.mutableStateOf(tableCount.toString()) }
+    var text by rememberSaveable(tableCount) { androidx.compose.runtime.mutableStateOf(tableCount.toString()) }
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("tables_card")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.shop_tables_title), style = MaterialTheme.typography.titleSmall)

@@ -956,7 +956,7 @@ private fun CartLineCard(
                     Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
                 } else {
                     // Typed in kilograms or litres; an entry that is not a valid amount is ignored until it is.
-                    var typed by remember(quantity) { mutableStateOf(stockUnit.toEntryText(quantity)) }
+                    var typed by rememberSaveable(quantity) { mutableStateOf(stockUnit.toEntryText(quantity)) }
                     AuxoTextField(
                         value = typed,
                         onValueChange = {
@@ -1276,7 +1276,7 @@ private fun CustomerSaveError.messageRes(): Int = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatePicker(label: String, selectedCode: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier, error: String? = null) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = modifier) {
         OutlinedTextField(
             value = if (selectedCode.isEmpty()) "" else IndianStates.label(selectedCode),

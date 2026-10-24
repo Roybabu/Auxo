@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,7 +92,7 @@ fun InventoryListScreen(
     onOpenStockPage: (StockPage) -> Unit = {},
     viewModel: InventoryViewModel = viewModel(factory = InventoryViewModel.Factory),
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
+    var menuOpen by rememberSaveable { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current

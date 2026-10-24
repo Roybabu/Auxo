@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -354,7 +355,7 @@ fun ReportTableView(table: ReportTable, modifier: Modifier = Modifier) {
         }
     }
     // Back to the first page when a different report or fewer rows arrive; a refresh keeps the page.
-    var requestedPage by remember(table.columns) { mutableIntStateOf(0) }
+    var requestedPage by rememberSaveable(table.columns) { mutableIntStateOf(0) }
     val page = ReportPaging.clamp(requestedPage, table.rows.size)
     val shown = ReportPaging.range(page, table.rows.size)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
