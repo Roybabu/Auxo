@@ -4,11 +4,28 @@
 package com.auxo.pos.core.backup.auto
 
 /** When a backup is made without anyone asking. */
-enum class BackupSchedule { OFF, DAILY, WEEKLY, EVERY_N_INVOICES }
+enum class BackupSchedule(
+    /** How long to wait between backups for the schedules that go by the clock; null for the others. */
+    val intervalMillis: Long? = null,
+) {
+    OFF,
+    MINUTES_15(15 * MINUTE),
+    MINUTES_30(30 * MINUTE),
+    HOURS_1(60 * MINUTE),
+    HOURS_2(2 * 60 * MINUTE),
+    HOURS_3(3 * 60 * MINUTE),
+    HOURS_6(6 * 60 * MINUTE),
+    HOURS_12(12 * 60 * MINUTE),
+    DAILY(24 * 60 * MINUTE),
+    WEEKLY(7 * 24 * 60 * MINUTE),
+    EVERY_N_INVOICES,
+}
+
+private const val MINUTE = 60_000L
 
 /** Why the last automatic backup did not happen, for the warning shown to the Super Admin. */
 enum class AutoBackupFailure {
-    /** The chosen folder can no longer be written to (card removed, access withdrawn, account signed out). */
+    /** The Auxo folder in Documents cannot be written to (storage full or unavailable, or access to it was refused). */
     FOLDER_UNAVAILABLE,
 
     /** The backup could not be made or written. */
@@ -19,14 +36,10 @@ enum class AutoBackupFailure {
 }
 
 /**
- * Everything chosen for automatic backup, plus what happened last time. The folder is one the Super Admin
- * picked with the phone's own folder picker: an SD card, a USB drive, or a Google Drive folder.
+ * Everything chosen for automatic backup, plus what happened last time. Backups always go to the Auxo folder
+ * inside Documents on this phone, which is created the first time.
  */
 data class AutoBackupSettings(
-    /** The picked folder, as a document-tree address. Null until one is chosen. */
-    val folderUri: String? = null,
-    /** The folder's name, for showing. */
-    val folderName: String = "",
     val schedule: BackupSchedule = BackupSchedule.OFF,
     /** For [BackupSchedule.EVERY_N_INVOICES]: how many new invoices trigger a backup. */
     val invoiceInterval: Int = DEFAULT_INVOICE_INTERVAL,
@@ -38,8 +51,8 @@ data class AutoBackupSettings(
     /** Invoices made since the last successful automatic backup. */
     val invoicesSinceBackup: Int = 0,
 ) {
-    /** Automatic backup will run: a schedule is chosen and there is a folder to put it in. */
-    val isActive: Boolean get() = schedule != BackupSchedule.OFF && !folderUri.isNullOrEmpty()
+    /** Automatic backup will run: a schedule is chosen. */
+    val isActive: Boolean get() = schedule != BackupSchedule.OFF
 
     /** Keeps every number inside the range the screen allows, whatever was saved or typed. */
     fun sanitized(): AutoBackupSettings = copy(

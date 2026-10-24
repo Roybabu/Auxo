@@ -47,6 +47,9 @@ enum class BackupProblem {
 
     /** Backups are set to be locked, but the passphrase cannot be read on this phone any more. */
     PASSPHRASE_UNAVAILABLE,
+
+    /** The file is an unlocked (zip) backup. Only backups locked with a passphrase can be restored. */
+    NOT_LOCKED,
 }
 
 class BackupException(val problem: BackupProblem, message: String? = null, cause: Throwable? = null) :

@@ -123,11 +123,16 @@ fun FindBackupDialog(
         }
     }
 
-    // A locked backup asks for its passphrase on top of the sheet.
-    if (state.unlocking && state.selected != null && !state.restoring) {
+    // A locked backup asks for its passphrase as soon as Restore shop is tapped, so the next step can name the shop.
+    if (state.unlocking && !state.restoring) {
         Dialog(onDismissRequest = viewModel::onSelectionCancelled) {
             Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) {
-                UnlockForm(onUnlock = viewModel::onPassphrase, onCancel = viewModel::onSelectionCancelled)
+                UnlockForm(
+                    onUnlock = viewModel::onPassphrase,
+                    onCancel = viewModel::onSelectionCancelled,
+                    error = state.problem?.let { stringResource(problemText(it)) },
+                    actionLabel = stringResource(R.string.find_unlock_action),
+                )
             }
         }
     }
@@ -533,6 +538,7 @@ private fun fileSize(backup: FoundBackup): String {
 
 private fun problemText(problem: BackupProblem): Int = when (problem) {
     BackupProblem.NOT_A_BACKUP -> R.string.backup_error_not_a_backup
+    BackupProblem.NOT_LOCKED -> R.string.backup_error_not_locked
     BackupProblem.WRONG_APP -> R.string.backup_error_wrong_app
     BackupProblem.NEWER_BACKUP -> R.string.backup_error_newer
     BackupProblem.CORRUPT -> R.string.backup_error_corrupt

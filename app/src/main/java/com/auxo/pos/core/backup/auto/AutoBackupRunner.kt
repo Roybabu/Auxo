@@ -39,7 +39,7 @@ sealed interface AutoBackupResult {
  */
 class AutoBackupRunner(
     private val store: AutoBackupSettingsStore,
-    private val folderFor: (folderUri: String) -> BackupFolder,
+    private val folder: () -> BackupFolder,
     private val backUpTo: suspend (BackupStorage) -> SavedBackup,
     private val clock: Clock,
     private val log: suspend (AuditDraft) -> Unit = {},
@@ -57,13 +57,6 @@ class AutoBackupRunner(
         backUp(settings)
     }
 
-    /** Makes a backup now, whatever the schedule says, if a folder has been chosen. */
-    suspend fun runNow(): AutoBackupResult = running.withLock {
-        val settings = store.settings.value
-        if (settings.folderUri.isNullOrEmpty()) return@withLock AutoBackupResult.NotDue
-        backUp(settings)
-    }
-
     /** Counts a finished sale towards "every N invoices". Does nothing when automatic backup is off. */
     fun onInvoiceRecorded() {
         store.update { if (it.isActive) it.copy(invoicesSinceBackup = it.invoicesSinceBackup + 1) else it }
@@ -73,11 +66,10 @@ class AutoBackupRunner(
     fun isDueNow(): Boolean = AutoBackupPolicy.isDue(store.settings.value, clock.millis())
 
     private suspend fun backUp(settings: AutoBackupSettings): AutoBackupResult {
-        val uri = settings.folderUri ?: return AutoBackupResult.NotDue
         val countedBefore = settings.invoicesSinceBackup
         return try {
             if (needsPassphrase()) throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
-            val storage = FolderBackupStorage(folderFor(uri))
+            val storage = FolderBackupStorage(folder())
             val saved = backUpTo(storage)
             // A failed clean-up must not turn a good backup into a failure.
             val removed = runCatching { storage.prune(settings.keep) }.getOrDefault(0)
@@ -115,7 +107,7 @@ class AutoBackupRunner(
     }
 
     private fun AutoBackupFailure.describe(): String = when (this) {
-        AutoBackupFailure.FOLDER_UNAVAILABLE -> "the backup folder is not available"
+        AutoBackupFailure.FOLDER_UNAVAILABLE -> "the Auxo folder in Documents is not available"
         AutoBackupFailure.SAVE_FAILED -> "the backup could not be saved"
         AutoBackupFailure.PASSPHRASE_REQUIRED -> "no backup passphrase is set"
     }

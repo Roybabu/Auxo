@@ -60,7 +60,9 @@ class BackupManagerTest {
     private fun open(): AuxoDatabase =
         AuxoDatabase.builder(context).allowMainThreadQueries().build()
 
-    private fun manager(db: AuxoDatabase) = BackupManager(context, db, appearance, storage, TestData.clock)
+    private val pass = "test backup passphrase"
+
+    private fun manager(db: AuxoDatabase) = BackupManager(context, db, appearance, storage, TestData.clock, passphrases = MemoryPassphrase(pass))
 
     private fun saveNew(db: AuxoDatabase, product: Product) = runBlocking {
         val fresh = product.copy(id = 0, variants = product.variants.map { it.copy(id = 0, productId = 0) })
@@ -91,7 +93,7 @@ class BackupManagerTest {
         val saved = manager(database).backUp()
 
         assertEquals("Documents/Auxo", saved.folder)
-        assertEquals("Auxo-backup-2026-10-10_1000.zip", saved.fileName)
+        assertEquals("Auxo-backup-2026-10-10_1000.auxobak", saved.fileName)
         assertTrue(storage.files.containsKey(saved.fileName))
         assertEquals(TestData.clock.millis(), manager(database).lastBackupMillis())
     }
@@ -111,7 +113,7 @@ class BackupManagerTest {
         appearance.setDarkMode(false)
         assertEquals(2, names(database).size)
 
-        manager(database).restoreFrom(ByteArrayInputStream(backup))
+        manager(database).restoreFrom(ByteArrayInputStream(backup), pass)
 
         val reopened = open()
         try {
@@ -134,14 +136,14 @@ class BackupManagerTest {
         val later = "ffffffffffffffffffffffffffffffff.jpg"
         java.io.File(dir, kept).writeBytes(byteArrayOf(1, 2, 3, 4))
         saveNew(database, TestData.tShirt().copy(photoFile = kept))
-        val manager = BackupManager(context, database, appearance, storage, TestData.clock, photos = photos)
+        val manager = BackupManager(context, database, appearance, storage, TestData.clock, photos = photos, passphrases = MemoryPassphrase(pass))
         val backup = storage.files.getValue(manager.backUp().fileName)
 
         // The photo is lost, and another one is added after the backup.
         java.io.File(dir, kept).delete()
         java.io.File(dir, later).writeBytes(byteArrayOf(9))
 
-        manager.restoreFrom(ByteArrayInputStream(backup))
+        manager.restoreFrom(ByteArrayInputStream(backup), pass)
 
         assertEquals(listOf<Byte>(1, 2, 3, 4), java.io.File(dir, kept).readBytes().toList())
         assertTrue(!java.io.File(dir, later).exists())
@@ -165,7 +167,7 @@ class BackupManagerTest {
 
         val fresh = open()
         fresh.openHelper.writableDatabase // creates the empty database a new install would have
-        manager(fresh).restoreFrom(ByteArrayInputStream(backup))
+        manager(fresh).restoreFrom(ByteArrayInputStream(backup), pass)
 
         val reopened = open()
         try {
@@ -244,19 +246,13 @@ class BackupManagerTest {
     }
 
     @Test
-    fun anOldUnlockedBackup_stillRestores_evenWhenAPassphraseIsGiven() = runBlocking {
+    fun anUnlockedZipBackup_isNeverRestored_andChangesNothing() = runBlocking {
         saveNew(database, TestData.tShirt())
-        val plain = storage.files.getValue(manager(database).backUp().fileName)
-        saveNew(database, TestData.biscuits())
+        val zip = byteArrayOf('P'.code.toByte(), 'K'.code.toByte(), 3, 4) + ByteArray(64)
 
-        manager(database).restoreFrom(ByteArrayInputStream(plain), "not needed")
-
-        val reopened = open()
-        try {
-            assertEquals(listOf("Cotton T-Shirt"), names(reopened))
-        } finally {
-            reopened.close()
-        }
+        assertEquals(BackupProblem.NOT_LOCKED, problemOf { manager(database).restoreFrom(ByteArrayInputStream(zip)) })
+        assertEquals(BackupProblem.NOT_LOCKED, problemOf { manager(database).restoreFrom(ByteArrayInputStream(zip), "not needed") })
+        assertEquals(listOf("Cotton T-Shirt"), names(database))
     }
 
     @Test
@@ -274,12 +270,12 @@ class BackupManagerTest {
     }
 
     @Test
-    fun turningLockingOff_makesPlainBackupsAgain() = runBlocking {
-        val store = MemoryPassphrase("correct horse")
-        val manager = lockedManager(database, store)
-        assertTrue(manager.isProtected())
+    fun withNoPassphrase_noBackupIsMade_soNoUnlockedFileExists() = runBlocking {
+        assertEquals(BackupProblem.PASSPHRASE_UNAVAILABLE, problemOf { runBlocking { BackupManager(context, database, appearance, storage, TestData.clock).backUp() } })
+        val manager = lockedManager(database, MemoryPassphrase("correct horse"))
         manager.clearPassphrase()
         assertTrue(!manager.isProtected())
-        assertTrue(manager.backUp().fileName.endsWith(".zip"))
+        assertEquals(BackupProblem.PASSPHRASE_UNAVAILABLE, problemOf { runBlocking { manager.backUp() } })
+        assertTrue(storage.files.isEmpty())
     }
 }

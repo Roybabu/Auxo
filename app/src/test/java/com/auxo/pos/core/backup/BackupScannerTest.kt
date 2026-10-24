@@ -74,9 +74,10 @@ class BackupScannerTest {
 
     @Test
     fun onlyBackupLookingNamesAreOpened() {
-        assertTrue(BackupScanner.isCandidate("Auxo-backup-2026-10-24_1200.zip"))
+        assertFalse(BackupScanner.isCandidate("Auxo-backup-2026-10-24_1200.zip"))
         assertTrue(BackupScanner.isCandidate("Auxo-backup-2026-10-24_1200.auxobak"))
-        assertTrue(BackupScanner.isCandidate("COPY.ZIP"))
+        assertFalse(BackupScanner.isCandidate("COPY.ZIP"))
+        assertTrue(BackupScanner.isCandidate("COPY.AUXOBAK"))
         assertFalse(BackupScanner.isCandidate("photo.jpg"))
     }
 

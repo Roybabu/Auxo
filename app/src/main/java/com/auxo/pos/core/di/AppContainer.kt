@@ -38,7 +38,7 @@ import com.auxo.pos.core.auth.SessionUser
 import com.auxo.pos.core.backup.auto.AutoBackupRunner
 import com.auxo.pos.core.backup.auto.AutoBackupScheduler
 import com.auxo.pos.core.backup.auto.AutoBackupSettingsStore
-import com.auxo.pos.core.backup.auto.DocumentTreeFolder
+import com.auxo.pos.core.backup.auto.DocumentsAutoFolder
 import com.auxo.pos.core.backup.auto.SharedPrefsAutoBackupStore
 import com.auxo.pos.core.backup.auto.WorkManagerAutoBackupScheduler
 import com.auxo.pos.data.security.AuthorizedAutoBackupService
@@ -251,14 +251,14 @@ class AppContainer(context: Context) {
 
     val autoBackupSettings: AutoBackupSettingsStore by lazy { SharedPrefsAutoBackupStore(appContext) }
 
-    val autoBackupScheduler: AutoBackupScheduler by lazy { WorkManagerAutoBackupScheduler(appContext) }
+    val autoBackupScheduler: AutoBackupScheduler by lazy { WorkManagerAutoBackupScheduler(appContext) { autoBackupSettings.settings.value.schedule } }
 
     /** Makes the scheduled backups. It acts for the app itself, so it needs nobody signed in. */
     val autoBackupRunner: AutoBackupRunner by lazy {
         val system = SessionUser(0L, "Automatic backup", Role.SUPER_ADMIN, emptySet())
         AutoBackupRunner(
             store = autoBackupSettings,
-            folderFor = { uri -> DocumentTreeFolder(appContext, uri.toUri()) },
+            folder = { DocumentsAutoFolder(appContext) },
             backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },

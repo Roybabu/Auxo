@@ -4,10 +4,6 @@
 package com.auxo.pos.ui.screens.more
 
 import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
@@ -56,10 +52,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.backup.BackupCrypto
 import com.auxo.pos.core.backup.BackupProblem
-import com.auxo.pos.core.backup.DocumentsBackupStorage
 import com.auxo.pos.core.backup.PassphraseStrength
 import com.auxo.pos.core.backup.RestartApp
-import com.auxo.pos.core.backup.SavedBackup
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.format.DateFormats
@@ -92,16 +86,11 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
         onBack = onBack,
         onBackUp = onBackUp,
         onChooseFile = { picker.launch(arrayOf("*/*")) },
-        onShare = { saved -> shareBackup(context, saved) },
         onConfirmRestore = viewModel::onRestoreConfirmed,
         onCancelRestore = viewModel::onRestoreCancelled,
         onDismissProblem = viewModel::onProblemDismissed,
-        onChoosePassphrase = viewModel::onChoosePassphrase,
         onPassphraseSet = viewModel::onPassphraseSet,
         onChoosePassphraseCancelled = viewModel::onChoosePassphraseCancelled,
-        onAskTurnOff = viewModel::onAskTurnOff,
-        onTurnOffConfirmed = viewModel::onTurnOffConfirmed,
-        onTurnOffCancelled = viewModel::onTurnOffCancelled,
         onPassphraseForRestore = viewModel::onPassphraseForRestore,
         onUnlockCancelled = viewModel::onUnlockCancelled,
         extra = { AutoBackupSection() },
@@ -114,16 +103,11 @@ fun BackupContent(
     onBack: () -> Unit,
     onBackUp: () -> Unit,
     onChooseFile: () -> Unit,
-    onShare: (SavedBackup) -> Unit,
     onConfirmRestore: () -> Unit,
     onCancelRestore: () -> Unit,
     onDismissProblem: () -> Unit,
-    onChoosePassphrase: () -> Unit = {},
     onPassphraseSet: (String) -> Unit = {},
     onChoosePassphraseCancelled: () -> Unit = {},
-    onAskTurnOff: () -> Unit = {},
-    onTurnOffConfirmed: () -> Unit = {},
-    onTurnOffCancelled: () -> Unit = {},
     onPassphraseForRestore: (String) -> Unit = {},
     onUnlockCancelled: () -> Unit = {},
     /** More cards shown between making a backup and restoring one. */
@@ -181,8 +165,6 @@ fun BackupContent(
                 }
             }
 
-            ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
-
             extra()
 
             state.saved?.let { saved ->
@@ -197,9 +179,6 @@ fun BackupContent(
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.testTag("backup_app_only_warning"),
                             )
-                        }
-                        OutlinedButton(onClick = { onShare(saved) }, modifier = Modifier.fillMaxWidth().testTag("backup_share")) {
-                            Text(stringResource(R.string.backup_share))
                         }
                     }
                 }
@@ -218,31 +197,10 @@ fun BackupContent(
                     }
                 }
             }
-
-            if (!state.isProtected) {
-                Text(
-                    text = stringResource(R.string.backup_privacy),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 
     if (state.choosingPassphrase) ChoosePassphraseDialog(onSave = onPassphraseSet, onCancel = onChoosePassphraseCancelled)
-    if (state.confirmingTurnOff) {
-        AlertDialog(
-            onDismissRequest = onTurnOffCancelled,
-            title = { Text(stringResource(R.string.backup_turn_off_title)) },
-            text = { Text(stringResource(R.string.backup_turn_off_body)) },
-            confirmButton = {
-                TextButton(onClick = onTurnOffConfirmed, modifier = Modifier.testTag("backup_turn_off_confirm")) {
-                    Text(stringResource(R.string.backup_protect_turn_off), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = { TextButton(onClick = onTurnOffCancelled) { Text(stringResource(R.string.action_cancel)) } },
-        )
-    }
     if (state.unlocking != null) UnlockDialog(onUnlock = onPassphraseForRestore, onCancel = onUnlockCancelled)
 
     if (state.pendingRestore != null) {
@@ -260,32 +218,9 @@ fun BackupContent(
     }
 }
 
-/** Whether new backups are locked, with the buttons to change that. */
-@Composable
-private fun ProtectionCard(isProtected: Boolean, onChoose: () -> Unit, onTurnOff: () -> Unit) {
-    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("backup_protection")) {
-        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-            Text(stringResource(R.string.backup_protect_title), style = MaterialTheme.typography.titleMedium)
-            Text(
-                stringResource(if (isProtected) R.string.backup_protect_on_body else R.string.backup_protect_off_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedButton(onClick = onChoose, modifier = Modifier.fillMaxWidth().testTag("backup_protect_set")) {
-                Text(stringResource(if (isProtected) R.string.backup_protect_change else R.string.backup_protect_set))
-            }
-            if (isProtected) {
-                TextButton(onClick = onTurnOff, modifier = Modifier.fillMaxWidth().testTag("backup_protect_off")) {
-                    Text(stringResource(R.string.backup_protect_turn_off), color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-    }
-}
-
 /** Asks for a new passphrase twice, with a plain warning that it cannot be recovered. */
 @Composable
-private fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
+internal fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
     Dialog(onDismissRequest = onCancel) {
         Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) { ChoosePassphraseForm(onSave, onCancel) }
     }
@@ -368,7 +303,7 @@ private fun UnlockDialog(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
 
 /** The contents of the box above, on its own so it can be tested without a dialog window. */
 @Composable
-internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
+internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit, error: String? = null, actionLabel: String? = null) {
     var passphrase by remember { mutableStateOf("") }
     Column(
         modifier = Modifier.padding(Spacing.xl).verticalScroll(rememberScrollState()),
@@ -385,10 +320,13 @@ internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth().testTag("backup_unlock_field"),
         )
+        if (error != null) {
+            Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("backup_unlock_error"))
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
             TextButton(onClick = { onUnlock(passphrase) }, enabled = passphrase.isNotEmpty(), modifier = Modifier.testTag("backup_unlock_action")) {
-                Text(stringResource(R.string.backup_unlock_action))
+                Text(actionLabel ?: stringResource(R.string.backup_unlock_action))
             }
         }
     }
@@ -398,6 +336,7 @@ internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit) {
 private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
     val message = when (problem) {
         BackupProblem.NOT_A_BACKUP -> R.string.backup_error_not_a_backup
+        BackupProblem.NOT_LOCKED -> R.string.backup_error_not_locked
         BackupProblem.WRONG_APP -> R.string.backup_error_wrong_app
         BackupProblem.NEWER_BACKUP -> R.string.backup_error_newer
         BackupProblem.CORRUPT -> R.string.backup_error_corrupt
@@ -421,20 +360,5 @@ private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
             )
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.backup_dismiss)) }
         }
-    }
-}
-
-private fun shareBackup(context: Context, saved: SavedBackup) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = DocumentsBackupStorage.mimeTypeFor(saved.fileName)
-        putExtra(Intent.EXTRA_STREAM, saved.uri)
-        putExtra(Intent.EXTRA_SUBJECT, saved.fileName)
-        clipData = ClipData.newRawUri(saved.fileName, saved.uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    try {
-        context.startActivity(Intent.createChooser(send, context.getString(R.string.backup_share_title)))
-    } catch (e: ActivityNotFoundException) {
-        // No app can take the file; it is still in the Auxo folder.
     }
 }

@@ -3,86 +3,78 @@
 
 package com.auxo.pos.ui.screens.more
 
-import android.content.Intent
-import android.net.Uri
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.backup.auto.AutoBackupFailure
-import com.auxo.pos.core.backup.auto.AutoBackupResult
 import com.auxo.pos.core.backup.auto.AutoBackupSettings
 import com.auxo.pos.core.backup.auto.BackupSchedule
-import com.auxo.pos.core.backup.auto.DocumentTreeFolder
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.components.DropdownField
 import com.auxo.pos.ui.format.DateFormats
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.AutoBackupUiState
 import com.auxo.pos.viewmodel.AutoBackupViewModel
 
-/** Automatic backup on the Backup page: where, how often and how many to keep. */
+/** Automatic backup on the Backup page: how often, and how many to keep. Backups go to Documents/Auxo by themselves. */
 @Composable
 fun AutoBackupSection(viewModel: AutoBackupViewModel = viewModel(factory = AutoBackupViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree: Uri? ->
-        if (tree == null) return@rememberLauncherForActivityResult
-        val resolver = context.contentResolver
-        try {
-            // Keep access across restarts, and let go of the folder used before so the phone's limit is not used up.
-            resolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            state.settings.folderUri?.let(Uri::parse)?.takeIf { it != tree }?.let { old ->
-                runCatching { resolver.releasePersistableUriPermission(old, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
-            }
-            val name = DocumentTreeFolder(context, tree).label.ifEmpty { tree.lastPathSegment.orEmpty() }
-            viewModel.onFolderPicked(tree.toString(), name)
-        } catch (e: SecurityException) {
-            viewModel.onFolderAccessProblem()
-        }
+    // Android 9 and older need the storage permission to save into Documents/Auxo; it is asked for before a schedule starts.
+    var pendingSchedule by remember { mutableStateOf<BackupSchedule?>(null) }
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        pendingSchedule?.let(viewModel::onScheduleChange)
+        pendingSchedule = null
     }
     AutoBackupCardContent(
         state = state,
-        onChooseFolder = { picker.launch(null) },
-        onSchedule = viewModel::onScheduleChange,
+        onSchedule = { option ->
+            val needsPermission = option != BackupSchedule.OFF && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+            if (needsPermission) {
+                pendingSchedule = option
+                storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            } else {
+                viewModel.onScheduleChange(option)
+            }
+        },
         onInterval = viewModel::onIntervalChange,
         onKeep = viewModel::onKeepChange,
-        onBackUpNow = viewModel::onBackUpNow,
     )
+    // Asked for as soon as a schedule is chosen and no passphrase exists yet; cancelling leaves the schedule as it was.
+    if (state.choosingPassphrase) ChoosePassphraseDialog(onSave = viewModel::onPassphraseSet, onCancel = viewModel::onPassphraseCancelled)
 }
 
 @Composable
 fun AutoBackupCardContent(
     state: AutoBackupUiState,
-    onChooseFolder: () -> Unit,
     onSchedule: (BackupSchedule) -> Unit,
     onInterval: (String) -> Unit,
     onKeep: (String) -> Unit,
-    onBackUpNow: () -> Unit,
 ) {
     val settings = state.settings
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("auto_backup_card")) {
@@ -94,39 +86,16 @@ fun AutoBackupCardContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            // Where
-            Text(stringResource(R.string.auto_backup_folder), style = MaterialTheme.typography.labelLarge)
-            Text(
-                text = if (settings.folderUri.isNullOrEmpty()) stringResource(R.string.auto_backup_no_folder) else settings.folderName.ifEmpty { stringResource(R.string.auto_backup_folder_chosen) },
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.testTag("auto_backup_folder"),
-            )
-            OutlinedButton(onClick = onChooseFolder, modifier = Modifier.fillMaxWidth().testTag("auto_backup_choose_folder")) {
-                Text(stringResource(if (settings.folderUri.isNullOrEmpty()) R.string.auto_backup_choose else R.string.auto_backup_change))
-            }
-            if (state.folderAccessProblem) {
-                Text(
-                    stringResource(R.string.auto_backup_access_problem),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.testTag("auto_backup_access_problem"),
-                )
-            }
-
             // When
-            Text(stringResource(R.string.auto_backup_when), style = MaterialTheme.typography.labelLarge)
-            BackupSchedule.entries.forEach { option ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(selected = settings.schedule == option, role = Role.RadioButton, onClick = { onSchedule(option) })
-                        .testTag("auto_schedule_${option.name}"),
-                ) {
-                    RadioButton(selected = settings.schedule == option, onClick = null)
-                    Text(stringResource(option.labelRes()), modifier = Modifier.padding(start = Spacing.sm))
-                }
-            }
+            val scheduleLabels = BackupSchedule.entries.associateWith { stringResource(it.labelRes()) }
+            DropdownField(
+                label = stringResource(R.string.auto_backup_when),
+                value = scheduleLabels.getValue(settings.schedule),
+                options = BackupSchedule.entries,
+                optionText = { scheduleLabels.getValue(it) },
+                onSelect = onSchedule,
+                modifier = Modifier.fillMaxWidth().testTag("auto_schedule_picker"),
+            )
             if (settings.schedule == BackupSchedule.EVERY_N_INVOICES) {
                 AuxoTextField(
                     value = state.intervalText,
@@ -150,15 +119,6 @@ fun AutoBackupCardContent(
                 modifier = Modifier.fillMaxWidth().testTag("auto_backup_keep"),
             )
 
-            if (settings.schedule != BackupSchedule.OFF && settings.folderUri.isNullOrEmpty()) {
-                Text(
-                    stringResource(R.string.auto_backup_needs_folder),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.testTag("auto_backup_needs_folder"),
-                )
-            }
-
             // How it is going
             Text(
                 text = settings.lastSuccessMillis?.let { stringResource(R.string.auto_backup_last, DateFormats.dateTime(it)) }
@@ -174,41 +134,19 @@ fun AutoBackupCardContent(
                     modifier = Modifier.testTag("auto_backup_failure"),
                 )
             }
-            state.lastResult?.let { result -> ResultLine(result) }
-
-            Button(
-                onClick = onBackUpNow,
-                enabled = !state.isWorking && !settings.folderUri.isNullOrEmpty(),
-                modifier = Modifier.fillMaxWidth().testTag("auto_backup_now"),
-            ) {
-                if (state.isWorking) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text(stringResource(R.string.backup_working), modifier = Modifier.padding(start = Spacing.sm))
-                } else {
-                    Text(stringResource(R.string.auto_backup_now))
-                }
-            }
         }
     }
 }
 
-@Composable
-private fun ResultLine(result: AutoBackupResult) {
-    val (text, isError) = when (result) {
-        is AutoBackupResult.Saved -> stringResource(R.string.auto_backup_saved, result.fileName) to false
-        is AutoBackupResult.Failed -> stringResource(result.reason.messageRes()) to true
-        AutoBackupResult.NotDue, AutoBackupResult.WaitingToRetry -> stringResource(R.string.auto_backup_not_run) to true
-    }
-    Text(
-        text,
-        style = MaterialTheme.typography.bodySmall,
-        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.testTag("auto_backup_result"),
-    )
-}
-
 private fun BackupSchedule.labelRes(): Int = when (this) {
     BackupSchedule.OFF -> R.string.auto_backup_off
+    BackupSchedule.MINUTES_15 -> R.string.auto_backup_every_15m
+    BackupSchedule.MINUTES_30 -> R.string.auto_backup_every_30m
+    BackupSchedule.HOURS_1 -> R.string.auto_backup_every_1h
+    BackupSchedule.HOURS_2 -> R.string.auto_backup_every_2h
+    BackupSchedule.HOURS_3 -> R.string.auto_backup_every_3h
+    BackupSchedule.HOURS_6 -> R.string.auto_backup_every_6h
+    BackupSchedule.HOURS_12 -> R.string.auto_backup_every_12h
     BackupSchedule.DAILY -> R.string.auto_backup_daily
     BackupSchedule.WEEKLY -> R.string.auto_backup_weekly
     BackupSchedule.EVERY_N_INVOICES -> R.string.auto_backup_after_invoices

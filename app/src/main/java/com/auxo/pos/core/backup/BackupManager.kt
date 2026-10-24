@@ -90,13 +90,9 @@ class BackupManager(
     }
 
     private fun makeBackup(): SavedBackup {
-        // When locking is switched on but the passphrase cannot be read, stop: saving an unlocked backup instead
-        // would quietly break the promise the person was given.
-        val passphrase = if (passphrases?.isSet() == true) {
-            passphrases.get() ?: throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
-        } else {
-            null
-        }
+        // Every backup is locked. With no passphrase, or one that cannot be read, nothing is saved: an unlocked
+        // backup could not be restored, and would hold the database key in the open.
+        val passphrase = passphrases?.takeIf { it.isSet() }?.get() ?: throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
         val work = workDir()
         try {
             val snapshot = File(work, BackupArchive.DATABASE_ENTRY)
@@ -115,9 +111,9 @@ class BackupManager(
                 invoices = count("invoices"),
             )
             val settings = appearance.settings.value
-            val saved = storage.save(fileName(now, locked = passphrase != null)) { out ->
+            val saved = storage.save(fileName(now, locked = true)) { out ->
                 BackupArchive.write(
-                    out = passphrase?.let { BackupCrypto.encrypt(out, it) } ?: out,
+                    out = BackupCrypto.encrypt(out, passphrase),
                     manifest = manifest,
                     database = snapshot,
                     databaseKey = databaseKey,
@@ -207,7 +203,11 @@ class BackupManager(
             filled += read
         }
         buffered.reset()
-        if (!BackupCrypto.looksEncrypted(head, filled)) return buffered
+        if (!BackupCrypto.looksEncrypted(head, filled)) {
+            // An unlocked backup holds the database key next to the data, so it is never restored. A zip says so; anything else is no backup.
+            val looksLikeZip = filled >= 4 && head[0] == 'P'.code.toByte() && head[1] == 'K'.code.toByte()
+            throw BackupException(if (looksLikeZip) BackupProblem.NOT_LOCKED else BackupProblem.NOT_A_BACKUP)
+        }
         if (passphrase.isNullOrEmpty()) throw BackupException(BackupProblem.PASSPHRASE_NEEDED)
         return BackupCrypto.decrypt(buffered, passphrase)
     }

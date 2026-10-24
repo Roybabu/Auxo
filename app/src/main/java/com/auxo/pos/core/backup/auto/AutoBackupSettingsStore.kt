@@ -31,8 +31,6 @@ class SharedPrefsAutoBackupStore(context: Context) : AutoBackupSettingsStore {
     override fun update(change: (AutoBackupSettings) -> AutoBackupSettings) {
         val next = change(read()).sanitized()
         prefs.edit {
-            putString(FOLDER_URI, next.folderUri)
-            putString(FOLDER_NAME, next.folderName)
             putString(SCHEDULE, next.schedule.name)
             putInt(INTERVAL, next.invoiceInterval)
             putInt(KEEP, next.keep)
@@ -45,8 +43,6 @@ class SharedPrefsAutoBackupStore(context: Context) : AutoBackupSettingsStore {
     }
 
     private fun read(): AutoBackupSettings = AutoBackupSettings(
-        folderUri = prefs.getString(FOLDER_URI, null)?.takeIf { it.isNotEmpty() },
-        folderName = prefs.getString(FOLDER_NAME, "").orEmpty(),
         schedule = prefs.getString(SCHEDULE, null)?.let { name -> BackupSchedule.entries.firstOrNull { it.name == name } } ?: BackupSchedule.OFF,
         invoiceInterval = prefs.getInt(INTERVAL, AutoBackupSettings.DEFAULT_INVOICE_INTERVAL),
         keep = prefs.getInt(KEEP, AutoBackupSettings.DEFAULT_KEEP),
@@ -58,8 +54,6 @@ class SharedPrefsAutoBackupStore(context: Context) : AutoBackupSettingsStore {
 
     private companion object {
         const val PREFS = "auto_backup"
-        const val FOLDER_URI = "folder_uri"
-        const val FOLDER_NAME = "folder_name"
         const val SCHEDULE = "schedule"
         const val INTERVAL = "invoice_interval"
         const val KEEP = "keep"

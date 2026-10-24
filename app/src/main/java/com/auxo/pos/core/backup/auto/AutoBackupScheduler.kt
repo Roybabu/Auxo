@@ -20,11 +20,15 @@ interface AutoBackupScheduler {
 }
 
 /**
- * Wakes the app every few hours to ask the runner whether a backup is due. The runner decides, so this works
+ * Wakes the app every 15 minutes to 6 hours, as often as the chosen schedule needs, to ask the runner whether a backup is due. The runner decides, so this works
  * for every schedule, and a phone that was off or asleep catches up as soon as it can. The app also checks
  * whenever it is opened.
  */
-class WorkManagerAutoBackupScheduler(private val context: Context) : AutoBackupScheduler {
+class WorkManagerAutoBackupScheduler(
+    private val context: Context,
+    /** The schedule chosen now; read each time so the wake-up rate follows it. */
+    private val schedule: () -> BackupSchedule = { BackupSchedule.DAILY },
+) : AutoBackupScheduler {
 
     override fun sync(active: Boolean) {
         val work = WorkManager.getInstance(context)
@@ -32,7 +36,7 @@ class WorkManagerAutoBackupScheduler(private val context: Context) : AutoBackupS
             work.cancelUniqueWork(WORK_NAME)
             return
         }
-        val request = PeriodicWorkRequestBuilder<AutoBackupWorker>(CHECK_EVERY_HOURS, TimeUnit.HOURS)
+        val request = PeriodicWorkRequestBuilder<AutoBackupWorker>(AutoBackupPolicy.checkEveryMinutes(schedule()), TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
             .build()
         work.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
@@ -40,7 +44,6 @@ class WorkManagerAutoBackupScheduler(private val context: Context) : AutoBackupS
 
     private companion object {
         const val WORK_NAME = "auto_backup_check"
-        const val CHECK_EVERY_HOURS = 6L
     }
 }
 

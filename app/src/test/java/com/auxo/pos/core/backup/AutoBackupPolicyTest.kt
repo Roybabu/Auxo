@@ -27,7 +27,6 @@ class AutoBackupPolicyTest {
     private val now = 1_000 * day
 
     private fun active(schedule: BackupSchedule, lastSuccess: Long? = null, since: Int = 0, interval: Int = 20) = AutoBackupSettings(
-        folderUri = "content://tree/backups",
         schedule = schedule,
         invoiceInterval = interval,
         lastSuccessMillis = lastSuccess,
@@ -37,10 +36,8 @@ class AutoBackupPolicyTest {
     // When a backup is due
 
     @Test
-    fun nothingIsDue_whenOff_orWithoutAFolder() {
+    fun nothingIsDue_whenOff() {
         assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.OFF), now))
-        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY).copy(folderUri = null), now))
-        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY).copy(folderUri = ""), now))
     }
 
     @Test
@@ -54,6 +51,37 @@ class AutoBackupPolicyTest {
     fun daily_isDueAfter24Hours_notBefore() {
         assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY, lastSuccess = now - 23 * hour), now))
         assertTrue(AutoBackupPolicy.isDue(active(BackupSchedule.DAILY, lastSuccess = now - 24 * hour), now))
+    }
+
+    @Test
+    fun timedSchedules_areDueAfterTheirInterval_withASmallAllowanceForAnEarlyWakeUp() {
+        val minute = 60_000L
+        val cases = mapOf(
+            BackupSchedule.MINUTES_15 to 15 * minute, BackupSchedule.MINUTES_30 to 30 * minute, BackupSchedule.HOURS_1 to hour,
+            BackupSchedule.HOURS_2 to 2 * hour, BackupSchedule.HOURS_3 to 3 * hour, BackupSchedule.HOURS_6 to 6 * hour, BackupSchedule.HOURS_12 to 12 * hour,
+        )
+        for ((schedule, interval) in cases) {
+            assertFalse(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval + 5 * minute), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval + minute), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule, lastSuccess = now - interval), now))
+            assertTrue(schedule.name, AutoBackupPolicy.isDue(active(schedule), now))
+        }
+    }
+
+    @Test
+    fun thePhoneIsWokenAsOftenAsTheScheduleNeeds_between15MinutesAndSixHours() {
+        assertEquals(15L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_15))
+        assertEquals(30L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_30))
+        assertEquals(180L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.HOURS_3))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.HOURS_12))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.DAILY))
+        assertEquals(360L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.EVERY_N_INVOICES))
+    }
+
+    @Test
+    fun aShortSchedule_isOnlyOverdueAfterSixHours() {
+        assertEquals(AutoBackupStatus.OK, AutoBackupPolicy.status(active(BackupSchedule.MINUTES_15, lastSuccess = now - 5 * hour), now))
+        assertEquals(AutoBackupStatus.OVERDUE, AutoBackupPolicy.status(active(BackupSchedule.MINUTES_15, lastSuccess = now - 7 * hour), now))
     }
 
     @Test
@@ -155,13 +183,10 @@ class AutoBackupPolicyTest {
         context.getSharedPreferences("auto_backup", android.content.Context.MODE_PRIVATE).edit().clear().commit()
         val first = SharedPrefsAutoBackupStore(context)
         assertEquals(BackupSchedule.OFF, first.settings.value.schedule)
-        assertNull(first.settings.value.folderUri)
         assertFalse(first.settings.value.isActive)
 
         first.update {
             it.copy(
-                folderUri = "content://tree/sd",
-                folderName = "Backups",
                 schedule = BackupSchedule.EVERY_N_INVOICES,
                 invoiceInterval = 50,
                 keep = 10,
@@ -172,8 +197,6 @@ class AutoBackupPolicyTest {
             )
         }
         val restarted = SharedPrefsAutoBackupStore(context).settings.value
-        assertEquals("content://tree/sd", restarted.folderUri)
-        assertEquals("Backups", restarted.folderName)
         assertEquals(BackupSchedule.EVERY_N_INVOICES, restarted.schedule)
         assertEquals(50, restarted.invoiceInterval)
         assertEquals(10, restarted.keep)

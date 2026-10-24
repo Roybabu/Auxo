@@ -59,6 +59,13 @@ class DocumentsBackupStorage(
         else -> saveInAppFolder(fileName, write)
     }
 
+    /** Android 9 and older: the folders backups can be in, for tidying up: the shared Auxo folder (when allowed) and the app's own. */
+    @Suppress("DEPRECATION")
+    fun legacyFolders(): List<File> = buildList {
+        if (canWritePublicDocuments()) add(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FOLDER))
+        context.getExternalFilesDir(null)?.let { add(File(it, FOLDER)) }
+    }
+
     /** Android 9 and older: true once the person has allowed storage access and shared storage is mounted. */
     private fun canWritePublicDocuments(): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&

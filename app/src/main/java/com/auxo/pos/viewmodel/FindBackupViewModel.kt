@@ -9,7 +9,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.backup.BackupException
+import com.auxo.pos.core.backup.BackupManifest
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupScanner
 import com.auxo.pos.core.backup.BackupService
@@ -49,7 +51,18 @@ class FindBackupViewModel(
     private val io: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     /** Runs once a restore has worked, before the app restarts. */
     private val afterRestore: () -> Unit = {},
+    /**
+     * Whether this phone may be restored from here. A restore replaces the shop's data and clears the sign-in, so it is
+     * only allowed while no account exists; a phone that already has one is changed from Backup, after signing in.
+     */
+    private val mayRestore: () -> Boolean = { true },
+    /** Reads the manifest of a locked backup with the typed passphrase; throws [BackupException] if it does not open. */
+    private val peek: (Uri, String) -> BackupManifest = { _, _ -> throw BackupException(BackupProblem.UNREADABLE) },
 ) : ViewModel() {
+
+    /** The passphrase that opened the selected locked backup; kept only in memory until the restore or until the person backs out. */
+    private var openedWith: String? = null
+    private var peeking = false
 
     private val _uiState = MutableStateFlow(FindBackupUiState())
     val uiState: StateFlow<FindBackupUiState> = _uiState.asStateFlow()
@@ -75,32 +88,69 @@ class FindBackupViewModel(
     fun onPickerClosed() = _uiState.update { it.copy(skipped = true) }
 
     /** A card was tapped: it is ticked, and nothing is restored yet. */
-    fun onChoose(backup: FoundBackup) = _uiState.update { it.copy(chosen = backup, problem = null) }
-
-    /** Restore shop was tapped: the ticked backup is shown for confirmation. */
-    fun onRestoreRequested() = _uiState.update { state -> state.chosen?.let { state.copy(selected = it, problem = null) } ?: state }
-
-    fun onSelectionCancelled() = _uiState.update { it.copy(selected = null, unlocking = false) }
-
-    /** The person confirmed the selected backup. A locked one asks for its passphrase first. */
-    fun onConfirmed() {
-        val backup = _uiState.value.selected ?: return
-        if (backup.locked) _uiState.update { it.copy(unlocking = true) } else restore(backup.uri, null)
+    fun onChoose(backup: FoundBackup) {
+        openedWith = null
+        _uiState.update { it.copy(chosen = backup, problem = null) }
     }
 
-    fun onPassphrase(passphrase: String) {
+    /**
+     * Restore shop was tapped. A plain backup goes straight to the confirmation. A locked one first asks for its
+     * passphrase, so the confirmation can show which shop it holds.
+     */
+    fun onRestoreRequested() {
+        val backup = _uiState.value.chosen ?: return
+        if (backup.locked) _uiState.update { it.copy(unlocking = true, problem = null) } else _uiState.update { it.copy(selected = backup, problem = null) }
+    }
+
+    /** The person backed out of the confirmation or of the passphrase question. */
+    fun onSelectionCancelled() {
+        openedWith = null
+        _uiState.update { it.copy(selected = null, unlocking = false, problem = null) }
+    }
+
+    /** The person confirmed the selected backup (after the last warning). */
+    fun onConfirmed() {
         val backup = _uiState.value.selected ?: return
-        _uiState.update { it.copy(unlocking = false) }
-        restore(backup.uri, passphrase)
+        restore(backup.uri, if (backup.locked) openedWith else null)
+    }
+
+    /** A passphrase was typed for the ticked locked backup: if it opens, the confirmation shows the shop's details. */
+    fun onPassphrase(passphrase: String) {
+        val backup = _uiState.value.chosen ?: return
+        if (peeking) return
+        peeking = true
+        _uiState.update { it.copy(problem = null) }
+        viewModelScope.launch {
+            try {
+                val manifest = withContext(io) { peek(backup.uri, passphrase) }
+                openedWith = passphrase
+                _uiState.update { it.copy(unlocking = false, selected = backup.copy(manifest = manifest), problem = null) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val problem = (e as? BackupException)?.problem ?: BackupProblem.UNREADABLE
+                _uiState.update { it.copy(unlocking = true, problem = if (problem == BackupProblem.PASSPHRASE_NEEDED) BackupProblem.WRONG_PASSPHRASE else problem) }
+            } finally {
+                peeking = false
+            }
+        }
     }
 
     fun onProblemDismissed() = _uiState.update { it.copy(problem = null) }
 
     /** Back to choosing a folder. */
-    fun onChooseAnother() = _uiState.update { FindBackupUiState() }
+    fun onChooseAnother() {
+        openedWith = null
+        _uiState.update { FindBackupUiState() }
+    }
 
     private fun restore(uri: Uri, passphrase: String?) {
         if (_uiState.value.restoring) return
+        if (!mayRestore()) {
+            com.auxo.pos.core.debuglog.DebugLog.warn("FindBackupViewModel", "Restore refused: this phone already has an account")
+            _uiState.update { it.copy(selected = null, unlocking = false, problem = BackupProblem.RESTORE_FAILED) }
+            return
+        }
         _uiState.update { it.copy(restoring = true, problem = null) }
         viewModelScope.launch {
             try {
@@ -114,7 +164,10 @@ class FindBackupViewModel(
                 val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
                 _uiState.update {
                     when (problem) {
-                        BackupProblem.WRONG_PASSPHRASE -> it.copy(restoring = false, unlocking = true, problem = problem)
+                        BackupProblem.WRONG_PASSPHRASE -> {
+                            openedWith = null
+                            it.copy(restoring = false, selected = null, unlocking = true, problem = problem)
+                        }
                         else -> it.copy(restoring = false, selected = null, problem = problem)
                     }
                 }
@@ -126,7 +179,13 @@ class FindBackupViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                FindBackupViewModel(container.backupScanner::scan, container.firstRunRestore, afterRestore = container::afterFirstRunRestore)
+                FindBackupViewModel(
+                    container.backupScanner::scan,
+                    container.firstRunRestore,
+                    afterRestore = container::afterFirstRunRestore,
+                    mayRestore = { container.authRepository.state.value == AuthState.NeedsSetup },
+                    peek = container.backupScanner::peekLocked,
+                )
             }
         }
     }

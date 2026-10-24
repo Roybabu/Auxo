@@ -7,7 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.auth.Permission
 import com.auxo.pos.core.auth.PermissionDeniedException
 import com.auxo.pos.core.backup.auto.AutoBackupFailure
-import com.auxo.pos.core.backup.auto.AutoBackupResult
 import com.auxo.pos.core.backup.auto.AutoBackupSettings
 import com.auxo.pos.core.backup.auto.AutoBackupStatus
 import com.auxo.pos.core.backup.auto.BackupSchedule
@@ -32,17 +31,11 @@ class AutoBackupViewModelTest {
 
     private class FakeService(val store: FakeAutoBackupStore) : AutoBackupService {
         var refuse = false
-        var result: AutoBackupResult = AutoBackupResult.Saved("b.zip", 0)
         val calls = mutableListOf<String>()
         override val settings get() = store.settings
 
         private fun check() {
             if (refuse) throw PermissionDeniedException(Permission.BACKUP_AND_RESTORE)
-        }
-
-        override suspend fun chooseFolder(folderUri: String, folderName: String) {
-            check(); calls += "folder $folderName"
-            store.update { it.copy(folderUri = folderUri, folderName = folderName) }
         }
 
         override suspend fun setSchedule(schedule: BackupSchedule) {
@@ -59,11 +52,6 @@ class AutoBackupViewModelTest {
             check(); calls += "keep $backups"
             store.update { it.copy(keep = backups) }
         }
-
-        override suspend fun backUpNow(): AutoBackupResult {
-            check(); calls += "now"
-            return result
-        }
     }
 
     private val clock = TestClock()
@@ -73,9 +61,9 @@ class AutoBackupViewModelTest {
 
     @Test
     fun startsFromTheSavedSettings() {
-        store.update { it.copy(folderUri = "content://tree/sd", folderName = "SD card", schedule = BackupSchedule.WEEKLY, invoiceInterval = 40, keep = 9) }
+        store.update { it.copy(schedule = BackupSchedule.WEEKLY, invoiceInterval = 40, keep = 9) }
         val state = viewModel().uiState.value
-        assertEquals("SD card", state.settings.folderName)
+        assertEquals(BackupSchedule.WEEKLY, state.settings.schedule)
         assertEquals("40", state.intervalText)
         assertEquals("9", state.keepText)
         assertEquals(AutoBackupStatus.OK, state.status)
@@ -85,19 +73,8 @@ class AutoBackupViewModelTest {
     fun theStatus_followsTheSettingsAsTheyChange() {
         val viewModel = viewModel()
         assertEquals(AutoBackupStatus.OFF, viewModel.uiState.value.status)
-        store.update { it.copy(folderUri = "content://tree/sd", schedule = BackupSchedule.DAILY, lastFailureMillis = clock.now, lastFailure = AutoBackupFailure.FOLDER_UNAVAILABLE) }
+        store.update { it.copy(schedule = BackupSchedule.DAILY, lastFailureMillis = clock.now, lastFailure = AutoBackupFailure.FOLDER_UNAVAILABLE) }
         assertEquals(AutoBackupStatus.FAILED, viewModel.uiState.value.status)
-    }
-
-    @Test
-    fun pickingAFolder_savesIt_andClearsAnAccessProblem() {
-        val viewModel = viewModel()
-        viewModel.onFolderAccessProblem()
-        assertTrue(viewModel.uiState.value.folderAccessProblem)
-        viewModel.onFolderPicked("content://tree/usb", "USB drive")
-        assertFalse(viewModel.uiState.value.folderAccessProblem)
-        assertEquals("content://tree/usb", viewModel.uiState.value.settings.folderUri)
-        assertEquals(listOf("folder USB drive"), service.calls)
     }
 
     @Test
@@ -143,29 +120,69 @@ class AutoBackupViewModelTest {
     }
 
     @Test
-    fun backUpNow_showsWhatHappened() {
-        val viewModel = viewModel()
-        viewModel.onBackUpNow()
-        assertFalse(viewModel.uiState.value.isWorking)
-        assertEquals(AutoBackupResult.Saved("b.zip", 0), viewModel.uiState.value.lastResult)
-
-        service.result = AutoBackupResult.Failed(AutoBackupFailure.FOLDER_UNAVAILABLE)
-        viewModel.onBackUpNow()
-        assertEquals(AutoBackupResult.Failed(AutoBackupFailure.FOLDER_UNAVAILABLE), viewModel.uiState.value.lastResult)
-    }
-
-    @Test
     fun aRefusedChange_changesNothing_andDoesNotCrash() {
         service.refuse = true
         val viewModel = viewModel()
         val before = store.settings.value
         viewModel.onScheduleChange(BackupSchedule.DAILY)
-        viewModel.onFolderPicked("content://tree/x", "X")
         viewModel.onIntervalChange("30")
         viewModel.onKeepChange("3")
-        viewModel.onBackUpNow()
         assertEquals(before, store.settings.value)
-        assertFalse(viewModel.uiState.value.isWorking)
-        assertEquals(null, viewModel.uiState.value.lastResult)
+    }
+
+    // The passphrase, asked for when a schedule is first chosen
+
+    private fun withoutPassphrase(saved: MutableList<String>) =
+        AutoBackupViewModel(service, clock, hasPassphrase = { saved.isNotEmpty() }, setPassphrase = { saved += it })
+
+    @Test
+    fun choosingASchedule_withNoPassphrase_asksForOneFirst_andStartsOnceItIsSaved() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.HOURS_1)
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(listOf("copper river lamp window"), saved)
+        assertEquals(BackupSchedule.HOURS_1, store.settings.value.schedule)
+    }
+
+    @Test
+    fun cancellingThePassphraseBox_leavesTheScheduleOff_andSavesNothing() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.DAILY)
+        viewModel.onPassphraseCancelled()
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertTrue(saved.isEmpty())
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+        // A passphrase saved afterwards does not start a schedule nobody is asking for any more.
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+    }
+
+    @Test
+    fun aWeakPassphrase_isNotAccepted_andTheBoxStaysOpen() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.DAILY)
+        viewModel.onPassphraseSet("12345678")
+        assertTrue(saved.isEmpty())
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+    }
+
+    @Test
+    fun withAPassphrase_theScheduleStartsAtOnce_andSwitchingOffNeverAsks() {
+        val saved = mutableListOf("already set")
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.WEEKLY)
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(BackupSchedule.WEEKLY, store.settings.value.schedule)
+
+        val none = mutableListOf<String>()
+        withoutPassphrase(none).onScheduleChange(BackupSchedule.OFF)
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
     }
 }

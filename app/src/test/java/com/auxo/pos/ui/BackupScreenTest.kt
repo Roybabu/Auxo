@@ -40,16 +40,12 @@ class BackupScreenTest {
         composeRule.setContent {
             AuxoTheme {
                 BackupContent(
-                    onChoosePassphrase = { log += "choose passphrase" },
                     onPassphraseSet = { log += "set $it" },
-                    onAskTurnOff = { log += "ask turn off" },
-                    onTurnOffConfirmed = { log += "turn off" },
                     onPassphraseForRestore = { log += "unlock $it" },
                     state = state,
                     onBack = {},
                     onBackUp = { log += "backup" },
                     onChooseFile = { log += "choose" },
-                    onShare = { log += "share ${it.fileName}" },
                     onConfirmRestore = { log += "confirm" },
                     onCancelRestore = { log += "cancel" },
                     onDismissProblem = { log += "dismiss" },
@@ -70,13 +66,12 @@ class BackupScreenTest {
     }
 
     @Test
-    fun afterABackup_showsTheFile_andCanShareIt() {
+    fun afterABackup_showsTheFile_withNoShareButton() {
         val saved = SavedBackup("Auxo-backup-2026-10-12_0106.zip", "Documents/Auxo", Uri.parse("content://x/y"))
         show(BackupUiState(saved = saved, lastBackupMillis = 1_700_000_000_000))
         composeRule.onNodeWithTag("backup_saved").assertIsDisplayed()
         composeRule.onNodeWithText("Auxo-backup-2026-10-12_0106.zip", substring = true).assertIsDisplayed()
-        composeRule.onNodeWithTag("backup_share").performClick()
-        assertEquals(listOf("share Auxo-backup-2026-10-12_0106.zip"), log)
+        composeRule.onNodeWithTag("backup_share").assertDoesNotExist()
     }
 
     @Test
@@ -124,21 +119,10 @@ class BackupScreenTest {
     }
 
     @Test
-    fun lockingIsOffByDefault_andTheCardSaysSo() {
+    fun thereIsNoSeparateOptionToLockBackups_becauseTheyAreAlwaysLocked() {
         show(BackupUiState())
-        composeRule.onNodeWithText("Lock backups with a passphrase").assertIsDisplayed()
-        composeRule.onNodeWithText("Backups are not locked.", substring = true).assertIsDisplayed()
-        composeRule.onNodeWithTag("backup_protect_set").performClick()
-        assertEquals(listOf("choose passphrase"), log)
-    }
-
-    @Test
-    fun whenLocked_theCardOffersChangeAndTurnOff() {
-        show(BackupUiState(isProtected = true))
-        composeRule.onNodeWithText("New backups are locked.", substring = true).assertIsDisplayed()
-        composeRule.onNodeWithText("Change passphrase").assertIsDisplayed()
-        composeRule.onNodeWithTag("backup_protect_off").performClick()
-        assertEquals(listOf("ask turn off"), log)
+        composeRule.onNodeWithTag("backup_protection").assertDoesNotExist()
+        composeRule.onNodeWithText("Lock backups with a passphrase").assertDoesNotExist()
     }
 
     // The boxes are tested without their dialog window: a text field inside a dialog window never lets Robolectric's
