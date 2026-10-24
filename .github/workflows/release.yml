@@ -38,6 +38,9 @@ jobs:
 
       - name: Check the tag matches the app version
         run: |
+          # Accept 1.0.0 as well as v1.0.0.
+          TAG="v${TAG#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
           name=$(grep -m1 'versionName' app/build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
           if [ "v$name" != "$TAG" ]; then
             echo "Tag $TAG does not match versionName $name in app/build.gradle.kts" >&2
