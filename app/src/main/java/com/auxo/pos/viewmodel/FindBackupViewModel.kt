@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupScanner
@@ -49,6 +50,11 @@ class FindBackupViewModel(
     private val io: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     /** Runs once a restore has worked, before the app restarts. */
     private val afterRestore: () -> Unit = {},
+    /**
+     * Whether this phone may be restored from here. A restore replaces the shop's data and clears the sign-in, so it is
+     * only allowed while no account exists; a phone that already has one is changed from Backup, after signing in.
+     */
+    private val mayRestore: () -> Boolean = { true },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FindBackupUiState())
@@ -101,6 +107,11 @@ class FindBackupViewModel(
 
     private fun restore(uri: Uri, passphrase: String?) {
         if (_uiState.value.restoring) return
+        if (!mayRestore()) {
+            com.auxo.pos.core.debuglog.DebugLog.warn("FindBackupViewModel", "Restore refused: this phone already has an account")
+            _uiState.update { it.copy(selected = null, unlocking = false, problem = BackupProblem.RESTORE_FAILED) }
+            return
+        }
         _uiState.update { it.copy(restoring = true, problem = null) }
         viewModelScope.launch {
             try {
@@ -126,7 +137,12 @@ class FindBackupViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                FindBackupViewModel(container.backupScanner::scan, container.firstRunRestore, afterRestore = container::afterFirstRunRestore)
+                FindBackupViewModel(
+                    container.backupScanner::scan,
+                    container.firstRunRestore,
+                    afterRestore = container::afterFirstRunRestore,
+                    mayRestore = { container.authRepository.state.value == AuthState.NeedsSetup },
+                )
             }
         }
     }

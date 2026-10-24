@@ -128,4 +128,17 @@ class FindBackupDialogTest {
         composeRule.onNodeWithTag("find_confirm_step").assertIsDisplayed()
         assertEquals(emptyList<Uri>(), restored)
     }
+
+    @Test
+    fun aPhoneThatAlreadyHasAnAccount_isNeverRestoredFromTheFirstScreen() {
+        val viewModel = FindBackupViewModel({ listOf(backup("a.zip", "Roy Stores", 2_000)) }, service, kotlinx.coroutines.Dispatchers.Unconfined, mayRestore = { false })
+        viewModel.onFolderChosen(Uri.parse("content://tree"))
+        composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.found != null }
+        viewModel.onChoose(viewModel.uiState.value.found!!.single())
+        viewModel.onRestoreRequested()
+        viewModel.onConfirmed()
+        assertEquals(emptyList<Uri>(), restored)
+        assertEquals(false, viewModel.uiState.value.restoring)
+        assertEquals(com.auxo.pos.core.backup.BackupProblem.RESTORE_FAILED, viewModel.uiState.value.problem)
+    }
 }
