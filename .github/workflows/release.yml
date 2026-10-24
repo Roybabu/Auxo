@@ -11,6 +11,10 @@ on:
       version:
         description: 'Version tag to publish, for example v1.0.0 (must match versionName)'
         required: true
+      publish:
+        description: 'Publish the GitHub Release (untick for a test build that only keeps the files)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -65,7 +69,18 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/auxo-release.jks"
 
+      - name: Keep the files from a test build
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-release-${{ env.TAG }}
+          path: |
+            Auxo-${{ env.TAG }}.apk
+            app/build/outputs/mapping/release/mapping.txt
+          retention-days: 7
+
       - name: Create the GitHub Release
+        if: github.event_name == 'push' || inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
