@@ -53,7 +53,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -316,7 +315,6 @@ private fun LoginForm(
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = { PasswordToggle(showPassword, onTogglePassword) },
             imeAction = ImeAction.Done,
-            keyboardActions = KeyboardActions(onDone = { onSignIn() }),
             enabled = !state.isSigningIn,
             fieldHeight = LOGIN_FIELD_HEIGHT,
             modifier = Modifier.testTag("login_password"),
