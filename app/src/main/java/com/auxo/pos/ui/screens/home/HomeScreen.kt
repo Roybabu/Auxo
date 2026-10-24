@@ -101,6 +101,8 @@ fun HomeScreen(
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
+    /** Where the Cash today and UPI today cards lead; the More tab when left null. */
+    onOpenBalances: (() -> Unit)? = null,
     onOpenBackup: () -> Unit = {},
     onOpenStoreDetails: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
@@ -117,6 +119,7 @@ fun HomeScreen(
         onRetry = viewModel::retry,
         modifier = modifier,
         onOpenAlerts = onOpenAlerts,
+        onOpenBalances = onOpenBalances,
         insights = insights,
         onInsightsPeriodChange = insightsViewModel::onPeriodChange,
         onInsightsRetry = insightsViewModel::retry,
@@ -143,6 +146,8 @@ fun HomeContent(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
+    /** Where the Cash today and UPI today cards lead; the More tab when left null. */
+    onOpenBalances: (() -> Unit)? = null,
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
@@ -163,7 +168,8 @@ fun HomeContent(
             onOpenInventory = onOpenInventory,
             modifier = modifier,
             onOpenAlerts = onOpenAlerts,
-                insights = insights,
+            onOpenBalances = onOpenBalances,
+            insights = insights,
             onInsightsPeriodChange = onInsightsPeriodChange,
             onInsightsRetry = onInsightsRetry,
             notice = notice,
@@ -180,6 +186,8 @@ private fun HomeDashboard(
     onOpenInventory: (StockFilter) -> Unit,
     modifier: Modifier = Modifier,
     onOpenAlerts: () -> Unit = {},
+    /** Where the Cash today and UPI today cards lead; the More tab when left null. */
+    onOpenBalances: (() -> Unit)? = null,
     insights: InsightsUiState? = null,
     onInsightsPeriodChange: (InsightsPeriod) -> Unit = {},
     onInsightsRetry: () -> Unit = {},
@@ -190,17 +198,28 @@ private fun HomeDashboard(
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(AuxoThemeExtras.home.header)) {
         val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
         val extents = rememberPanelExtents(widthDp = maxWidth.value, heightDp = maxHeight.value, statusBarDp = statusBar.value)
-        HomeHeaderBlock(
-            storeName = state.storeName,
-            hasAlerts = state.inventory.alerts.isNotEmpty(),
-            collectedToday = insights?.collectedToday,
-            onOpenAlerts = onOpenAlerts,
-            onOpenBalances = { onNavigate(TopLevelDestination.MORE) },
-            onNewBill = { onNavigate(TopLevelDestination.BILLING) },
+        // On a short screen (a phone turned on its side) the header is taller than the space above the panel, so it
+        // scrolls inside that space and its buttons can be brought into view.
+        val short = com.auxo.pos.ui.components.rememberIsShortScreen()
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val headerScroll = if (short) {
+            Modifier.height(with(density) { extents.collapsedTop.toDp() }).verticalScroll(rememberScrollState()).testTag("home_header_scroll")
+        } else {
+            Modifier
+        }
+        Box(modifier = headerScroll) {
+            HomeHeaderBlock(
+                storeName = state.storeName,
+                hasAlerts = state.inventory.alerts.isNotEmpty(),
+                collectedToday = insights?.collectedToday,
+                onOpenAlerts = onOpenAlerts,
+                onOpenBalances = onOpenBalances ?: { onNavigate(TopLevelDestination.MORE) },
+                onNewBill = { onNavigate(TopLevelDestination.BILLING) },
                 onAddProduct = onAddProduct,
-            onInventory = { onNavigate(TopLevelDestination.INVENTORY) },
-            onMore = { onNavigate(TopLevelDestination.MORE) },
-        )
+                onInventory = { onNavigate(TopLevelDestination.INVENTORY) },
+                onMore = { onNavigate(TopLevelDestination.MORE) },
+            )
+        }
         ExpandablePanel(extents = extents) {
             HomePanelContent(
                 state = state,

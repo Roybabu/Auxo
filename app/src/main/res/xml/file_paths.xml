@@ -11,4 +11,6 @@
     <!-- Debug builds only write these; the folder does not exist in a release build. -->
     <external-files-path name="debuglogs" path="debug-logs/" />
     <files-path name="debuglogs_internal" path="debug-logs/" />
+    <!-- Crash and diagnostic reports, shared only when the person chooses. -->
+    <files-path name="crash_reports" path="crash-reports/" />
 </paths>

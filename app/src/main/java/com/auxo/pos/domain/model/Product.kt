@@ -124,6 +124,9 @@ data class Product(
     /** The photo to show for the product as a whole: its own, else the first colour photo. */
     val displayPhotoFile: String? get() = photoFile ?: variants.firstNotNullOfOrNull { it.photoFile }
 
+    /** Every distinct photo of the product: its own first, then those of its colours. */
+    val allPhotoFiles: List<String> get() = (listOfNotNull(photoFile) + variants.mapNotNull { it.photoFile }).distinct()
+
     /** The photo to show for one variant: its colour's photo, else the product's. */
     fun photoFor(variant: ProductVariant): String? = variant.photoFile ?: photoFile
 

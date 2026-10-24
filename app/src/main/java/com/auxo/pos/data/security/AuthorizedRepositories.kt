@@ -577,7 +577,7 @@ class AuthorizedCategoryRepository(
 
     private suspend fun change(
         what: String,
-        id: Long,
+        id: Long?,
         block: suspend () -> com.auxo.pos.data.repository.CategoryResult,
     ): com.auxo.pos.data.repository.CategoryResult {
         auth.require(Permission.MANAGE_SETTINGS)
@@ -589,7 +589,7 @@ class AuthorizedCategoryRepository(
     }
 
     override suspend fun addCategory(name: String, profile: com.auxo.pos.domain.model.ProductCategory) =
-        change("Category \"$name\" added", 0L) { inner.addCategory(name, profile) }
+        change("Category \"$name\" added", null) { inner.addCategory(name, profile) }
 
     override suspend fun renameCategory(id: Long, name: String) = change("Category $id renamed to \"$name\"", id) { inner.renameCategory(id, name) }
 
@@ -605,5 +605,5 @@ class AuthorizedCategoryRepository(
 
     override suspend fun deleteSubcategory(id: Long) = change("Subcategory $id deleted", id) { inner.deleteSubcategory(id) }
 
-    override suspend fun applySetup(enabledIds: Set<Long>) = change("Categories chosen during setup", 0L) { inner.applySetup(enabledIds) }
+    override suspend fun applySetup(enabledIds: Set<Long>) = change("Categories chosen during setup", null) { inner.applySetup(enabledIds) }
 }

@@ -41,7 +41,11 @@ interface BackupStorage {
  * permission; with it the same folder is used. Without it the backup goes into the app's own storage area,
  * which is erased when the app is uninstalled, and [SavedBackup.appFolderOnly] says so.
  */
-class DocumentsBackupStorage(private val context: Context) : BackupStorage {
+class DocumentsBackupStorage(
+    private val context: Context,
+    /** The address other apps use to open a saved file; tests replace it, because the real one needs a phone-style path. */
+    private val uriFor: (File) -> Uri = { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) },
+) : BackupStorage {
 
     override fun save(fileName: String, write: (OutputStream) -> Unit): SavedBackup = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> saveInDocuments(fileName, write)
@@ -75,7 +79,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
         }
         // So the file shows up in file managers and over USB straight away.
         runCatching { MediaScannerConnection.scanFile(context, arrayOf(file.path), null, null) }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val uri = uriFor(file)
         return SavedBackup(fileName, "$DOCUMENTS/$FOLDER", uri)
     }
 
@@ -115,7 +119,7 @@ class DocumentsBackupStorage(private val context: Context) : BackupStorage {
             if (e is BackupException) throw e
             throw BackupException(BackupProblem.SAVE_FAILED, cause = e)
         }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val uri = uriFor(file)
         return SavedBackup(fileName, "Android/data/${context.packageName}/files/$FOLDER", uri, appFolderOnly = true)
     }
 

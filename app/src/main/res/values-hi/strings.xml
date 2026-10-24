@@ -121,6 +121,8 @@
     <string name="detail_not_found">यह उत्पाद अब मौजूद नहीं है।</string>
     <string name="detail_brand">ब्रांड: %1$s</string>
     <string name="detail_material">सामग्री: %1$s</string>
+    <string name="detail_sizes">साइज़: %1$s</string>
+    <string name="detail_colours">रंग: %1$s</string>
     <string name="detail_warranty">वारंटी: %1$d महीने</string>
     <string name="detail_prescription">पर्चा ज़रूरी</string>
     <string name="detail_variant_standard">सामान्य</string>
@@ -1152,6 +1154,8 @@
     <string name="lock_body">%1$s के रूप में साइन इन हैं। जहाँ छोड़ा था वहीं से आगे बढ़ने के लिए अनलॉक करें।</string>
     <string name="lock_field_pin">पिन</string>
     <string name="lock_unlock">अनलॉक करें</string>
+    <string name="lock_slide_unlock">अनलॉक करने के लिए स्लाइड करें</string>
+    <string name="lock_unlocking">अनलॉक हो रहा है…</string>
     <string name="lock_use_fingerprint">फ़िंगरप्रिंट इस्तेमाल करें</string>
     <string name="lock_or_password">या अपना पासवर्ड इस्तेमाल करें</string>
     <string name="lock_quick_off">गलत पिन बहुत बार लिखे गए। पासवर्ड से अनलॉक करने तक पिन और फ़िंगरप्रिंट बंद हैं।</string>
@@ -1858,4 +1862,16 @@
     <string name="billing_browse_title">आइटम देखें</string>
     <string name="billing_browse_more">%2$d में से %1$d दिख रहे हैं। बाकी खोज से मिलेंगे।</string>
     <string name="update_licence">Auxo GNU जनरल पब्लिक लाइसेंस v3.0 के तहत मुफ़्त सॉफ़्टवेयर है। सोर्स कोड: github.com/Roybabu/Auxo</string>
+    <string name="crash_prompt_title">ऐप अपने आप बंद हो गया</string>
+    <string name="crash_prompt_body">पिछली बार ऐप अपने आप बंद हो गया था। इसे ठीक करने में मदद के लिए आप एक छोटी रिपोर्ट भेज सकते हैं। इसमें ऐप और फ़ोन का संस्करण और गड़बड़ी की जगह होती है, ग्राहक, बिक्री या दुकान की कोई जानकारी नहीं।</string>
+    <string name="crash_prompt_send">रिपोर्ट भेजें</string>
+    <string name="crash_prompt_later">अभी नहीं</string>
+    <string name="help_report_title">डायग्नोस्टिक रिपोर्ट भेजें</string>
+    <string name="help_report_body">कुछ ठीक से काम न करे तो एक छोटी रिपोर्ट साझा करें। इसमें ग्राहक या बिक्री की जानकारी नहीं होती।</string>
+    <string name="crash_prompt_github">GitHub पर रिपोर्ट करें</string>
+    <string name="crash_github_copied">रिपोर्ट कॉपी हो गई। इसे इश्यू में पेस्ट करें।</string>
+    <string name="help_github_title">GitHub पर समस्या बताएँ</string>
+    <string name="help_github_body">यह सार्वजनिक पेज खोलता है। ग्राहक या दुकान की जानकारी न जोड़ें।</string>
+    <string name="help_problem_title">समस्या की रिपोर्ट करें</string>
+    <string name="help_problem_body">कुछ ठीक से काम नहीं कर रहा? डेवलपर को रिपोर्ट भेजें।</string>
 </resources>

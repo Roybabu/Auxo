@@ -80,6 +80,7 @@ object MoreRoutes {
     const val ACTIVITY_LOG = "$PREFIX/activity"
     const val RECOVERY_CODE = "$PREFIX/recovery-code"
     const val QUICK_UNLOCK = "$PREFIX/quick-unlock"
+    const val DEBUG = "$PREFIX/debug"
     const val LOYALTY = "$PREFIX/loyalty"
     const val ARG_CLOSING_ID = "closingId"
     const val DAY_END = "$PREFIX/day-end"

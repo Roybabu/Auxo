@@ -3,16 +3,21 @@
 
 package com.auxo.pos.core.shop
 
+import android.content.ContentProvider
+import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.testutil.MainDispatcherRule
 import com.auxo.pos.testutil.keepActive
 import com.auxo.pos.viewmodel.StoreLogoViewModel
 import java.io.File
+import java.io.FileNotFoundException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.annotation.GraphicsMode
 
 class LogoSizingTest {
@@ -169,8 +175,22 @@ class StoreLogoRepositoryTest {
 
     @Test
     fun anInaccessibleUri_isRejected() = runTest {
+        // A provider that cannot open the file, like a picture that was removed after it was chosen. Robolectric's default
+        // stream would fail inside the image decoder instead, which prints a stack trace.
+        Robolectric.setupContentProvider(UnopenableProvider::class.java, "auxo.missing")
         assertEquals(LogoSaveResult.UNREADABLE, repository().save(Uri.parse("content://auxo.missing/none")))
     }
+}
+
+/** A content provider whose files can never be opened. */
+class UnopenableProvider : ContentProvider() {
+    override fun onCreate() = true
+    override fun query(uri: Uri, projection: Array<String>?, selection: String?, selectionArgs: Array<String>?, sortOrder: String?): Cursor? = null
+    override fun getType(uri: Uri): String? = null
+    override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?) = 0
+    override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?) = 0
+    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? = throw FileNotFoundException("No file for $uri")
 }
 
 private class FakeLogoRepository(private val result: LogoSaveResult = LogoSaveResult.SAVED) : StoreLogoRepository {

@@ -53,6 +53,7 @@ import com.auxo.pos.R
 import com.auxo.pos.domain.inventory.StockFilter
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.StockStatus
+import com.auxo.pos.ui.components.rememberIsShortScreen
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.screens.more.label
 import com.auxo.pos.ui.selectableCategories
@@ -218,13 +219,19 @@ fun InventoryListContent(
             modifier = modifier,
         )
         else -> Column(modifier = modifier.fillMaxSize()) {
-            InventoryFilters(
-                uiState = uiState,
-                onSearchTextChange = onSearchTextChange,
-                onSearchSubmitted = onSearchSubmitted,
-                onCategorySelected = onCategorySelected,
-                onStockFilterSelected = onStockFilterSelected,
-            )
+            // On a short screen (a phone turned on its side) the filters scroll with the list instead of taking the page.
+            val short = rememberIsShortScreen()
+            val filters: @Composable (Modifier) -> Unit = { filtersModifier ->
+                InventoryFilters(
+                    uiState = uiState,
+                    onSearchTextChange = onSearchTextChange,
+                    onSearchSubmitted = onSearchSubmitted,
+                    onCategorySelected = onCategorySelected,
+                    onStockFilterSelected = onStockFilterSelected,
+                    modifier = filtersModifier,
+                )
+            }
+            if (!short || uiState.products.isEmpty()) filters(Modifier.padding(horizontal = Spacing.screen))
             if (uiState.products.isEmpty()) {
                 EmptyState(
                     iconRes = R.drawable.ic_search,
@@ -246,6 +253,7 @@ fun InventoryListContent(
                     ),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
+                    if (short) item(key = "filters") { filters(Modifier) }
                     items(uiState.products, key = { it.id }) { product ->
                         ProductRow(product = product, today = uiState.today, onClick = { onOpenProduct(product.id) })
                     }
@@ -262,9 +270,10 @@ private fun InventoryFilters(
     onSearchSubmitted: () -> Unit,
     onCategorySelected: (Long?) -> Unit,
     onStockFilterSelected: (StockFilter) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.padding(horizontal = Spacing.screen),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         AuxoTextField(
@@ -327,6 +336,10 @@ private fun InventoryFilters(
 /** Size of a product photo in the product list. */
 private val PHOTO_SIZE = 44.dp
 
+/** Size of each small colour photo under a product's name in the list, and how many are shown before "+N". */
+private val ROW_PHOTO_SIZE = 24.dp
+private const val ROW_PHOTO_LIMIT = 5
+
 @Composable
 fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val formatter = LocalMoneyFormatter.current
@@ -386,6 +399,31 @@ fun ProductRow(product: Product, today: LocalDate, onClick: () -> Unit, modifier
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // A product with photos for several colours shows a small thumbnail of each.
+                val photos = product.allPhotoFiles
+                if (photos.size > 1) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.testTag("product_row_photos_${product.id}"),
+                    ) {
+                        photos.take(ROW_PHOTO_LIMIT).forEach { file ->
+                            ProductPhoto(
+                                photoFile = file,
+                                contentDescription = null,
+                                modifier = Modifier.size(ROW_PHOTO_SIZE).clip(RoundedCornerShape(5.dp)),
+                                maxSidePx = 96,
+                            ) {}
+                        }
+                        if (photos.size > ROW_PHOTO_LIMIT) {
+                            Text(
+                                text = "+${photos.size - ROW_PHOTO_LIMIT}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (chipText != null) StatusChip(text = chipText, tone = chipTone)

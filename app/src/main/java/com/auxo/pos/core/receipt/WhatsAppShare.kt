@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.graphics.Bitmap
 import androidx.core.content.FileProvider
 import com.auxo.pos.domain.customers.DuesReminder
@@ -29,8 +30,16 @@ object WhatsAppShare {
     val PACKAGES: List<String> = listOf("com.whatsapp", "com.whatsapp.w4b")
 
     /** The invoice PDF as a share intent, aimed at WhatsApp package [packageName] (or any app when it is null). */
-    fun invoiceIntent(context: Context, file: File, invoice: Invoice, caption: String, packageName: String?): Intent {
-        val uri = FileProvider.getUriForFile(context, ReceiptOutput.fileProviderAuthority(context), file)
+    fun invoiceIntent(
+        context: Context,
+        file: File,
+        invoice: Invoice,
+        caption: String,
+        packageName: String?,
+        /** The address WhatsApp opens the file from; tests replace it, because the real one needs a phone-style path. */
+        uriFor: (File) -> Uri = { FileProvider.getUriForFile(context, ReceiptOutput.fileProviderAuthority(context), it) },
+    ): Intent {
+        val uri = uriFor(file)
         return Intent(Intent.ACTION_SEND).apply {
             type = ReceiptOutput.PDF_MIME_TYPE
             putExtra(Intent.EXTRA_STREAM, uri)

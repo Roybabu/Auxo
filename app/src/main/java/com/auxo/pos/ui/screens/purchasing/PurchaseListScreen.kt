@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.domain.model.PurchaseOrder
 import com.auxo.pos.domain.model.PurchaseReceipt
+import com.auxo.pos.ui.components.rememberIsShortScreen
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
@@ -132,8 +133,9 @@ fun PurchaseListContent(
                 text = { Text(stringResource(R.string.purchases_tab_receipts)) },
             )
         }
-        Column(
-            modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm),
+        val header: @Composable (Modifier) -> Unit = { headerModifier ->
+            Column(
+            modifier = headerModifier,
             verticalArrangement = Arrangement.spacedBy(Spacing.xs),
         ) {
             AuxoTextField(
@@ -163,6 +165,10 @@ fun PurchaseListContent(
                 }
             }
         }
+        }
+        val short = rememberIsShortScreen()
+        val listShown = !state.isLoading && !state.loadFailed && (if (state.tab == PurchaseTab.ORDERS) state.orders.isNotEmpty() else state.receipts.isNotEmpty())
+        if (!(short && listShown)) header(Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm))
         when {
             state.isLoading -> LoadingState()
             state.loadFailed -> ErrorState(stringResource(R.string.error_generic), onRetry)
@@ -181,6 +187,7 @@ fun PurchaseListContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.testTag(if (state.tab == PurchaseTab.ORDERS) "order_list" else "receipt_list"),
             ) {
+                if (short) item(key = "filters") { header(Modifier) }
                 if (state.tab == PurchaseTab.ORDERS) {
                     item(key = "open_value") {
                         StatTile(

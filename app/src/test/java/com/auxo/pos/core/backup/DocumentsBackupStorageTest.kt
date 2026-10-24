@@ -11,6 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import com.auxo.pos.testutil.testFileUri
 import java.io.File
 
 /** Android 8 (the oldest supported) has no Documents write access, so backups go to the app's own folder. */
@@ -21,7 +22,7 @@ class DocumentsBackupStorageTest {
     @Test
     fun onAndroid8_theBackupIsSavedInTheAppFolder_withTheContentsWritten() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val saved = DocumentsBackupStorage(context).save("Auxo-backup-test.zip") { it.write("zip-bytes".toByteArray()) }
+        val saved = DocumentsBackupStorage(context, testFileUri(context)).save("Auxo-backup-test.zip") { it.write("zip-bytes".toByteArray()) }
 
         assertEquals("Auxo-backup-test.zip", saved.fileName)
         assertTrue(saved.folder.endsWith("files/Auxo"))

@@ -417,6 +417,7 @@ class LocalAuthRepository(
         pendingCode = null
         startSession()
         _recoveryPrompt.value = RecoveryPrompt.None
+        DebugLog.event("Auth", "Signed in again from the saved session: user ${account.id}, role ${account.role}")
         tell(AccountEvent(AccountEventKind.SIGNED_IN, account.toSession()))
         return true
     }

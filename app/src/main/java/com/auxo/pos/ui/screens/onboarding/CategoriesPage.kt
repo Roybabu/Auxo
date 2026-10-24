@@ -38,7 +38,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
+import com.auxo.pos.ui.components.rememberBackgroundPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -117,7 +117,7 @@ internal fun CategoriesPage() {
         val scale = minOf(maxWidth / FRAME_WIDTH.dp, maxHeight / FRAME_HEIGHT.dp)
         // The same wave background as the second page, filling the whole screen behind the scaled frame.
         Image(
-            painter = painterResource(R.drawable.onb_intro_bg),
+            painter = rememberBackgroundPainter(R.drawable.onb_intro_bg),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -138,7 +138,7 @@ internal fun CategoriesPage() {
 private fun Art(picture: Int?, x: Int, y: Int, width: Int, height: Int) {
     if (picture == null) return
     Image(
-        painter = painterResource(picture),
+        painter = rememberBackgroundPainter(picture),
         contentDescription = null,
         modifier = Modifier.offset(x.dp, y.dp).size(width.dp, height.dp),
     )
@@ -241,7 +241,7 @@ private fun CategoryTile(card: CategoryCard, modifier: Modifier = Modifier) {
 @Composable
 private fun Leaf(@DrawableRes id: Int, x: Int, y: Int, width: Int, rotation: Float = 0f, alpha: Float = 1f, blur: Int = 0) {
     Image(
-        painter = painterResource(id),
+        painter = rememberBackgroundPainter(id),
         contentDescription = null,
         contentScale = ContentScale.FillWidth,
         modifier = Modifier

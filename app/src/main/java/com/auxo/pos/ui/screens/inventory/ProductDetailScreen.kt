@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -198,6 +199,7 @@ fun ProductDetailContent(
         items(product.variants, key = { "variant_${it.id}" }) { variant ->
             VariantCard(
                 variant = variant,
+                photoFile = product.photoFor(variant).takeIf { product.variants.any { v -> v.photoFile != null } },
                 category = product.category,
                 unit = product.stockUnit,
                 tracksStock = product.tracksStock,
@@ -233,17 +235,47 @@ fun ProductDetailContent(
 private fun ProductHeader(product: Product) {
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            // Nothing is shown (not even a placeholder) for a product with no photo.
-            ProductPhoto(
-                photoFile = product.displayPhotoFile,
-                contentDescription = product.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .testTag("detail_photo"),
-                maxSidePx = 800,
-            ) {}
+            val photos = product.allPhotoFiles
+            if (photos.size > 1 || product.variants.any { it.photoFile != null }) {
+                // The product photo and every colour's photo, side by side; scroll sideways for the rest.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .testTag("detail_photos"),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                ) {
+                    photos.forEach { file ->
+                        val colours = // A colour without its own photo is shown with the product photo, so that photo carries its name too.
+                        product.variants.filter { product.photoFor(it) == file }.mapNotNull { it.colour }.distinct()
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                            ProductPhoto(
+                                photoFile = file,
+                                contentDescription = colours.joinToString(", ").ifEmpty { product.name },
+                                modifier = Modifier
+                                    .size(width = 200.dp, height = 200.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                maxSidePx = 800,
+                            ) {}
+                            if (colours.isNotEmpty()) {
+                                Text(colours.joinToString(", "), style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Nothing is shown (not even a placeholder) for a product with no photo.
+                ProductPhoto(
+                    photoFile = product.displayPhotoFile,
+                    contentDescription = product.name,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .testTag("detail_photo"),
+                    maxSidePx = 800,
+                ) {}
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 StatusChip(
                     text = product.categoryLabel(),
@@ -258,6 +290,23 @@ private fun ProductHeader(product: Product) {
             Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
             product.brand?.let { Text(stringResource(R.string.detail_brand, it), style = MaterialTheme.typography.bodyMedium) }
             product.material?.let { Text(stringResource(R.string.detail_material, it), style = MaterialTheme.typography.bodyMedium) }
+            // Which sizes and colours the product comes in, whether or not each has a photo.
+            val sizes = product.variants.mapNotNull { it.size }.distinct()
+            if (sizes.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.detail_sizes, sizes.joinToString(", ")),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag("detail_sizes"),
+                )
+            }
+            val colours = product.variants.mapNotNull { it.colour }.distinct()
+            if (colours.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.detail_colours, colours.joinToString(", ")),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag("detail_colours"),
+                )
+            }
             product.subcategory?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             product.warrantyMonths?.let { Text(stringResource(R.string.detail_warranty, it), style = MaterialTheme.typography.bodyMedium) }
             product.metal?.let { metal ->
@@ -300,6 +349,7 @@ private fun ProductHeader(product: Product) {
 @Composable
 private fun VariantCard(
     variant: ProductVariant,
+    photoFile: String?,
     category: ProductCategory,
     unit: StockUnit,
     tracksStock: Boolean,
@@ -310,10 +360,10 @@ private fun VariantCard(
     val status = AuxoThemeExtras.statusColors
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            // Only a variant whose colour has its own photo shows one; the others show the product photo above.
-            if (variant.photoFile != null) {
+            // When any colour has a photo, every variant shows its own colour photo, or the product photo if its colour has none.
+            if (photoFile != null) {
                 ProductPhoto(
-                    photoFile = variant.photoFile,
+                    photoFile = photoFile,
                     contentDescription = variant.attributesLabel.ifEmpty { null },
                     modifier = Modifier
                         .size(96.dp)

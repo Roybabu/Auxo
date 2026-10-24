@@ -18,6 +18,7 @@ object RouteAccess {
         MoreRoutes.HOME,
         MoreRoutes.APPEARANCE,
         MoreRoutes.QUICK_UNLOCK,
+        MoreRoutes.DEBUG, // only reachable from a debug build
     )
 
     private val REQUIRED: Map<String, Permission> = mapOf(

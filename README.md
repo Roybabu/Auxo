@@ -53,6 +53,12 @@ The approved artwork is in `design/auxo/` (originals: `docs/branding/auxo-logo-r
 
 Money is stored in whole paise, never as decimals. A sale saves the invoice, payments, stock and customer account in a single transaction, so it either all happens or none of it does. Double taps can't save a bill twice. Thousands of random bills in the tests add up to the paisa.
 
+## Install
+
+Download `Auxo-vX.Y.Z.apk` from the [latest release](https://github.com/Roybabu/Auxo/releases/latest) on your phone (Android 8.0 or newer) and open it. Android will ask you to allow installs from your browser or file manager the first time. Later versions are offered inside the app (More → Check for updates) and install over the old one. Google is introducing developer verification for apps on certified phones, so Android may show an extra warning for apps from outside Google Play. The app is signed with the project's own key; the privacy policy is in [docs/PRIVACY.md](docs/PRIVACY.md).
+
+**Publishing a release (maintainers).** Add the secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`, raise `versionCode` and `versionName` in `app/build.gradle.kts`, then push a matching tag: `git tag v0.4.0 && git push origin v0.4.0`. The Release workflow builds the signed APK and attaches it with `mapping.txt` (keep it to read crash traces).
+
 ## Get started
 
 **You need**
@@ -89,7 +95,7 @@ Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.gi
 | Language | Kotlin |
 | UI | Jetpack Compose, Material 3, Navigation Compose |
 | Architecture | MVVM, with plain-Kotlin domain logic |
-| Database | Room (SQLite) locked with SQLCipher, with exported schemas and migration tests |
+| Database | Room (SQLite) locked with SQLCipher, with exported schemas |
 | Barcodes | Camera and hardware scanners, ZXing |
 | Printing | PDF, Android printing, Bluetooth receipt printers |
 | Languages | English, Hindi, Bengali |
@@ -106,11 +112,17 @@ app/src/main/java/com/auxo/pos/
 └── ui/         Compose screens and navigation
 ```
 
+## Crash and problem reports
+
+If the app crashes, it saves a short report on the phone and offers, the next time you open it, to share it. **More → Send a diagnostic report** makes one on demand. Nothing is sent unless you choose to. A report holds the app and phone version, the error and where it happened, and the names of the last screens opened. It holds no customer, sales or shop details, and database keys, email addresses and long numbers are removed. You can share the file with the developer, or use **Report on GitHub**, which opens a new issue on this repository: anything you paste there is public.
+
 ## Database upgrades
 
-No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 23). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
+The database starts at version 1, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.
 
 ## Privacy and permissions
+
+The full policy is in [docs/PRIVACY.md](docs/PRIVACY.md).
 
 Your shop's data (products, bills, customers, settings) stays on the device. The app has no server and no account, and it sends none of that data anywhere. The only thing it does over the network is update itself:
 

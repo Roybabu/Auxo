@@ -37,7 +37,8 @@ class RouteAccessTest {
 
     @Test
     fun everyPageHasAnExplicitAccessRule() {
-        assertEquals(everyPage.toSet(), RouteAccess.registered)
+        // The Debug page is open to everyone but only reachable from a debug build, so it is not one of the pages listed here.
+        assertEquals(everyPage.toSet(), RouteAccess.registered - MoreRoutes.DEBUG)
     }
 
     @Test

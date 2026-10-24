@@ -3,6 +3,8 @@
 
 package com.auxo.pos.ui.screens.billing
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.auxo.pos.domain.billing.BusinessTime
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -830,7 +832,7 @@ private fun BrowseItemsCard(state: BillingUiState, actions: BillingActions) {
             onDismissRequest = { choosing = null },
             title = { Text(product.name) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     product.variants.forEach { variant ->
                         val unit = product.stockUnit
                         val price = formatter.format(variant.sellingPrice).let {

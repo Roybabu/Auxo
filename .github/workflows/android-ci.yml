@@ -146,6 +146,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      # The shrunk app has scrambled class names; this file turns a crash trace back into real names (see README).
+      - name: Upload release mapping file
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-mapping-${{ github.sha }}
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
+          retention-days: 90
+
   device-tests:
     if: ${{ !inputs.quick }}
     name: Device tests (Android emulator)

@@ -121,6 +121,8 @@
     <string name="detail_not_found">এই পণ্যটি আর নেই।</string>
     <string name="detail_brand">ব্র্যান্ড: %1$s</string>
     <string name="detail_material">উপাদান: %1$s</string>
+    <string name="detail_sizes">সাইজ: %1$s</string>
+    <string name="detail_colours">রং: %1$s</string>
     <string name="detail_warranty">ওয়ারেন্টি: %1$d মাস</string>
     <string name="detail_prescription">প্রেসক্রিপশন প্রয়োজন</string>
     <string name="detail_variant_standard">সাধারণ</string>
@@ -1152,6 +1154,8 @@
     <string name="lock_body">%1$s হিসেবে সাইন ইন আছে। যেখানে ছেড়েছিলেন সেখান থেকে এগোতে আনলক করুন।</string>
     <string name="lock_field_pin">পিন</string>
     <string name="lock_unlock">আনলক করুন</string>
+    <string name="lock_slide_unlock">আনলক করতে স্লাইড করুন</string>
+    <string name="lock_unlocking">আনলক হচ্ছে…</string>
     <string name="lock_use_fingerprint">ফিঙ্গারপ্রিন্ট ব্যবহার করুন</string>
     <string name="lock_or_password">অথবা আপনার পাসওয়ার্ড ব্যবহার করুন</string>
     <string name="lock_quick_off">অনেকবার ভুল পিন দেওয়া হয়েছে। পাসওয়ার্ড দিয়ে আনলক না করা পর্যন্ত পিন ও ফিঙ্গারপ্রিন্ট বন্ধ।</string>
@@ -1858,4 +1862,16 @@
     <string name="billing_browse_title">আইটেম দেখুন</string>
     <string name="billing_browse_more">%2$d এর মধ্যে %1$d দেখানো হচ্ছে। বাকিগুলো খুঁজে নিন।</string>
     <string name="update_licence">Auxo হলো GNU জেনারেল পাবলিক লাইসেন্স v3.0 এর অধীনে মুক্ত সফটওয়্যার। সোর্স কোড: github.com/Roybabu/Auxo</string>
+    <string name="crash_prompt_title">অ্যাপ হঠাৎ বন্ধ হয়ে গেছে</string>
+    <string name="crash_prompt_body">গতবার অ্যাপ নিজে থেকেই বন্ধ হয়ে গিয়েছিল। এটি ঠিক করতে সাহায্য করতে আপনি একটি ছোট রিপোর্ট পাঠাতে পারেন। এতে অ্যাপ ও ফোনের সংস্করণ এবং কোথায় সমস্যা হয়েছে তা থাকে, কিন্তু গ্রাহক, বিক্রয় বা দোকানের কোনো তথ্য থাকে না।</string>
+    <string name="crash_prompt_send">রিপোর্ট পাঠান</string>
+    <string name="crash_prompt_later">এখন নয়</string>
+    <string name="help_report_title">ডায়াগনস্টিক রিপোর্ট পাঠান</string>
+    <string name="help_report_body">কিছু ঠিকমতো কাজ না করলে একটি ছোট রিপোর্ট শেয়ার করুন। এতে গ্রাহক বা বিক্রয়ের তথ্য থাকে না।</string>
+    <string name="crash_prompt_github">GitHub-এ রিপোর্ট করুন</string>
+    <string name="crash_github_copied">রিপোর্ট কপি হয়েছে। ইস্যুতে পেস্ট করুন।</string>
+    <string name="help_github_title">GitHub-এ সমস্যা জানান</string>
+    <string name="help_github_body">এটি একটি সর্বজনীন পৃষ্ঠা খোলে। গ্রাহক বা দোকানের তথ্য যোগ করবেন না।</string>
+    <string name="help_problem_title">সমস্যা জানান</string>
+    <string name="help_problem_body">কিছু ঠিকমতো কাজ করছে না? ডেভেলপারকে রিপোর্ট পাঠান।</string>
 </resources>

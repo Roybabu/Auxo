@@ -55,6 +55,7 @@ interface MoreActions {
     fun onOpenUsers() = Unit
     fun onOpenRecoveryCode() = Unit
     fun onOpenQuickUnlock() = Unit
+    fun onOpenDebug() = Unit
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
     fun onOpenGstReport() = Unit
@@ -69,6 +70,7 @@ fun MoreScreen(
     shop: ShopUiState = ShopUiState(),
 ) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    var reportOpen by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.more_title)) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -227,19 +229,20 @@ fun MoreScreen(
             if (can(Permission.BACKUP_AND_RESTORE)) {
                 MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
             }
+            MoreItem(
+                R.drawable.ic_bug_report,
+                stringResource(R.string.help_problem_title),
+                stringResource(R.string.help_problem_body),
+                { reportOpen = true },
+                modifier = Modifier.testTag("more_report_problem"),
+            )
             if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {
-                val context = androidx.compose.ui.platform.LocalContext.current
                 MoreItem(
-                    R.drawable.ic_activity,
-                    stringResource(R.string.debug_logs_title),
-                    stringResource(R.string.debug_logs_body),
-                    {
-                        val send = com.auxo.pos.core.debuglog.DebugLog.shareIntent(context)
-                        if (send != null) {
-                            runCatching { context.startActivity(android.content.Intent.createChooser(send, null)) }
-                        }
-                    },
-                    modifier = Modifier.testTag("more_debug_logs"),
+                    R.drawable.ic_warning,
+                    stringResource(R.string.debug_page_title),
+                    stringResource(R.string.debug_page_body),
+                    actions::onOpenDebug,
+                    modifier = Modifier.testTag("more_debug"),
                 )
             }
             MoreItem(
@@ -251,6 +254,8 @@ fun MoreScreen(
             )
         }
     }
+
+    if (reportOpen) ProblemReportDialog(onDismiss = { reportOpen = false })
 
     if (confirmSignOut) {
         ConfirmDialog(

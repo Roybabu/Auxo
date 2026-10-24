@@ -121,6 +121,8 @@
     <string name="detail_not_found">This product no longer exists.</string>
     <string name="detail_brand">Brand: %1$s</string>
     <string name="detail_material">Material: %1$s</string>
+    <string name="detail_sizes">Sizes: %1$s</string>
+    <string name="detail_colours">Colours: %1$s</string>
     <string name="detail_warranty">Warranty: %1$d months</string>
     <string name="detail_prescription">Prescription required</string>
     <string name="detail_variant_standard">Standard</string>
@@ -1153,6 +1155,8 @@ in %2$s</string>
     <string name="lock_body">Signed in as %1$s. Unlock to carry on where you left off.</string>
     <string name="lock_field_pin">PIN</string>
     <string name="lock_unlock">Unlock</string>
+    <string name="lock_slide_unlock">Slide to unlock</string>
+    <string name="lock_unlocking">Unlocking…</string>
     <string name="lock_use_fingerprint">Use fingerprint</string>
     <string name="lock_or_password">Or use your password</string>
     <string name="lock_quick_off">Too many wrong PINs. The PIN and fingerprint are off until you unlock with your password.</string>
@@ -1858,4 +1862,16 @@ in %2$s</string>
     <string name="billing_browse_title">Browse items</string>
     <string name="billing_browse_more">Showing %1$d of %2$d. Search to find others.</string>
     <string name="update_licence">Auxo is free software under the GNU General Public License v3.0. Source code: github.com/Roybabu/Auxo</string>
+    <string name="crash_prompt_title">The app closed unexpectedly</string>
+    <string name="crash_prompt_body">Last time the app stopped by itself. You can send a short report to help fix it. It has the app and phone version and where it failed, but no customer, sales or shop details.</string>
+    <string name="crash_prompt_send">Send report</string>
+    <string name="crash_prompt_later">Not now</string>
+    <string name="help_report_title">Send a diagnostic report</string>
+    <string name="help_report_body">Share a short report if something is not working. It has no customer or sales details.</string>
+    <string name="crash_prompt_github">Report on GitHub</string>
+    <string name="crash_github_copied">Report copied. Paste it into the issue.</string>
+    <string name="help_github_title">Report a problem on GitHub</string>
+    <string name="help_github_body">Opens a public page. Do not add customer or shop details.</string>
+    <string name="help_problem_title">Report a problem</string>
+    <string name="help_problem_body">Something not working? Send a report to the developer.</string>
 </resources>

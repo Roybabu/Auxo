@@ -93,12 +93,15 @@ fun AuxoNavHost(
     ) {
         guarded(navController, TopLevelDestination.HOME.route) {
             if (can(Permission.VIEW_DASHBOARD)) {
+                val canCloseDay = can(Permission.CLOSE_DAY)
                 HomeScreen(
                     onNavigate = navController::navigateToTopLevel,
                     onAddProduct = { navController.navigateOnce(InventoryRoutes.newProduct()) },
                     onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
                     onOpenInventory = { filter -> navController.navigateToInventory(filter) },
                     onOpenAlerts = { navController.navigateOnce(StockRoutes.alerts()) },
+                    // Cash today and UPI today lead to the day's figures: Day end when allowed, else the invoices.
+                    onOpenBalances = { navController.navigateOnce(if (canCloseDay) MoreRoutes.DAY_END else BillingRoutes.HISTORY) },
                     onOpenBackup = { navController.navigateOnce(MoreRoutes.BACKUP) },
                     onOpenStoreDetails = { navController.navigateOnce(MoreRoutes.STORE_DETAILS) },
                 )
@@ -335,6 +338,7 @@ fun AuxoNavHost(
                         override fun onOpenUsers() = navController.navigateOnce(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenRecoveryCode() = navController.navigateOnce(MoreRoutes.RECOVERY_CODE)
                         override fun onOpenQuickUnlock() = navController.navigateOnce(MoreRoutes.QUICK_UNLOCK)
+                        override fun onOpenDebug() = navController.navigateOnce(MoreRoutes.DEBUG)
                         override fun onOpenActivity() = navController.navigateOnce(MoreRoutes.ACTIVITY_LOG)
                         override fun onOpenDayEnd() = navController.navigateOnce(MoreRoutes.DAY_END)
                         override fun onOpenGstReport() = navController.navigateOnce(MoreRoutes.GST_REPORT)
@@ -389,6 +393,9 @@ fun AuxoNavHost(
             }
             guarded(navController, MoreRoutes.APPEARANCE) {
                 AppearanceScreen(onBack = { navController.popOnce() })
+            }
+            guarded(navController, MoreRoutes.DEBUG) {
+                com.auxo.pos.ui.screens.more.DebugScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.QUICK_UNLOCK) {
                 QuickUnlockScreen(onBack = { navController.popOnce() })

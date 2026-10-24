@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
+import com.auxo.pos.ui.components.rememberBackgroundPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +40,7 @@ import com.auxo.pos.R
  * To update it from a new export of the design (the Composable1() function):
  *   1. Replace everything between the two "PASTE ZONE" lines below with the Image(...) blocks of the new export,
  *      in the order the export gives them.
- *   2. In each pasted Image, replace   painter = ColorPainter(Color(0xFFCFD4DC))   with   painter = painterResource(R.drawable.<name>)
+ *   2. In each pasted Image, replace   painter = ColorPainter(Color(0xFFCFD4DC))   with   painter = rememberBackgroundPainter(R.drawable.<name>)
  *      The names are in the list under "PICTURES" just below. The export only gives places and sizes, so which
  *      picture goes in which slot is the one thing that is decided by hand.
  *   3. If the export moved the text, change the numbers in IntroTexts() at the bottom.
@@ -67,7 +67,7 @@ internal fun IntroPage() {
     BoxWithConstraints(modifier = Modifier.fillMaxSize().testTag("onboarding_intro")) {
         val scale = minOf(maxWidth / FRAME_WIDTH.dp, maxHeight / FRAME_HEIGHT.dp)
         Image(
-            painter = painterResource(R.drawable.onb_intro_bg),
+            painter = rememberBackgroundPainter(R.drawable.onb_intro_bg),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -86,7 +86,7 @@ internal fun IntroPage() {
 private fun IntroPictures() {
     // ===================================== PASTE ZONE: start =====================================
     Image(
-        painter = painterResource(R.drawable.onb_leafset_17),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_17),
         contentDescription = null,
         modifier = Modifier
             .offset(379.dp, 855.dp)
@@ -95,7 +95,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_10),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_10),
         contentDescription = null,
         modifier = Modifier
             .size(18.dp, 21.dp)
@@ -104,7 +104,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_20),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_20),
         contentDescription = null,
         modifier = Modifier
             .offset(147.dp, 66.dp)
@@ -114,7 +114,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_06),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_06),
         contentDescription = null,
         modifier = Modifier
             .size(51.dp, 60.dp)
@@ -122,7 +122,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_14),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_14),
         contentDescription = null,
         modifier = Modifier
             .size(33.dp, 73.dp)
@@ -132,7 +132,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_19),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_19),
         contentDescription = null,
         modifier = Modifier
             .offset(74.dp, 370.dp)
@@ -141,7 +141,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_03),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_03),
         contentDescription = null,
         modifier = Modifier
             .size(40.dp, 52.dp)
@@ -149,7 +149,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_07),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_07),
         contentDescription = null,
         modifier = Modifier
             .offset(112.dp, 197.dp)
@@ -158,7 +158,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_15),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_15),
         contentDescription = null,
         modifier = Modifier
             .offset(403.dp, 212.dp)
@@ -168,7 +168,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_intro_hero),
+        painter = rememberBackgroundPainter(R.drawable.onb_intro_hero),
         contentDescription = null,
         modifier = Modifier
             .size(421.dp, 370.dp)
@@ -176,7 +176,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_04),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_04),
         contentDescription = null,
         modifier = Modifier
             .offset(-6.dp, 796.dp)
@@ -185,7 +185,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_11),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_11),
         contentDescription = null,
         modifier = Modifier
             .size(38.dp, 34.dp)
@@ -194,7 +194,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_09),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_09),
         contentDescription = null,
         modifier = Modifier
             .offset(353.dp, 533.dp)
@@ -202,7 +202,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_05),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_05),
         contentDescription = null,
         modifier = Modifier
             .size(43.dp, 28.dp)
@@ -210,7 +210,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_16),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_16),
         contentDescription = null,
         modifier = Modifier
             .offset(295.dp, 363.dp)
@@ -219,7 +219,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_18),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_18),
         contentDescription = null,
         modifier = Modifier
             .offset(384.dp, 254.dp)
@@ -228,7 +228,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_12),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_12),
         contentDescription = null,
         modifier = Modifier
             .offset(409.dp, 18.dp)
@@ -237,7 +237,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_08),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_08),
         contentDescription = null,
         modifier = Modifier
             .offset(360.dp, 139.dp)
@@ -245,7 +245,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_01),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_01),
         contentDescription = null,
         modifier = Modifier
             .offset(366.dp, 434.dp)
@@ -253,7 +253,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafset_13),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafset_13),
         contentDescription = null,
         modifier = Modifier
             .offset(7.dp, 453.dp)
@@ -262,7 +262,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafpic_03),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafpic_03),
         contentDescription = null,
         modifier = Modifier
             .size(54.dp, 48.dp)
@@ -270,7 +270,7 @@ private fun IntroPictures() {
     )
 
     Image(
-        painter = painterResource(R.drawable.onb_leafpic_01),
+        painter = rememberBackgroundPainter(R.drawable.onb_leafpic_01),
         contentDescription = null,
         modifier = Modifier
             .size(60.dp, 41.dp)

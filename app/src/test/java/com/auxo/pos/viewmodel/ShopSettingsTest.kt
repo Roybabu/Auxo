@@ -108,17 +108,17 @@ class ShopSettingsTest {
     }
 
     @Test
-    fun suppliers_areOnUntilTheShopTurnsThemOff_andStayOffAfterARestart() {
+    fun suppliers_areOffUntilTheShopTurnsThemOn_andStayOnAfterARestart() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.getSharedPreferences(SharedPrefsShopPreferences.FILE, Context.MODE_PRIVATE).edit().clear().commit()
         val prefs = SharedPrefsShopPreferences(context)
-        assertTrue(prefs.suppliers.value)
-
-        prefs.setSuppliers(false)
         assertFalse(prefs.suppliers.value)
-        assertFalse(SharedPrefsShopPreferences(context).suppliers.value)
+
         prefs.setSuppliers(true)
+        assertTrue(prefs.suppliers.value)
         assertTrue(SharedPrefsShopPreferences(context).suppliers.value)
+        prefs.setSuppliers(false)
+        assertFalse(SharedPrefsShopPreferences(context).suppliers.value)
     }
 
     @Test
