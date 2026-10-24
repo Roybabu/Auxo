@@ -78,7 +78,8 @@ class BackupScanner(private val context: Context) {
             when (inspection) {
                 Inspection.NotABackup -> Unit
                 Inspection.Locked -> into += FoundBackup(uri, name, row[3] as Long, row[4] as Long, locked = true, manifest = null)
-                is Inspection.Plain -> into += FoundBackup(uri, name, row[3] as Long, row[4] as Long, locked = false, manifest = inspection.manifest)
+                // An unlocked backup cannot be restored, so it is not listed.
+                is Inspection.Plain -> Unit
             }
         }
     }
@@ -87,11 +88,8 @@ class BackupScanner(private val context: Context) {
         private const val MAX_DEPTH = 2
         private const val MAX_FOUND = 200
 
-        /** Only files named like a backup are opened at all. */
-        fun isCandidate(fileName: String): Boolean {
-            val lower = fileName.lowercase()
-            return lower.endsWith(".zip") || lower.endsWith(BackupCrypto.FILE_EXTENSION)
-        }
+        /** Only locked backups can be restored, so only files named like one are opened at all. */
+        fun isCandidate(fileName: String): Boolean = fileName.lowercase().endsWith(BackupCrypto.FILE_EXTENSION)
 
         /** Says what [input] is: a locked backup, a plain one (with its manifest), or something else. */
         fun inspect(input: InputStream): Inspection {

@@ -893,6 +893,7 @@ in %2$s</string>
     <string name="backup_restoring">Restoring your data…</string>
     <string name="backup_dismiss">OK</string>
     <string name="backup_error_not_a_backup">That file is not an Auxo backup.</string>
+    <string name="backup_error_not_locked">That is an unlocked backup (.zip). Auxo restores only locked backups (.auxobak).</string>
     <string name="backup_error_wrong_app">That backup is from a different app.</string>
     <string name="backup_error_newer">That backup was made by a newer version of Auxo. Update the app and try again.</string>
     <string name="backup_error_corrupt">That backup is damaged, so nothing was changed.</string>

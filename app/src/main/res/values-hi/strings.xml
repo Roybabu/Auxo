@@ -892,6 +892,7 @@
     <string name="backup_restoring">आपका डेटा रिस्टोर हो रहा है…</string>
     <string name="backup_dismiss">ठीक है</string>
     <string name="backup_error_not_a_backup">यह Auxo का बैकअप नहीं है।</string>
+    <string name="backup_error_not_locked">यह बिना लॉक वाला बैकअप (.zip) है। Auxo केवल लॉक किए गए बैकअप (.auxobak) ही रीस्टोर करता है।</string>
     <string name="backup_error_wrong_app">यह बैकअप किसी दूसरे ऐप का है।</string>
     <string name="backup_error_newer">यह बैकअप Auxo के नए संस्करण से बना है। ऐप अपडेट करके फिर कोशिश करें।</string>
     <string name="backup_error_corrupt">यह बैकअप खराब है, इसलिए कुछ भी नहीं बदला गया।</string>

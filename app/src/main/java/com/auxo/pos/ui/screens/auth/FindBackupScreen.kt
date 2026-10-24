@@ -538,6 +538,7 @@ private fun fileSize(backup: FoundBackup): String {
 
 private fun problemText(problem: BackupProblem): Int = when (problem) {
     BackupProblem.NOT_A_BACKUP -> R.string.backup_error_not_a_backup
+    BackupProblem.NOT_LOCKED -> R.string.backup_error_not_locked
     BackupProblem.WRONG_APP -> R.string.backup_error_wrong_app
     BackupProblem.NEWER_BACKUP -> R.string.backup_error_newer
     BackupProblem.CORRUPT -> R.string.backup_error_corrupt
