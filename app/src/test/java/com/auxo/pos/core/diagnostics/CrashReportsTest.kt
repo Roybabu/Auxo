@@ -31,7 +31,7 @@ class CrashReportsTest {
 
     @Test
     fun redact_cutsLongMessages_andJoinsLines() {
-        val out = CrashReports.redact("a".repeat(1000) + "\nb")
+        val out = CrashReports.redact("z".repeat(1000) + "\nb")
         assertEquals(300, out.length)
         assertFalse(out.contains('\n'))
     }
