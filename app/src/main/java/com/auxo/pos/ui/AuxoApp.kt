@@ -16,6 +16,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -44,15 +45,23 @@ fun AuxoApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val onHome = currentDestination?.route == TopLevelDestination.HOME.route
+    val lastLoggedScreen = remember { androidx.compose.runtime.mutableStateOf("") }
     LaunchedEffect(backStackEntry) {
         val entry = backStackEntry ?: return@LaunchedEffect
         val route = entry.destination.route ?: return@LaunchedEffect
-        // Fill the {placeholders} with the real values so the log says which product, bill, etc.
-        val shown = Regex("\\{(\\w+)\\}").replace(route) { m ->
-            @Suppress("DEPRECATION")
-            entry.arguments?.get(m.groupValues[1])?.toString() ?: m.value
+        // Fill the {placeholders} with the real values (which product, bill, ...) and leave out optional values that were not given.
+        @Suppress("DEPRECATION")
+        fun value(name: String): String? = entry.arguments?.get(name)?.toString()
+        var shown = Regex("[?&]\\w+=\\{(\\w+)\\}").replace(route) { m ->
+            value(m.groupValues[1])?.let { m.value.replace("{" + m.groupValues[1] + "}", it) } ?: ""
         }
-        com.auxo.pos.core.debuglog.DebugLog.event("Screen", shown)
+        if ('?' !in shown) shown = shown.replaceFirst('&', '?')
+        shown = Regex("\\{(\\w+)\\}").replace(shown) { m -> value(m.groupValues[1]) ?: m.value }
+        // The same screen can be reported twice in a row when the back stack is rebuilt; log it once.
+        if (shown != lastLoggedScreen.value) {
+            lastLoggedScreen.value = shown
+            com.auxo.pos.core.debuglog.DebugLog.event("Screen", shown)
+        }
     }
     val capabilities = LocalCapabilities.current
     val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
