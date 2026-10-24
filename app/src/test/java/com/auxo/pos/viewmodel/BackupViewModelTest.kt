@@ -70,6 +70,7 @@ class BackupViewModelTest {
 
     @Test
     fun backUp_showsWhereTheFileWent_andWhen() {
+        service.storedPassphrase = "a long passphrase"
         val viewModel = BackupViewModel(service)
         assertNull(viewModel.uiState.value.lastBackupMillis)
 
@@ -83,7 +84,45 @@ class BackupViewModelTest {
     }
 
     @Test
+    fun withoutAPassphrase_aBackupFirstAsksForOne_thenMakesTheBackup() {
+        val viewModel = BackupViewModel(service)
+        viewModel.onBackUp()
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+        assertNull(viewModel.uiState.value.saved)
+        assertNull(service.last)
+
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals("b.zip", viewModel.uiState.value.saved?.fileName)
+        assertEquals("copper river lamp window", service.storedPassphrase)
+    }
+
+    @Test
+    fun cancellingThePassphraseBox_makesNoBackup() {
+        val viewModel = BackupViewModel(service)
+        viewModel.onBackUp()
+        viewModel.onChoosePassphraseCancelled()
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertNull(viewModel.uiState.value.saved)
+        assertNull(service.last)
+        // Setting one later on its own does not make a backup nobody asked for.
+        viewModel.onChoosePassphrase()
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertNull(viewModel.uiState.value.saved)
+    }
+
+    @Test
+    fun aWeakPassphrase_isNotAccepted() {
+        val viewModel = BackupViewModel(service)
+        viewModel.onBackUp()
+        viewModel.onPassphraseSet("12345678")
+        assertNull(service.storedPassphrase)
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+    }
+
+    @Test
     fun aFailedBackup_reportsWhy() {
+        service.storedPassphrase = "a long passphrase"
         service.failBackup = BackupException(BackupProblem.SAVE_FAILED)
         val viewModel = BackupViewModel(service)
         viewModel.onBackUp()

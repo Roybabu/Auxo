@@ -47,8 +47,21 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
     private val _uiState = MutableStateFlow(BackupUiState(lastBackupMillis = service.lastBackupMillis(), isProtected = service.isProtected()))
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
 
+    /** Set when a backup was asked for before any passphrase existed: it is made as soon as one is chosen. */
+    private var backUpAfterPassphrase = false
+
     fun onBackUp() {
         if (_uiState.value.isWorking) return
+        // Backups are always locked. With no passphrase yet, ask for one first and make the backup right after.
+        if (!service.isProtected()) {
+            backUpAfterPassphrase = true
+            _uiState.update { it.copy(choosingPassphrase = true, problem = null) }
+            return
+        }
+        startBackUp()
+    }
+
+    private fun startBackUp() {
         _uiState.update { it.copy(isWorking = true, problem = null, saved = null) }
         viewModelScope.launch {
             try {
@@ -107,14 +120,24 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
 
     fun onChoosePassphrase() = _uiState.update { it.copy(choosingPassphrase = true) }
 
-    fun onChoosePassphraseCancelled() = _uiState.update { it.copy(choosingPassphrase = false) }
+    fun onChoosePassphraseCancelled() {
+        backUpAfterPassphrase = false
+        _uiState.update { it.copy(choosingPassphrase = false) }
+    }
 
     fun onPassphraseSet(passphrase: String) {
+        // The box already refuses weak passphrases; this keeps one from getting through any other way.
+        if (com.auxo.pos.core.backup.PassphraseStrength.problem(passphrase) != null) return
         try {
             service.setPassphrase(passphrase)
             _uiState.update { it.copy(choosingPassphrase = false, isProtected = service.isProtected(), problem = null) }
+            if (backUpAfterPassphrase) {
+                backUpAfterPassphrase = false
+                startBackUp()
+            }
         } catch (e: Exception) {
             com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
+            backUpAfterPassphrase = false
             _uiState.update { it.copy(choosingPassphrase = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
         }
     }

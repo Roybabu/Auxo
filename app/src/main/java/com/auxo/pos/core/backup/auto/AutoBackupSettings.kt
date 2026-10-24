@@ -13,6 +13,9 @@ enum class AutoBackupFailure {
 
     /** The backup could not be made or written. */
     SAVE_FAILED,
+
+    /** Backups are always locked, and no passphrase has been chosen (or it can no longer be read). */
+    PASSPHRASE_REQUIRED,
 }
 
 /**

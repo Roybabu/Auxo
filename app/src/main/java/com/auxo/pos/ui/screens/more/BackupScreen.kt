@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -56,6 +57,7 @@ import com.auxo.pos.R
 import com.auxo.pos.core.backup.BackupCrypto
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.DocumentsBackupStorage
+import com.auxo.pos.core.backup.PassphraseStrength
 import com.auxo.pos.core.backup.RestartApp
 import com.auxo.pos.core.backup.SavedBackup
 import com.auxo.pos.ui.components.AuxoCard
@@ -294,7 +296,8 @@ private fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Uni
 internal fun ChoosePassphraseForm(onSave: (String) -> Unit, onCancel: () -> Unit) {
     var first by remember { mutableStateOf("") }
     var second by remember { mutableStateOf("") }
-    val tooShort = first.length < BackupCrypto.MIN_PASSPHRASE_LENGTH
+    val problem = PassphraseStrength.problem(first)
+    val weak = first.isNotEmpty() && problem != null
     val differs = first != second
     Column(
         modifier = Modifier.padding(Spacing.xl).verticalScroll(rememberScrollState()),
@@ -309,10 +312,18 @@ internal fun ChoosePassphraseForm(onSave: (String) -> Unit, onCancel: () -> Unit
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            supportingText = { if (first.isNotEmpty() && tooShort) Text(stringResource(R.string.backup_pass_short, BackupCrypto.MIN_PASSPHRASE_LENGTH)) },
-            isError = first.isNotEmpty() && tooShort,
+            supportingText = {
+                when {
+                    !weak -> Text(stringResource(R.string.backup_pass_tip))
+                    problem == PassphraseStrength.Problem.TOO_SHORT -> Text(stringResource(R.string.backup_pass_short, BackupCrypto.MIN_PASSPHRASE_LENGTH))
+                    problem == PassphraseStrength.Problem.TOO_COMMON -> Text(stringResource(R.string.backup_pass_common))
+                    else -> Text(stringResource(R.string.backup_pass_simple))
+                }
+            },
+            isError = weak,
             modifier = Modifier.fillMaxWidth().testTag("backup_pass_first"),
         )
+        if (first.isNotEmpty()) PassphraseMeter(PassphraseStrength.segments(first))
         OutlinedTextField(
             value = second,
             onValueChange = { second = it },
@@ -326,9 +337,23 @@ internal fun ChoosePassphraseForm(onSave: (String) -> Unit, onCancel: () -> Unit
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
-            TextButton(onClick = { onSave(first) }, enabled = !tooShort && !differs, modifier = Modifier.testTag("backup_pass_save")) {
+            TextButton(onClick = { onSave(first) }, enabled = problem == null && !differs, modifier = Modifier.testTag("backup_pass_save")) {
                 Text(stringResource(R.string.backup_pass_save))
             }
+        }
+    }
+}
+
+/** Four bars that fill as the passphrase gets stronger. Only a guide: weak passphrases are refused whatever it shows. */
+@Composable
+private fun PassphraseMeter(filled: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.fillMaxWidth().testTag("backup_pass_meter")) {
+        repeat(PassphraseStrength.SEGMENTS) { index ->
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = if (index < filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.weight(1f).height(6.dp),
+            ) {}
         }
     }
 }

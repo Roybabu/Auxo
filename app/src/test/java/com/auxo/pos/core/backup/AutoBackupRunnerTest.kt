@@ -43,6 +43,7 @@ class AutoBackupRunnerTest {
         store: FakeAutoBackupStore,
         whileBackingUp: suspend () -> Unit = {},
         failWith: Exception? = null,
+        needsPassphrase: Boolean = false,
     ) = AutoBackupRunner(
         store = store,
         folderFor = { folder },
@@ -54,6 +55,7 @@ class AutoBackupRunnerTest {
         },
         clock = clock,
         log = { audit.record(it) },
+        needsPassphrase = { needsPassphrase },
     )
 
     private fun stamp(): String {
@@ -150,6 +152,15 @@ class AutoBackupRunnerTest {
         assertEquals(clock.now, store.settings.value.lastFailureMillis)
         assertNull(store.settings.value.lastSuccessMillis)
         assertEquals(listOf(AuditAction.AUTO_BACKUP_FAILED), audit.drafts.map { it.action })
+    }
+
+    @Test
+    fun withoutAPassphrase_noBackupIsMade_andTheFailureSaysWhy() = runBlocking {
+        val store = FakeAutoBackupStore(settings())
+        val result = newRunner(store, needsPassphrase = true).runIfDue()
+        assertEquals(AutoBackupResult.Failed(AutoBackupFailure.PASSPHRASE_REQUIRED), result)
+        assertEquals(AutoBackupFailure.PASSPHRASE_REQUIRED, store.settings.value.lastFailure)
+        assertEquals(0, backups)
     }
 
     @Test

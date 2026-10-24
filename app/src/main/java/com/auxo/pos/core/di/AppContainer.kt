@@ -262,6 +262,7 @@ class AppContainer(context: Context) {
             backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },
+            needsPassphrase = { !backupPassphrase.isSet() },
         )
     }
 

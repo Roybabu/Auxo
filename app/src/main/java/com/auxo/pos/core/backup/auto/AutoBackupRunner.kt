@@ -7,6 +7,8 @@ import com.auxo.pos.core.debuglog.DebugLog
 import com.auxo.pos.core.audit.AuditAction
 import com.auxo.pos.core.audit.AuditDraft
 import com.auxo.pos.core.audit.AuditEntity
+import com.auxo.pos.core.backup.BackupException
+import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupStorage
 import com.auxo.pos.core.backup.SavedBackup
 import java.time.Clock
@@ -41,6 +43,8 @@ class AutoBackupRunner(
     private val backUpTo: suspend (BackupStorage) -> SavedBackup,
     private val clock: Clock,
     private val log: suspend (AuditDraft) -> Unit = {},
+    /** True while backups must be locked but no passphrase is available: no backup is made, and the failure says why. */
+    private val needsPassphrase: () -> Boolean = { false },
 ) {
     private val running = Mutex()
 
@@ -72,6 +76,7 @@ class AutoBackupRunner(
         val uri = settings.folderUri ?: return AutoBackupResult.NotDue
         val countedBefore = settings.invoicesSinceBackup
         return try {
+            if (needsPassphrase()) throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
             val storage = FolderBackupStorage(folderFor(uri))
             val saved = backUpTo(storage)
             // A failed clean-up must not turn a good backup into a failure.
@@ -92,7 +97,11 @@ class AutoBackupRunner(
             throw e
         } catch (e: Exception) {
             com.auxo.pos.core.debuglog.DebugLog.error("AutoBackupRunner", "Failed and showed an error", e)
-            val reason = if (e is FolderUnavailableException) AutoBackupFailure.FOLDER_UNAVAILABLE else AutoBackupFailure.SAVE_FAILED
+            val reason = when {
+                e is FolderUnavailableException -> AutoBackupFailure.FOLDER_UNAVAILABLE
+                (e as? BackupException)?.problem == BackupProblem.PASSPHRASE_UNAVAILABLE -> AutoBackupFailure.PASSPHRASE_REQUIRED
+                else -> AutoBackupFailure.SAVE_FAILED
+            }
             val alreadyFailing = AutoBackupPolicy.status(settings, clock.millis()) == AutoBackupStatus.FAILED
             store.update { it.copy(lastFailureMillis = clock.millis(), lastFailure = reason) }
             if (!alreadyFailing) {
@@ -108,5 +117,6 @@ class AutoBackupRunner(
     private fun AutoBackupFailure.describe(): String = when (this) {
         AutoBackupFailure.FOLDER_UNAVAILABLE -> "the backup folder is not available"
         AutoBackupFailure.SAVE_FAILED -> "the backup could not be saved"
+        AutoBackupFailure.PASSPHRASE_REQUIRED -> "no backup passphrase is set"
     }
 }

@@ -148,18 +148,27 @@ class BackupScreenTest {
     }
 
     @Test
-    fun choosingAPassphrase_needsEightCharacters_andTwoMatchingEntries() {
+    fun choosingAPassphrase_needsTenCharacters_andTwoMatchingEntries() {
         showForm { ChoosePassphraseForm(onSave = { log += "set $it" }, onCancel = {}) }
         composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
         composeRule.onNodeWithTag("backup_pass_first").performTextInput("short")
         composeRule.onNodeWithTag("backup_pass_second").performTextInput("short")
         composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
-        composeRule.onNodeWithText("Use at least 8 characters.").assertIsDisplayed()
+        composeRule.onNodeWithText("Use at least 10 characters.").assertIsDisplayed()
 
         composeRule.onNodeWithTag("backup_pass_first").performTextInput("er passphrase")
         composeRule.onNodeWithTag("backup_pass_second").performTextInput("x")
         composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
         composeRule.onNodeWithText("The two passphrases are not the same.").assertIsDisplayed()
+    }
+
+    @Test
+    fun anEasyPassphrase_isRefused_withAReason() {
+        showForm { ChoosePassphraseForm(onSave = { log += "set $it" }, onCancel = {}) }
+        composeRule.onNodeWithTag("backup_pass_first").performTextInput("password123")
+        composeRule.onNodeWithTag("backup_pass_second").performTextInput("password123")
+        composeRule.onNodeWithTag("backup_pass_save").assertIsNotEnabled()
+        composeRule.onNodeWithText("That is too easy to guess. Choose something less common.").assertIsDisplayed()
     }
 
     @Test

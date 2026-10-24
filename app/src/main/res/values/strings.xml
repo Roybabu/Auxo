@@ -913,6 +913,10 @@ in %2$s</string>
     <string name="backup_pass_field">Passphrase</string>
     <string name="backup_pass_repeat">Repeat passphrase</string>
     <string name="backup_pass_short" tools:ignore="PluralsCandidate">Use at least %1$d characters.</string>
+    <string name="backup_pass_tip">Tip: use three or four random words, like copper river lamp window.</string>
+    <string name="backup_pass_common">That is too easy to guess. Choose something less common.</string>
+    <string name="backup_pass_simple">That is too simple. Avoid repeated characters, only numbers, or a row like 123456.</string>
+    <string name="auto_backup_failed_passphrase">Automatic backups need a passphrase. Open Back up this phone and choose one.</string>
     <string name="backup_pass_mismatch">The two passphrases are not the same.</string>
     <string name="backup_pass_save">Lock backups</string>
     <string name="backup_turn_off_title">Stop locking backups?</string>

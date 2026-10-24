@@ -912,6 +912,10 @@
     <string name="backup_pass_field">पासफ़्रेज़</string>
     <string name="backup_pass_repeat">पासफ़्रेज़ दोबारा लिखें</string>
     <string name="backup_pass_short" tools:ignore="PluralsCandidate">कम से कम %1$d अक्षर रखें।</string>
+    <string name="backup_pass_tip">सुझाव: तीन या चार बेतरतीब शब्द रखें, जैसे copper river lamp window।</string>
+    <string name="backup_pass_common">इसका अंदाज़ा लगाना बहुत आसान है। कुछ कम आम चुनें।</string>
+    <string name="backup_pass_simple">यह बहुत सरल है। दोहराए अक्षर, सिर्फ़ अंक या 123456 जैसी कतार से बचें।</string>
+    <string name="auto_backup_failed_passphrase">अपने-आप बैकअप के लिए पासफ़्रेज़ चाहिए। “इस फ़ोन का बैकअप” खोलकर एक चुनें।</string>
     <string name="backup_pass_mismatch">दोनों पासफ़्रेज़ एक जैसे नहीं हैं।</string>
     <string name="backup_pass_save">बैकअप बंद करें</string>
     <string name="backup_turn_off_title">बैकअप बंद करना रोकें?</string>

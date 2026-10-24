@@ -28,7 +28,7 @@ object BackupCrypto {
     /** Ends the name of an encrypted backup, so nobody mistakes it for a plain zip. */
     const val FILE_EXTENSION = ".auxobak"
 
-    const val MIN_PASSPHRASE_LENGTH = 8
+    const val MIN_PASSPHRASE_LENGTH = 10
 
     const val DEFAULT_ITERATIONS = 600_000
     private const val MAX_ITERATIONS = 5_000_000

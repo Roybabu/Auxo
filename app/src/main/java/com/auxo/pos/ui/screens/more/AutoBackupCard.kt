@@ -217,4 +217,5 @@ private fun BackupSchedule.labelRes(): Int = when (this) {
 fun AutoBackupFailure.messageRes(): Int = when (this) {
     AutoBackupFailure.FOLDER_UNAVAILABLE -> R.string.auto_backup_failed_folder
     AutoBackupFailure.SAVE_FAILED -> R.string.auto_backup_failed_save
+    AutoBackupFailure.PASSPHRASE_REQUIRED -> R.string.auto_backup_failed_passphrase
 }
