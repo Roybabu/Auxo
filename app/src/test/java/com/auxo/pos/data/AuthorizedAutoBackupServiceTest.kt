@@ -104,7 +104,7 @@ class AuthorizedAutoBackupServiceTest {
         val admin = service(Role.SUPER_ADMIN)
         admin.setSchedule(BackupSchedule.DAILY)
         admin.setSchedule(BackupSchedule.OFF)
-        assertEquals(listOf(false, true, false), scheduler.calls)
+        assertEquals(listOf(true, false), scheduler.calls)
     }
 
     @Test
