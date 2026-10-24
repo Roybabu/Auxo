@@ -72,12 +72,6 @@ class AutoBackupPolicyTest {
     }
 
     @Test
-    fun monthly_isDueAfterThirtyDays_notBefore() {
-        assertFalse(AutoBackupPolicy.isDue(active(BackupSchedule.MONTHLY, lastSuccess = now - 29 * day), now))
-        assertTrue(AutoBackupPolicy.isDue(active(BackupSchedule.MONTHLY, lastSuccess = now - 30 * day), now))
-    }
-
-    @Test
     fun thePhoneIsWokenAsOftenAsTheScheduleNeeds_between15MinutesAndSixHours() {
         assertEquals(15L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_15))
         assertEquals(30L, AutoBackupPolicy.checkEveryMinutes(BackupSchedule.MINUTES_30))

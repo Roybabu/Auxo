@@ -216,7 +216,6 @@ private fun BackupSchedule.labelRes(): Int = when (this) {
     BackupSchedule.HOURS_3 -> R.string.auto_backup_every_3h
     BackupSchedule.HOURS_6 -> R.string.auto_backup_every_6h
     BackupSchedule.HOURS_12 -> R.string.auto_backup_every_12h
-    BackupSchedule.MONTHLY -> R.string.auto_backup_monthly
     BackupSchedule.DAILY -> R.string.auto_backup_daily
     BackupSchedule.WEEKLY -> R.string.auto_backup_weekly
     BackupSchedule.EVERY_N_INVOICES -> R.string.auto_backup_after_invoices

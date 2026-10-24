@@ -18,7 +18,6 @@ enum class BackupSchedule(
     HOURS_12(12 * 60 * MINUTE),
     DAILY(24 * 60 * MINUTE),
     WEEKLY(7 * 24 * 60 * MINUTE),
-    MONTHLY(30 * 24 * 60 * MINUTE),
     EVERY_N_INVOICES,
 }
 
