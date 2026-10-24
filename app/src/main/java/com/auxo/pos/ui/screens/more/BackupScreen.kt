@@ -220,7 +220,7 @@ fun BackupContent(
 
 /** Asks for a new passphrase twice, with a plain warning that it cannot be recovered. */
 @Composable
-private fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
+internal fun ChoosePassphraseDialog(onSave: (String) -> Unit, onCancel: () -> Unit) {
     Dialog(onDismissRequest = onCancel) {
         Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp) { ChoosePassphraseForm(onSave, onCancel) }
     }

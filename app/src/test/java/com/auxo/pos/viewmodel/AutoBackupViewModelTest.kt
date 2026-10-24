@@ -129,4 +129,60 @@ class AutoBackupViewModelTest {
         viewModel.onKeepChange("3")
         assertEquals(before, store.settings.value)
     }
+
+    // The passphrase, asked for when a schedule is first chosen
+
+    private fun withoutPassphrase(saved: MutableList<String>) =
+        AutoBackupViewModel(service, clock, hasPassphrase = { saved.isNotEmpty() }, setPassphrase = { saved += it })
+
+    @Test
+    fun choosingASchedule_withNoPassphrase_asksForOneFirst_andStartsOnceItIsSaved() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.HOURS_1)
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(listOf("copper river lamp window"), saved)
+        assertEquals(BackupSchedule.HOURS_1, store.settings.value.schedule)
+    }
+
+    @Test
+    fun cancellingThePassphraseBox_leavesTheScheduleOff_andSavesNothing() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.DAILY)
+        viewModel.onPassphraseCancelled()
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertTrue(saved.isEmpty())
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+        // A passphrase saved afterwards does not start a schedule nobody is asking for any more.
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+    }
+
+    @Test
+    fun aWeakPassphrase_isNotAccepted_andTheBoxStaysOpen() {
+        val saved = mutableListOf<String>()
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.DAILY)
+        viewModel.onPassphraseSet("12345678")
+        assertTrue(saved.isEmpty())
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+    }
+
+    @Test
+    fun withAPassphrase_theScheduleStartsAtOnce_andSwitchingOffNeverAsks() {
+        val saved = mutableListOf("already set")
+        val viewModel = withoutPassphrase(saved)
+        viewModel.onScheduleChange(BackupSchedule.WEEKLY)
+        assertFalse(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(BackupSchedule.WEEKLY, store.settings.value.schedule)
+
+        val none = mutableListOf<String>()
+        withoutPassphrase(none).onScheduleChange(BackupSchedule.OFF)
+        assertEquals(BackupSchedule.OFF, store.settings.value.schedule)
+    }
 }

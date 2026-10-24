@@ -65,6 +65,8 @@ fun AutoBackupSection(viewModel: AutoBackupViewModel = viewModel(factory = AutoB
         onInterval = viewModel::onIntervalChange,
         onKeep = viewModel::onKeepChange,
     )
+    // Asked for as soon as a schedule is chosen and no passphrase exists yet; cancelling leaves the schedule as it was.
+    if (state.choosingPassphrase) ChoosePassphraseDialog(onSave = viewModel::onPassphraseSet, onCancel = viewModel::onPassphraseCancelled)
 }
 
 @Composable

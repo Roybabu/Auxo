@@ -906,7 +906,7 @@
     <string name="backup_pass_tip">পরামর্শ: তিন বা চারটি এলোমেলো শব্দ ব্যবহার করুন, যেমন copper river lamp window।</string>
     <string name="backup_pass_common">এটি আন্দাজ করা খুব সহজ। কম প্রচলিত কিছু বেছে নিন।</string>
     <string name="backup_pass_simple">এটি খুব সাধারণ। পুনরাবৃত্ত অক্ষর, শুধু সংখ্যা বা 123456-এর মতো সারি এড়িয়ে চলুন।</string>
-    <string name="auto_backup_failed_passphrase">স্বয়ংক্রিয় ব্যাকআপের জন্য একটি পাসফ্রেজ লাগবে। “এই ফোনের ব্যাকআপ” খুলে একটি বেছে নিন।</string>
+    <string name="auto_backup_failed_passphrase">স্বয়ংক্রিয় ব্যাকআপের জন্য একটি পাসফ্রেজ লাগবে। সেট করতে সময়সূচি আবার বেছে নিন।</string>
     <string name="backup_pass_mismatch">দুটি পাসফ্রেজ একই নয়।</string>
     <string name="backup_pass_save">ব্যাকআপ তালাবন্ধ করুন</string>
     <string name="backup_unlock_title">এই ব্যাকআপ তালাবন্ধ</string>
