@@ -153,26 +153,26 @@ class FindBackupDialogTest {
             { listOf(locked) }, service, kotlinx.coroutines.Dispatchers.Unconfined,
             peek = { _, pass -> if (pass == "right-pass-123") manifest else throw BackupException(BackupProblem.WRONG_PASSPHRASE) },
         )
-        composeRule.setContent {
-            AuxoTheme { FindBackupDialog(viewModel, onSetUpNewShop = {}, onChooseAnother = {}) }
-        }
+        // The pop-up window with a text box does not settle in these tests (see UnlockForm), so the steps are driven directly.
         viewModel.onFolderChosen(Uri.parse("content://tree"))
         composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.found != null }
-        composeRule.onNodeWithTag("find_backup_a.auxobak").performClick()
-        composeRule.onNodeWithTag("find_restore").performClick()
-        // The passphrase is asked for first, and a wrong one opens nothing.
-        composeRule.onNodeWithTag("backup_unlock_field").assertIsDisplayed()
-        composeRule.runOnIdle { viewModel.onPassphrase("wrong-pass") }
+        viewModel.onChoose(viewModel.uiState.value.found!!.single())
+        viewModel.onRestoreRequested()
+        // The passphrase is asked for first, nothing is selected yet, and a wrong one opens nothing.
+        assertEquals(true, viewModel.uiState.value.unlocking)
+        assertEquals(null, viewModel.uiState.value.selected)
+        viewModel.onPassphrase("wrong-pass")
         composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.problem != null }
-        composeRule.onNodeWithTag("backup_unlock_error").assertIsDisplayed()
-        assertEquals(emptyList<Uri>(), restored)
-        composeRule.runOnIdle { viewModel.onPassphrase("right-pass-123") }
+        assertEquals(BackupProblem.WRONG_PASSPHRASE, viewModel.uiState.value.problem)
+        assertEquals(true, viewModel.uiState.value.unlocking)
+        assertEquals(null, viewModel.uiState.value.selected)
+        viewModel.onPassphrase("right-pass-123")
         composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.selected != null }
-        // The shop's name is shown on the confirmation, and the backup is restored with the same passphrase.
-        composeRule.onNodeWithText("Roy Stores").assertIsDisplayed()
+        // The shop's name is known for the confirmation, and the backup is restored with the same passphrase.
+        assertEquals("Roy Stores", viewModel.uiState.value.selected?.manifest?.shopName)
+        assertEquals(false, viewModel.uiState.value.unlocking)
         assertEquals(emptyList<Uri>(), restored)
-        composeRule.onNodeWithTag("find_confirm").performClick()
-        composeRule.onNodeWithTag("find_warn_confirm").performClick()
+        viewModel.onConfirmed()
         composeRule.waitUntil(timeoutMillis = 5_000) { restored.isNotEmpty() }
         assertEquals(listOf<String?>("right-pass-123"), passphrases)
     }
