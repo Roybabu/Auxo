@@ -7,9 +7,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -17,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -24,6 +26,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.auxo.pos.R
 import com.auxo.pos.core.diagnostics.CrashReports
+import com.auxo.pos.ui.components.AuxoCard
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
+import com.auxo.pos.ui.theme.Spacing
 
 /**
  * The one "Report a problem" row on More opens this: send a diagnostic report to share with the developer, or report on
@@ -40,6 +46,7 @@ fun ProblemReportDialog(onDismiss: () -> Unit) {
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 ReportChoice(
+                    icon = R.drawable.ic_fact_check,
                     title = stringResource(R.string.help_report_title),
                     body = stringResource(R.string.help_report_body),
                     modifier = Modifier.testTag("report_choice_diagnostic"),
@@ -50,6 +57,7 @@ fun ProblemReportDialog(onDismiss: () -> Unit) {
                     }
                 }
                 ReportChoice(
+                    icon = R.drawable.ic_language,
                     title = stringResource(R.string.help_github_title),
                     body = stringResource(R.string.help_github_body),
                     modifier = Modifier.testTag("report_choice_github"),
@@ -70,9 +78,14 @@ fun ProblemReportDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun ReportChoice(title: String, body: String, modifier: Modifier, onClick: () -> Unit) {
-    Column(modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun ReportChoice(@DrawableRes icon: Int, title: String, body: String, modifier: Modifier, onClick: () -> Unit) {
+    AuxoCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+            AuxoIcon(icon, contentDescription = null, size = AuxoIconSize.Medium)
+            Column(modifier = Modifier.weight(1f).padding(start = Spacing.lg)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@ fun DebugScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             DebugItem(
-                R.drawable.ic_activity,
+                R.drawable.ic_share,
                 stringResource(R.string.debug_logs_title),
                 stringResource(R.string.debug_logs_body),
                 {
@@ -59,7 +59,7 @@ fun DebugScreen(onBack: () -> Unit) {
                 modifier = Modifier.testTag("more_debug_logs"),
             )
             DebugItem(
-                R.drawable.ic_warning,
+                R.drawable.ic_error,
                 stringResource(R.string.debug_crash_title),
                 stringResource(R.string.debug_crash_body),
                 { throw IllegalStateException("Test crash from the debug button") },
