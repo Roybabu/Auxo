@@ -28,19 +28,27 @@ data class FindBackupUiState(
     val scanning: Boolean = false,
     /** The backups found in the chosen folder, newest first; null until a folder has been searched. */
     val found: List<FoundBackup>? = null,
-    /** The backup the person tapped, waiting for them to confirm. */
+    /** The backup the person has ticked in the list; Restore shop acts on this one only. */
+    val chosen: FoundBackup? = null,
+    /** The backup whose restore is being confirmed (the step after Restore shop). */
     val selected: FoundBackup? = null,
     /** The selected backup is locked, so its passphrase is being asked for. */
     val unlocking: Boolean = false,
     val restoring: Boolean = false,
     val restored: Boolean = false,
     val problem: BackupProblem? = null,
+    /** The folder picker was closed without a choice, so the person is offered a new shop instead. */
+    val skipped: Boolean = false,
 )
 
 /** The first screen on a new phone: find backups in a folder and restore one, before any account exists. */
 class FindBackupViewModel(
     private val scanner: (Uri) -> List<FoundBackup>,
     private val service: BackupService,
+    /** Where the folder is searched; tests pass an immediate one. */
+    private val io: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+    /** Runs once a restore has worked, before the app restarts. */
+    private val afterRestore: () -> Unit = {},
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FindBackupUiState())
@@ -52,7 +60,7 @@ class FindBackupViewModel(
         _uiState.update { FindBackupUiState(scanning = true) }
         viewModelScope.launch {
             val result = try {
-                withContext(Dispatchers.IO) { scanner(tree) }
+                withContext(io) { scanner(tree) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -63,7 +71,14 @@ class FindBackupViewModel(
         }
     }
 
-    fun onSelected(backup: FoundBackup) = _uiState.update { it.copy(selected = backup, problem = null) }
+    /** The folder picker was closed without choosing anything. */
+    fun onPickerClosed() = _uiState.update { it.copy(skipped = true) }
+
+    /** A card was tapped: it is ticked, and nothing is restored yet. */
+    fun onChoose(backup: FoundBackup) = _uiState.update { it.copy(chosen = backup, problem = null) }
+
+    /** Restore shop was tapped: the ticked backup is shown for confirmation. */
+    fun onRestoreRequested() = _uiState.update { state -> state.chosen?.let { state.copy(selected = it, problem = null) } ?: state }
 
     fun onSelectionCancelled() = _uiState.update { it.copy(selected = null, unlocking = false) }
 
@@ -90,6 +105,7 @@ class FindBackupViewModel(
         viewModelScope.launch {
             try {
                 service.restore(uri, passphrase)
+                afterRestore()
                 _uiState.update { it.copy(restoring = false, restored = true) }
             } catch (e: CancellationException) {
                 throw e
@@ -110,7 +126,7 @@ class FindBackupViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                FindBackupViewModel(container.backupScanner::scan, container.firstRunRestore)
+                FindBackupViewModel(container.backupScanner::scan, container.firstRunRestore, afterRestore = container::afterFirstRunRestore)
             }
         }
     }

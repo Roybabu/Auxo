@@ -70,6 +70,25 @@ class UserAccountsTest {
         assertEquals(2, (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.size)
     }
 
+    @Test
+    fun afterARestore_oldAccountsAreForgotten_andANewFirstAccountCanBeMade() = runBlocking {
+        val owner = ownerWithEmployee()
+        owner.signOut()
+        owner.forgetAccountsAfterRestore()
+        assertEquals(AuthState.NeedsSetup, owner.state.value)
+        val next = launch()
+        assertEquals(AuthState.NeedsSetup, next.state.value)
+        assertEquals(SetupResult.Created, next.createAdministrator("New Owner", "new.owner", OWNER_PW, OWNER_PW))
+        assertEquals(1, (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.size)
+    }
+
+    @Test
+    fun forgettingAccounts_doesNothingWhileSomeoneIsSignedIn() = runBlocking {
+        val owner = ownerWithEmployee()
+        owner.forgetAccountsAfterRestore()
+        assertEquals(2, (FileAccountStore(dir).read() as StoredAccounts.Present).accounts.size)
+    }
+
     // Upgrading an install that only ever had one administrator
 
     @Test

@@ -226,6 +226,19 @@ class AppContainer(context: Context) {
         BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys)
     }
 
+    val restoredSignIn: com.auxo.pos.core.backup.RestoredSignInFlag by lazy { com.auxo.pos.core.backup.RestoredSignInFlag(appContext) }
+
+    /**
+     * Called after a backup was restored from the first screen. The restored data already holds the shop's category
+     * choices, and the person has been past the introduction, so neither is asked again; only a sign-in is.
+     */
+    fun afterFirstRunRestore() {
+        restoredSignIn.set()
+        authRepository.forgetAccountsAfterRestore()
+        rawShopPreferences.setCategorySetupDone(true)
+        rawShopPreferences.setOnboardingSeen(true)
+    }
+
     val backupScanner: com.auxo.pos.core.backup.BackupScanner by lazy { com.auxo.pos.core.backup.BackupScanner(appContext) }
 
     val backupService: BackupService by lazy {

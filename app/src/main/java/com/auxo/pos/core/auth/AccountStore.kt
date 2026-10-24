@@ -42,6 +42,9 @@ interface AccountStore {
      * refuse. Fails if there is no readable registry, so it can never create the first account.
      */
     fun update(change: (List<UserAccount>) -> List<UserAccount>?): UpdateOutcome
+
+    /** Removes every account, so the next start asks for a new first one. Returns false if nothing could be removed. */
+    fun clear(): Boolean = false
 }
 
 /**
@@ -83,6 +86,12 @@ class FileAccountStore(directory: File) : AccountStore {
         val current = readLocked() as? StoredAccounts.Present ?: return UpdateOutcome.FAILED
         val next = change(current.accounts) ?: return UpdateOutcome.REJECTED
         if (write(next)) UpdateOutcome.UPDATED else UpdateOutcome.FAILED
+    }
+
+    override fun clear(): Boolean = synchronized(LOCK) {
+        temp.delete()
+        legacy.delete()
+        target.delete() || !target.exists()
     }
 
     private fun write(accounts: List<UserAccount>): Boolean = try {

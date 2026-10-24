@@ -102,16 +102,51 @@ import com.auxo.pos.ui.components.AuxoIcon
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBarsPadding
+import com.auxo.pos.viewmodel.FindBackupViewModel
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 
 /** Width over height of auxo_mark.png (the icon glyph alone, cropped from the approved vertical lockup). */
 internal const val MARK_ASPECT = 261f / 191f
+
+/** How the button under the sign-in slider looks and what it says; null keeps the usual "Get started". */
+class SetUpButton(
+    val label: String,
+    @DrawableRes val icon: Int,
+    val divider: String,
+    val enabled: Boolean = true,
+    /** A short line under the button, such as "No backups found in that folder." */
+    val note: String? = null,
+    /** A smaller second choice under the button, such as "Choose another folder". */
+    val secondaryLabel: String? = null,
+    val onSecondary: () -> Unit = {},
+)
 
 /** The sign-in screen: the first screen on every launch. [hasBusiness] is false until a business has been set up on this device. */
 @Composable
 fun LoginScreen(
     hasBusiness: Boolean = true,
     onSetUpBusiness: () -> Unit = {},
+    /** On a phone with no business, the button first asks for the folder holding old backups (see [BackupAwareLogin]). */
+    findBackups: Boolean = false,
     viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory),
+) {
+    if (findBackups && !hasBusiness) {
+        BackupAwareLogin(onSetUpBusiness = onSetUpBusiness, loginViewModel = viewModel)
+        return
+    }
+    LoginScreenBody(hasBusiness, onSetUpBusiness, null, viewModel)
+}
+
+@Composable
+private fun LoginScreenBody(
+    hasBusiness: Boolean,
+    onSetUpBusiness: () -> Unit,
+    setUpButton: SetUpButton?,
+    viewModel: LoginViewModel,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var resetting by rememberSaveable { mutableStateOf(false) }
@@ -124,7 +159,58 @@ fun LoginScreen(
             onForgotPassword = if (hasBusiness) ({ resetting = true }) else null,
             // Once a business exists on this device, "Get started" is hidden.
             onSetUpBusiness = if (hasBusiness) null else onSetUpBusiness,
+            setUpButton = setUpButton,
             topEnd = { LanguageChip() },
+        )
+    }
+}
+
+/**
+ * The sign-in page of a phone with no business. The button under the slider first asks for the folder holding old
+ * backups. With backups in it, they are listed to restore; with none (or if the picker is closed), the button
+ * becomes "Set up a new shop".
+ */
+@Composable
+private fun BackupAwareLogin(onSetUpBusiness: () -> Unit, loginViewModel: LoginViewModel) {
+    val finder: FindBackupViewModel = viewModel(factory = FindBackupViewModel.Factory)
+    val found by finder.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree == null) {
+            finder.onPickerClosed()
+        } else {
+            // Keep read access for as long as the phone allows, so a restore that starts later can still open the file.
+            runCatching { context.contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            finder.onFolderChosen(tree)
+        }
+    }
+    val hasBackups = found.found.orEmpty().isNotEmpty()
+    val noneFound = found.found != null && !found.scanning && !hasBackups
+    val newShop = noneFound || found.skipped
+    val button = when {
+        found.scanning -> SetUpButton(stringResource(R.string.find_scanning), R.drawable.ic_search, stringResource(R.string.find_divider), enabled = false)
+        newShop -> SetUpButton(
+            label = stringResource(R.string.find_new),
+            icon = R.drawable.ic_store,
+            divider = stringResource(R.string.auth_login_setup_business),
+            note = if (noneFound) stringResource(R.string.find_none_short) else null,
+            secondaryLabel = stringResource(R.string.find_another),
+            onSecondary = { picker.launch(null) },
+        )
+        else -> SetUpButton(stringResource(R.string.find_choose), R.drawable.ic_backup, stringResource(R.string.find_divider))
+    }
+    LoginScreenBody(
+        hasBusiness = false,
+        onSetUpBusiness = if (newShop) onSetUpBusiness else ({ picker.launch(null) }),
+        setUpButton = button,
+        viewModel = loginViewModel,
+    )
+    // Backups found in the folder: a pop-up over this page lists them as blocks, with a new shop as the other choice.
+    if (hasBackups || found.restoring) {
+        FindBackupDialog(
+            viewModel = finder,
+            onSetUpNewShop = { finder.onChooseAnother(); onSetUpBusiness() },
+            onChooseAnother = { finder.onChooseAnother(); picker.launch(null) },
         )
     }
 }
@@ -153,6 +239,13 @@ private const val PITCH_BOTTOM = 0.50f
 /** The sign-in fields' height: 5 dp under the 56 dp Material default. */
 private val LOGIN_FIELD_HEIGHT = 51.dp
 
+/** Windows shorter than this get the plain scrolling page instead of the picture. */
+internal val COMPACT_BELOW = 560.dp
+
+/** How much height the sign-in form needs, without and with the "Get started" button. */
+private val FORM_HEIGHT = 340.dp
+private val FORM_HEIGHT_WITH_SETUP = 420.dp
+
 /** The widest the page is drawn; on a tablet it is a centred phone-shaped column. */
 internal val MAX_LOGIN_WIDTH = 480.dp
 
@@ -164,15 +257,38 @@ fun LoginContent(
     onSignIn: () -> Unit,
     onForgotPassword: (() -> Unit)? = null,
     onSetUpBusiness: (() -> Unit)? = null,
+    setUpButton: SetUpButton? = null,
     topEnd: (@Composable () -> Unit)? = null,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(AuthCream).testTag("auth_screen")) {
         // The picture sets the page's shape. On a wide or short window the column narrows so the whole picture still fits its height.
+        // A short window (split screen, a landscape phone) cannot hold the picture and the form, so it gets a plain
+        // page that scrolls: a green band with the logo, then the form.
+        if (maxHeight < COMPACT_BELOW) {
+            CompactLogin(
+                state = state,
+                onIdentifierChange = onIdentifierChange,
+                onPasswordChange = onPasswordChange,
+                onSignIn = onSignIn,
+                onForgotPassword = onForgotPassword,
+                onSetUpBusiness = onSetUpBusiness,
+                setUpButton = setUpButton,
+                showPassword = showPassword,
+                onTogglePassword = { showPassword = !showPassword },
+            )
+            if (topEnd != null) {
+                Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
+            }
+            return@BoxWithConstraints
+        }
         val width = minOf(maxWidth, MAX_LOGIN_WIDTH, maxHeight / ART_ASPECT)
         val artHeight = width * ART_ASPECT
-        val pageHeight = maxHeight
+        // Never shorter than the form needs below the picture's curve, so on a smaller phone the page scrolls
+        // instead of cutting the form off.
+        val formNeed = if (onSetUpBusiness != null) FORM_HEIGHT_WITH_SETUP else FORM_HEIGHT
+        val pageHeight = maxOf(maxHeight, artHeight * FORM_TOP + formNeed)
         // The page keeps its exact shape. Only when the keyboard is up does the viewport shrink and scroll, so the field being typed in is never hidden.
         Box(modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
         Box(modifier = Modifier.width(width).height(pageHeight).align(Alignment.TopCenter)) {
@@ -202,6 +318,7 @@ fun LoginContent(
                     onSignIn = onSignIn,
                     onForgotPassword = onForgotPassword,
                     onSetUpBusiness = onSetUpBusiness,
+                    setUpButton = setUpButton,
                     showPassword = showPassword,
                     onTogglePassword = { showPassword = !showPassword },
                 )
@@ -211,6 +328,58 @@ fun LoginContent(
         if (topEnd != null) {
             Box(modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp)) { topEnd() }
         }
+    }
+}
+
+/** The sign-in page for a short window: the logo on a green band, then the form, all in one scrolling column. */
+@Composable
+private fun CompactLogin(
+    state: LoginUiState,
+    onIdentifierChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSignIn: () -> Unit,
+    onForgotPassword: (() -> Unit)?,
+    onSetUpBusiness: (() -> Unit)?,
+    setUpButton: SetUpButton?,
+    showPassword: Boolean,
+    onTogglePassword: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).testTag("login_compact"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(AuthInk, AuthEmerald)))
+                .statusBarsPadding()
+                .padding(horizontal = Spacing.screen, vertical = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.auxo_mark),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier.width(52.dp).aspectRatio(MARK_ASPECT),
+            )
+            Column {
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Text(stringResource(R.string.app_tagline), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.75f))
+            }
+        }
+        LoginForm(
+            bottomClearance = Spacing.lg,
+            state = state,
+            onIdentifierChange = onIdentifierChange,
+            onPasswordChange = onPasswordChange,
+            onSignIn = onSignIn,
+            onForgotPassword = onForgotPassword,
+            onSetUpBusiness = onSetUpBusiness,
+            setUpButton = setUpButton,
+            showPassword = showPassword,
+            onTogglePassword = onTogglePassword,
+            modifier = Modifier.widthIn(max = MAX_LOGIN_WIDTH).fillMaxWidth(),
+        )
     }
 }
 
@@ -268,13 +437,15 @@ private fun LoginForm(
     onSignIn: () -> Unit,
     onForgotPassword: (() -> Unit)?,
     onSetUpBusiness: (() -> Unit)?,
+    setUpButton: SetUpButton?,
     showPassword: Boolean,
     onTogglePassword: () -> Unit,
+    /** The picture layout gives the form the whole white sheet; the compact page lets it be as tall as it is. */
+    modifier: Modifier = Modifier.fillMaxSize(),
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .padding(horizontal = Spacing.xl, vertical = Spacing.lg)
             .testTag("login"),
     ) {
@@ -358,10 +529,10 @@ private fun LoginForm(
         SlideToSignIn(isSigningIn = state.isSigningIn, onSignIn = onSignIn, modifier = Modifier.padding(horizontal = 2.dp).testTag("login_submit"))
         // Only offered until a business has been set up on this device.
         if (onSetUpBusiness != null) {
-            OrDivider(stringResource(R.string.auth_login_setup_business))
+            OrDivider(setUpButton?.divider ?: stringResource(R.string.auth_login_setup_business))
             OutlinedButton(
                 onClick = onSetUpBusiness,
-                enabled = !state.isSigningIn,
+                enabled = !state.isSigningIn && (setUpButton?.enabled ?: true),
                 shape = RoundedCornerShape(32.dp),
                 // Half the form's width, centred; the padding is trimmed so the icon, label and arrow still fit.
                 contentPadding = PaddingValues(horizontal = 8.dp),
@@ -370,17 +541,31 @@ private fun LoginForm(
                 // As tall as the sign-in slider including its raised edge.
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .fillMaxWidth(0.5f)
+                    .fillMaxWidth(if (setUpButton != null) 0.8f else 0.5f)
                     .padding(horizontal = 1.dp) // 2 dp narrower overall, still centred
                     .height(62.dp)
                     .crystalGlass(RoundedCornerShape(32.dp), rgb = true)
                     .testTag("login_setup_business"),
             ) {
-                AuxoIcon(R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact)
+                AuxoIcon(setUpButton?.icon ?: R.drawable.ic_store, contentDescription = null, size = AuxoIconSize.Compact)
                 Spacer(Modifier.width(12.dp))
-                Text(stringResource(R.string.auth_login_setup_business_action), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
+                Text(setUpButton?.label ?: stringResource(R.string.auth_login_setup_business_action), color = AuthEmerald, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(8.dp))
                 AuxoIcon(R.drawable.ic_arrow_forward, contentDescription = null, size = AuxoIconSize.Compact, style = AuxoIconStyle.Flat)
+            }
+            setUpButton?.note?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().testTag("login_setup_note"),
+                )
+            }
+            setUpButton?.secondaryLabel?.let {
+                TextButton(onClick = setUpButton.onSecondary, modifier = Modifier.align(Alignment.CenterHorizontally).testTag("login_setup_secondary")) {
+                    Text(it, color = AuthEmerald)
+                }
             }
         }
         Spacer(Modifier.height(bottomClearance))

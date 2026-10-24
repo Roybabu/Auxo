@@ -75,6 +75,22 @@ class AuthViewModelsTest {
     // Setup
 
     @Test
+    fun afterARestore_onlyTheSignInIsAsked_andTheRestoredShopDetailsAreLeftAlone() {
+        var saved = 0
+        val viewModel = AdminSetupViewModel(auth, restored = true, saveStore = { _, _, _ -> saved++ })
+        // No shop name is typed: the backup already brought it.
+        viewModel.onNameChange("Sample User")
+        viewModel.onIdentifierChange("sample.user")
+        viewModel.onPasswordChange("Green-Leaf-42")
+        viewModel.onConfirmChange("Green-Leaf-42")
+        viewModel.submit()
+        waitUntil { viewModel.uiState.first { !it.isSubmitting } }
+        assertEquals(emptyMap<SetupField, SetupError>(), viewModel.uiState.value.errors)
+        assertTrue(store.read() is StoredAccounts.Present)
+        assertEquals(0, saved)
+    }
+
+    @Test
     fun errorsAreNotShownWhileTheFormIsUntouched_orBeingFirstTyped() {
         val viewModel = AdminSetupViewModel(auth)
         viewModel.onNameChange("R")

@@ -228,6 +228,13 @@ interface AuthRepository {
 
     /** Super Admin only. */
     suspend fun setIdleTimeout(value: IdleTimeout): UserChangeResult
+
+    /**
+     * Forgets every account so the next start asks for a new first one. Used only right after a backup was restored
+     * from the sign-in page: the restored shop replaces what was here, and backups hold no sign-in details, so the
+     * person makes a new one. Does nothing while someone is signed in.
+     */
+    fun forgetAccountsAfterRestore() = Unit
 }
 
 class LocalAuthRepository(
@@ -389,6 +396,19 @@ class LocalAuthRepository(
         if (count < FREE_ATTEMPTS) return current
         val delay = min(BASE_LOCK_MILLIS shl min(count - FREE_ATTEMPTS, 4), MAX_LOCK_MILLIS)
         return clock.millis() + delay
+    }
+
+    override fun forgetAccountsAfterRestore() {
+        if (_state.value is AuthState.SignedIn) return
+        if (!store.clear()) return
+        DebugLog.event("Auth", "Accounts cleared after a backup was restored")
+        runCatching { sessions.clear() }
+        failures = 0
+        lockedUntilMillis = 0L
+        codeFailures = 0
+        codeLockedUntilMillis = 0L
+        forgetRecoveryPrompt()
+        _state.value = AuthState.NeedsSetup
     }
 
     override fun signOut() {
