@@ -13,8 +13,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.BackupManifest
@@ -163,12 +161,12 @@ class FindBackupDialogTest {
         composeRule.onNodeWithTag("find_backup_a.auxobak").performClick()
         composeRule.onNodeWithTag("find_restore").performClick()
         // The passphrase is asked for first, and a wrong one opens nothing.
-        composeRule.onNodeWithTag("backup_unlock_field").performTextInput("wrong-pass")
-        composeRule.onNodeWithTag("backup_unlock_action").performClick()
+        composeRule.onNodeWithTag("backup_unlock_field").assertIsDisplayed()
+        composeRule.runOnIdle { viewModel.onPassphrase("wrong-pass") }
+        composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.problem != null }
         composeRule.onNodeWithTag("backup_unlock_error").assertIsDisplayed()
         assertEquals(emptyList<Uri>(), restored)
-        composeRule.onNodeWithTag("backup_unlock_field").performTextReplacement("right-pass-123")
-        composeRule.onNodeWithTag("backup_unlock_action").performClick()
+        composeRule.runOnIdle { viewModel.onPassphrase("right-pass-123") }
         composeRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.selected != null }
         // The shop's name is shown on the confirmation, and the backup is restored with the same passphrase.
         composeRule.onNodeWithText("Roy Stores").assertIsDisplayed()
