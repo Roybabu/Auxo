@@ -33,6 +33,7 @@ import com.auxo.pos.R
 import com.auxo.pos.domain.billing.QuotationStatus
 import com.auxo.pos.domain.billing.QuotationSummary
 import com.auxo.pos.domain.billing.Quotations
+import com.auxo.pos.ui.components.rememberDialogListMaxHeight
 import com.auxo.pos.ui.components.ConfirmDialog
 import com.auxo.pos.ui.format.LocalMoneyFormatter
 import com.auxo.pos.ui.theme.Spacing
@@ -91,7 +92,7 @@ fun QuotationsDialog(
                 } else if (!counterIsEmpty) {
                     Text(stringResource(R.string.quotes_counter_busy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = 300.dp).testTag("quote_list")) {
+                LazyColumn(modifier = Modifier.heightIn(max = rememberDialogListMaxHeight(300.dp)).testTag("quote_list")) {
                     items(quotations, key = { it.id }) { quote ->
                         Column(modifier = Modifier.fillMaxWidth().testTag("quote_${quote.id}")) {
                             Text(quote.number, style = MaterialTheme.typography.titleSmall)

@@ -39,6 +39,7 @@ import com.auxo.pos.domain.billing.BusinessTime
 import com.auxo.pos.domain.billing.HeldBill
 import com.auxo.pos.domain.billing.HeldBillSummary
 import com.auxo.pos.domain.billing.HeldBills
+import com.auxo.pos.ui.components.rememberDialogListMaxHeight
 import com.auxo.pos.ui.components.ConfirmDialog
 import com.auxo.pos.ui.components.AuxoTextField
 import com.auxo.pos.ui.format.LocalMoneyFormatter
@@ -245,7 +246,7 @@ fun HeldBillsDialog(
                         Text(stringResource(R.string.held_filter_empty), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = 360.dp).testTag("held_list")) {
+                LazyColumn(modifier = Modifier.heightIn(max = rememberDialogListMaxHeight(360.dp)).testTag("held_list")) {
                     items(shown, key = { it.id }) { bill ->
                         Column(modifier = Modifier.fillMaxWidth().testTag("held_${bill.id}")) {
                             HeldBillHeading(bill)
@@ -365,7 +366,7 @@ private fun HeldBillReviewDialog(
                                 modifier = Modifier.testTag("held_review_unreadable"),
                             )
                         } else {
-                            LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                            LazyColumn(modifier = Modifier.heightIn(max = rememberDialogListMaxHeight(320.dp))) {
                                 items(bill.cart.lines, key = { it.variantId }) { line ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,

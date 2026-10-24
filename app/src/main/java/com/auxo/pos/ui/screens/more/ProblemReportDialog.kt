@@ -3,6 +3,8 @@
 
 package com.auxo.pos.ui.screens.more
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -36,7 +38,7 @@ fun ProblemReportDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.help_problem_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 ReportChoice(
                     title = stringResource(R.string.help_report_title),
                     body = stringResource(R.string.help_report_body),

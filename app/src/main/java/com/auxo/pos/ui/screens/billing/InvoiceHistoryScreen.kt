@@ -39,6 +39,7 @@ import com.auxo.pos.ui.can
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentKind
 import com.auxo.pos.domain.model.PaymentRecord
+import com.auxo.pos.ui.components.rememberIsShortScreen
 import com.auxo.pos.ui.components.EmptyState
 import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.AuxoCard
@@ -105,7 +106,8 @@ fun InvoiceHistoryContent(
                 text = { Text(stringResource(R.string.history_tab_payments)) },
             )
         }
-        Column(modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        val header: @Composable (Modifier) -> Unit = { headerModifier ->
+            Column(modifier = headerModifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             AuxoTextField(
                 value = state.query,
                 onValueChange = onQueryChange,
@@ -125,6 +127,10 @@ fun InvoiceHistoryContent(
                 }
             }
         }
+        }
+        val short = rememberIsShortScreen()
+        val listShown = !state.isLoading && !state.loadFailed && (state.tab == HistoryTab.PAYMENTS || state.invoices.isNotEmpty())
+        if (!(short && listShown)) header(Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm))
 
         when {
             state.isLoading -> LoadingState()
@@ -142,6 +148,7 @@ fun InvoiceHistoryContent(
                         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                         modifier = Modifier.testTag("history_list"),
                     ) {
+                        if (short) item(key = "filters") { header(Modifier) }
                         // Sales and returns totals are business-wide figures.
                         if (showFinancials) item(key = "totals") {
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
@@ -160,13 +167,13 @@ fun InvoiceHistoryContent(
                     }
                 }
             }
-            else -> PaymentsList(state, onOpenInvoice)
+            else -> PaymentsList(state, onOpenInvoice, if (short) ({ header(Modifier) }) else null)
         }
     }
 }
 
 @Composable
-private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> Unit) {
+private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> Unit, header: (@Composable () -> Unit)? = null) {
     val formatter = LocalMoneyFormatter.current
     val totals = state.paymentTotals
     LazyColumn(
@@ -174,6 +181,7 @@ private fun PaymentsList(state: InvoiceHistoryUiState, onOpenInvoice: (Long) -> 
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         modifier = Modifier.testTag("payments_list"),
     ) {
+        header?.let { item(key = "filters") { it() } }
         item(key = "method_totals") {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {

@@ -3,6 +3,8 @@
 
 package com.auxo.pos.ui.components
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import android.content.Intent
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -37,7 +39,7 @@ fun CrashReportPrompt() {
         },
         title = { Text(stringResource(R.string.crash_prompt_title)) },
         text = {
-            androidx.compose.foundation.layout.Column {
+            androidx.compose.foundation.layout.Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.crash_prompt_body))
                 TextButton(
                     onClick = {

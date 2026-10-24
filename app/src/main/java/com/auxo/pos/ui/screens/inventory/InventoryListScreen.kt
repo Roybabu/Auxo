@@ -53,6 +53,7 @@ import com.auxo.pos.R
 import com.auxo.pos.domain.inventory.StockFilter
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.StockStatus
+import com.auxo.pos.ui.components.rememberIsShortScreen
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.screens.more.label
 import com.auxo.pos.ui.selectableCategories
@@ -218,13 +219,19 @@ fun InventoryListContent(
             modifier = modifier,
         )
         else -> Column(modifier = modifier.fillMaxSize()) {
-            InventoryFilters(
-                uiState = uiState,
-                onSearchTextChange = onSearchTextChange,
-                onSearchSubmitted = onSearchSubmitted,
-                onCategorySelected = onCategorySelected,
-                onStockFilterSelected = onStockFilterSelected,
-            )
+            // On a short screen (a phone turned on its side) the filters scroll with the list instead of taking the page.
+            val short = rememberIsShortScreen()
+            val filters: @Composable (Modifier) -> Unit = { filtersModifier ->
+                InventoryFilters(
+                    uiState = uiState,
+                    onSearchTextChange = onSearchTextChange,
+                    onSearchSubmitted = onSearchSubmitted,
+                    onCategorySelected = onCategorySelected,
+                    onStockFilterSelected = onStockFilterSelected,
+                    modifier = filtersModifier,
+                )
+            }
+            if (!short || uiState.products.isEmpty()) filters(Modifier.padding(horizontal = Spacing.screen))
             if (uiState.products.isEmpty()) {
                 EmptyState(
                     iconRes = R.drawable.ic_search,
@@ -246,6 +253,7 @@ fun InventoryListContent(
                     ),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
+                    if (short) item(key = "filters") { filters(Modifier) }
                     items(uiState.products, key = { it.id }) { product ->
                         ProductRow(product = product, today = uiState.today, onClick = { onOpenProduct(product.id) })
                     }
@@ -262,9 +270,10 @@ private fun InventoryFilters(
     onSearchSubmitted: () -> Unit,
     onCategorySelected: (Long?) -> Unit,
     onStockFilterSelected: (StockFilter) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.padding(horizontal = Spacing.screen),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         AuxoTextField(

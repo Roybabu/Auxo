@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.export.FileExport
 import com.auxo.pos.domain.model.StockMovementRecord
+import com.auxo.pos.ui.components.rememberIsShortScreen
 import com.auxo.pos.ui.components.ActionIcon
 import com.auxo.pos.ui.selectableCategories
 import com.auxo.pos.ui.components.EmptyState
@@ -135,8 +136,9 @@ fun StockMovementsContent(
 ) {
     val formatter = LocalMoneyFormatter.current
     Column(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm),
+        val header: @Composable (Modifier) -> Unit = { headerModifier ->
+            Column(
+            modifier = headerModifier,
             verticalArrangement = Arrangement.spacedBy(Spacing.xs),
         ) {
             AuxoTextField(
@@ -170,6 +172,10 @@ fun StockMovementsContent(
                 }
             }
         }
+        }
+        val short = rememberIsShortScreen()
+        val listShown = !state.isLoading && !state.loadFailed && state.movements.isNotEmpty()
+        if (!(short && listShown)) header(Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.sm))
         when {
             state.isLoading -> LoadingState()
             state.loadFailed -> ErrorState(stringResource(R.string.error_generic), onRetry)
@@ -183,6 +189,7 @@ fun StockMovementsContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.testTag("movement_list"),
             ) {
+                if (short) item(key = "filters") { header(Modifier) }
                 item(key = "tiles") {
                     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         StatTile(stringResource(R.string.movements_in), state.receivedCount.toString(), Modifier.weight(1f))
