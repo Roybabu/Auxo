@@ -1,6 +1,19 @@
-<p align="center"><img src="app/src/main/res/drawable-nodpi/auxo_logo_horizontal.png" alt="Auxo: Built to grow." width="420"></p>
+<p align="center">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="design/auxo/auxo-logo-horizontal-dark.png">
+<img src="design/auxo/auxo-logo-horizontal.png" alt="Auxo: Built to grow." width="420">
+</picture>
+</p>
 
-**Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. No internet, no server, no monthly fee. The name comes from the Greek *auxō*, "to increase or grow".
+<p align="center">
+<img src="https://img.shields.io/badge/platform-Android%208.0%2B-3DDC84" alt="Android 8.0+">
+<img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF" alt="Kotlin and Jetpack Compose">
+<img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0 license">
+<img src="https://img.shields.io/badge/data-stays%20on%20device-informational" alt="Data stays on the device">
+<img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali-blue" alt="English, Hindi, Bengali">
+</p>
+
+**Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. It works offline, with no server and no monthly fee. The only time it uses the internet is to check for and download app updates. The name comes from the Greek *auxō*, "to increase or grow".
 
 Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
 
@@ -13,6 +26,22 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 - **See the numbers.** Twelve reports, day-end cash closing, a GST report, CSV export.
 - **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, activity log, backup and restore.
 - **Print anywhere.** PDF, Android printing, or straight to a Bluetooth receipt printer (58, 76 or 80 mm).
+
+## Screenshots
+
+| Sign in | Home | New bill |
+|---|---|---|
+| <img src="docs/screenshots/sign-in.jpg" width="240" alt="Sign in"> | <img src="docs/screenshots/home.jpg" width="240" alt="Home"> | <img src="docs/screenshots/new-bill.jpg" width="240" alt="New bill"> |
+
+| Inventory | Add product | Customers |
+|---|---|---|
+| <img src="docs/screenshots/inventory.jpg" width="240" alt="Inventory"> | <img src="docs/screenshots/add-product.jpg" width="240" alt="Add product"> | <img src="docs/screenshots/customers.jpg" width="240" alt="Customers"> |
+
+| Invoices and payments | Day end | Backup and restore |
+|---|---|---|
+| <img src="docs/screenshots/invoices.jpg" width="240" alt="Invoices and payments"> | <img src="docs/screenshots/day-end.jpg" width="240" alt="Day end"> | <img src="docs/screenshots/backup.jpg" width="240" alt="Backup and restore"> |
+
+Taken on a real Android phone.
 
 ## Brand assets
 
@@ -32,7 +61,7 @@ Money is stored in whole paise, never as decimals. A sale saves the invoice, pay
 - Android Studio recent enough for Android Gradle Plugin 9.4
 - Android SDK Platform 37 and Build Tools 36.0.0 or newer (install from Android Studio's SDK Manager)
 - A phone (Android 8.0+) with USB debugging, or an emulator. Camera scanning needs Google Play services.
-- Internet on the first build, so Gradle can download itself and the libraries. The app itself needs none.
+- Internet on the first build, so Gradle can download itself and the libraries. The app works offline; it uses the internet only to look for updates (see Privacy and permissions).
 
 **Clone and run**
 ```bash
@@ -53,6 +82,19 @@ Before you commit, run `python3 .github/scripts/security_check.py` (the same sec
 
 Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.github/workflows/android-ci.yml`) builds, tests, lints and runs device tests on an emulator.
 
+## Tech stack
+
+| Layer | Used |
+|---|---|
+| Language | Kotlin |
+| UI | Jetpack Compose, Material 3, Navigation Compose |
+| Architecture | MVVM, with plain-Kotlin domain logic |
+| Database | Room (SQLite) locked with SQLCipher, with exported schemas and migration tests |
+| Barcodes | Camera and hardware scanners, ZXing |
+| Printing | PDF, Android printing, Bluetooth receipt printers |
+| Languages | English, Hindi, Bengali |
+| CI | GitHub Actions: build, unit tests, lint, security check, emulator tests |
+
 ## Where things live
 
 ```
@@ -66,17 +108,28 @@ app/src/main/java/com/auxo/pos/
 
 ## Database upgrades
 
-No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 17). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
+No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 23). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
 
-## Honest status
+## Privacy and permissions
 
-Version 0.4.0. The logic is well tested, but the app has only run on an emulator.
+Your shop's data (products, bills, customers, settings) stays on the device. The app has no server and no account, and it sends none of that data anywhere. The only thing it does over the network is update itself:
 
-- ❌ Never tried on a real Bluetooth printer or a physical phone.
-- ❌ Hindi and Bengali text hasn't been checked by a native speaker.
-- ❌ The database and backup files aren't encrypted. Keep backups somewhere other than the phone.
-- ⚠️ No supplier balances, and a bill that totals zero can't be completed.
-- ⚠️ A refund isn't tied to the original payment method, and a cash refund on an account sale doesn't change the customer's ledger.
-- ⚠️ The release build isn't minified or signed. Turning on minification (R8) is planned for after release signing is set up, because it has to be tested on a signed release on a real phone: sign in, sale, receipt print, barcode scan, backup and restore, fingerprint. Until then the release file is larger and its code is easy to read.
+- **Update check.** When the app opens, and when you tap Check for updates, it asks GitHub (`api.github.com`, the project's latest release) whether a newer version exists. The request carries no shop data. If one exists it offers to download it. Downloading and installing only happen when you tap them.
+- **Install permission.** To install a downloaded update, Android asks you to allow Auxo to install apps. This is the `REQUEST_INSTALL_PACKAGES` permission, used only for updates.
 
-Everything stays on the device. The app makes no network calls, and its only permission is Bluetooth (for the printer).
+Permissions the app declares:
+
+| Permission | Why |
+| --- | --- |
+| Internet | Check for and download app updates (above). Nothing else. |
+| Install unknown apps | Install a downloaded update, after you allow it. |
+| Bluetooth (connect) | Print receipts on a paired Bluetooth printer. No scanning and no location. |
+| Storage (Android 9 and older only) | Save backups in Documents/Auxo, where they survive uninstalling the app. |
+
+Things that happen outside the app's own network use: sending a customer a reminder opens WhatsApp or the messages app, which then does its own sending, and the barcode scanner is Google Play services' scanner, which Google may download once.
+
+## License
+
+Auxo is free software under the [GNU General Public License v3.0](LICENSE) (GPL-3.0-or-later). You can use, study, change and share it. If you distribute a modified version, you must share its source code under the same license.
+
+The name **Auxo**, its logo and its artwork are not covered by that license. Forks may reuse the code but not the name or the logo.

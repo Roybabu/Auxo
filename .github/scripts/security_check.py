@@ -61,6 +61,7 @@ if re.search(r'android:allowBackup\s*=\s*"true"', manifest):
 REVIEWED_PERMISSIONS = {
     "android.permission.BLUETOOTH",
     "android.permission.BLUETOOTH_CONNECT",
+    "android.permission.WRITE_EXTERNAL_STORAGE",  # the app's own, Android 9 and older only (maxSdk 28): save backups in Documents/Auxo
     "android.permission.INTERNET",  # app update: look up the newest GitHub release and download its APK
     "android.permission.REQUEST_INSTALL_PACKAGES",  # app update: open the downloaded APK in the system installer
 }

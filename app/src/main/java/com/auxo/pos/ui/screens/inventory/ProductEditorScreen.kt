@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.inventory
 
 import android.content.ActivityNotFoundException
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -72,7 +74,6 @@ import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.domain.model.Supplier
 import com.auxo.pos.domain.validation.FieldError
 import com.auxo.pos.domain.validation.FormField
-import com.auxo.pos.domain.validation.GarmentVariants
 import com.auxo.pos.domain.validation.GstChoice
 import com.auxo.pos.domain.model.GstRate
 import com.auxo.pos.domain.model.formatRatePercent
@@ -110,6 +111,8 @@ interface ProductEditorActions {
     fun onDietTypeChange(dietType: DietType?)
     fun onWarrantyChange(value: String) = Unit
     fun onPrescriptionChange(required: Boolean) = Unit
+    fun onMetalChange(metal: com.auxo.pos.domain.jewellery.JewelleryMetal) = Unit
+    fun onMakingChargeChange(value: String) = Unit
     fun onSubcategoryChange(value: String) = Unit
     fun onAvailableChange(available: Boolean) = Unit
     fun onTracksStockChange(tracks: Boolean) = Unit
@@ -193,6 +196,8 @@ fun ProductEditorScreen(
             override fun onDietTypeChange(dietType: DietType?) = viewModel.onDietTypeChange(dietType)
             override fun onWarrantyChange(value: String) = viewModel.onWarrantyChange(value)
             override fun onPrescriptionChange(required: Boolean) = viewModel.onPrescriptionChange(required)
+            override fun onMetalChange(metal: com.auxo.pos.domain.jewellery.JewelleryMetal) = viewModel.onMetalChange(metal)
+            override fun onMakingChargeChange(value: String) = viewModel.onMakingChargeChange(value)
             override fun onSubcategoryChange(value: String) = viewModel.onSubcategoryChange(value)
             override fun onAvailableChange(available: Boolean) = viewModel.onAvailableChange(available)
             override fun onTracksStockChange(tracks: Boolean) = viewModel.onTracksStockChange(tracks)
@@ -519,6 +524,32 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("editor_warranty"),
+                )
+            }
+            if (form.category.usesMetal) {
+                Text(stringResource(R.string.editor_metal), style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    com.auxo.pos.domain.jewellery.JewelleryMetal.entries.forEach { metal ->
+                        FilterChip(
+                            selected = form.metal == metal,
+                            onClick = { actions.onMetalChange(metal) },
+                            label = { Text(stringResource(metal.labelRes())) },
+                            modifier = Modifier.testTag("editor_metal_${metal.name}"),
+                        )
+                    }
+                }
+                errors.fields[FormField.METAL]?.let {
+                    Text(stringResource(it.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+                AuxoTextField(
+                    value = form.makingChargePercent,
+                    onValueChange = actions::onMakingChargeChange,
+                    label = stringResource(R.string.editor_making_charge),
+                    error = errors.fields[FormField.MAKING_CHARGE]?.let { stringResource(it.messageRes()) },
+                    keyboardType = KeyboardType.Decimal,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("editor_making_charge"),
                 )
             }
             if (form.category.usesPrescription) {
@@ -900,6 +931,11 @@ private fun DefaultsSection(defaults: VariantDefaults, actions: ProductEditorAct
     }
 }
 
+/** "Selling price (per kg)" for goods priced by weight or volume; the plain label for goods counted in pieces. */
+@Composable
+private fun perUnitLabel(label: String, unit: StockUnit): String =
+    if (unit == StockUnit.UNIT) label else stringResource(R.string.field_with_unit, label, stringResource(R.string.per_unit, unit.entrySymbol))
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun VariantEditorCard(
@@ -961,7 +997,7 @@ private fun VariantEditorCard(
                 AuxoTextField(
                     value = row.sellingPrice,
                     onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(sellingPrice = sanitizeDecimal(value)) } },
-                    label = stringResource(R.string.field_selling_price),
+                    label = perUnitLabel(stringResource(R.string.field_selling_price), unit),
                     prefix = currency,
                     error = errorFor(VariantField.SELLING_PRICE),
                     keyboardType = KeyboardType.Decimal,
@@ -969,7 +1005,7 @@ private fun VariantEditorCard(
                         .weight(1f)
                         .testTag("variant_price_$index"),
                 )
-                if (category != ProductCategory.RESTAURANT) {
+                if (category != ProductCategory.RESTAURANT && !category.usesMetal) {
                     AuxoTextField(
                         value = row.mrp,
                         onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(mrp = sanitizeDecimal(value)) } },
@@ -991,7 +1027,7 @@ private fun VariantEditorCard(
                 AuxoTextField(
                     value = row.costPrice,
                     onValueChange = { value -> actions.onUpdateVariant(key) { it.copy(costPrice = sanitizeDecimal(value)) } },
-                    label = stringResource(R.string.field_cost_price),
+                    label = perUnitLabel(stringResource(R.string.field_cost_price), unit),
                     prefix = currency,
                     error = errorFor(VariantField.COST_PRICE),
                     keyboardType = KeyboardType.Decimal,

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.imports
 
 import org.junit.Assert.assertEquals
@@ -88,7 +91,7 @@ class CsvParserTest {
     fun theTemplate_isReadBackWithEveryColumn() {
         val table = parsed(ProductImportTemplate.csv())
         assertEquals(ImportColumn.entries.map { it.key }, table.header)
-        assertEquals(4, table.rows.size)
+        assertEquals(10, table.rows.size)
         assertTrue(table.rows.all { it.cells.size == ImportColumn.entries.size })
     }
 

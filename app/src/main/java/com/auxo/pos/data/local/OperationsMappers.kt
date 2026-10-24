@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data.local
 
 import com.auxo.pos.data.local.entity.AccountPaymentRow
@@ -13,7 +16,6 @@ import com.auxo.pos.data.local.entity.PurchaseReceiptWithLines
 import com.auxo.pos.data.local.entity.SupplierEntity
 import com.auxo.pos.domain.model.Customer
 import com.auxo.pos.domain.model.CustomerAccount
-import com.auxo.pos.domain.model.DietType
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money

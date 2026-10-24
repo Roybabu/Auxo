@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.insights
 
 import com.auxo.pos.domain.billing.InvoiceNumbers
@@ -30,7 +33,7 @@ enum class InsightsPeriod(val preset: PeriodPreset) {
 }
 
 /** Where an item sold sits for the "by department" chart: its product category, or a restaurant dish. */
-enum class Department { GARMENTS, FOOTWEAR, ACCESSORIES, PACKAGED_FOOD, BEVERAGES, RESTAURANT, GENERAL, ELECTRONICS, PHARMACY, COSMETICS, OTHER }
+enum class Department { GARMENTS, FOOTWEAR, ACCESSORIES, PACKAGED_FOOD, BEVERAGES, RESTAURANT, GENERAL, ELECTRONICS, PHARMACY, COSMETICS, LOOSE, JEWELLERY, OTHER }
 
 data class SeriesPoint(val label: String, val amount: Money)
 
@@ -236,6 +239,8 @@ object InsightsBuilder {
         ProductCategory.ELECTRONICS -> Department.ELECTRONICS
         ProductCategory.PHARMACY -> Department.PHARMACY
         ProductCategory.COSMETICS -> Department.COSMETICS
+        ProductCategory.LOOSE -> Department.LOOSE
+        ProductCategory.JEWELLERY -> Department.JEWELLERY
         null -> Department.OTHER
     }
 

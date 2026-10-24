@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.model
 
 import org.junit.Assert.assertEquals
@@ -79,5 +82,30 @@ class ProductCategoryTest {
         assertTrue(ProductCategory.PHARMACY.usesPrescription)
         assertFalse(ProductCategory.COSMETICS.usesPrescription)
         assertEquals(setOf(ProductCategory.ELECTRONICS), ProductCategory.entries.filter { it.usesWarranty }.toSet())
+    }
+
+    @Test
+    fun looseGoods_areSoldByWeightOrVolume_withNoSizePackOrExpiry() {
+        val category = ProductCategory.LOOSE
+        assertTrue(category.soldByMeasure)
+        assertEquals(listOf(StockUnit.GRAM, StockUnit.MILLILITRE), category.allowedStockUnits)
+        assertFalse(category.usesSizeAndColour)
+        assertFalse(category.usesNetQuantity)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.usesMetal)
+        assertEquals(setOf(ProductCategory.LOOSE), ProductCategory.entries.filter { it.soldByMeasure }.toSet())
+    }
+
+    @Test
+    fun jewellery_isPricedFromMetalAndWeight_andCountedInPieces() {
+        val category = ProductCategory.JEWELLERY
+        assertTrue(category.usesMetal)
+        assertTrue(category.usesNetQuantity)
+        assertEquals(listOf(QuantityUnit.GRAM), category.allowedUnits)
+        assertEquals(listOf(StockUnit.UNIT), category.allowedStockUnits)
+        assertFalse(category.tracksExpiry)
+        assertFalse(category.soldByMeasure)
+        assertEquals(300, ProductCategory.JEWELLERY_GST_BASIS_POINTS)
+        assertEquals(setOf(ProductCategory.JEWELLERY), ProductCategory.entries.filter { it.usesMetal }.toSet())
     }
 }

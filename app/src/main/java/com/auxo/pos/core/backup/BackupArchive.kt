@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.backup
 
 import com.auxo.pos.core.photos.PhotoFiles
+import com.auxo.pos.data.local.DatabaseEncryption
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -64,6 +68,8 @@ class ExtractedBackup(
     val preferences: Map<String, String>,
     /** Product photo files unpacked from the backup (empty for a backup without photos). */
     val photos: List<File> = emptyList(),
+    /** The key that opens [database] when the backup holds a locked database file; null for a plain one. */
+    val databaseKey: String? = null,
 )
 
 /**
@@ -78,13 +84,21 @@ object BackupArchive {
 
     const val MANIFEST_ENTRY = "manifest.properties"
     const val DATABASE_ENTRY = "auxo.db"
+    const val DATABASE_KEY_ENTRY = "database.key"
     const val PREFERENCES_ENTRY = "appearance.properties"
 
     /** Largest database accepted, so a damaged or hostile file cannot fill the phone. */
     const val MAX_DATABASE_BYTES = 1L shl 30
     private const val MAX_TEXT_BYTES = 64L * 1024
 
-    fun write(out: OutputStream, manifest: BackupManifest, database: File, preferences: Map<String, String>, photos: List<File> = emptyList()) {
+    fun write(
+        out: OutputStream,
+        manifest: BackupManifest,
+        database: File,
+        preferences: Map<String, String>,
+        photos: List<File> = emptyList(),
+        databaseKey: String? = null,
+    ) {
         ZipOutputStream(out).use { zip ->
             zip.putNextEntry(ZipEntry(MANIFEST_ENTRY))
             zip.write(toText(manifestProperties(manifest)).toByteArray(Charsets.UTF_8))
@@ -93,6 +107,12 @@ object BackupArchive {
             zip.putNextEntry(ZipEntry(DATABASE_ENTRY))
             database.inputStream().use { it.copyTo(zip) }
             zip.closeEntry()
+
+            if (databaseKey != null) {
+                zip.putNextEntry(ZipEntry(DATABASE_KEY_ENTRY))
+                zip.write(databaseKey.toByteArray(Charsets.US_ASCII))
+                zip.closeEntry()
+            }
 
             zip.putNextEntry(ZipEntry(PREFERENCES_ENTRY))
             zip.write(toText(Properties().apply { preferences.forEach { (k, v) -> setProperty(k, v) } }).toByteArray(Charsets.UTF_8))
@@ -116,6 +136,7 @@ object BackupArchive {
         workDir.mkdirs()
         var manifestText: String? = null
         var preferencesText: String? = null
+        var keyText: String? = null
         var database: File? = null
         val photos = mutableListOf<File>()
         try {
@@ -125,6 +146,7 @@ object BackupArchive {
                     when (entry.name) {
                         MANIFEST_ENTRY -> manifestText = zip.readText(MAX_TEXT_BYTES)
                         PREFERENCES_ENTRY -> preferencesText = zip.readText(MAX_TEXT_BYTES)
+                        DATABASE_KEY_ENTRY -> keyText = zip.readText(MAX_TEXT_BYTES)
                         DATABASE_ENTRY -> {
                             val target = File(workDir, DATABASE_ENTRY)
                             target.outputStream().use { out -> zip.copyLimited(out, MAX_DATABASE_BYTES) }
@@ -166,6 +188,8 @@ object BackupArchive {
         )
         val file = database ?: throw BackupException(BackupProblem.CORRUPT)
 
+        val databaseKey = keyText?.trim()?.also { if (!DatabaseEncryption.isValidKey(it)) throw BackupException(BackupProblem.CORRUPT) }
+
         val preferences = Properties()
         preferencesText?.let { preferences.load(StringReader(it)) }
         return ExtractedBackup(
@@ -173,6 +197,7 @@ object BackupArchive {
             database = file,
             preferences = preferences.stringPropertyNames().associateWith { preferences.getProperty(it) },
             photos = photos,
+            databaseKey = databaseKey,
         )
     }
 

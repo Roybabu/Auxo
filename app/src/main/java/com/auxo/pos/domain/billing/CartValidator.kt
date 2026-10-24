@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.model.Money
@@ -47,7 +50,7 @@ object CartValidator {
     fun check(cart: Cart, totals: BillTotals, gstRegistered: Boolean, discountLimitBp: Int? = null): CartCheck {
         val lineIssues = buildMap {
             cart.lines.forEach { line ->
-                val gross = line.unitPrice * line.quantity
+                val gross = line.gross
                 val issue = when {
                     line.availableStock == null -> LineIssue.Unavailable
                     line.quantity > line.availableStock -> LineIssue.NotEnoughStock(line.availableStock)

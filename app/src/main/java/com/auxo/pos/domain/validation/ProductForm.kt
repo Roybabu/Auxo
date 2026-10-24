@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.validation
 
 import com.auxo.pos.domain.model.DietType
@@ -80,6 +83,10 @@ data class ProductForm(
     val dietType: DietType? = null,
     /** Warranty period in months, as typed; electronics only. */
     val warrantyMonths: String = "",
+    /** What the piece is made of; jewellery only. */
+    val metal: com.auxo.pos.domain.jewellery.JewelleryMetal? = null,
+    /** Making charge in percent of the metal value, as typed; jewellery only. */
+    val makingChargePercent: String = "",
     /** Sold only against a prescription; pharmacy only. */
     val prescriptionRequired: Boolean = false,
     /** Grouping inside the category, such as a menu section; restaurant items only. */
@@ -118,6 +125,8 @@ data class ProductForm(
             dietType = product.dietType,
             warrantyMonths = product.warrantyMonths?.toString().orEmpty(),
             prescriptionRequired = product.prescriptionRequired,
+            metal = product.metal,
+            makingChargePercent = product.makingChargeBasisPoints?.let { formatRatePercent(it) }.orEmpty(),
             subcategory = product.subcategory.orEmpty(),
             categoryId = product.categoryId,
             available = product.available,

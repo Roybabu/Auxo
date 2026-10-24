@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data.local.dao
 
 import androidx.room.Dao
@@ -14,6 +17,12 @@ interface HeldBillDao {
 
     @Query("SELECT * FROM held_bills WHERE id = :id")
     suspend fun get(id: Long): HeldBillEntity?
+
+    @Query("SELECT token_number FROM held_bills WHERE token_number IS NOT NULL")
+    suspend fun usedTokens(): List<Int>
+
+    @Query("SELECT COUNT(*) FROM held_bills WHERE table_number = :table AND id != :exceptId")
+    suspend fun tableTakenCount(table: Int, exceptId: Long): Int
 
     @Insert
     suspend fun insert(bill: HeldBillEntity): Long

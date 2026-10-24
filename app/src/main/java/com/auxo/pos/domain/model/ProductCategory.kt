@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.model
 
 /** The kinds of goods the store sells. Each category has its own product attributes. */
@@ -24,6 +27,12 @@ enum class ProductCategory {
     /** Skin, hair and make-up products. Sold in packs with batch and expiry. */
     COSMETICS,
 
+    /** Rice, sugar, oil, spices and the like, sold by weight or volume. Stock is kept in grams or millilitres and the price is per kilogram or litre. */
+    LOOSE,
+
+    /** Gold, silver and other metal pieces. Each piece has its own weight; the price comes from the metal rate and a making charge. */
+    JEWELLERY,
+
     /** Dishes and drinks made or served to order. Stock is optional, per item. */
     RESTAURANT,
     ;
@@ -47,13 +56,19 @@ enum class ProductCategory {
         }
 
     /** Packaged food and beverages carry a net quantity (weight or volume) on each pack. */
-    val usesNetQuantity: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE || this == PHARMACY || this == COSMETICS
+    val usesNetQuantity: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE || this == PHARMACY || this == COSMETICS || this == JEWELLERY
 
     /** Food and beverages are kept in batches with expiry dates. Clothing and restaurant items are not. */
     val tracksExpiry: Boolean get() = this == PACKAGED_FOOD || this == BEVERAGE || this == PHARMACY || this == COSMETICS
 
     /** Electronics carry a warranty period in months. */
     val usesWarranty: Boolean get() = this == ELECTRONICS
+
+    /** Jewellery carries the metal it is made of and a making charge. */
+    val usesMetal: Boolean get() = this == JEWELLERY
+
+    /** Loose goods are counted and sold by weight or volume rather than by the piece. */
+    val soldByMeasure: Boolean get() = this == LOOSE
 
     /** Medicines can be marked as needing a prescription. */
     val usesPrescription: Boolean get() = this == PHARMACY
@@ -66,9 +81,10 @@ enum class ProductCategory {
 
     val allowedUnits: List<QuantityUnit>
         get() = when (this) {
-            GARMENT, FOOTWEAR, ACCESSORIES, ELECTRONICS, GENERAL, RESTAURANT -> emptyList()
+            GARMENT, FOOTWEAR, ACCESSORIES, ELECTRONICS, GENERAL, LOOSE, RESTAURANT -> emptyList()
             PHARMACY -> listOf(QuantityUnit.PIECE, QuantityUnit.MILLILITRE, QuantityUnit.GRAM)
             COSMETICS -> listOf(QuantityUnit.MILLILITRE, QuantityUnit.GRAM, QuantityUnit.PIECE)
+            JEWELLERY -> listOf(QuantityUnit.GRAM)
             PACKAGED_FOOD -> listOf(QuantityUnit.GRAM, QuantityUnit.KILOGRAM, QuantityUnit.PIECE)
             BEVERAGE -> listOf(QuantityUnit.MILLILITRE, QuantityUnit.LITRE)
         }
@@ -78,7 +94,7 @@ enum class ProductCategory {
 
     /** How stock can be counted: by unit (pieces or packs). */
     val allowedStockUnits: List<StockUnit>
-        get() = listOf(StockUnit.UNIT)
+        get() = if (this == LOOSE) listOf(StockUnit.GRAM, StockUnit.MILLILITRE) else listOf(StockUnit.UNIT)
 
     companion object {
         /** Restaurant service is usually taxed at 5% GST. */
@@ -86,6 +102,9 @@ enum class ProductCategory {
 
         /** Service accounting code for restaurant and food serving services, printed instead of an HSN code. */
         const val RESTAURANT_SAC = "996331"
+
+        /** Jewellery is taxed at 3% GST. */
+        const val JEWELLERY_GST_BASIS_POINTS = 300
     }
 }
 

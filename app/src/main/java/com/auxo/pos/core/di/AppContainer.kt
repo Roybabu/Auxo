@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.di
 
 import com.auxo.pos.domain.billing.BusinessTime
@@ -83,7 +86,10 @@ class AppContainer(context: Context) {
 
     val clock: Clock = BusinessTime.clock()
 
-    private val database: AuxoDatabase by lazy { AuxoDatabase.create(appContext) }
+    /** Holds the key that locks the database file on this phone. */
+    private val databaseKeys: com.auxo.pos.data.local.DatabaseKeyStore by lazy { com.auxo.pos.data.local.KeystoreDatabaseKeyStore(appContext) }
+
+    private val database: AuxoDatabase by lazy { AuxoDatabase.create(appContext, databaseKeys) }
 
     private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -213,7 +219,7 @@ class AppContainer(context: Context) {
 
     val backupService: BackupService by lazy {
         AuthorizedBackupService(
-            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase),
+            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys),
             authorizer,
             auditTrail,
         )
@@ -229,7 +235,7 @@ class AppContainer(context: Context) {
         AutoBackupRunner(
             store = autoBackupSettings,
             folderFor = { uri -> DocumentTreeFolder(appContext, uri.toUri()) },
-            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase).backUp() },
+            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },
         )

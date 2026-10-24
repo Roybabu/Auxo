@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import com.auxo.pos.core.debuglog.DebugLog
@@ -31,6 +34,7 @@ import com.auxo.pos.domain.billing.CreditAccount
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.billing.HeldBillSummary
+import com.auxo.pos.domain.billing.HeldBills
 import com.auxo.pos.data.repository.QuotationRepository
 import com.auxo.pos.domain.billing.QuotationRepricing
 import com.auxo.pos.domain.billing.QuotationStatus
@@ -101,6 +105,10 @@ data class BillingUiState(
     val quickItems: List<ProductSearchResult> = emptyList(),
     /** Subcategory shown in the quick-add card; null shows the first one. */
     val quickSection: String? = null,
+    /** Everything that is not a restaurant dish, by name, for browsing on the new bill page. */
+    val browseProducts: List<Product> = emptyList(),
+    /** The kind of goods the browse card shows; null shows all of them. */
+    val browseCategory: ProductCategory? = null,
     val lineDiscounts: Map<Long, DiscountInput> = emptyMap(),
     /** Line whose discount editor is open. */
     val editingDiscountFor: Long? = null,
@@ -137,6 +145,8 @@ data class BillingUiState(
     val canHold: Boolean = false,
     /** The parked bill now on the counter, if the cart came from one. It is removed when the sale is saved. */
     val resumedHeldId: Long? = null,
+    /** How many tables the restaurant has; the table picker offers 1 to this. */
+    val tableCount: Int = HeldBills.DEFAULT_TABLES,
     /** Quotations, newest first. */
     val quotations: List<QuotationSummary> = emptyList(),
     /** True when the shop can make quotations at all. */
@@ -179,6 +189,9 @@ data class BillingUiState(
 
     /** Subcategories that have available restaurant items; an empty name means no subcategory. */
     val quickSections: List<String> get() = quickItems.map { it.product.subcategory.orEmpty() }.distinct()
+
+    /** The kinds of goods the browse card has chips for: those with at least one product. */
+    val browseCategories: List<ProductCategory> get() = browseProducts.map { it.category }.distinct().sortedBy { it.ordinal }
 }
 
 enum class CustomerSaveError { NAME_REQUIRED, INVALID_PHONE, INVALID_DETAILS, PHONE_IN_USE, FAILED }
@@ -282,6 +295,7 @@ class BillingViewModel(
                             cart = syncStock(state.cart),
                             searchResults = search(state.searchText),
                             quickItems = quickItems(),
+                            browseProducts = browseProducts(),
                         )
                     }
                 }
@@ -315,6 +329,9 @@ class BillingViewModel(
                 }
             }
         }
+        val tablesJob = shop?.let { prefs ->
+            viewModelScope.launch { prefs.tableCount.collect { count -> _uiState.update { it.copy(tableCount = count) } } }
+        }
         val heldJob = heldBills?.let { repository ->
             viewModelScope.launch {
                 repository.observeHeld()
@@ -329,7 +346,7 @@ class BillingViewModel(
                     .collect { list -> _uiState.update { it.copy(quotations = list, canQuote = true) } }
             }
         }
-        loadJobs = listOfNotNull(settingsJob, productsJob, shopJob, customersJob, loyaltyJob, heldJob, quotationJob)
+        loadJobs = listOfNotNull(settingsJob, productsJob, shopJob, tablesJob, customersJob, loyaltyJob, heldJob, quotationJob)
     }
 
     // Search and adding items
@@ -384,11 +401,13 @@ class BillingViewModel(
                 return
             }
             // All the stock is already on the bill: nothing more to add, and no message.
-            inCart + 1 > available -> return
+            inCart >= available -> return
         }
         recalculate { state ->
             state.copy(
-                cart = state.cart.add(CartLine.from(product, variant, today = today)),
+                cart = state.cart.add(
+                    CartLine.from(product, variant, today = today).let { it.copy(quantity = it.withinStock(it.quantity)) },
+                ),
                 searchText = if (clearSearch) "" else state.searchText,
                 searchResults = if (clearSearch) emptyList() else state.searchResults,
             )
@@ -405,18 +424,27 @@ class BillingViewModel(
 
     fun onQuickSectionChange(section: String?) = _uiState.update { it.copy(quickSection = section) }
 
+    fun onBrowseCategoryChange(category: ProductCategory?) = _uiState.update { it.copy(browseCategory = category) }
+
     // Cart lines, keyed by CartLine.variantId
 
     fun increment(lineKey: Long) {
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
         // The "+" button is off at the limit; this keeps the rule in the billing logic too.
         if (!line.canIncrease) return
-        setQuantity(lineKey, line.quantity + 1)
+        setQuantity(lineKey, line.quantity + line.step)
     }
 
     fun decrement(lineKey: Long) {
         val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
-        if (line.quantity > 1) setQuantity(lineKey, line.quantity - 1)
+        if (line.quantity > line.step) setQuantity(lineKey, line.quantity - line.step)
+    }
+
+    /** A weight or volume typed in for a loose item, such as "1.25" kilograms. Ignored when it is not a valid amount. */
+    fun setTypedQuantity(lineKey: Long, text: String) {
+        val line = _uiState.value.cart.lines.firstOrNull { it.variantId == lineKey } ?: return
+        val base = line.stockUnit.parse(text) ?: return
+        setQuantity(lineKey, base)
     }
 
     fun setQuantity(lineKey: Long, quantity: Int) = recalculate { it.copy(cart = it.cart.setQuantity(lineKey, quantity)) }
@@ -561,8 +589,11 @@ class BillingViewModel(
                 productCount = it.productCount,
                 quickItems = it.quickItems,
                 quickSection = it.quickSection,
+                browseProducts = it.browseProducts,
+                browseCategory = it.browseCategory,
                 heldBills = it.heldBills,
                 canHold = it.canHold,
+                tableCount = it.tableCount,
                 quotations = it.quotations,
                 canQuote = it.canQuote,
             )
@@ -668,13 +699,29 @@ class BillingViewModel(
 
     // Held bills
 
-    /** Parks the bill on the counter under an optional [label] (a customer name, a table) and starts a new one. */
-    fun holdBill(label: String) {
+    /**
+     * Parks the bill on the counter under an optional [label] (a customer name) and starts a new one. A bill with a
+     * restaurant dish needs a [tableNumber] that no other parked bill is using; any other bill is given a number by the
+     * app. A [phone] typed for the customer is kept on the bill.
+     */
+    fun holdBill(label: String, tableNumber: Int? = null, phone: String = "") {
         val store = heldBills ?: return
         val state = _uiState.value
         if (state.cart.isEmpty || state.isSaving) return
+        if (state.cart.needsTable) {
+            val free = tableNumber != null && tableNumber in 1..state.tableCount &&
+                tableNumber !in HeldBills.busyTables(state.heldBills, state.resumedHeldId)
+            if (!free) return
+        }
+        val table = tableNumber.takeIf { state.cart.needsTable }
+        val digits = phone.filter(Char::isDigit).takeLast(10)
+        val cart = if (digits.isNotEmpty() && state.cart.customer.phone.isBlank()) {
+            state.cart.copy(customer = state.cart.customer.copy(phone = digits))
+        } else {
+            state.cart
+        }
         viewModelScope.launch {
-            val saved = runCatching { store.hold(state.cart, state.totals.grandTotal, label, state.resumedHeldId) }
+            val saved = runCatching { store.hold(cart, state.totals.grandTotal, label, state.resumedHeldId, table) }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 .isSuccess
             if (saved) {
@@ -684,6 +731,17 @@ class BillingViewModel(
                 eventChannel.send(BillingEvent.SaveFailed)
             }
         }
+    }
+
+    /**
+     * Parks a resumed restaurant bill again, against the table it already has and under the name it already had, so
+     * nothing is asked a second time. Does nothing for a bill that did not come from a table.
+     */
+    fun holdAgain() {
+        val state = _uiState.value
+        val held = state.heldBills.firstOrNull { it.id == state.resumedHeldId } ?: return
+        val table = held.tableNumber ?: return
+        holdBill(held.label, table)
     }
 
     /**
@@ -952,6 +1010,10 @@ class BillingViewModel(
             .sortedWith(compareBy({ it.subcategory.isNullOrBlank() }, { it.subcategory.orEmpty().lowercase() }, { it.name.lowercase() }))
             .flatMap { product -> product.variants.map { ProductSearchResult(product, it) } }
     }
+
+    /** Every product that is not a restaurant dish (dishes have their own menu card), by name. */
+    private fun browseProducts(): List<Product> =
+        products.filter { it.category != ProductCategory.RESTAURANT && it.variants.isNotEmpty() }.sortedBy { it.name.lowercase() }
 
     private fun findVariantByBarcode(code: String): Pair<Product, ProductVariant>? {
         // Items saved without a barcode have an empty one, so an empty scan must never match them.

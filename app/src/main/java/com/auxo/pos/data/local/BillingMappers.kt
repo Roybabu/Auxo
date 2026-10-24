@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data.local
 
 import com.auxo.pos.data.local.entity.InvoiceEntity
@@ -81,6 +84,7 @@ fun InvoiceLineEntity.toDomain(): InvoiceLine = InvoiceLine(
     originalLineId = originalLineId,
     menuItemId = menuItemId,
     discountReason = discountReason,
+    stockUnit = stockUnitOf(stockUnit),
 )
 
 fun PaymentEntity.toDomain(invoiceNumber: String? = null): PaymentRecord = PaymentRecord(
@@ -166,6 +170,7 @@ fun InvoiceLine.toEntity(invoiceId: Long): InvoiceLineEntity = InvoiceLineEntity
     originalLineId = originalLineId,
     menuItemId = menuItemId,
     discountReason = discountReason,
+    stockUnit = stockUnit.takeIf { it != com.auxo.pos.domain.model.StockUnit.UNIT }?.name,
 )
 
 fun PaymentRecord.toEntity(invoiceId: Long): PaymentEntity = PaymentEntity(

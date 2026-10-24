@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -27,7 +30,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
-import java.time.LocalDate
 
 /**
  * What the Home charts need: the chosen [period], whether the data is loading or failed to

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.model
 
 import java.time.LocalDate
@@ -102,6 +105,10 @@ data class Product(
     val photoFile: String? = null,
     /** Warranty period in months; electronics only. Null when none is given. */
     val warrantyMonths: Int? = null,
+    /** What a piece of jewellery is made of; jewellery only. Its price follows the shop's rate for this metal. */
+    val metal: com.auxo.pos.domain.jewellery.JewelleryMetal? = null,
+    /** Making charge as a share of the metal value, in basis points (1200 = 12%); jewellery only. */
+    val makingChargeBasisPoints: Int? = null,
     /** True for a medicine that is sold only against a prescription; pharmacy items only. */
     val prescriptionRequired: Boolean = false,
     val createdAtMillis: Long = 0,

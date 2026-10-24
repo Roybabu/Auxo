@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 import java.util.Base64
 import java.util.Properties
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
@@ -46,9 +49,10 @@ android {
             enableUnitTestCoverage = providers.gradleProperty("coverage").isPresent
         }
         release {
-            // Deliberately off for now. Enable R8 only after release signing exists and a signed release has been
-            // checked on a real phone (see "Honest status" in the README).
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates the code and removes unused resources, which makes the app much smaller.
+            // Keep rules for libraries that look classes up by name are in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -135,6 +139,8 @@ dependencies {
     implementation(libs.androidx.exifinterface)
 
     implementation(libs.tink.android)
+    // Encrypts the database file on the phone; its key is kept in the Android Keystore.
+    implementation(libs.sqlcipher.android)
     implementation(libs.zxing.core)
     implementation(libs.play.services.code.scanner)
 

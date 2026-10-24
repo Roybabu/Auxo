@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.inventory
 
 import androidx.compose.foundation.layout.Arrangement
@@ -256,6 +259,17 @@ private fun ProductHeader(product: Product) {
             product.material?.let { Text(stringResource(R.string.detail_material, it), style = MaterialTheme.typography.bodyMedium) }
             product.subcategory?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             product.warrantyMonths?.let { Text(stringResource(R.string.detail_warranty, it), style = MaterialTheme.typography.bodyMedium) }
+            product.metal?.let { metal ->
+                val making = product.makingChargeBasisPoints?.let { com.auxo.pos.domain.model.formatRatePercent(it) }
+                Text(
+                    text = if (making == null) {
+                        stringResource(metal.labelRes())
+                    } else {
+                        stringResource(R.string.detail_metal_making, stringResource(metal.labelRes()), making)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             if (product.prescriptionRequired) {
                 Text(stringResource(R.string.detail_prescription), style = MaterialTheme.typography.bodyMedium)
             }
@@ -313,7 +327,11 @@ private fun VariantCard(
             }
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                 Text(
-                    text = formatter.format(variant.sellingPrice),
+                    text = if (unit == StockUnit.UNIT) {
+                        formatter.format(variant.sellingPrice)
+                    } else {
+                        stringResource(R.string.price_per_unit, formatter.format(variant.sellingPrice), unit.entrySymbol)
+                    },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                 )

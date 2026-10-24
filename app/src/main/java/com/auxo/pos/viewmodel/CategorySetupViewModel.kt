@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -17,7 +20,7 @@ import kotlinx.coroutines.launch
 
 data class CategorySetupUiState(
     val categories: List<ShopCategory> = emptyList(),
-    /** Ids of the categories ticked. Starts as the ones currently on. */
+    /** Ids of the categories ticked. Starts empty: the owner chooses what the shop sells. */
     val selected: Set<Long> = emptySet(),
     val loaded: Boolean = false,
     val saving: Boolean = false,
@@ -39,7 +42,7 @@ class CategorySetupViewModel(
         viewModelScope.launch {
             try {
                 val categories = repository.getCategories()
-                _uiState.update { it.copy(categories = categories, selected = categories.filter { c -> c.enabled }.map { c -> c.id }.toSet(), loaded = true) }
+                _uiState.update { it.copy(categories = categories, loaded = true) }
             } catch (e: com.auxo.pos.core.auth.PermissionDeniedException) {
                 throw e
             } catch (e: Exception) {

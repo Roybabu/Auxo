@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.billing
 
 import com.auxo.pos.domain.loyalty.LoyaltyRedemption
@@ -6,6 +9,7 @@ import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.ProductVariant
+import com.auxo.pos.domain.model.StockUnit
 import java.time.LocalDate
 
 /**
@@ -34,9 +38,28 @@ data class CartLine(
     val availableStock: Int?,
     /** A one-off item typed in at the counter: not in the shop's list, so no stock is tracked. */
     val isCustom: Boolean = false,
+    /**
+     * How [quantity] is counted. Pieces for nearly everything; loose goods are counted in grams or millilitres while
+     * [unitPrice] is the price of a kilogram or litre.
+     */
+    val stockUnit: StockUnit = StockUnit.UNIT,
+    /** A dish from the restaurant menu. A bill with one is parked against a table. */
+    val isRestaurantItem: Boolean = false,
 ) {
+    /** What the line comes to before any discount: price times quantity, or price per kilogram times the grams. */
+    val gross: Money get() = stockUnit.amountFor(quantity, unitPrice)
+
+    /** What the customer would have paid at the printed MRP for this line, or null when it has none. */
+    val mrpGross: Money? get() = mrp?.let { stockUnit.amountFor(quantity, it) }
+
     /** True while one more unit can still be sold: the "+" button is on only then. */
     val canIncrease: Boolean get() = availableStock != null && quantity < availableStock
+
+    /** The quantity as people read it: "3" pieces, "1.25 kg". */
+    val quantityText: String get() = stockUnit.format(quantity)
+
+    /** How much the plus and minus buttons change [quantity] by. */
+    val step: Int get() = stockUnit.buttonStep
 
     /** [wanted] kept within what can be sold. An item that cannot be sold at all is left as asked. */
     fun withinStock(wanted: Int): Int = if (availableStock == null) wanted else wanted.coerceAtMost(availableStock)
@@ -71,7 +94,7 @@ data class CartLine(
          * A product line. With [today], batch-tracked items can only sell stock that hasn't expired. A restaurant
          * item sold without a stock count has no limit, and is unavailable while it is switched off.
          */
-        fun from(product: Product, variant: ProductVariant, quantity: Int = 1, today: LocalDate? = null) = CartLine(
+        fun from(product: Product, variant: ProductVariant, quantity: Int = product.stockUnit.startingSaleQuantity, today: LocalDate? = null) = CartLine(
             variantId = variant.id,
             productId = product.id,
             productName = product.name,
@@ -83,6 +106,8 @@ data class CartLine(
             mrp = variant.mrp,
             gstRate = product.gstRate,
             quantity = quantity,
+            stockUnit = product.stockUnit,
+            isRestaurantItem = product.category == ProductCategory.RESTAURANT,
             availableStock = when {
                 !product.available -> null
                 !product.tracksStock -> UNLIMITED
@@ -114,9 +139,13 @@ data class Cart(
     val placeOfSupplyStateCode: String? = null,
 ) {
     val isEmpty: Boolean get() = lines.isEmpty()
-    val itemCount: Int get() = lines.sumOf { it.quantity }
 
-    /** Adds one unit, merging with an existing line for the same variant. */
+    /** True when the bill has a restaurant dish, so parking it needs a table. */
+    val needsTable: Boolean get() = lines.any { it.isRestaurantItem }
+    /** Pieces on the bill; a loose item sold by weight counts as one item, not as its grams. */
+    val itemCount: Int get() = lines.sumOf { if (it.stockUnit == StockUnit.UNIT) it.quantity else 1 }
+
+    /** Adds the line, merging with an existing line for the same variant by adding the quantities together. */
     fun add(line: CartLine): Cart {
         val existing = lines.firstOrNull { it.variantId == line.variantId }
         return if (existing == null) {

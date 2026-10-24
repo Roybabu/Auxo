@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.receipt
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import com.auxo.pos.core.label.LabelSheetLayout

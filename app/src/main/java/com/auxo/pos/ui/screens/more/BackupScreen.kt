@@ -1,9 +1,16 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.more
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -66,6 +73,14 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.onRestoreFilePicked(uri)
     }
+    // Android 9 and older need the storage permission to save into Documents/Auxo, where a backup survives
+    // uninstalling the app. If it is refused the backup is still made, in the app's own folder, and says so.
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { viewModel.onBackUp() }
+    val onBackUp = {
+        val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        if (needsPermission) storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE) else viewModel.onBackUp()
+    }
     // The restored data is only picked up by a fresh start of the app.
     LaunchedEffect(state.restored) {
         if (state.restored) RestartApp.restart(context)
@@ -73,7 +88,7 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
     BackupContent(
         state = state,
         onBack = onBack,
-        onBackUp = viewModel::onBackUp,
+        onBackUp = onBackUp,
         onChooseFile = { picker.launch(arrayOf("*/*")) },
         onShare = { saved -> shareBackup(context, saved) },
         onConfirmRestore = viewModel::onRestoreConfirmed,
@@ -164,9 +179,7 @@ fun BackupContent(
                 }
             }
 
-            // Choosing a passphrase is no longer offered. The card only appears on a phone that already locks its
-            // backups, so the lock can still be changed or turned off there.
-            if (state.isProtected) ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
+            ProtectionCard(state.isProtected, onChoosePassphrase, onAskTurnOff)
 
             extra()
 
@@ -175,6 +188,14 @@ fun BackupContent(
                     Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         Text(stringResource(R.string.backup_saved_title), style = MaterialTheme.typography.titleSmall)
                         Text(stringResource(R.string.backup_saved_where, saved.fileName, saved.folder), style = MaterialTheme.typography.bodyMedium)
+                        if (saved.appFolderOnly) {
+                            Text(
+                                stringResource(R.string.backup_saved_app_only),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.testTag("backup_app_only_warning"),
+                            )
+                        }
                         OutlinedButton(onClick = { onShare(saved) }, modifier = Modifier.fillMaxWidth().testTag("backup_share")) {
                             Text(stringResource(R.string.backup_share))
                         }

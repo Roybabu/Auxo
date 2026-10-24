@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import android.content.Context
@@ -107,11 +110,11 @@ class CategoriesTest {
     fun theViewModel_listsAddedCategories_andExplainsRefusals() = runTest {
         val viewModel = CategoriesViewModel(RoomCategoryRepository(database))
         keepActive(viewModel.uiState)
-        awaitUntil { viewModel.uiState.value.categories.size == 10 }
-        assertEquals(10, viewModel.uiState.value.categories.size)
-        // A new shop starts with the four newer categories off, and Restaurant off.
+        awaitUntil { viewModel.uiState.value.categories.size == 12 }
+        assertEquals(12, viewModel.uiState.value.categories.size)
+        // A new shop starts with the six newer categories off, and Restaurant off.
         assertEquals(
-            setOf(ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS, ProductCategory.RESTAURANT),
+            setOf(ProductCategory.GENERAL, ProductCategory.ELECTRONICS, ProductCategory.PHARMACY, ProductCategory.COSMETICS, ProductCategory.LOOSE, ProductCategory.JEWELLERY, ProductCategory.RESTAURANT),
             viewModel.uiState.value.categories.filter { !it.enabled }.map { it.profile }.toSet(),
         )
 

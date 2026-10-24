@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.home.insights
 
 import androidx.compose.foundation.horizontalScroll
@@ -324,6 +327,8 @@ private fun departmentName(department: Department): String = stringResource(
         Department.ELECTRONICS -> R.string.insights_dept_electronics
         Department.PHARMACY -> R.string.insights_dept_pharmacy
         Department.COSMETICS -> R.string.insights_dept_cosmetics
+        Department.LOOSE -> R.string.insights_dept_loose
+        Department.JEWELLERY -> R.string.insights_dept_jewellery
         Department.OTHER -> R.string.insights_dept_other
     },
 )

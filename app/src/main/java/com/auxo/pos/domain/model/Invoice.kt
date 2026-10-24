@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.model
 
 enum class InvoiceType {
@@ -95,7 +98,15 @@ data class InvoiceLine(
     val menuItemId: Long? = null,
     /** Why this line was discounted at the counter; null when it was not (a bill discount has its own reason). */
     val discountReason: String? = null,
+    /** How [quantity] is counted: pieces, or grams or millilitres for loose goods priced per kilogram or litre. */
+    val stockUnit: StockUnit = StockUnit.UNIT,
 ) {
+    /** What the line comes to before any discount. */
+    val gross: Money get() = stockUnit.amountFor(quantity, unitPrice)
+
+    /** [quantity] as printed: "3", or "1.25 kg" for loose goods. */
+    val quantityText: String get() = stockUnit.format(quantity)
+
     val tax: Money get() = cgst + sgst + igst
     val returnableQuantity: Int get() = quantity - returnedQuantity
 }
@@ -155,7 +166,7 @@ data class Invoice(
 ) {
     val isQuotation: Boolean get() = quotationValidUntil != null
     val taxTotal: Money get() = cgstTotal + sgstTotal + igstTotal
-    val itemCount: Int get() = lines.sumOf { it.quantity }
+    val itemCount: Int get() = lines.sumOf { if (it.stockUnit == StockUnit.UNIT) it.quantity else 1 }
     val isFullyReturned: Boolean get() = type == InvoiceType.SALE && lines.all { it.returnableQuantity <= 0 }
 }
 

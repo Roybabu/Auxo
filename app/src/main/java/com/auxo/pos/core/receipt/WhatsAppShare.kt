@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.receipt
 
 import android.content.ActivityNotFoundException
@@ -5,7 +8,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import androidx.core.content.FileProvider
 import com.auxo.pos.domain.customers.DuesReminder
 import com.auxo.pos.domain.model.Invoice

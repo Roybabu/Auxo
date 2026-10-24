@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.billing
 
 import com.auxo.pos.domain.billing.BusinessTime
@@ -90,6 +93,10 @@ import com.auxo.pos.domain.billing.IndianStates
 import com.auxo.pos.domain.billing.Upi
 import com.auxo.pos.domain.loyalty.LoyaltyMath
 import com.auxo.pos.domain.model.CustomerAccount
+import androidx.compose.material3.AlertDialog
+import com.auxo.pos.domain.model.Product
+import com.auxo.pos.domain.model.ProductCategory
+import com.auxo.pos.ui.screens.inventory.labelRes
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
 import com.auxo.pos.ui.components.ActionIcon
@@ -99,6 +106,9 @@ import com.auxo.pos.ui.components.ErrorState
 import com.auxo.pos.ui.components.ExpiredStockBanner
 import com.auxo.pos.ui.components.AuxoCard
 import com.auxo.pos.ui.components.AuxoTextField
+import com.auxo.pos.ui.screens.inventory.sanitizeDecimal
+import com.auxo.pos.domain.model.StockUnit
+import com.auxo.pos.domain.billing.HeldBills
 import com.auxo.pos.ui.components.AuxoTopAppBar
 import com.auxo.pos.ui.components.LoadingState
 import com.auxo.pos.ui.components.QrCode
@@ -127,9 +137,11 @@ interface BillingActions {
     fun onSearchSubmitted() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
     fun onQuickSectionChange(section: String?) = Unit
+    fun onBrowseCategoryChange(category: ProductCategory?) = Unit
     fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int): Boolean = false
     fun onIncrement(lineKey: Long) = Unit
     fun onDecrement(lineKey: Long) = Unit
+    fun onTypedQuantity(lineKey: Long, text: String) = Unit
     fun onRemove(lineKey: Long) = Unit
     fun onToggleLineDiscount(lineKey: Long) = Unit
     fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) = Unit
@@ -257,10 +269,12 @@ fun BillingScreen(
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
             override fun onQuickSectionChange(section: String?) = viewModel.onQuickSectionChange(section)
+            override fun onBrowseCategoryChange(category: ProductCategory?) = viewModel.onBrowseCategoryChange(category)
             override fun onAddCustomItem(name: String, price: String, quantity: String, gstBasisPoints: Int) =
                 viewModel.addCustomItem(name, price, quantity, gstBasisPoints)
             override fun onIncrement(lineKey: Long) = viewModel.increment(lineKey)
             override fun onDecrement(lineKey: Long) = viewModel.decrement(lineKey)
+            override fun onTypedQuantity(lineKey: Long, text: String) = viewModel.setTypedQuantity(lineKey, text)
             override fun onRemove(lineKey: Long) = viewModel.removeLine(lineKey)
             override fun onToggleLineDiscount(lineKey: Long) = viewModel.toggleLineDiscountEditor(lineKey)
             override fun onLineDiscountChange(lineKey: Long, text: String, isPercent: Boolean) =
@@ -304,7 +318,16 @@ fun BillingScreen(
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
-                            ActionIcon(R.drawable.ic_pause, stringResource(R.string.hold_icon), { showHold = true }, Modifier.testTag("hold_open"))
+                            ActionIcon(
+                                R.drawable.ic_pause,
+                                stringResource(R.string.hold_icon),
+                                {
+                                    // A resumed table bill goes back to its table without being asked again.
+                                    val resumed = uiState.heldBills.firstOrNull { it.id == uiState.resumedHeldId }
+                                    if (uiState.cart.needsTable && resumed?.tableNumber != null) viewModel.holdAgain() else showHold = true
+                                },
+                                Modifier.testTag("hold_open"),
+                            )
                         }
                         if (uiState.canHold && (uiState.heldBills.isNotEmpty() || uiState.resumedHeldId != null)) {
                             IconButton(onClick = { showHeld = true }, modifier = Modifier.testTag("held_open")) {
@@ -351,9 +374,14 @@ fun BillingScreen(
     if (showHold) {
         HoldBillDialog(
             suggestion = uiState.cart.customer.name,
-            onHold = { label ->
+            needsTable = uiState.cart.needsTable,
+            tableCount = uiState.tableCount,
+            busyTables = HeldBills.busyTables(uiState.heldBills, uiState.resumedHeldId),
+            token = uiState.heldBills.firstOrNull { it.id == uiState.resumedHeldId }?.tokenNumber
+                ?: HeldBills.nextToken(uiState.heldBills.mapNotNull { it.tokenNumber }),
+            onHold = { label, phone, table ->
                 showHold = false
-                viewModel.holdBill(label)
+                viewModel.holdBill(label, table, phone)
             },
             onDismiss = { showHold = false },
         )
@@ -544,9 +572,12 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
         if (state.searchText.isBlank() && state.quickItems.isNotEmpty()) {
             item(key = "quick_menu") { QuickMenuCard(state, actions) }
         }
+        if (state.searchText.isBlank() && state.browseProducts.isNotEmpty()) {
+            item(key = "browse_items") { BrowseItemsCard(state, actions) }
+        }
 
         if (state.cart.isEmpty) {
-            if (state.searchText.isBlank() && state.quickItems.isEmpty()) {
+            if (state.searchText.isBlank() && state.quickItems.isEmpty() && state.browseProducts.isEmpty()) {
                 item(key = "empty") {
                     val noProducts = state.productCount == 0
                     EmptyState(
@@ -566,9 +597,16 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 CartLineCard(
                     name = line.productName,
                     variant = line.variantLabel,
-                    unitPrice = formatter.format(line.unitPrice),
+                    unitPrice = if (line.stockUnit == StockUnit.UNIT) {
+                        formatter.format(line.unitPrice)
+                    } else {
+                        stringResource(R.string.price_per_unit, formatter.format(line.unitPrice), line.stockUnit.entrySymbol)
+                    },
                     quantity = line.quantity,
-                    lineTotal = formatter.format(amounts?.let { it.gross - it.lineDiscount } ?: (line.unitPrice * line.quantity)),
+                    stockUnit = line.stockUnit,
+                    step = line.step,
+                    onTypedQuantity = { actions.onTypedQuantity(line.variantId, it) },
+                    lineTotal = formatter.format(amounts?.let { it.gross - it.lineDiscount } ?: line.gross),
                     hasDiscount = amounts?.lineDiscount?.isZero == false,
                     issue = state.check.lineIssues[line.variantId]?.let { lineIssueText(it) },
                     discountOpen = state.editingDiscountFor == line.variantId,
@@ -678,7 +716,14 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
             )
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(formatter.format(result.variant.sellingPrice), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = if (result.product.stockUnit == StockUnit.UNIT) {
+                    formatter.format(result.variant.sellingPrice)
+                } else {
+                    stringResource(R.string.price_per_unit, formatter.format(result.variant.sellingPrice), result.product.stockUnit.entrySymbol)
+                },
+                style = MaterialTheme.typography.titleSmall,
+            )
             // An item sold without a stock count shows no figure; it is only flagged while switched off.
             val note = when {
                 !result.product.available -> stringResource(R.string.menu_unavailable)
@@ -694,6 +739,103 @@ private fun SearchResultRow(result: ProductSearchResult, onClick: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+/** The most items the browse card lists at once; the search box finds the rest. */
+private const val BROWSE_LIMIT = 60
+
+/**
+ * Everything that is not a restaurant dish, by kind of goods, for adding with one tap (no scanner or typing). An
+ * item with several sizes, colours or packs asks which one first. Items with no stock are greyed out.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BrowseItemsCard(state: BillingUiState, actions: BillingActions) {
+    val formatter = LocalMoneyFormatter.current
+    val categories = state.browseCategories
+    val category = state.browseCategory?.takeIf { it in categories }
+    val matching = state.browseProducts.filter { category == null || it.category == category }
+    val shown = matching
+        .sortedBy { product -> !(product.variants.any { it.stockQuantity > 0 } || !product.tracksStock) }
+        .take(BROWSE_LIMIT)
+    var choosing by remember { mutableStateOf<Product?>(null) }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("browse_items")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.billing_browse_title), style = MaterialTheme.typography.titleSmall)
+            if (categories.size > 1) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    FilterChip(
+                        selected = category == null,
+                        onClick = { actions.onBrowseCategoryChange(null) },
+                        label = { Text(stringResource(R.string.held_filter_all)) },
+                        modifier = Modifier.testTag("browse_all"),
+                    )
+                    categories.forEach { option ->
+                        FilterChip(
+                            selected = category == option,
+                            onClick = { actions.onBrowseCategoryChange(option) },
+                            label = { Text(stringResource(option.labelRes())) },
+                            modifier = Modifier.testTag("browse_${option.name}"),
+                        )
+                    }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                shown.forEach { product ->
+                    val inStock = product.variants.any { it.stockQuantity > 0 } || !product.tracksStock
+                    val unit = product.stockUnit
+                    val first = product.variants.first()
+                    val price = formatter.format(first.sellingPrice).let {
+                        if (unit == StockUnit.UNIT) it else stringResource(R.string.price_per_unit, it, unit.entrySymbol)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            if (product.variants.size == 1) actions.onAddResult(ProductSearchResult(product, first)) else choosing = product
+                        },
+                        enabled = inStock,
+                        modifier = Modifier.testTag("browse_item_${product.id}"),
+                    ) {
+                        Text(if (product.variants.size == 1) "${product.name} · $price" else product.name)
+                    }
+                }
+            }
+            if (matching.size > shown.size) {
+                Text(
+                    stringResource(R.string.billing_browse_more, shown.size, matching.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+    choosing?.let { product ->
+        AlertDialog(
+            onDismissRequest = { choosing = null },
+            title = { Text(product.name) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    product.variants.forEach { variant ->
+                        val unit = product.stockUnit
+                        val price = formatter.format(variant.sellingPrice).let {
+                            if (unit == StockUnit.UNIT) it else stringResource(R.string.price_per_unit, it, unit.entrySymbol)
+                        }
+                        val inStock = variant.stockQuantity > 0 || !product.tracksStock
+                        TextButton(
+                            onClick = {
+                                choosing = null
+                                actions.onAddResult(ProductSearchResult(product, variant))
+                            },
+                            enabled = inStock,
+                            modifier = Modifier.fillMaxWidth().testTag("browse_variant_${variant.id}"),
+                        ) {
+                            Text(listOf(variant.attributesLabel.ifBlank { variant.barcode }, price).joinToString(" · "))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { choosing = null }) { Text(stringResource(R.string.action_cancel)) } },
+        )
     }
 }
 
@@ -732,6 +874,9 @@ private fun CartLineCard(
     variant: String,
     unitPrice: String,
     quantity: Int,
+    stockUnit: StockUnit,
+    step: Int,
+    onTypedQuantity: (String) -> Unit,
     lineTotal: String,
     hasDiscount: Boolean,
     issue: String?,
@@ -755,7 +900,9 @@ private fun CartLineCard(
                     if (variant.isNotEmpty()) {
                         Text(variant, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text("$quantity × $unitPrice", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = if (stockUnit == StockUnit.UNIT) "$quantity × $unitPrice" else "${stockUnit.format(quantity)} × $unitPrice",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(end = Spacing.sm)) {
                     Text(lineTotal, style = MaterialTheme.typography.titleSmall)
@@ -769,10 +916,25 @@ private fun CartLineCard(
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDecrement, enabled = quantity > 1) {
+                IconButton(onClick = onDecrement, enabled = quantity > step) {
                     AuxoIcon(R.drawable.ic_remove, stringResource(R.string.action_decrease), size = AuxoIconSize.Compact)
                 }
-                Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
+                if (stockUnit == StockUnit.UNIT) {
+                    Text(quantity.toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(32.dp))
+                } else {
+                    // Typed in kilograms or litres; an entry that is not a valid amount is ignored until it is.
+                    var typed by remember(quantity) { mutableStateOf(stockUnit.toEntryText(quantity)) }
+                    AuxoTextField(
+                        value = typed,
+                        onValueChange = {
+                            typed = sanitizeDecimal(it, 3)
+                            onTypedQuantity(typed)
+                        },
+                        label = stockUnit.entrySymbol,
+                        keyboardType = KeyboardType.Decimal,
+                        modifier = Modifier.width(104.dp).testTag("line_weight"),
+                    )
+                }
                 IconButton(onClick = onIncrement, enabled = canIncrease, modifier = Modifier.testTag("line_increase")) {
                     AuxoIcon(R.drawable.ic_add, stringResource(R.string.action_increase), size = AuxoIconSize.Compact)
                 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui.screens.auth
 
 import com.auxo.pos.ui.components.liquidGlass
@@ -84,9 +87,7 @@ import com.auxo.pos.ui.components.LanguageChip
 import com.auxo.pos.ui.components.OrDivider
 import com.auxo.pos.ui.components.crystalGlass
 import com.auxo.pos.ui.theme.AuthEmerald
-import com.auxo.pos.ui.theme.AuthEmeraldBright
 import com.auxo.pos.ui.theme.AuthInk
-import com.auxo.pos.ui.theme.AuthInkMuted
 import com.auxo.pos.ui.theme.AuthCream
 import com.auxo.pos.ui.theme.AuthMint
 import com.auxo.pos.ui.theme.Spacing

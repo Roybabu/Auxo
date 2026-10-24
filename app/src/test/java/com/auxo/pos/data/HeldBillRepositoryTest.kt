@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data
 
 import android.content.Context
@@ -51,9 +54,16 @@ class HeldBillRepositoryTest {
     @After
     fun tearDown() = database.close()
 
+    private var savedShirtId: Long? = null
+
     private suspend fun cartOfShirt(quantity: Int = 2): Cart {
+        savedShirtId?.let { id ->
+            val product = inventory.getProduct(id)!!
+            return Cart(lines = listOf(CartLine.from(product, product.variants[0], quantity)))
+        }
         val fresh = TestData.tShirt().let { it.copy(id = 0, variants = it.variants.map { v -> v.copy(id = 0, productId = 0) }) }
         val id = (inventory.saveProduct(fresh) as SaveProductResult.Saved).productId
+        savedShirtId = id
         val product = inventory.getProduct(id)!!
         return Cart(lines = listOf(CartLine.from(product, product.variants[0], quantity)))
     }
@@ -94,6 +104,38 @@ class HeldBillRepositoryTest {
         assertNull(HeldCartCodec.decode("{not json"))
         assertNull(HeldCartCodec.decode("""{"v":99,"lines":[],"customer":{}}"""))
         assertNull(HeldCartCodec.decode("""{"v":1,"lines":[{"key":1}],"customer":{}}"""))
+    }
+
+    // Tables and numbers
+
+    @Test
+    fun aBillParkedForATable_keepsTheTable_andNoNumber() = kotlinx.coroutines.test.runTest {
+        val id = held.hold(cartOfShirt(), Money(998_00), "Asha", tableNumber = 4)
+        val summary = held.get(id)!!.summary
+        assertEquals(4, summary.tableNumber)
+        assertNull(summary.tokenNumber)
+    }
+
+    @Test
+    fun aTable_canHoldOnlyOneBill_butItsOwnBillCanBeParkedAgain() = kotlinx.coroutines.test.runTest {
+        val id = held.hold(cartOfShirt(), Money(998_00), "", tableNumber = 4)
+        held.hold(cartOfShirt(3), Money(1_497_00), "", replacingId = id, tableNumber = 4)
+        assertEquals(1, held.observeHeld().first().size)
+        val refused = runCatching { held.hold(cartOfShirt(), Money(499_00), "", tableNumber = 4) }
+        assertTrue(refused.isFailure)
+        assertEquals(1, held.observeHeld().first().size)
+    }
+
+    @Test
+    fun otherBills_getTheSmallestFreeNumber_andKeepItWhenParkedAgain() = kotlinx.coroutines.test.runTest {
+        val first = held.hold(cartOfShirt(), Money(998_00), "")
+        val second = held.hold(cartOfShirt(), Money(998_00), "")
+        assertEquals(listOf(1, 2), listOf(first, second).map { held.get(it)!!.summary.tokenNumber })
+        held.hold(cartOfShirt(3), Money(1_497_00), "", replacingId = first)
+        assertEquals(1, held.get(first)!!.summary.tokenNumber)
+        held.discard(first)
+        val third = held.hold(cartOfShirt(), Money(998_00), "")
+        assertEquals(1, held.get(third)!!.summary.tokenNumber)
     }
 
     // Keeping, resuming, discarding

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.domain.reports
 
 import com.auxo.pos.domain.customers.LedgerLine
@@ -314,6 +317,8 @@ object Reports {
         ProductCategory.ELECTRONICS -> "Electronics"
         ProductCategory.PHARMACY -> "Pharmacy"
         ProductCategory.COSMETICS -> "Cosmetics"
+        ProductCategory.LOOSE -> "Loose goods"
+        ProductCategory.JEWELLERY -> "Jewellery"
         ProductCategory.RESTAURANT -> "Restaurant"
     }
 

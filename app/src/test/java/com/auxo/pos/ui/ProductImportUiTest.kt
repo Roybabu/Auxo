@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -80,6 +83,16 @@ class ProductImportUiTest {
         composeRule.onNodeWithTag("import_choose").performClick()
         assertEquals(1, template)
         assertEquals(1, choose)
+    }
+
+    @Test
+    fun beforeAFileIsChosen_theGuideShowsAnExampleForEveryImportableCategory() {
+        show(ProductImportUiState())
+        composeRule.onNodeWithTag("import_guide").assertExists()
+        com.auxo.pos.domain.imports.ProductImportGuide.examples.forEach { example ->
+            composeRule.onNodeWithTag("import_guide_${example.category.name}").assertExists()
+        }
+        composeRule.onNodeWithText("name: Smartphone X1", substring = true).assertExists()
     }
 
     @Test

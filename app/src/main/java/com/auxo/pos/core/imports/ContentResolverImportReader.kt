@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.imports
 
 import android.content.Context
-import android.net.Uri
 import androidx.core.net.toUri
 import com.auxo.pos.domain.imports.FileReadResult
 import com.auxo.pos.domain.imports.ImportFile

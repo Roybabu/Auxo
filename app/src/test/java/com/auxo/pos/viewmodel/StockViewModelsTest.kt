@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import com.auxo.pos.domain.model.Money
-import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.model.StockBatch
 import com.auxo.pos.domain.model.StockChangeReason
 import com.auxo.pos.domain.model.StockMovement

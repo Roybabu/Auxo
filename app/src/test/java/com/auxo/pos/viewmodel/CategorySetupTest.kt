@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.viewmodel
 
 import android.content.Context
@@ -111,6 +114,15 @@ class CategorySetupTest {
         awaitUntil { prefs.categorySetupDone.value }
         assertTrue(prefs.categorySetupDone.value)
         assertTrue(repository.getCategories().first { it.id == restaurant.id }.enabled)
+    }
+
+    @Test
+    fun firstTimeSetup_startsWithNothingTicked() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val viewModel = CategorySetupViewModel(RoomCategoryRepository(database), SharedPrefsShopPreferences(context))
+        awaitUntil { viewModel.uiState.value.loaded }
+        assertTrue(viewModel.uiState.value.categories.isNotEmpty())
+        assertTrue(viewModel.uiState.value.selected.isEmpty())
     }
 
     @Test

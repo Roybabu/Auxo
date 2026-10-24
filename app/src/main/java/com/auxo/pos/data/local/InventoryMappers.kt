@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data.local
 
 import com.auxo.pos.data.local.entity.BatchRow
@@ -46,6 +49,8 @@ fun ProductWithVariants.toDomain(): Product = Product(
     tracksStock = product.tracksStock,
     warrantyMonths = product.warrantyMonths,
     prescriptionRequired = product.prescriptionRequired,
+    metal = product.metal?.let { name -> com.auxo.pos.domain.jewellery.JewelleryMetal.entries.firstOrNull { it.name == name } },
+    makingChargeBasisPoints = product.makingChargeBasisPoints,
 )
 
 fun VariantWithBatches.toDomain(): ProductVariant = variant.toDomain().copy(
@@ -113,6 +118,8 @@ fun Product.toEntity(nowMillis: Long): ProductEntity = ProductEntity(
     tracksStock = tracksStock,
     warrantyMonths = warrantyMonths.takeIf { category.usesWarranty },
     prescriptionRequired = prescriptionRequired && category.usesPrescription,
+    metal = metal?.name.takeIf { category.usesMetal },
+    makingChargeBasisPoints = makingChargeBasisPoints.takeIf { category.usesMetal },
 )
 
 fun ProductVariant.toEntity(productId: Long): ProductVariantEntity = ProductVariantEntity(

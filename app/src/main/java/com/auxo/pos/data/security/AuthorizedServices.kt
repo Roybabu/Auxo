@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.data.security
 
 import android.graphics.Bitmap
@@ -29,6 +32,16 @@ class AuthorizedShopPreferences(private val inner: ShopPreferences, private val 
     override fun setCategorySetupDone(done: Boolean) {
         auth.require(Permission.MANAGE_SETTINGS)
         inner.setCategorySetupDone(done)
+    }
+
+    override fun setTableCount(count: Int) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setTableCount(count)
+    }
+
+    override fun setMetalRates(rates: com.auxo.pos.domain.jewellery.MetalRates) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setMetalRates(rates)
     }
 }
 

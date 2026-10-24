@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.core.backup
 
 import android.database.sqlite.SQLiteDatabase
@@ -56,11 +59,20 @@ class DatabaseCheckTest {
     }
 
     @Test
-    fun aFileThatIsNotADatabase_isCorrupt() {
+    fun aFileThatIsNotADatabase_isNotABackup() {
+        // Random bytes look like a locked database, and there is no key to open one with.
         val junk = folder.newFile("junk.db").apply { writeBytes(ByteArray(4096) { 7 }) }
-        assertEquals(BackupProblem.CORRUPT, problemOf(junk))
+        assertEquals(BackupProblem.NOT_A_BACKUP, problemOf(junk))
         val empty = folder.newFile("empty.db")
         val problem = problemOf(empty)
         if (problem == null) fail("An empty file should not pass")
+    }
+
+    @Test
+    fun aDatabaseWithADamagedBody_isCorrupt() {
+        val damaged = folder.newFile("damaged.db").apply {
+            writeBytes("SQLite format 3\u0000".toByteArray(Charsets.ISO_8859_1) + ByteArray(4096) { 7 })
+        }
+        assertEquals(BackupProblem.CORRUPT, problemOf(damaged))
     }
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
 package com.auxo.pos.ui
 
 import android.net.Uri
@@ -94,6 +97,20 @@ class BackupScreenTest {
     }
 
     @Test
+    fun aBackupOnlyInTheAppFolder_warnsItIsErasedOnUninstall() {
+        val saved = SavedBackup("b.zip", "Android/data/com.auxo.pos/files/Auxo", Uri.parse("content://x/y"), appFolderOnly = true)
+        show(BackupUiState(saved = saved))
+        composeRule.onNodeWithTag("backup_app_only_warning").assertIsDisplayed()
+    }
+
+    @Test
+    fun aBackupInDocuments_showsNoWarning() {
+        val saved = SavedBackup("b.zip", "Documents/Auxo", Uri.parse("content://x/y"))
+        show(BackupUiState(saved = saved))
+        composeRule.onNodeWithTag("backup_app_only_warning").assertDoesNotExist()
+    }
+
+    @Test
     fun whileWorking_theButtonsAreOff() {
         show(BackupUiState(isWorking = true))
         composeRule.onNodeWithTag("backup_now").assertIsNotEnabled()
@@ -107,10 +124,12 @@ class BackupScreenTest {
     }
 
     @Test
-    fun lockingIsNotOffered_whenBackupsAreNotLocked() {
+    fun lockingIsOffByDefault_andTheCardSaysSo() {
         show(BackupUiState())
-        composeRule.onNodeWithTag("backup_protection").assertDoesNotExist()
-        composeRule.onNodeWithText("Lock backups with a passphrase").assertDoesNotExist()
+        composeRule.onNodeWithText("Lock backups with a passphrase").assertIsDisplayed()
+        composeRule.onNodeWithText("Backups are not locked.", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("backup_protect_set").performClick()
+        assertEquals(listOf("choose passphrase"), log)
     }
 
     @Test
