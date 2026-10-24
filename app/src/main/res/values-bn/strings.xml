@@ -1872,4 +1872,6 @@
     <string name="crash_github_copied">রিপোর্ট কপি হয়েছে। ইস্যুতে পেস্ট করুন।</string>
     <string name="help_github_title">GitHub-এ সমস্যা জানান</string>
     <string name="help_github_body">এটি একটি সর্বজনীন পৃষ্ঠা খোলে। গ্রাহক বা দোকানের তথ্য যোগ করবেন না।</string>
+    <string name="help_problem_title">সমস্যা জানান</string>
+    <string name="help_problem_body">কিছু ঠিকমতো কাজ করছে না? ডেভেলপারকে রিপোর্ট পাঠান।</string>
 </resources>

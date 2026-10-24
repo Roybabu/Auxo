@@ -70,6 +70,7 @@ fun MoreScreen(
     shop: ShopUiState = ShopUiState(),
 ) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    var reportOpen by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.more_title)) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -228,35 +229,13 @@ fun MoreScreen(
             if (can(Permission.BACKUP_AND_RESTORE)) {
                 MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
             }
-            run {
-                val helpContext = androidx.compose.ui.platform.LocalContext.current
-                val helpChooserTitle = stringResource(R.string.crash_prompt_send)
-                val helpCopied = stringResource(R.string.crash_github_copied)
-                MoreItem(
-                    R.drawable.ic_activity,
-                    stringResource(R.string.help_report_title),
-                    stringResource(R.string.help_report_body),
-                    {
-                        com.auxo.pos.core.diagnostics.CrashReports.diagnosticShare(helpContext)?.let { send ->
-                            runCatching { helpContext.startActivity(android.content.Intent.createChooser(send, helpChooserTitle)) }
-                        }
-                    },
-                    modifier = Modifier.testTag("more_help_report"),
-                )
-                MoreItem(
-                    R.drawable.ic_activity,
-                    stringResource(R.string.help_github_title),
-                    stringResource(R.string.help_github_body),
-                    {
-                        runCatching {
-                            val open = com.auxo.pos.core.diagnostics.CrashReports.issueIntent(helpContext, com.auxo.pos.core.diagnostics.CrashReports.diagnosticFile(helpContext))
-                            android.widget.Toast.makeText(helpContext, helpCopied, android.widget.Toast.LENGTH_LONG).show()
-                            helpContext.startActivity(open)
-                        }
-                    },
-                    modifier = Modifier.testTag("more_help_github"),
-                )
-            }
+            MoreItem(
+                R.drawable.ic_activity,
+                stringResource(R.string.help_problem_title),
+                stringResource(R.string.help_problem_body),
+                { reportOpen = true },
+                modifier = Modifier.testTag("more_report_problem"),
+            )
             if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {
                 MoreItem(
                     R.drawable.ic_warning,
@@ -275,6 +254,8 @@ fun MoreScreen(
             )
         }
     }
+
+    if (reportOpen) ProblemReportDialog(onDismiss = { reportOpen = false })
 
     if (confirmSignOut) {
         ConfirmDialog(

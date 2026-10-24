@@ -1872,4 +1872,6 @@ in %2$s</string>
     <string name="crash_github_copied">Report copied. Paste it into the issue.</string>
     <string name="help_github_title">Report a problem on GitHub</string>
     <string name="help_github_body">Opens a public page. Do not add customer or shop details.</string>
+    <string name="help_problem_title">Report a problem</string>
+    <string name="help_problem_body">Something not working? Send a report to the developer.</string>
 </resources>

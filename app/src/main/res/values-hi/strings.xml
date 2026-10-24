@@ -1872,4 +1872,6 @@
     <string name="crash_github_copied">रिपोर्ट कॉपी हो गई। इसे इश्यू में पेस्ट करें।</string>
     <string name="help_github_title">GitHub पर समस्या बताएँ</string>
     <string name="help_github_body">यह सार्वजनिक पेज खोलता है। ग्राहक या दुकान की जानकारी न जोड़ें।</string>
+    <string name="help_problem_title">समस्या की रिपोर्ट करें</string>
+    <string name="help_problem_body">कुछ ठीक से काम नहीं कर रहा? डेवलपर को रिपोर्ट भेजें।</string>
 </resources>
