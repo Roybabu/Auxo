@@ -230,7 +230,7 @@ fun MoreScreen(
                 MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
             }
             MoreItem(
-                R.drawable.ic_alert,
+                R.drawable.ic_bug_report,
                 stringResource(R.string.help_problem_title),
                 stringResource(R.string.help_problem_body),
                 { reportOpen = true },
