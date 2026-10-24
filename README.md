@@ -57,7 +57,7 @@ Money is stored in whole paise, never as decimals. A sale saves the invoice, pay
 
 Download `Auxo-vX.Y.Z.apk` from the [latest release](https://github.com/Roybabu/Auxo/releases/latest) on your phone (Android 8.0 or newer) and open it. Android will ask you to allow installs from your browser or file manager the first time. Later versions are offered inside the app (More → Check for updates) and install over the old one. Google is introducing developer verification for apps on certified phones, so Android may show an extra warning for apps from outside Google Play. The app is signed with the project's own key; the privacy policy is in [docs/PRIVACY.md](docs/PRIVACY.md).
 
-**Publishing a release (maintainers).** Add the secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`, raise `versionCode` and `versionName` in `app/build.gradle.kts`, then push a matching tag: `git tag v0.4.0 && git push origin v0.4.0`. The Release workflow builds the signed APK and attaches it with `mapping.txt` (keep it to read crash traces).
+**Publishing a release (maintainers).** Add the secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`, raise `versionCode` and `versionName` in `app/build.gradle.kts`, then push a matching tag: `git tag v1.0.0 && git push origin v1.0.0`. The Release workflow builds the signed APK and attaches it with `mapping.txt` (keep it to read crash traces).
 
 ## Get started
 
