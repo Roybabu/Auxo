@@ -56,6 +56,8 @@ fun AuthGate(
     categoryPrompt: Boolean = false,
     categorySetup: @Composable () -> Unit = { CategorySetupScreen() },
     onboarding: Boolean = false,
+    /** A backup was just restored on a phone with no account, so the sign-in is made straight away. */
+    startInSetup: Boolean = false,
     onboardingScreen: @Composable () -> Unit = { OnboardingScreen() },
     savedSessionName: String? = null,
     resume: @Composable (name: String, onUsePassword: () -> Unit) -> Unit = { name, usePassword -> ResumeScreen(name, usePassword) },
@@ -66,7 +68,7 @@ fun AuthGate(
         // "Set up your business" is always on the login screen. With no business on the device it opens setup;
         // with one already there it only explains, so an existing business can never be replaced from here.
         AuthState.NeedsSetup, AuthState.SignedOut -> {
-            var settingUp by rememberSaveable { mutableStateOf(false) }
+            var settingUp by rememberSaveable { mutableStateOf(startInSetup && state == AuthState.NeedsSetup) }
             var usePassword by rememberSaveable { mutableStateOf(false) }
             when {
                 state == AuthState.NeedsSetup && onboarding -> onboardingScreen()

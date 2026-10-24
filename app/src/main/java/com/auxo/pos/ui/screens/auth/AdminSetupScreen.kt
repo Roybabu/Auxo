@@ -114,13 +114,15 @@ fun AdminSetupScreen(onBack: (() -> Unit)? = null, viewModel: AdminSetupViewMode
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmChange = viewModel::onConfirmChange,
         onSubmit = viewModel::submit,
-        onBack = onBack,
+        // After a restore there is no sign-in page to go back to that would help: the next step is making the sign-in.
+        onBack = if (viewModel.restored) null else onBack,
         onBusinessChange = viewModel::onBusinessChange,
         onSuggestionPick = viewModel::useSuggestion,
         onDetailsChange = viewModel::onDetailsChange,
         onGstinChange = viewModel::onGstinChange,
         onLogoChoose = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onLogoRemove = viewModel::onLogoRemoved,
+        restored = viewModel.restored,
     )
 }
 
@@ -139,6 +141,8 @@ fun AdminSetupContent(
     onGstinChange: (String) -> Unit = {},
     onLogoChoose: () -> Unit = {},
     onLogoRemove: () -> Unit = {},
+    /** A backup was just restored: ask only for the sign-in, and keep the shop's details from the backup. */
+    restored: Boolean = false,
 ) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     AuthLayout(
@@ -170,13 +174,13 @@ fun AdminSetupContent(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.testTag("admin_setup")) {
             Illustration(R.drawable.auth_storefront, modifier = Modifier.fillMaxWidth().height(110.dp))
-            Text(stringResource(R.string.auth_setup_title), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
+            Text(stringResource(if (restored) R.string.auth_restored_title else R.string.auth_setup_title), style = MaterialTheme.typography.headlineMedium, color = AuthInk)
             Text(
-                stringResource(R.string.auth_setup_body),
+                stringResource(if (restored) R.string.auth_restored_body else R.string.auth_setup_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            AuxoTextField(
+            if (!restored) AuxoTextField(
                 value = state.businessName,
                 onValueChange = onBusinessChange,
                 label = stringResource(R.string.auth_field_business),
@@ -243,13 +247,13 @@ fun AdminSetupContent(
             // Everything below is optional; only the shop name, username and password above are required.
             val detailErrors = if (state.submitted) state.detailErrors else emptyMap()
             val enabled = !state.isSubmitting
-            Text(stringResource(R.string.auth_setup_details_title), style = MaterialTheme.typography.titleMedium, color = AuthInk)
-            Text(
+            if (!restored) Text(stringResource(R.string.auth_setup_details_title), style = MaterialTheme.typography.titleMedium, color = AuthInk)
+            if (!restored) Text(
                 stringResource(R.string.auth_setup_details_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.testTag("setup_details")) {
+            if (!restored) Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.testTag("setup_details")) {
                 SectionHeader(stringResource(R.string.store_logo_title))
                 SetupLogoPicker(state.logo, enabled, onLogoChoose, onLogoRemove)
                 SectionHeader(stringResource(R.string.settings_store))

@@ -69,6 +69,11 @@ data class AdminSetupUiState(
  */
 class AdminSetupViewModel(
     private val auth: AuthRepository,
+    /**
+     * True after a backup was restored on a phone with no account: only the sign-in is asked for, and the shop's
+     * name and details are left as the backup brought them.
+     */
+    val restored: Boolean = false,
     private val saveStore: (businessName: String, details: StoreSettings, logo: Uri?) -> Unit = { _, _, _ -> },
 ) : ViewModel() {
 
@@ -107,7 +112,7 @@ class AdminSetupViewModel(
 
     private fun validate(state: AdminSetupUiState): Map<SetupField, SetupError> {
         val errors = LinkedHashMap<SetupField, SetupError>()
-        AdminSetupValidator.businessNameError(state.businessName)?.let { errors[SetupField.BUSINESS] = it }
+        if (!restored) AdminSetupValidator.businessNameError(state.businessName)?.let { errors[SetupField.BUSINESS] = it }
         errors.putAll(AdminSetupValidator.validate(accountName(state), state.identifier, state.password, state.confirm))
         // The person's own name is optional; the username stands in for it (see accountName).
         if (state.name.isBlank()) errors.remove(SetupField.NAME)
@@ -133,7 +138,7 @@ class AdminSetupViewModel(
                 when (result) {
                     // The app moves on by itself once the account exists; do not keep the password around.
                     SetupResult.Created -> {
-                        saveStore(AdminSetupValidator.normalizeName(current.businessName), current.details.trimmed(), current.logo)
+                        if (!restored) saveStore(AdminSetupValidator.normalizeName(current.businessName), current.details.trimmed(), current.logo)
                         state.copy(isSubmitting = false, password = "", confirm = "")
                     }
                     SetupResult.AlreadyInitialized -> state.copy(isSubmitting = false, password = "", confirm = "")
@@ -160,7 +165,7 @@ class AdminSetupViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                AdminSetupViewModel(container.authRepository, container::rememberStore)
+                AdminSetupViewModel(container.authRepository, restored = container.restoredSignIn.isSet(), saveStore = container::rememberStore)
             }
         }
     }

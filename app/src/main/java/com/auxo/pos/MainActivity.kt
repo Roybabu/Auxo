@@ -123,8 +123,13 @@ class MainActivity : FragmentActivity() {
                         lock = lock,
                         categoryPrompt = mayChooseCategories && !categorySetupDone,
                         onboarding = !onboardingSeen,
+                        startInSetup = remember { container.restoredSignIn.isSet() },
+                        // On a phone with no business, the button under the slider first asks for the backup folder.
+                        login = { openSetup -> com.auxo.pos.ui.screens.auth.LoginScreen(hasBusiness = authState == AuthState.SignedOut, onSetUpBusiness = openSetup, findBackups = true) },
                         savedSessionName = remember(authState) { container.authRepository.savedSessionName() },
                     ) { AuxoApp() }
+                    // Signing in ends the "make a sign-in after a restore" step.
+                    LaunchedEffect(authState) { if (authState is AuthState.SignedIn) container.restoredSignIn.clear() }
                     // Once someone is signed in, look quietly for a newer version and offer it if there is one.
                     if (authState is AuthState.SignedIn) {
                         LaunchedEffect(Unit) { container.appUpdater.checkOnLaunch() }

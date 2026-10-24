@@ -1874,4 +1874,43 @@ in %2$s</string>
     <string name="help_github_body">Opens a public page. Do not add customer or shop details.</string>
     <string name="help_problem_title">Report a problem</string>
     <string name="help_problem_body">Something not working? Send a report to the developer.</string>
+
+    <!-- Restoring a backup from the first screen on a new phone -->
+    <string name="find_choose">Choose backup folder</string>
+    <string name="find_new">Set up a new shop</string>
+    <string name="find_scanning">Looking for backups…</string>
+    <string name="find_another">Choose another folder</string>
+    <string name="find_sheet_title">Restore your shop</string>
+    <string name="find_sheet_body">Choose a backup to bring your shop\'s data and settings back to Auxo.</string>
+    <string name="find_banner_title">Shop name isn\'t available in these backups.</string>
+    <string name="find_banner_body">Restoring brings back the shop data and settings. You\'ll create a new sign-in afterwards.</string>
+    <string name="find_available">Available backups</string>
+    <string name="find_found">%1$d found</string>
+    <string name="find_restore_shop">Restore shop</string>
+    <string name="find_badge_latest">LATEST BACKUP</string>
+    <string name="find_c_title">Restore this backup?</string>
+    <string name="find_c_body">You\'ll restore the shop using the data and settings saved in this backup.</string>
+    <string name="find_row_date">Backup date</string>
+    <string name="find_row_file">Archive file</string>
+    <string name="find_row_size">File size</string>
+    <string name="find_row_shop">Shop name</string>
+    <string name="find_not_available">Not available</string>
+    <string name="find_c_warning">This replaces the products, customers, bills and settings now on this phone with the ones in this backup. Sign-in details aren\'t part of a backup, so you\'ll create a new sign-in next.</string>
+    <string name="find_restoring_title">Restoring your shop...</string>
+    <string name="find_restoring_body">Please keep the app open while we restore your data and settings.</string>
+    <string name="find_done_title">Shop restored</string>
+    <string name="find_done_body">Restarting Auxo…</string>
+    <string name="find_kind_zip">ZIP file</string>
+    <string name="find_kind_locked">Locked file</string>
+    <string name="find_w_title">Replace the data on this phone?</string>
+    <string name="find_w_body">Restoring removes the products, customers, bills and settings now on this phone and puts this backup\'s in their place. This can\'t be undone. If you haven\'t backed up what\'s on this phone, it will be lost.</string>
+    <string name="find_w_action">Replace and restore</string>
+    <string name="find_w_back">Go back</string>
+    <string name="find_unknown_shop">Shop name not saved in these backups</string>
+    <string name="find_counts">%1$d products · %2$d customers · %3$d bills</string>
+    <string name="find_locked_hint">Locked with a passphrase. The shop name shows after you unlock it.</string>
+    <string name="find_divider">Used Auxo before?</string>
+    <string name="find_none_short">No backups found in that folder.</string>
+    <string name="auth_restored_title">Backup restored</string>
+    <string name="auth_restored_body">Your shop is back. Backups do not carry sign-in details, so create the sign-in for this phone. Your shop name and details came with the backup.</string>
 </resources>

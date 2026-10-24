@@ -76,7 +76,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val categorySetupDone: StateFlow<Boolean> = categorySetupState.asStateFlow()
 
     override fun setCategorySetupDone(done: Boolean) {
-        prefs.edit { putBoolean(KEY_CATEGORY_SETUP, done) }
+        prefs.edit(commit = true) { putBoolean(KEY_CATEGORY_SETUP, done) }
         categorySetupState.value = done
     }
 
@@ -84,7 +84,7 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
     override val onboardingSeen: StateFlow<Boolean> = onboardingState.asStateFlow()
 
     override fun setOnboardingSeen(seen: Boolean) {
-        prefs.edit { putBoolean(KEY_ONBOARDING_SEEN, seen) }
+        prefs.edit(commit = true) { putBoolean(KEY_ONBOARDING_SEEN, seen) }
         onboardingState.value = seen
     }
 
