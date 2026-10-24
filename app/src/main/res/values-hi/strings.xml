@@ -1874,4 +1874,26 @@
     <string name="help_github_body">यह सार्वजनिक पेज खोलता है। ग्राहक या दुकान की जानकारी न जोड़ें।</string>
     <string name="help_problem_title">समस्या की रिपोर्ट करें</string>
     <string name="help_problem_body">कुछ ठीक से काम नहीं कर रहा? डेवलपर को रिपोर्ट भेजें।</string>
+
+    <!-- Restoring a backup from the first screen on a new phone -->
+    <string name="find_title">क्या आपके पास बैकअप है?</string>
+    <string name="find_body">अगर आपने पहले Auxo इस्तेमाल किया है, तो वह फ़ोल्डर चुनें जहाँ आपने बैकअप रखे थे (आमतौर पर Documents, फिर Auxo)। नई दुकान है तो नए सिरे से शुरू करें।</string>
+    <string name="find_choose">बैकअप फ़ोल्डर चुनें</string>
+    <string name="find_new">नई दुकान शुरू करें</string>
+    <string name="find_scanning">बैकअप खोजे जा रहे हैं…</string>
+    <string name="find_restoring">बहाल किया जा रहा है…</string>
+    <string name="find_none_title">कोई बैकअप नहीं मिला</string>
+    <string name="find_none_body">उस फ़ोल्डर में कोई Auxo बैकअप नहीं है। आप दूसरा फ़ोल्डर चुन सकते हैं, या नई दुकान शुरू कर सकते हैं।</string>
+    <string name="find_another">दूसरा फ़ोल्डर चुनें</string>
+    <string name="find_pick_title">बहाल करने के लिए बैकअप चुनें</string>
+    <string name="find_pick_body">दुकान के अनुसार, सबसे नया ऊपर। बहाल करने पर वह दुकान साइन-इन विवरण सहित वैसी ही वापस आ जाती है।</string>
+    <string name="find_unknown_shop">इन बैकअप में दुकान का नाम सहेजा नहीं गया है</string>
+    <string name="find_taken">%1$s का बैकअप</string>
+    <string name="find_latest">सबसे नया</string>
+    <string name="find_counts">%1$d उत्पाद · %2$d ग्राहक · %3$d बिल</string>
+    <string name="find_locked_hint">पासफ़्रेज़ से लॉक है। खोलने के बाद दुकान का नाम दिखेगा।</string>
+    <string name="find_this_backup">यह बैकअप</string>
+    <string name="find_confirm_title">यह बैकअप बहाल करें?</string>
+    <string name="find_confirm_body">इससे %1$s वैसी ही वापस आएगी जैसी %2$s को थी। फिर आप उसी बैकअप के लॉगिन विवरण से साइन इन करेंगे।</string>
+    <string name="find_confirm_action">बहाल करें</string>
 </resources>

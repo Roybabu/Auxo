@@ -109,6 +109,10 @@ class BackupManager(
                 createdAtMillis = now,
                 databaseVersion = AuxoDatabase.VERSION,
                 appVersion = appVersion(),
+                shopName = shopName(),
+                products = count("products"),
+                customers = count("customers"),
+                invoices = count("invoices"),
             )
             val settings = appearance.settings.value
             val saved = storage.save(fileName(now, locked = passphrase != null)) { out ->
@@ -213,6 +217,16 @@ class BackupManager(
         checkpoint()
         context.getDatabasePath(AuxoDatabase.NAME).copyTo(target, overwrite = true)
     }
+
+    /** The shop's name for the list of backups; blank if it cannot be read. */
+    private fun shopName(): String = runCatching {
+        database.openHelper.readableDatabase.query("SELECT store_name FROM store_settings WHERE id = 1").use { if (it.moveToFirst()) it.getString(0).orEmpty().trim() else "" }
+    }.getOrDefault("")
+
+    /** Rows in [table], or null if it cannot be counted. [table] is always one of this file's own names. */
+    private fun count(table: String): Int? = runCatching {
+        database.openHelper.readableDatabase.query("SELECT COUNT(*) FROM $table").use { if (it.moveToFirst()) it.getInt(0) else null }
+    }.getOrNull()
 
     private fun checkpoint() {
         database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }

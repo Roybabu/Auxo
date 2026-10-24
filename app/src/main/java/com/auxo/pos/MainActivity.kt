@@ -123,6 +123,7 @@ class MainActivity : FragmentActivity() {
                         lock = lock,
                         categoryPrompt = mayChooseCategories && !categorySetupDone,
                         onboarding = !onboardingSeen,
+                        findBackup = { onNewShop, onBack -> com.auxo.pos.ui.screens.auth.FindBackupScreen(onNewShop = onNewShop, onBack = onBack) },
                         savedSessionName = remember(authState) { container.authRepository.savedSessionName() },
                     ) { AuxoApp() }
                     // Once someone is signed in, look quietly for a newer version and offer it if there is one.

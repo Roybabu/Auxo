@@ -59,6 +59,11 @@ data class BackupManifest(
     val createdAtMillis: Long,
     val databaseVersion: Int,
     val appVersion: String,
+    /** The shop's name, and how much it holds, so a list of backups can say which is which. Blank or null in older files. */
+    val shopName: String = "",
+    val products: Int? = null,
+    val customers: Int? = null,
+    val invoices: Int? = null,
 )
 
 /** A backup opened into a work folder, ready to be checked and restored. */
@@ -169,23 +174,7 @@ object BackupArchive {
             throw BackupException(BackupProblem.NOT_A_BACKUP, cause = e)
         }
 
-        val properties = Properties()
-        try {
-            properties.load(StringReader(manifestText ?: throw BackupException(BackupProblem.NOT_A_BACKUP)))
-        } catch (e: IllegalArgumentException) {
-            throw BackupException(BackupProblem.NOT_A_BACKUP, cause = e)
-        }
-        val app = properties.getProperty("app") ?: throw BackupException(BackupProblem.NOT_A_BACKUP)
-        if (app != APP_ID) throw BackupException(BackupProblem.WRONG_APP)
-        val format = properties.getProperty("format")?.toIntOrNull() ?: throw BackupException(BackupProblem.NOT_A_BACKUP)
-        if (format > FORMAT) throw BackupException(BackupProblem.NEWER_BACKUP)
-        val manifest = BackupManifest(
-            app = app,
-            format = format,
-            createdAtMillis = properties.getProperty("created")?.toLongOrNull() ?: 0L,
-            databaseVersion = properties.getProperty("database_version")?.toIntOrNull() ?: throw BackupException(BackupProblem.CORRUPT),
-            appVersion = properties.getProperty("app_version").orEmpty(),
-        )
+        val manifest = parseManifest(manifestText ?: throw BackupException(BackupProblem.NOT_A_BACKUP))
         val file = database ?: throw BackupException(BackupProblem.CORRUPT)
 
         val databaseKey = keyText?.trim()?.also { if (!DatabaseEncryption.isValidKey(it)) throw BackupException(BackupProblem.CORRUPT) }
@@ -201,7 +190,55 @@ object BackupArchive {
         )
     }
 
+    /**
+     * Reads only the manifest of a plain (unlocked) backup, stopping as soon as it is found, so a list of backups
+     * can be shown without unpacking any database.
+     */
+    fun readManifest(input: InputStream): BackupManifest {
+        try {
+            ZipInputStream(input).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    if (entry.name == MANIFEST_ENTRY) return parseManifest(zip.readText(MAX_TEXT_BYTES))
+                }
+            }
+        } catch (e: BackupException) {
+            throw e
+        } catch (e: IOException) {
+            throw BackupException(BackupProblem.NOT_A_BACKUP, cause = e)
+        }
+        throw BackupException(BackupProblem.NOT_A_BACKUP)
+    }
+
+    private fun parseManifest(text: String): BackupManifest {
+        val properties = Properties()
+        try {
+            properties.load(StringReader(text))
+        } catch (e: IllegalArgumentException) {
+            throw BackupException(BackupProblem.NOT_A_BACKUP, cause = e)
+        }
+        val app = properties.getProperty("app") ?: throw BackupException(BackupProblem.NOT_A_BACKUP)
+        if (app != APP_ID) throw BackupException(BackupProblem.WRONG_APP)
+        val format = properties.getProperty("format")?.toIntOrNull() ?: throw BackupException(BackupProblem.NOT_A_BACKUP)
+        if (format > FORMAT) throw BackupException(BackupProblem.NEWER_BACKUP)
+        return BackupManifest(
+            app = app,
+            format = format,
+            createdAtMillis = properties.getProperty("created")?.toLongOrNull() ?: 0L,
+            databaseVersion = properties.getProperty("database_version")?.toIntOrNull() ?: throw BackupException(BackupProblem.CORRUPT),
+            appVersion = properties.getProperty("app_version").orEmpty(),
+            shopName = properties.getProperty("shop").orEmpty(),
+            products = properties.getProperty("products")?.toIntOrNull(),
+            customers = properties.getProperty("customers")?.toIntOrNull(),
+            invoices = properties.getProperty("invoices")?.toIntOrNull(),
+        )
+    }
+
     private fun manifestProperties(manifest: BackupManifest) = Properties().apply {
+        if (manifest.shopName.isNotBlank()) setProperty("shop", manifest.shopName)
+        manifest.products?.let { setProperty("products", it.toString()) }
+        manifest.customers?.let { setProperty("customers", it.toString()) }
+        manifest.invoices?.let { setProperty("invoices", it.toString()) }
         setProperty("app", manifest.app)
         setProperty("format", manifest.format.toString())
         setProperty("created", manifest.createdAtMillis.toString())

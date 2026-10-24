@@ -198,16 +198,6 @@ fun MoreScreen(
                 )
             }
 
-            SectionHeader(stringResource(R.string.more_section_appearance), modifier = Modifier.padding(top = Spacing.md))
-            MoreItem(
-                R.drawable.ic_palette,
-                stringResource(R.string.appearance_title),
-                stringResource(R.string.appearance_row_body),
-                actions::onOpenAppearance,
-                modifier = Modifier.testTag("more_appearance"),
-            )
-            UpdateCard()
-
             // Account: sign-in security and the shop's data, then sign out last.
             SectionHeader(stringResource(R.string.more_section_account), modifier = Modifier.padding(top = Spacing.md))
             MoreItem(
@@ -252,6 +242,16 @@ fun MoreScreen(
                 { confirmSignOut = true },
                 modifier = Modifier.testTag("more_sign_out"),
             )
+
+            SectionHeader(stringResource(R.string.more_section_appearance), modifier = Modifier.padding(top = Spacing.md))
+            MoreItem(
+                R.drawable.ic_palette,
+                stringResource(R.string.appearance_title),
+                stringResource(R.string.appearance_row_body),
+                actions::onOpenAppearance,
+                modifier = Modifier.testTag("more_appearance"),
+            )
+            UpdateCard()
         }
     }
 

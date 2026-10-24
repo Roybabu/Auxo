@@ -7,29 +7,37 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auxo.pos.AuxoApplication
 import com.auxo.pos.R
 import com.auxo.pos.core.update.AppUpdater
 import com.auxo.pos.core.update.UpdateState
 import com.auxo.pos.ui.components.AuxoCard
+import com.auxo.pos.ui.components.AuxoIcon
+import com.auxo.pos.ui.components.AuxoIconSize
 import com.auxo.pos.ui.theme.Spacing
 
 private fun Context.appUpdater(): AppUpdater = (applicationContext as AuxoApplication).container.appUpdater
@@ -52,33 +60,32 @@ private fun rememberInstall(updater: AppUpdater, onNeedsPermission: () -> Unit):
     }
 }
 
-/** The "App update" card on the More page: the installed version, a check button, and download and install. */
+/** The "App update" card on the More page: the installed version, what the last check found, and download and install. */
 @Composable
 fun UpdateCard(modifier: Modifier = Modifier) {
     val updater = LocalContext.current.appUpdater()
     val state by updater.state.collectAsStateWithLifecycle()
-    var permissionHint by remember { mutableStateOf(false) }
+    var permissionHint by rememberSaveable { mutableStateOf(false) }
     val install = rememberInstall(updater) { permissionHint = true }
+    val colors = MaterialTheme.colorScheme
+    val newer = state is UpdateState.Available || state is UpdateState.Ready || state is UpdateState.Downloading
     AuxoCard(modifier = modifier.fillMaxWidth().testTag("update_card")) {
-        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            Text(stringResource(R.string.update_title), style = MaterialTheme.typography.titleSmall)
-            Text(
-                stringResource(R.string.update_version, updater.currentVersion),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                stringResource(R.string.update_licence),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag("update_licence"),
-            )
-            Text(
-                stringResource(R.string.update_privacy_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag("update_privacy_note"),
-            )
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AuxoIcon(
+                    if (newer) R.drawable.ic_download else R.drawable.ic_autorenew,
+                    contentDescription = null,
+                    size = AuxoIconSize.Medium,
+                )
+                Column(modifier = Modifier.weight(1f).padding(start = Spacing.lg)) {
+                    Text(stringResource(R.string.update_title), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.update_version, updater.currentVersion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+            }
             val status = when (val s = state) {
                 UpdateState.Checking -> stringResource(R.string.update_checking)
                 UpdateState.UpToDate -> stringResource(R.string.update_up_to_date)
@@ -89,7 +96,37 @@ fun UpdateCard(modifier: Modifier = Modifier) {
                 UpdateState.Idle -> null
             }
             if (status != null) {
-                Text(status, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("update_status"))
+                val failed = state == UpdateState.Failed
+                val upToDate = state == UpdateState.UpToDate
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = when {
+                        failed -> colors.errorContainer
+                        newer -> colors.primaryContainer
+                        else -> colors.surfaceVariant
+                    },
+                    contentColor = when {
+                        failed -> colors.onErrorContainer
+                        newer -> colors.onPrimaryContainer
+                        else -> colors.onSurfaceVariant
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (upToDate) {
+                                AuxoIcon(R.drawable.ic_check, contentDescription = null, size = AuxoIconSize.Mini, modifier = Modifier.padding(end = Spacing.sm))
+                            }
+                            Text(status, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("update_status"))
+                        }
+                        (state as? UpdateState.Downloading)?.let {
+                            LinearProgressIndicator(
+                                progress = { it.percent / 100f },
+                                modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm),
+                            )
+                        }
+                    }
+                }
             }
             if (permissionHint) {
                 Text(stringResource(R.string.update_permission_hint), style = MaterialTheme.typography.bodySmall)
@@ -108,6 +145,18 @@ fun UpdateCard(modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxWidth().testTag("update_check"),
                 ) { Text(stringResource(R.string.update_check)) }
             }
+            Text(
+                stringResource(R.string.update_licence),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.testTag("update_licence"),
+            )
+            Text(
+                stringResource(R.string.update_privacy_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.testTag("update_privacy_note"),
+            )
         }
     }
 }

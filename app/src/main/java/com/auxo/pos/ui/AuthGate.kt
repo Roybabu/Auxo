@@ -49,6 +49,8 @@ fun AuthGate(
     setup: @Composable (onBack: () -> Unit) -> Unit = { AdminSetupScreen(onBack = it) },
     login: @Composable (onSetUpBusiness: () -> Unit) -> Unit = { LoginScreen(hasBusiness = state == AuthState.SignedOut, onSetUpBusiness = it) },
     businessExists: @Composable (onBack: () -> Unit) -> Unit = { BusinessExistsScreen(onBack = it) },
+    /** On a phone with no business, asks for a backup folder before sign-up; null goes straight to sign-up. */
+    findBackup: (@Composable (onNewShop: () -> Unit, onBack: () -> Unit) -> Unit)? = null,
     recoveryPrompt: RecoveryPrompt = RecoveryPrompt.None,
     recovery: @Composable (canSkip: Boolean) -> Unit = { canSkip -> RecoveryCodeGate(canSkip) },
     lock: LockInfo = LockInfo(),
@@ -67,14 +69,20 @@ fun AuthGate(
         // with one already there it only explains, so an existing business can never be replaced from here.
         AuthState.NeedsSetup, AuthState.SignedOut -> {
             var settingUp by rememberSaveable { mutableStateOf(false) }
+            var lookingForBackup by rememberSaveable { mutableStateOf(false) }
             var usePassword by rememberSaveable { mutableStateOf(false) }
             when {
                 state == AuthState.NeedsSetup && onboarding -> onboardingScreen()
                 // The app was closed while someone who unlocks with a fingerprint was signed in: pick them back up.
                 state == AuthState.SignedOut && savedSessionName != null && !usePassword && !settingUp ->
                     resume(savedSessionName) { usePassword = true }
+                lookingForBackup && state == AuthState.NeedsSetup && findBackup != null ->
+                    findBackup({ lookingForBackup = false; settingUp = true }, { lookingForBackup = false })
                 settingUp -> if (state == AuthState.NeedsSetup) setup { settingUp = false } else businessExists { settingUp = false }
-                else -> login { settingUp = true }
+                else -> login {
+                    // A new phone first offers to bring back a backup; a phone with a business only explains.
+                    if (state == AuthState.NeedsSetup && findBackup != null) lookingForBackup = true else settingUp = true
+                }
             }
         }
         is AuthState.SignedIn -> CompositionLocalProvider(LocalCapabilities provides Capabilities(state.role, state.name, state.permissions)) {

@@ -15,7 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
@@ -37,7 +37,7 @@ fun <T> DropdownField(
     supportingText: String? = null,
     enabled: Boolean = true,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     ExposedDropdownMenuBox(
         expanded = expanded && enabled,
         onExpandedChange = { if (enabled) expanded = it },

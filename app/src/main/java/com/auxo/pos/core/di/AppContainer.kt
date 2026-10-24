@@ -217,6 +217,17 @@ class AppContainer(context: Context) {
         com.auxo.pos.core.backup.KeystoreBackupPassphraseStore(appContext)
     }
 
+    /**
+     * Restoring before anyone has signed in: the first screen on a new phone offers the backups it finds. It is
+     * the same manager without the permission check, which would refuse a person who has no account yet, and the
+     * screen that uses it is only reachable while no business exists on the phone.
+     */
+    val firstRunRestore: BackupService by lazy {
+        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys)
+    }
+
+    val backupScanner: com.auxo.pos.core.backup.BackupScanner by lazy { com.auxo.pos.core.backup.BackupScanner(appContext) }
+
     val backupService: BackupService by lazy {
         AuthorizedBackupService(
             BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys),

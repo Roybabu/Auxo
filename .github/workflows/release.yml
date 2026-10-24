@@ -5,6 +5,16 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # The Run workflow button on the Actions page: type the version, for example v1.0.0.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to publish, for example v1.0.0 (must match versionName)'
+        required: true
+      publish:
+        description: 'Publish the GitHub Release (untick for a test build that only keeps the files)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -14,6 +24,8 @@ jobs:
     name: Build and publish signed APK
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      TAG: ${{ github.event.inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,9 +38,12 @@ jobs:
 
       - name: Check the tag matches the app version
         run: |
+          # Accept 1.0.0 as well as v1.0.0.
+          TAG="v${TAG#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
           name=$(grep -m1 'versionName' app/build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "v$name" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match versionName $name in app/build.gradle.kts" >&2
+          if [ "v$name" != "$TAG" ]; then
+            echo "Tag $TAG does not match versionName $name in app/build.gradle.kts" >&2
             exit 1
           fi
 
@@ -51,16 +66,29 @@ jobs:
         run: |
           apk=$(ls app/build/outputs/apk/release/*.apk | head -1)
           "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner verify --print-certs "$apk"
-          cp "$apk" "Auxo-${GITHUB_REF_NAME}.apk"
+          cp "$apk" "Auxo-${TAG}.apk"
 
       - name: Remove the signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/auxo-release.jks"
 
+      - name: Name the mapping file
+        run: cp app/build/outputs/mapping/release/mapping.txt "mapping-${TAG}.txt"
+
+      - name: Keep the files from a test build
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-release-${{ env.TAG }}
+          path: |
+            Auxo-${{ env.TAG }}.apk
+            mapping-${{ env.TAG }}.txt
+          retention-days: 7
+
       - name: Create the GitHub Release
+        if: github.event_name == 'push' || inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/mapping/release/mapping.txt "mapping-${GITHUB_REF_NAME}.txt"
-          gh release create "$GITHUB_REF_NAME" "Auxo-${GITHUB_REF_NAME}.apk" "mapping-${GITHUB_REF_NAME}.txt" \
-            --title "Auxo ${GITHUB_REF_NAME}" --generate-notes
+          gh release create "$TAG" "Auxo-${TAG}.apk" "mapping-${TAG}.txt" \
+            --title "Auxo ${TAG}" --generate-notes --target "$GITHUB_SHA"
