@@ -5,4 +5,6 @@
     <string name="debug_logs_body" translatable="false">Send the saved record of recent app runs, including crashes</string>
     <string name="debug_crash_title" translatable="false">Crash the app (test)</string>
     <string name="debug_crash_body" translatable="false">Close the app with an error on purpose, to try the crash report</string>
+    <string name="debug_page_title" translatable="false">Debug</string>
+    <string name="debug_page_body" translatable="false">Logs and crash test, only in debug builds</string>
 </resources>

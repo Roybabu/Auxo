@@ -55,6 +55,7 @@ interface MoreActions {
     fun onOpenUsers() = Unit
     fun onOpenRecoveryCode() = Unit
     fun onOpenQuickUnlock() = Unit
+    fun onOpenDebug() = Unit
     fun onOpenActivity() = Unit
     fun onOpenDayEnd() = Unit
     fun onOpenGstReport() = Unit
@@ -257,25 +258,12 @@ fun MoreScreen(
                 )
             }
             if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                MoreItem(
-                    R.drawable.ic_activity,
-                    stringResource(R.string.debug_logs_title),
-                    stringResource(R.string.debug_logs_body),
-                    {
-                        val send = com.auxo.pos.core.debuglog.DebugLog.shareIntent(context)
-                        if (send != null) {
-                            runCatching { context.startActivity(android.content.Intent.createChooser(send, null)) }
-                        }
-                    },
-                    modifier = Modifier.testTag("more_debug_logs"),
-                )
                 MoreItem(
                     R.drawable.ic_warning,
-                    stringResource(R.string.debug_crash_title),
-                    stringResource(R.string.debug_crash_body),
-                    { throw IllegalStateException("Test crash from the debug button") },
-                    modifier = Modifier.testTag("more_debug_crash"),
+                    stringResource(R.string.debug_page_title),
+                    stringResource(R.string.debug_page_body),
+                    actions::onOpenDebug,
+                    modifier = Modifier.testTag("more_debug"),
                 )
             }
             MoreItem(

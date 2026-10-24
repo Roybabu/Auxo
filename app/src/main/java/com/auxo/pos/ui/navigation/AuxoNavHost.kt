@@ -338,6 +338,7 @@ fun AuxoNavHost(
                         override fun onOpenUsers() = navController.navigateOnce(MoreRoutes.USER_MANAGEMENT)
                         override fun onOpenRecoveryCode() = navController.navigateOnce(MoreRoutes.RECOVERY_CODE)
                         override fun onOpenQuickUnlock() = navController.navigateOnce(MoreRoutes.QUICK_UNLOCK)
+                        override fun onOpenDebug() = navController.navigateOnce(MoreRoutes.DEBUG)
                         override fun onOpenActivity() = navController.navigateOnce(MoreRoutes.ACTIVITY_LOG)
                         override fun onOpenDayEnd() = navController.navigateOnce(MoreRoutes.DAY_END)
                         override fun onOpenGstReport() = navController.navigateOnce(MoreRoutes.GST_REPORT)
@@ -392,6 +393,9 @@ fun AuxoNavHost(
             }
             guarded(navController, MoreRoutes.APPEARANCE) {
                 AppearanceScreen(onBack = { navController.popOnce() })
+            }
+            guarded(navController, MoreRoutes.DEBUG) {
+                com.auxo.pos.ui.screens.more.DebugScreen(onBack = { navController.popOnce() })
             }
             guarded(navController, MoreRoutes.QUICK_UNLOCK) {
                 QuickUnlockScreen(onBack = { navController.popOnce() })
