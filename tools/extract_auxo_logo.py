@@ -166,8 +166,9 @@ def main() -> None:
     save(symbol, DESIGN / "auxo-symbol.png")
     tile = np.asarray(Image.open(ICON).convert("RGBA"))
     save(launcher_tile(tile), RES / "ic_launcher_foreground.png")
-    # Themed (monochrome) icons need a plain shape, so that layer is the same symbol without the tile.
-    save(launcher(symbol, mono=True), RES / "ic_launcher_monochrome.png")
+    # Themed (monochrome) icons need a plain shape: the supplied black symbol with thin gaps between the folds.
+    mono = np.asarray(Image.open(DESIGN / "auxo-icon-mono.png").convert("RGBA"))
+    save(launcher(mono, mono=True), RES / "ic_launcher_monochrome.png")
 
 
 if __name__ == "__main__":
