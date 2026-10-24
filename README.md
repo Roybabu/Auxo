@@ -89,7 +89,7 @@ Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.gi
 | Language | Kotlin |
 | UI | Jetpack Compose, Material 3, Navigation Compose |
 | Architecture | MVVM, with plain-Kotlin domain logic |
-| Database | Room (SQLite) locked with SQLCipher, with exported schemas and migration tests |
+| Database | Room (SQLite) locked with SQLCipher, with exported schemas |
 | Barcodes | Camera and hardware scanners, ZXing |
 | Printing | PDF, Android printing, Bluetooth receipt printers |
 | Languages | English, Hindi, Bengali |
@@ -108,7 +108,7 @@ app/src/main/java/com/auxo/pos/
 
 ## Database upgrades
 
-No release has been published, so no customer database exists below version 15. Upgrades are guaranteed only from version 15 (the current version is 24). Versions 6 to 14 were development steps: their migrations are in `AuxoDatabase.kt` and are covered only by the 4 to 15 chain test, and `app/schemas` has no exported files for them. A test phone still holding a version 6 to 14 database should be uninstalled and reinstalled rather than updated. Once the first real release is out, every new version needs a migration, its test and its exported schema.
+The database starts at version 24, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.
 
 ## Privacy and permissions
 
