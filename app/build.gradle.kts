@@ -41,6 +41,17 @@ android {
             keyAlias = debugProps.getProperty("keyAlias")
             keyPassword = debugProps.getProperty("keyPassword")
         }
+        // Release signing comes only from the environment (the release workflow sets these). Without them the
+        // release build stays unsigned, so nothing secret is ever stored in the repository.
+        val releaseKeystore = System.getenv("AUXO_KEYSTORE_FILE")
+        if (!releaseKeystore.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("AUXO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("AUXO_KEY_ALIAS")
+                keyPassword = System.getenv("AUXO_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -57,6 +68,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
