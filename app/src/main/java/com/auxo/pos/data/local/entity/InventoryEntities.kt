@@ -94,7 +94,7 @@ data class ProductVariantEntity(
     @ColumnInfo(name = "expiry_epoch_day") val expiryEpochDay: Long?,
     /** Added in version 3. */
     @ColumnInfo(name = "reorder_quantity", defaultValue = "0") val reorderQuantity: Int = 0,
-    /** The photo of this variant's colour (see ProductVariant.photoFile). Added in version 24. */
+    /** The photo of this variant's colour (see ProductVariant.photoFile). Added in the first version. */
     @ColumnInfo(name = "photo_file") val photoFile: String? = null,
 )
 

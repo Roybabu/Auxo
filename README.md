@@ -108,7 +108,7 @@ app/src/main/java/com/auxo/pos/
 
 ## Database upgrades
 
-The database starts at version 24, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.
+The database starts at version 1, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.
 
 ## Privacy and permissions
 

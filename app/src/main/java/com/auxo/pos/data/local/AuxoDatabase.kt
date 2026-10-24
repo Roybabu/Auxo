@@ -45,7 +45,7 @@ import com.auxo.pos.data.local.entity.ShopSubcategoryEntity
 import com.auxo.pos.data.local.entity.SupplierEntity
 
 /**
- * The Auxo database. Version 24 is the first released version, so it is the baseline: nothing older is supported.
+ * The Auxo database. Version 1 is the first released version, so it is the baseline: nothing older is supported.
  * From the next version on, every change needs a migration, a test and its exported schema in app/schemas.
  */
 @Database(
@@ -107,7 +107,7 @@ abstract class AuxoDatabase : RoomDatabase() {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 24
+        const val VERSION = 1
 
         /** A builder for the database. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
