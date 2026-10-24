@@ -256,6 +256,13 @@ fun MoreScreen(
                     },
                     modifier = Modifier.testTag("more_debug_logs"),
                 )
+                MoreItem(
+                    R.drawable.ic_warning,
+                    stringResource(R.string.debug_crash_title),
+                    stringResource(R.string.debug_crash_body),
+                    { throw IllegalStateException("Test crash from the debug button") },
+                    modifier = Modifier.testTag("more_debug_crash"),
+                )
             }
             MoreItem(
                 R.drawable.ic_logout,
