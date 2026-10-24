@@ -99,6 +99,8 @@ fun AuxoNavHost(
                     onOpenProduct = { navController.navigateOnce(InventoryRoutes.product(it)) },
                     onOpenInventory = { filter -> navController.navigateToInventory(filter) },
                     onOpenAlerts = { navController.navigateOnce(StockRoutes.alerts()) },
+                    // Cash today and UPI today lead to the day's figures: Day end when allowed, else the invoices.
+                    onOpenBalances = { navController.navigateOnce(if (can(Permission.CLOSE_DAY)) MoreRoutes.DAY_END else BillingRoutes.HISTORY) },
                     onOpenBackup = { navController.navigateOnce(MoreRoutes.BACKUP) },
                     onOpenStoreDetails = { navController.navigateOnce(MoreRoutes.STORE_DETAILS) },
                 )
