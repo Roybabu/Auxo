@@ -31,6 +31,8 @@ object CrashReports {
     private const val FRAMES_PER_ERROR = 40
     private const val CAUSES = 5
     private const val MESSAGE_LIMIT = 300
+    /** Longest the issue text may be once encoded for a web address. */
+    internal const val ISSUE_BODY_LIMIT = 5500
     internal const val ISSUES_URL = "https://github.com/Roybabu/Auxo/issues/new"
     private const val PREFS = "crash_reports"
     private const val ASKED = "asked"
@@ -85,15 +87,32 @@ object CrashReports {
      * clipboard for the person to paste (it is too long for the web address). Issues there are public.
      */
     fun issueIntent(context: Context, report: File): Intent {
+        val text = runCatching { report.readText() }.getOrDefault("")
         runCatching {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Auxo report", report.readText()))
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Auxo report", text))
         }
         val info = header(context).joinToString("\n")
-        val body = "$info\n\nWhat happened:\n\n\nReport (paste it below):\n"
         val title = "Problem report: ${header(context).first().substringAfter("version ").substringBefore(" (")}"
-        val url = "$ISSUES_URL?title=${Uri.encode(title)}&body=${Uri.encode(body)}"
+        val url = "$ISSUES_URL?title=${Uri.encode(title)}&body=${Uri.encode(issueBody(info, text))}"
         return Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    }
+
+    /**
+     * The text put in the new issue: the versions, a place to say what happened, and as much of the report as fits in a web
+     * address (GitHub refuses addresses over about 8 KB). The whole report is also on the clipboard.
+     */
+    internal fun issueBody(info: String, report: String, encodedLimit: Int = ISSUE_BODY_LIMIT): String {
+        fun build(part: String, cut: Boolean) = buildString {
+            append(info).append("\n\nWhat happened:\n\n\nReport")
+            if (cut) append(" (shortened; the full report is on your clipboard, paste it here if more is needed)")
+            append(":\n```\n").append(part.trim()).append("\n```\n")
+        }
+        fun size(text: String) = java.net.URLEncoder.encode(text, "UTF-8").length
+        if (size(build(report, false)) <= encodedLimit) return build(report, false)
+        var keep = report.length
+        while (keep > 0 && size(build(report.take(keep), true)) > encodedLimit) keep -= maxOf(1, keep / 10)
+        return build(report.take(keep), true)
     }
 
     /** A diagnostic report written to a file now (see [diagnosticShare]). */

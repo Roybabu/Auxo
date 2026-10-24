@@ -81,4 +81,21 @@ class CrashReportsTest {
             dir.deleteRecursively()
         }
     }
+
+    @Test
+    fun issueBody_putsTheWholeShortReportInTheIssue() {
+        val body = CrashReports.issueBody("App x version 1", "Auxo crash report\nError boom")
+        assertTrue(body.contains("App x version 1"))
+        assertTrue(body.contains("Error boom"))
+        assertFalse(body.contains("shortened"))
+    }
+
+    @Test
+    fun issueBody_cutsALongReportToFitAWebAddress_andSaysSo() {
+        val long = (1..2000).joinToString("\n") { "    at com.auxo.pos.Thing$it.run(Thing.kt:$it)" }
+        val body = CrashReports.issueBody("App x version 1", long)
+        assertTrue(java.net.URLEncoder.encode(body, "UTF-8").length <= CrashReports.ISSUE_BODY_LIMIT)
+        assertTrue(body.contains("shortened"))
+        assertTrue(body.contains("at com.auxo.pos.Thing1.run"))
+    }
 }
