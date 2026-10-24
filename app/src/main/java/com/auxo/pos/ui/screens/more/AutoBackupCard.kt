@@ -112,11 +112,12 @@ fun AutoBackupCardContent(
             }
 
             // When
+            val scheduleLabels = BackupSchedule.entries.associateWith { stringResource(it.labelRes()) }
             DropdownField(
                 label = stringResource(R.string.auto_backup_when),
-                value = stringResource(settings.schedule.labelRes()),
+                value = scheduleLabels.getValue(settings.schedule),
                 options = BackupSchedule.entries,
-                optionText = { stringResource(it.labelRes()) },
+                optionText = { scheduleLabels.getValue(it) },
                 onSelect = onSchedule,
                 modifier = Modifier.fillMaxWidth().testTag("auto_schedule_picker"),
             )
