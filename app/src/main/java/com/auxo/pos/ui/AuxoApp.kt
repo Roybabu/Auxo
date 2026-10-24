@@ -61,8 +61,10 @@ fun AuxoApp() {
         if (shown != lastLoggedScreen.value) {
             lastLoggedScreen.value = shown
             com.auxo.pos.core.debuglog.DebugLog.event("Screen", shown)
+            com.auxo.pos.core.diagnostics.CrashReports.note(shown)
         }
     }
+    com.auxo.pos.ui.components.CrashReportPrompt()
     val capabilities = LocalCapabilities.current
     val adaptiveLayout = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
     val imeVisible = WindowInsets.isImeVisible

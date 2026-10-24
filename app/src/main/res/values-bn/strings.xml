@@ -1862,4 +1862,10 @@
     <string name="billing_browse_title">আইটেম দেখুন</string>
     <string name="billing_browse_more">%2$d এর মধ্যে %1$d দেখানো হচ্ছে। বাকিগুলো খুঁজে নিন।</string>
     <string name="update_licence">Auxo হলো GNU জেনারেল পাবলিক লাইসেন্স v3.0 এর অধীনে মুক্ত সফটওয়্যার। সোর্স কোড: github.com/Roybabu/Auxo</string>
+    <string name="crash_prompt_title">অ্যাপ হঠাৎ বন্ধ হয়ে গেছে</string>
+    <string name="crash_prompt_body">গতবার অ্যাপ নিজে থেকেই বন্ধ হয়ে গিয়েছিল। এটি ঠিক করতে সাহায্য করতে আপনি একটি ছোট রিপোর্ট পাঠাতে পারেন। এতে অ্যাপ ও ফোনের সংস্করণ এবং কোথায় সমস্যা হয়েছে তা থাকে, কিন্তু গ্রাহক, বিক্রয় বা দোকানের কোনো তথ্য থাকে না।</string>
+    <string name="crash_prompt_send">রিপোর্ট পাঠান</string>
+    <string name="crash_prompt_later">এখন নয়</string>
+    <string name="help_report_title">ডায়াগনস্টিক রিপোর্ট পাঠান</string>
+    <string name="help_report_body">কিছু ঠিকমতো কাজ না করলে একটি ছোট রিপোর্ট শেয়ার করুন। এতে গ্রাহক বা বিক্রয়ের তথ্য থাকে না।</string>
 </resources>

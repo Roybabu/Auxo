@@ -227,6 +227,20 @@ fun MoreScreen(
             if (can(Permission.BACKUP_AND_RESTORE)) {
                 MoreItem(R.drawable.ic_backup, stringResource(R.string.more_backup_title), stringResource(R.string.more_backup_body), actions::onOpenBackup)
             }
+            run {
+                val helpContext = androidx.compose.ui.platform.LocalContext.current
+                MoreItem(
+                    R.drawable.ic_activity,
+                    stringResource(R.string.help_report_title),
+                    stringResource(R.string.help_report_body),
+                    {
+                        com.auxo.pos.core.diagnostics.CrashReports.diagnosticShare(helpContext)?.let { send ->
+                            runCatching { helpContext.startActivity(android.content.Intent.createChooser(send, helpContext.getString(R.string.crash_prompt_send))) }
+                        }
+                    },
+                    modifier = Modifier.testTag("more_help_report"),
+                )
+            }
             if (com.auxo.pos.core.debuglog.DebugLog.isEnabled) {
                 val context = androidx.compose.ui.platform.LocalContext.current
                 MoreItem(

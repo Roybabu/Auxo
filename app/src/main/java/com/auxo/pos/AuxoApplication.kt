@@ -16,6 +16,8 @@ class AuxoApplication : Application() {
         super.onCreate()
         // Debug builds only: records this run to a file so problems can be read afterwards.
         DebugLog.install(this)
+        // Every build: a crash is saved as a short report that the person can choose to share.
+        com.auxo.pos.core.diagnostics.CrashReports.install(this)
         container = AppContainer(this)
     }
 }

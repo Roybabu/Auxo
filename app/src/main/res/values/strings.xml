@@ -1862,4 +1862,10 @@ in %2$s</string>
     <string name="billing_browse_title">Browse items</string>
     <string name="billing_browse_more">Showing %1$d of %2$d. Search to find others.</string>
     <string name="update_licence">Auxo is free software under the GNU General Public License v3.0. Source code: github.com/Roybabu/Auxo</string>
+    <string name="crash_prompt_title">The app closed unexpectedly</string>
+    <string name="crash_prompt_body">Last time the app stopped by itself. You can send a short report to help fix it. It has the app and phone version and where it failed, but no customer, sales or shop details.</string>
+    <string name="crash_prompt_send">Send report</string>
+    <string name="crash_prompt_later">Not now</string>
+    <string name="help_report_title">Send a diagnostic report</string>
+    <string name="help_report_body">Share a short report if something is not working. It has no customer or sales details.</string>
 </resources>
