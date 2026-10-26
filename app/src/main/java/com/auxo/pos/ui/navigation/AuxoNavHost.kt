@@ -599,12 +599,15 @@ fun NavHostController.popOnce() {
  *    when you leave for another tab and come back.
  */
 fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
+    // What you were doing is only saved when it all belongs to one tab. A page opened from another tab (an invoice
+    // from a customer's history, say) would otherwise be saved with that tab and brought back when the tab is tapped.
+    val keepPlace = stackBelongsToOneTab()
     if (destination == TopLevelDestination.HOME) {
         val home = TopLevelDestination.HOME.route
-        if (popBackStack(home, inclusive = false, saveState = true)) return
+        if (popBackStack(home, inclusive = false, saveState = keepPlace)) return
         if (currentDestination?.route != home) {
             navigate(home) {
-                popUpTo(graph.findStartDestination().id) { saveState = true }
+                popUpTo(graph.findStartDestination().id) { saveState = keepPlace }
                 launchSingleTop = true
             }
         }
@@ -627,11 +630,20 @@ fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
 
     navigate(destination.route) {
         popUpTo(graph.findStartDestination().id) {
-            saveState = true
+            saveState = keepPlace
         }
         launchSingleTop = true
         restoreState = destination != TopLevelDestination.MORE
     }
+}
+
+/** True when every page above Home belongs to the same tab, so saving the stack under that tab cannot mix tabs. */
+private fun NavHostController.stackBelongsToOneTab(): Boolean {
+    val tabs = TopLevelDestination.entries.filter { it != TopLevelDestination.HOME }.map { it.route }.toSet()
+    val owners = currentBackStack.value.mapNotNull { entry ->
+        entry.destination.hierarchy.firstOrNull { it.route in tabs }?.route
+    }.toSet()
+    return owners.size <= 1
 }
 
 /** Opens the Inventory tab with a stock filter already applied. */
