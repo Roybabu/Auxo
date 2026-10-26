@@ -170,6 +170,10 @@ private fun LoginScreenBody(
  * backups. With backups in it, they are listed to restore; with none (or if the picker is closed), the button
  * becomes "Set up a new shop".
  */
+/** Documents/Auxo on the phone's main storage, as a hint for where the folder picker should open. */
+private val AUXO_BACKUP_FOLDER: android.net.Uri =
+    android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:Documents/Auxo")
+
 @Composable
 private fun BackupAwareLogin(onSetUpBusiness: () -> Unit, loginViewModel: LoginViewModel) {
     val finder: FindBackupViewModel = viewModel(factory = FindBackupViewModel.Factory)
@@ -187,21 +191,24 @@ private fun BackupAwareLogin(onSetUpBusiness: () -> Unit, loginViewModel: LoginV
     val hasBackups = found.found.orEmpty().isNotEmpty()
     val noneFound = found.found != null && !found.scanning && !hasBackups
     val newShop = noneFound || found.skipped
-    val button = when {
-        found.scanning -> SetUpButton(stringResource(R.string.find_scanning), R.drawable.ic_search, stringResource(R.string.find_divider), enabled = false)
-        newShop -> SetUpButton(
+    // Opens the folder picker at Documents/Auxo, where Auxo saves backups; the phone falls back to its usual start if it is missing.
+    val openPicker = { picker.launch(AUXO_BACKUP_FOLDER) }
+    // A new owner can set up straight away; restoring from a backup is the other choice and is the only thing that opens the picker.
+    val button = if (found.scanning) {
+        SetUpButton(stringResource(R.string.find_scanning), R.drawable.ic_search, stringResource(R.string.find_divider), enabled = false)
+    } else {
+        SetUpButton(
             label = stringResource(R.string.find_new),
             icon = R.drawable.ic_store,
             divider = stringResource(R.string.auth_login_setup_business),
             note = if (noneFound) stringResource(R.string.find_none_short) else null,
-            secondaryLabel = stringResource(R.string.find_another),
-            onSecondary = { picker.launch(null) },
+            secondaryLabel = stringResource(if (newShop) R.string.find_another else R.string.find_restore),
+            onSecondary = openPicker,
         )
-        else -> SetUpButton(stringResource(R.string.find_choose), R.drawable.ic_backup, stringResource(R.string.find_divider))
     }
     LoginScreenBody(
         hasBusiness = false,
-        onSetUpBusiness = if (newShop) onSetUpBusiness else ({ picker.launch(null) }),
+        onSetUpBusiness = onSetUpBusiness,
         setUpButton = button,
         viewModel = loginViewModel,
     )
@@ -210,7 +217,7 @@ private fun BackupAwareLogin(onSetUpBusiness: () -> Unit, loginViewModel: LoginV
         FindBackupDialog(
             viewModel = finder,
             onSetUpNewShop = { finder.onChooseAnother(); onSetUpBusiness() },
-            onChooseAnother = { finder.onChooseAnother(); picker.launch(null) },
+            onChooseAnother = { finder.onChooseAnother(); openPicker() },
         )
     }
 }

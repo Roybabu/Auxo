@@ -1868,10 +1868,10 @@ in %2$s</string>
     <string name="help_problem_body">Something not working? Send a report to the developer.</string>
 
     <!-- Restoring a backup from the first screen on a new phone -->
-    <string name="find_choose">Choose backup folder</string>
     <string name="find_new">Set up a new shop</string>
     <string name="find_scanning">Looking for backups…</string>
     <string name="find_another">Choose another folder</string>
+    <string name="find_restore">Restore from a backup</string>
     <string name="find_sheet_title">Restore your shop</string>
     <string name="find_sheet_body">Choose a backup to bring your shop\'s data and settings back to Auxo.</string>
     <string name="find_banner_title">Shop name isn\'t available in these backups.</string>

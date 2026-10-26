@@ -1868,10 +1868,10 @@
     <string name="help_problem_body">कुछ ठीक से काम नहीं कर रहा? डेवलपर को रिपोर्ट भेजें।</string>
 
     <!-- Restoring a backup from the first screen on a new phone -->
-    <string name="find_choose">बैकअप फ़ोल्डर चुनें</string>
     <string name="find_new">नई दुकान शुरू करें</string>
     <string name="find_scanning">बैकअप खोजे जा रहे हैं…</string>
     <string name="find_another">दूसरा फ़ोल्डर चुनें</string>
+    <string name="find_restore">बैकअप से रिस्टोर करें</string>
     <string name="find_sheet_title">अपनी दुकान बहाल करें</string>
     <string name="find_sheet_body">अपनी दुकान का डेटा और सेटिंग्स Auxo में वापस लाने के लिए एक बैकअप चुनें।</string>
     <string name="find_banner_title">इन बैकअप में दुकान का नाम उपलब्ध नहीं है।</string>
