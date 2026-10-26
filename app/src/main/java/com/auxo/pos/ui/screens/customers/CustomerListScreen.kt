@@ -254,6 +254,16 @@ private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit, ageDays: 
                         modifier = Modifier.testTag("owing_age_${account.customer.id}"),
                     )
                 }
+                val promised = account.promisedOn
+                if (ageDays != null && promised != null) {
+                    val missed = promised.isBefore(java.time.LocalDate.now())
+                    Text(
+                        stringResource(if (missed) R.string.promise_missed else R.string.promise_set, promised.format(java.time.format.DateTimeFormatter.ofPattern("d MMM"))),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (missed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("owing_promise_${account.customer.id}"),
+                    )
+                }
             }
             StatusChip(text = balanceText(account.balance), tone = balanceTone(account.balance))
             if (onRemind != null) {

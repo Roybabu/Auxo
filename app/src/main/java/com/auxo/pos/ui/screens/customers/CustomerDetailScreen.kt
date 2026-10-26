@@ -146,6 +146,7 @@ fun CustomerDetailScreen(
                         }
                     }
                 },
+                onSetPromise = viewModel::setPromise,
                 modifier = modifier,
             )
         }
@@ -161,6 +162,8 @@ fun CustomerDetailContent(
     onOpenHistory: () -> Unit = {},
     onRemind: (() -> Unit)? = null,
     onShareStatement: (() -> Unit)? = null,
+    onSetPromise: ((java.time.LocalDate?) -> Unit)? = null,
+    today: java.time.LocalDate = java.time.LocalDate.now(),
 ) {
     val formatter = LocalMoneyFormatter.current
     val customer = state.account.customer
@@ -244,6 +247,9 @@ fun CustomerDetailContent(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                    if (onSetPromise != null && balance > Money.ZERO) {
+                        PromiseRow(state.promisedOn, today, onSetPromise)
                     }
                     if (onShareStatement != null && state.statement.isNotEmpty() && state.reminderShop != null) {
                         OutlinedButton(onClick = onShareStatement, modifier = Modifier.testTag("customer_share_statement")) {
@@ -344,3 +350,58 @@ private fun PointsRow(entry: LedgerEntry, onOpenInvoice: (Long) -> Unit) {
         )
     }
 }
+
+/** The date the customer promised to pay by, with a button to set or clear it. A date that has passed shows in red. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun PromiseRow(promisedOn: java.time.LocalDate?, today: java.time.LocalDate, onSet: (java.time.LocalDate?) -> Unit) {
+    var picking by rememberSaveable { mutableStateOf(false) }
+    val missed = promisedOn != null && promisedOn.isBefore(today)
+    val text = when {
+        promisedOn == null -> stringResource(R.string.promise_none)
+        missed -> stringResource(R.string.promise_missed, promisedOn.format(PROMISE_DATE))
+        else -> stringResource(R.string.promise_set, promisedOn.format(PROMISE_DATE))
+    }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (missed) AuxoThemeExtras.statusColors.danger.content else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.testTag("customer_promise_text"),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        OutlinedButton(onClick = { picking = true }, modifier = Modifier.testTag("customer_promise_set")) {
+            Text(stringResource(if (promisedOn == null) R.string.promise_add else R.string.promise_change))
+        }
+        if (promisedOn != null) {
+            androidx.compose.material3.TextButton(onClick = { onSet(null) }, modifier = Modifier.testTag("customer_promise_clear")) {
+                Text(stringResource(R.string.promise_clear))
+            }
+        }
+    }
+    if (picking) {
+        val pickerState = androidx.compose.material3.rememberDatePickerState(
+            initialSelectedDateMillis = (promisedOn ?: today).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { picking = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let {
+                            onSet(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate())
+                        }
+                        picking = false
+                    },
+                    modifier = Modifier.testTag("customer_promise_confirm"),
+                ) { Text(stringResource(R.string.action_save)) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { picking = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        ) {
+            androidx.compose.material3.DatePicker(state = pickerState)
+        }
+    }
+}
+
+private val PROMISE_DATE: java.time.format.DateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy")

@@ -686,6 +686,13 @@
     <string name="ledger_points_earned">Points earned</string>
     <string name="ledger_points_redeemed">Points used</string>
     <string name="ledger_points_reversed">Points taken back</string>
+    <string name="ledger_promise">Promised payment date</string>
+    <string name="promise_set">Promised to pay by %1$s</string>
+    <string name="promise_missed">Promise missed: was to pay by %1$s</string>
+    <string name="promise_none">No payment date promised</string>
+    <string name="promise_add">Set promised date</string>
+    <string name="promise_change">Change date</string>
+    <string name="promise_clear">Clear</string>
     <string name="customer_points_balance">Loyalty points</string>
     <string name="customer_points_tab">Points (%1$d)</string>
     <plurals name="customer_points_gained">

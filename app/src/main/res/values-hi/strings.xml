@@ -686,6 +686,13 @@
     <string name="ledger_points_earned">मिले पॉइंट</string>
     <string name="ledger_points_redeemed">इस्तेमाल हुए पॉइंट</string>
     <string name="ledger_points_reversed">वापस लिए गए पॉइंट</string>
+    <string name="ledger_promise">वादा किया गया भुगतान तारीख</string>
+    <string name="promise_set">%1$s तक भुगतान का वादा</string>
+    <string name="promise_missed">वादा चूक गया: %1$s तक भुगतान करना था</string>
+    <string name="promise_none">भुगतान की कोई तारीख तय नहीं</string>
+    <string name="promise_add">वादे की तारीख तय करें</string>
+    <string name="promise_change">तारीख बदलें</string>
+    <string name="promise_clear">हटाएँ</string>
     <string name="customer_points_balance">लॉयल्टी पॉइंट</string>
     <string name="customer_points_tab">पॉइंट (%1$d)</string>
     <plurals name="customer_points_gained">

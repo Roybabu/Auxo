@@ -33,17 +33,45 @@ private class NoCustomerException : RuntimeException("Customer not found")
 class RoomCustomerRepository(
     private val database: AuxoDatabase,
     private val clock: Clock,
+    /** Loyalty points given when a customer clears what they owe on time; 0 for none. */
+    private val onTimeBonus: () -> Int = { 0 },
 ) : CustomerRepository {
 
     private val dao = database.customerDao()
     private val billing = database.billingDao()
     private val operations = database.operationDao()
 
-    override fun observeAccounts(): Flow<List<CustomerAccount>> = combine(dao.observeAccounts(), dao.observeMoneyEntries()) { rows, entries ->
+    override fun observeAccounts(): Flow<List<CustomerAccount>> = combine(dao.observeAccounts(), dao.observeMoneyEntries(), dao.observePromises()) { rows, entries, promises ->
         val byCustomer = entries.map { it.toDomain() }.groupBy { it.customerId }
+        val promisesByCustomer = promises.map { it.toDomain() }.groupBy { it.customerId }
         rows.map { row ->
             val account = row.toDomain()
-            if (account.balance > Money.ZERO) account.copy(owingSinceMillis = Ledger.owingSince(byCustomer[account.customer.id].orEmpty())) else account
+            if (account.balance > Money.ZERO) {
+                account.copy(
+                    owingSinceMillis = Ledger.owingSince(byCustomer[account.customer.id].orEmpty()),
+                    promisedOn = Ledger.promisedOn(promisesByCustomer[account.customer.id].orEmpty()),
+                )
+            } else {
+                account
+            }
+        }
+    }
+
+    override suspend fun setPromise(customerId: Long, date: java.time.LocalDate?) {
+        database.withTransaction {
+            dao.getCustomer(customerId) ?: return@withTransaction
+            dao.insertEntry(
+                LedgerEntryEntity(
+                    customerId = customerId,
+                    type = LedgerEntryType.PROMISE.name,
+                    amountMinor = 0,
+                    invoiceId = null,
+                    method = null,
+                    reference = null,
+                    note = date?.toString() ?: "",
+                    createdAt = clock.millis(),
+                ),
+            )
         }
     }
 
@@ -118,6 +146,7 @@ class RoomCustomerRepository(
                         dao.getCustomer(customerId) ?: throw NoCustomerException()
                         val balance = dao.balance(customerId)
                         if (amount.minorUnits > balance) throw OverpaymentException(balance)
+                        val bonus = onTimeBonusFor(customerId, amount, balance, now)
                         val id = dao.insertEntry(
                             LedgerEntry(
                                 customerId = customerId,
@@ -129,6 +158,21 @@ class RoomCustomerRepository(
                                 createdAtMillis = now,
                             ).toEntity(),
                         )
+                        if (bonus > 0) {
+                            dao.insertEntry(
+                                LedgerEntryEntity(
+                                    customerId = customerId,
+                                    type = LedgerEntryType.POINTS_EARNED.name,
+                                    amountMinor = 0,
+                                    invoiceId = null,
+                                    method = null,
+                                    reference = null,
+                                    note = null,
+                                    createdAt = now,
+                                    points = bonus,
+                                ),
+                            )
+                        }
                         operations.setRequestResult(requestId, id)
                         AccountPaymentResult.Recorded(id)
                     }
@@ -143,4 +187,21 @@ class RoomCustomerRepository(
 
     override fun observeAccountPayments(fromMillis: Long, toMillis: Long): Flow<List<PaymentRecord>> =
         dao.observeAccountPayments(fromMillis, toMillis).map { rows -> rows.map { it.toPaymentRecord() } }
+
+    /**
+     * The bonus points for a payment that clears the whole balance within [ShopPreferences.ON_TIME_DAYS] of the
+     * customer first owing: 0 when the bonus is off, loyalty is off, or the payment leaves something owing.
+     */
+    private suspend fun onTimeBonusFor(customerId: Long, amount: Money, balance: Long, now: Long): Int {
+        val points = onTimeBonus()
+        if (points <= 0 || amount.minorUnits != balance) return 0
+        if (!dao.getLoyalty().toRules().enabled) return 0
+        val since = Ledger.owingSince(dao.moneyEntriesOf(customerId).map { it.toDomain() }) ?: return 0
+        val days = (now - since) / MILLIS_PER_DAY
+        return if (days <= com.auxo.pos.core.shop.ShopPreferences.ON_TIME_DAYS) points else 0
+    }
+
+    private companion object {
+        const val MILLIS_PER_DAY = 86_400_000L
+    }
 }

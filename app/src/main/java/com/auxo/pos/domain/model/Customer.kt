@@ -40,10 +40,16 @@ enum class LedgerEntryType {
 
     /** Points taken back because goods from the sale were returned. */
     POINTS_REVERSED,
+
+    /** A date the customer promised to pay by, kept in the note as yyyy-MM-dd (blank clears it). Moves no money. */
+    PROMISE,
     ;
 
     /** True for entries that move loyalty points and never change what the customer owes. */
     val isPoints: Boolean get() = this == POINTS_EARNED || this == POINTS_REDEEMED || this == POINTS_REVERSED
+
+    /** True for entries that really move money: everything except loyalty points and promised dates. */
+    val isMoney: Boolean get() = !isPoints && this != PROMISE
 }
 
 /**
@@ -80,4 +86,6 @@ data class CustomerAccount(
      * is owed. Payments are counted against the oldest charges first.
      */
     val owingSinceMillis: Long? = null,
+    /** The date the customer promised to pay by, or null when none is set or nothing is owed. */
+    val promisedOn: java.time.LocalDate? = null,
 )

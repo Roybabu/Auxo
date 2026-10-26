@@ -686,6 +686,13 @@
     <string name="ledger_points_earned">অর্জিত পয়েন্ট</string>
     <string name="ledger_points_redeemed">ব্যবহৃত পয়েন্ট</string>
     <string name="ledger_points_reversed">ফেরত নেওয়া পয়েন্ট</string>
+    <string name="ledger_promise">প্রতিশ্রুত পরিশোধের তারিখ</string>
+    <string name="promise_set">%1$s-এর মধ্যে পরিশোধের প্রতিশ্রুতি</string>
+    <string name="promise_missed">প্রতিশ্রুতি রক্ষা হয়নি: %1$s-এর মধ্যে দেওয়ার কথা ছিল</string>
+    <string name="promise_none">পরিশোধের কোনো তারিখ ঠিক করা নেই</string>
+    <string name="promise_add">প্রতিশ্রুত তারিখ ঠিক করুন</string>
+    <string name="promise_change">তারিখ বদলান</string>
+    <string name="promise_clear">মুছুন</string>
     <string name="customer_points_balance">লয়্যালটি পয়েন্ট</string>
     <string name="customer_points_tab">পয়েন্ট (%1$d)</string>
     <plurals name="customer_points_gained">
