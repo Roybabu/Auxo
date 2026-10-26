@@ -616,6 +616,8 @@
     <string name="customer_last_activity">आखिरी गतिविधि %1$s</string>
     <string name="customer_detail_balance">बाकी राशि</string>
     <string name="customer_detail_advance">अग्रिम चुकाया</string>
+    <string name="customer_owes_you">ग्राहक आपको देगा</string>
+    <string name="customer_you_owe">आपको ग्राहक को देना है</string>
     <string name="customer_receive_payment">भुगतान लें</string>
     <string name="customer_export_statement">स्टेटमेंट निर्यात करें</string>
     <string name="customer_credit_limit">उधार सीमा %1$s</string>

@@ -181,6 +181,15 @@ fun CustomerDetailContent(
                         },
                         modifier = Modifier.testTag("customer_balance"),
                     )
+                    // Says who owes whom, under the amount.
+                    if (balance != Money.ZERO) {
+                        Text(
+                            text = stringResource(if (balance > Money.ZERO) R.string.customer_owes_you else R.string.customer_you_owe),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (balance > Money.ZERO) AuxoThemeExtras.statusColors.success.content else AuxoThemeExtras.statusColors.danger.content,
+                            modifier = Modifier.testTag("customer_balance_note"),
+                        )
+                    }
                     Text(
                         text = customer.creditLimit?.let { stringResource(R.string.customer_credit_limit, formatter.format(it)) }
                             ?: stringResource(R.string.customer_no_limit),

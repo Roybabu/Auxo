@@ -616,6 +616,8 @@
     <string name="customer_last_activity">Last activity %1$s</string>
     <string name="customer_detail_balance">Balance due</string>
     <string name="customer_detail_advance">Paid in advance</string>
+    <string name="customer_owes_you">Customer owes you</string>
+    <string name="customer_you_owe">You owe the customer</string>
     <string name="customer_receive_payment">Receive payment</string>
     <string name="customer_export_statement">Export statement</string>
     <string name="customer_credit_limit">Credit limit %1$s</string>

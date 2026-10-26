@@ -616,6 +616,8 @@
     <string name="customer_last_activity">শেষ কাজ %1$s</string>
     <string name="customer_detail_balance">বাকি অঙ্ক</string>
     <string name="customer_detail_advance">অগ্রিম দেওয়া</string>
+    <string name="customer_owes_you">গ্রাহক আপনাকে দেবেন</string>
+    <string name="customer_you_owe">আপনি গ্রাহককে দেবেন</string>
     <string name="customer_receive_payment">পেমেন্ট নিন</string>
     <string name="customer_export_statement">স্টেটমেন্ট এক্সপোর্ট করুন</string>
     <string name="customer_credit_limit">বাকির সীমা %1$s</string>
