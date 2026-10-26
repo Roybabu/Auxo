@@ -170,10 +170,15 @@ fun CustomerDetailContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(if (balance < Money.ZERO) Money(-balance.minorUnits) else balance),
+                        // Green when the customer has to pay the shop; red and negative when the shop owes the customer.
+                        text = if (balance < Money.ZERO) "-" + formatter.format(Money(-balance.minorUnits)) else formatter.format(balance),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (balance > Money.ZERO) AuxoThemeExtras.statusColors.warning.content else MaterialTheme.colorScheme.onSurface,
+                        color = when {
+                            balance > Money.ZERO -> AuxoThemeExtras.statusColors.success.content
+                            balance < Money.ZERO -> AuxoThemeExtras.statusColors.danger.content
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                         modifier = Modifier.testTag("customer_balance"),
                     )
                     Text(
