@@ -621,8 +621,8 @@
     <string name="customer_credit_limit">उधार सीमा %1$s</string>
     <string name="customer_no_limit">उधार की कोई सीमा नहीं</string>
     <string name="customer_gstin">GSTIN %1$s</string>
-    <string name="customer_charged">उधार पर बेचा</string>
-    <string name="customer_paid">प्राप्त भुगतान</string>
+    <string name="customer_bought">कुल खरीदारी</string>
+    <string name="customer_paid">कुल भुगतान</string>
     <string name="customer_statement">खाता</string>
     <string name="customer_statement_empty">अभी खाते में कोई प्रविष्टि नहीं। खाते में डाले गए बिल और प्राप्त भुगतान यहाँ दिखेंगे।</string>
     <string name="customer_bills">बिल (%1$d)</string>

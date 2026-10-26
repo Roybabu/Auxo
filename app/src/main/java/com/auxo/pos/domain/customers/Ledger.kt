@@ -3,6 +3,8 @@
 
 package com.auxo.pos.domain.customers
 
+import com.auxo.pos.domain.model.InvoiceSummary
+import com.auxo.pos.domain.model.InvoiceType
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money
@@ -73,6 +75,21 @@ object Ledger {
         val charged = entries.filter { it.type == LedgerEntryType.SALE }.fold(Money.ZERO) { acc, e -> acc + e.amount }
         val paid = entries.filter { it.type == LedgerEntryType.PAYMENT }.fold(Money.ZERO) { acc, e -> acc - e.amount }
         return charged to paid
+    }
+
+    /**
+     * What the customer has bought from the shop and what they have paid for it, all time. Bought is every bill
+     * minus the credit notes; paid is that less what is still owed on those bills, so it counts money handed over at
+     * the counter as well as payments received later. A balance brought in when the account was opened is not a bill
+     * and is left out of both.
+     */
+    fun purchases(invoices: List<InvoiceSummary>, entries: List<LedgerEntry>): Pair<Money, Money> {
+        val bought = invoices.fold(Money.ZERO) { acc, invoice ->
+            if (invoice.type == InvoiceType.RETURN) acc - invoice.grandTotal else acc + invoice.grandTotal
+        }
+        val stillOwed = entries.filterNot { it.type.isPoints || it.type == LedgerEntryType.OPENING_BALANCE }
+            .fold(Money.ZERO) { acc, entry -> acc + entry.amount }
+        return bought to (bought - stillOwed)
     }
 }
 

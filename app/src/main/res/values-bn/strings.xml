@@ -621,8 +621,8 @@
     <string name="customer_credit_limit">বাকির সীমা %1$s</string>
     <string name="customer_no_limit">বাকির কোনো সীমা নেই</string>
     <string name="customer_gstin">GSTIN %1$s</string>
-    <string name="customer_charged">বাকিতে বিক্রি</string>
-    <string name="customer_paid">প্রাপ্ত পেমেন্ট</string>
+    <string name="customer_bought">মোট কেনাকাটা</string>
+    <string name="customer_paid">মোট পরিশোধ</string>
     <string name="customer_statement">খাতা</string>
     <string name="customer_statement_empty">খাতায় এখনও কোনো এন্ট্রি নেই। খাতায় রাখা বিল ও প্রাপ্ত পেমেন্ট এখানে দেখা যাবে।</string>
     <string name="customer_bills">বিল (%1$d)</string>

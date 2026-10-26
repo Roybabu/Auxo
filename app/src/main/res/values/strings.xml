@@ -621,8 +621,8 @@
     <string name="customer_credit_limit">Credit limit %1$s</string>
     <string name="customer_no_limit">No credit limit</string>
     <string name="customer_gstin">GSTIN %1$s</string>
-    <string name="customer_charged">Sold on account</string>
-    <string name="customer_paid">Payments received</string>
+    <string name="customer_bought">Total bought</string>
+    <string name="customer_paid">Total paid</string>
     <string name="customer_statement">Account</string>
     <string name="customer_statement_empty">No account entries yet. Bills put on account and payments received appear here.</string>
     <string name="customer_bills">Bills (%1$d)</string>

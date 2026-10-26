@@ -226,7 +226,7 @@ fun CustomerDetailContent(
         }
         item(key = "totals") {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                StatTile(stringResource(R.string.customer_charged), formatter.format(state.charged), Modifier.weight(1f))
+                StatTile(stringResource(R.string.customer_bought), formatter.format(state.bought), Modifier.weight(1f))
                 StatTile(stringResource(R.string.customer_paid), formatter.format(state.paid), Modifier.weight(1f))
             }
         }
