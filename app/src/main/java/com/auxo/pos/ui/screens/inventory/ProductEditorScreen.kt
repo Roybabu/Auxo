@@ -375,7 +375,10 @@ fun ProductEditorContent(
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
 
-        item(key = "subcategory") { SubcategorySection(form, errors, actions) }
+        // The menu section is only for restaurant items.
+        if (form.category == ProductCategory.RESTAURANT) {
+            item(key = "subcategory") { SubcategorySection(form, errors, actions) }
+        }
 
         if (form.category.canSkipStock) {
             item(key = "restaurant") { RestaurantSection(form, errors, actions) }
