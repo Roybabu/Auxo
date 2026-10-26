@@ -8,19 +8,33 @@ import com.auxo.pos.R
 import com.auxo.pos.core.locale.LocaleContext
 import com.auxo.pos.core.receipt.WhatsAppShare
 import com.auxo.pos.domain.customers.DuesReminder
+import com.auxo.pos.domain.billing.Upi
 import com.auxo.pos.domain.customers.ReminderShop
+import com.auxo.pos.domain.customers.ReminderTone
+import java.time.LocalDate
+import java.time.ZoneId
 import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.core.format.MoneyFormatter
 
 /** The reminder text for [account], in the shop's bill language: the customer's name, what they owe, the shop's name and (if valid) its UPI ID. */
 internal fun reminderMessage(context: Context, account: CustomerAccount, shop: ReminderShop, formatter: MoneyFormatter): String {
     val resources = LocaleContext.wrap(context, shop.language).resources
+    val age = DuesReminder.ageInDays(account.owingSinceMillis, LocalDate.now(), ZoneId.systemDefault())
+    val body = when (DuesReminder.toneFor(age)) {
+        ReminderTone.FRIENDLY -> R.string.reminder_body
+        ReminderTone.FIRM -> R.string.reminder_body_firm
+        ReminderTone.URGENT -> R.string.reminder_body_urgent
+    }
+    // A link that opens a UPI app with the shop's ID and the exact amount filled in.
+    val payLink = shop.upiId?.let { Upi.billLink(it, shop.shopName, shop.shopName, account.balance, "") }
     return DuesReminder.message(
-        body = resources.getString(R.string.reminder_body),
+        body = resources.getString(body),
         upiLine = resources.getString(R.string.reminder_upi),
         customerName = account.customer.name,
         shop = shop,
         amountText = formatter.format(account.balance),
+        payLinkLine = resources.getString(R.string.reminder_pay_link),
+        payLink = payLink,
     )
 }
 

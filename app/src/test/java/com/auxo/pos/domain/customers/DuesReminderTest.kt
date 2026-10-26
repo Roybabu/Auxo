@@ -132,6 +132,24 @@ class DuesReminderTest {
     }
 
     @Test
+    fun tone_getsFirmerTheLongerTheMoneyIsOwed() {
+        assertEquals(ReminderTone.FRIENDLY, DuesReminder.toneFor(null))
+        assertEquals(ReminderTone.FRIENDLY, DuesReminder.toneFor(7))
+        assertEquals(ReminderTone.FIRM, DuesReminder.toneFor(8))
+        assertEquals(ReminderTone.FIRM, DuesReminder.toneFor(30))
+        assertEquals(ReminderTone.URGENT, DuesReminder.toneFor(31))
+    }
+
+    @Test
+    fun message_addsThePayLinkOnlyWhenThereIsAValidUpiId() {
+        val link = "upi://pay?pa=samplemart%40okaxis&am=10.00"
+        val text = DuesReminder.message(body, upiLine, "Asha", shop, "₹10.00", payLinkLine = "Pay now: %1\$s", payLink = link)
+        assertTrue(text.endsWith("Pay now: $link"))
+        val none = ReminderShop.of("Sample Mart", "not a upi id", Language.ENGLISH)
+        assertFalse(DuesReminder.message(body, upiLine, "Asha", none, "₹10.00", payLinkLine = "Pay now: %1\$s", payLink = link).contains("Pay now"))
+    }
+
+    @Test
     fun owingSince_ignoresLoyaltyPointEntries() {
         val entries = listOf(
             entry(LedgerEntryType.POINTS_EARNED, 0, 1).copy(points = 10),

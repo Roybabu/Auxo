@@ -1526,6 +1526,9 @@
     <string name="whatsapp_share_title">ইনভয়েস পাঠান</string>
     <string name="invoice_whatsapp_failed">WhatsApp খোলা যায়নি।</string>
     <string name="reminder_body">নমস্কার %1$s, %2$s-এর পক্ষ থেকে একটি বিনীত মনে করিয়ে দেওয়া: আপনার বকেয়া %3$s। সুবিধামতো পরিশোধ করুন। ধন্যবাদ!</string>
+    <string name="reminder_body_firm">নমস্কার %1$s, %2$s থেকে মনে করিয়ে দিচ্ছি। আপনার %3$s বাকি এখন পেরিয়ে গেছে। অনুগ্রহ করে তাড়াতাড়ি মিটিয়ে দিন। ধন্যবাদ।</string>
+    <string name="reminder_body_urgent">নমস্কার %1$s, %2$s-এ আপনার %3$s বাকি এক মাসেরও বেশি সময় ধরে বকেয়া। অনুগ্রহ করে আজই মিটিয়ে দিন, কোনো সমস্যা থাকলে আমাদের জানান।</string>
+    <string name="reminder_pay_link">ঠিক অঙ্কটি এক ট্যাপে দিন: %1$s</string>
     <string name="reminder_upi">আপনি UPI-তে %1$s-এ টাকা দিতে পারেন।</string>
     <string name="reminder_button">WhatsApp-এ মনে করান</string>
     <string name="reminder_share_title">মনে করানোর বার্তা পাঠান</string>

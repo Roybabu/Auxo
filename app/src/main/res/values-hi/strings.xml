@@ -1526,6 +1526,9 @@
     <string name="whatsapp_share_title">इनवॉइस भेजें</string>
     <string name="invoice_whatsapp_failed">WhatsApp नहीं खुल सका।</string>
     <string name="reminder_body">नमस्ते %1$s, %2$s की ओर से एक विनम्र याद दिलाना: आपका बकाया %3$s है। कृपया सुविधानुसार भुगतान करें। धन्यवाद!</string>
+    <string name="reminder_body_firm">नमस्ते %1$s, %2$s की ओर से याद दिलाना है। आपकी %3$s की बाकी राशि अब देय हो चुकी है। कृपया जल्द चुका दें। धन्यवाद।</string>
+    <string name="reminder_body_urgent">नमस्ते %1$s, %2$s में आपकी %3$s की बाकी राशि एक महीने से ज़्यादा समय से बकाया है। कृपया आज ही चुका दें, या कोई समस्या हो तो हमसे संपर्क करें।</string>
+    <string name="reminder_pay_link">सही राशि एक टैप में चुकाएं: %1$s</string>
     <string name="reminder_upi">आप UPI से %1$s पर भुगतान कर सकते हैं।</string>
     <string name="reminder_button">WhatsApp पर याद दिलाएँ</string>
     <string name="reminder_share_title">याद दिलाने का संदेश भेजें</string>

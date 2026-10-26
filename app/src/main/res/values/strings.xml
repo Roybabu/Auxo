@@ -1526,6 +1526,9 @@ in %2$s</string>
     <string name="whatsapp_share_title">Send invoice</string>
     <string name="invoice_whatsapp_failed">Could not open WhatsApp.</string>
     <string name="reminder_body">Hello %1$s, this is a friendly reminder from %2$s. Your pending balance is %3$s. Please pay when convenient. Thank you!</string>
+    <string name="reminder_body_firm">Hello %1$s, this is a reminder from %2$s. Your balance of %3$s is now overdue. Please pay it as soon as you can. Thank you.</string>
+    <string name="reminder_body_urgent">Hello %1$s, your balance of %3$s with %2$s has been overdue for over a month. Please pay it today, or contact us if there is a problem.</string>
+    <string name="reminder_pay_link">Pay the exact amount in one tap: %1$s</string>
     <string name="reminder_upi">You can pay by UPI to %1$s.</string>
     <string name="reminder_button">Remind on WhatsApp</string>
     <string name="reminder_share_title">Send reminder</string>
