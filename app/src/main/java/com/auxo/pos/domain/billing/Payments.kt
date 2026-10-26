@@ -30,10 +30,13 @@ enum class PaymentError {
 
     /** The amount on account would take the customer past their credit limit. */
     CREDIT_OVER_LIMIT,
+
+    /** The customer has owed money for longer than the shop allows, so no new credit is given. */
+    CREDIT_ON_HOLD,
 }
 
 /** The customer account a bill can be put on: what they owe now and their limit, if any. */
-data class CreditAccount(val balance: Money, val limit: Money? = null) {
+data class CreditAccount(val balance: Money, val limit: Money? = null, val onHold: Boolean = false) {
     /** How much more can go on the account; null when there is no limit. */
     val available: Money? get() = limit?.let { it - balance }
 }
@@ -83,6 +86,7 @@ object PaymentValidator {
                 val available = account?.available
                 when {
                     account == null -> errors[draft.key] = PaymentError.CREDIT_NEEDS_CUSTOMER
+                    account.onHold -> errors[draft.key] = PaymentError.CREDIT_ON_HOLD
                     available != null && onAccount > available -> errors[draft.key] = PaymentError.CREDIT_OVER_LIMIT
                 }
                 records += PaymentRecord(method = PaymentMethod.CREDIT, kind = PaymentKind.PAYMENT, amount = amount)

@@ -52,7 +52,7 @@ fun ShopSettingsScreen(
     viewModel: ShopViewModel = viewModel(factory = ShopViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories, viewModel::saveMetalRates, viewModel::onTableCountChange)
+    ShopSettingsContent(state, onBack, viewModel::onSuppliersChange, onOpenStoreDetails, onOpenCategories, viewModel::saveMetalRates, viewModel::onTableCountChange, viewModel::onCreditHoldDaysChange, viewModel::onOnTimeBonusChange)
 }
 
 @Composable
@@ -64,6 +64,8 @@ fun ShopSettingsContent(
     onOpenCategories: () -> Unit = {},
     onSaveMetalRates: (Map<JewelleryMetal, String>, Boolean) -> Unit = { _, _ -> },
     onTableCountChange: (String) -> Unit = {},
+    onCreditHoldDaysChange: (String) -> Unit = {},
+    onOnTimeBonusChange: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = { AuxoTopAppBar(title = stringResource(R.string.shop_settings_title), onBack = onBack) },
@@ -125,6 +127,7 @@ fun ShopSettingsContent(
                 }
             }
             TablesCard(state.tableCount, onTableCountChange)
+            CreditRulesCard(state.creditHoldDays, state.onTimeBonusPoints, onCreditHoldDaysChange, onOnTimeBonusChange)
             if (com.auxo.pos.ui.visibleCategories().contains(com.auxo.pos.domain.model.ProductCategory.JEWELLERY)) {
                 MetalRatesCard(state, onSaveMetalRates)
             }
@@ -203,6 +206,48 @@ private fun TablesCard(tableCount: Int, onChange: (String) -> Unit) {
                 label = stringResource(R.string.shop_tables_field),
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.fillMaxWidth().testTag("tables_field"),
+            )
+        }
+    }
+}
+
+/** Two rules for customers who buy on credit: when to stop giving more credit, and a bonus for paying on time. */
+@Composable
+private fun CreditRulesCard(holdDays: Int, bonusPoints: Int, onHoldChange: (String) -> Unit, onBonusChange: (String) -> Unit) {
+    var hold by rememberSaveable(holdDays) { androidx.compose.runtime.mutableStateOf(if (holdDays == 0) "" else holdDays.toString()) }
+    var bonus by rememberSaveable(bonusPoints) { androidx.compose.runtime.mutableStateOf(if (bonusPoints == 0) "" else bonusPoints.toString()) }
+    AuxoCard(modifier = Modifier.fillMaxWidth().testTag("credit_rules_card")) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.shop_credit_rules_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.shop_credit_hold_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuxoTextField(
+                value = hold,
+                onValueChange = {
+                    hold = it.filter(Char::isDigit).take(3)
+                    onHoldChange(hold)
+                },
+                label = stringResource(R.string.shop_credit_hold_field),
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.fillMaxWidth().testTag("credit_hold_field"),
+            )
+            Text(
+                stringResource(R.string.shop_on_time_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AuxoTextField(
+                value = bonus,
+                onValueChange = {
+                    bonus = it.filter(Char::isDigit).take(5)
+                    onBonusChange(bonus)
+                },
+                label = stringResource(R.string.shop_on_time_field),
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.fillMaxWidth().testTag("on_time_bonus_field"),
             )
         }
     }

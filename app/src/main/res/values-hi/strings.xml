@@ -435,6 +435,12 @@
     <string name="payment_error_reference">संदर्भ जाँचें</string>
     <string name="payment_error_credit_customer">इस बिल को खाते में डालने के लिए सहेजा हुआ ग्राहक चुनें</string>
     <string name="payment_error_credit_limit">इससे ग्राहक की उधार सीमा पार हो जाएगी</string>
+    <string name="payment_error_credit_hold">इस ग्राहक पर बहुत समय से पैसे बाकी हैं। और उधार देने से पहले उनसे भुगतान करवाएं।</string>
+    <string name="shop_credit_rules_title">उधार के नियम</string>
+    <string name="shop_credit_hold_body">जिस ग्राहक पर इतने दिनों से ज़्यादा समय से पैसे बाकी हैं, उसे नया उधार देना बंद करें। कभी बंद न करने के लिए खाली छोड़ें।</string>
+    <string name="shop_credit_hold_field">इतने दिन बाद उधार रोकें (दिन)</string>
+    <string name="shop_on_time_body">जब ग्राहक 30 दिनों के भीतर पूरी बाकी राशि चुका दे तो लॉयल्टी पॉइंट दें। इसके लिए लॉयल्टी पॉइंट चालू होने चाहिए। बोनस न देने के लिए खाली छोड़ें।</string>
+    <string name="shop_on_time_field">समय पर भुगतान का बोनस (पॉइंट)</string>
     <string name="sale_completed">बिक्री सहेजी गई: %1$s</string>
     <string name="sale_completed_change">बिक्री सहेजी गई: %1$s। %2$s वापस करें।</string>
 

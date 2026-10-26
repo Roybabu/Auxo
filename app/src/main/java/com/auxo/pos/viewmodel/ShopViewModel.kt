@@ -32,6 +32,10 @@ data class ShopUiState(
     val tableCount: Int = com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES,
     /** How many jewellery items the last price update changed; null until one has run. */
     val repricedCount: Int? = null,
+    /** Days a customer may owe before new credit is refused; 0 means never. */
+    val creditHoldDays: Int = 0,
+    /** Loyalty points given for clearing what is owed on time; 0 means no bonus. */
+    val onTimeBonusPoints: Int = 0,
 )
 
 class ShopViewModel(
@@ -47,7 +51,8 @@ class ShopViewModel(
         shop.restaurantMenu,
         shop.suppliers,
         combine(shop.metalRates, repriced, shop.tableCount) { rates, repricedCount, tables -> Triple(rates, repricedCount, tables) },
-    ) { name, menu, suppliers, extras ->
+        combine(shop.creditHoldDays, shop.onTimeBonusPoints) { hold, bonus -> hold to bonus },
+    ) { name, menu, suppliers, extras, credit ->
         ShopUiState(
             shopName = name,
             restaurantMenu = menu,
@@ -55,6 +60,8 @@ class ShopViewModel(
             metalRates = extras.first,
             repricedCount = extras.second,
             tableCount = extras.third,
+            creditHoldDays = credit.first,
+            onTimeBonusPoints = credit.second,
         )
     }
         .stateIn(
@@ -96,6 +103,16 @@ class ShopViewModel(
     /** The number of tables as typed; anything that is not 1 to 99 is ignored. */
     fun onTableCountChange(text: String) {
         com.auxo.pos.domain.billing.HeldBills.parseTableCount(text)?.let { shop.setTableCount(it) }
+    }
+
+    /** Days as typed; blank or 0 turns the hold off. */
+    fun onCreditHoldDaysChange(text: String) {
+        shop.setCreditHoldDays(text.filter(Char::isDigit).take(3).toIntOrNull() ?: 0)
+    }
+
+    /** Points as typed; blank or 0 turns the bonus off. */
+    fun onOnTimeBonusChange(text: String) {
+        shop.setOnTimeBonusPoints(text.filter(Char::isDigit).take(5).toIntOrNull() ?: 0)
     }
 
     fun dismissRepriced() {

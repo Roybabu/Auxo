@@ -49,6 +49,25 @@ interface ShopPreferences {
         get() = MutableStateFlow(com.auxo.pos.domain.billing.HeldBills.DEFAULT_TABLES)
 
     fun setTableCount(count: Int) = Unit
+
+    /** Days a customer may owe before new credit is refused to them; 0 means credit is never held. */
+    val creditHoldDays: StateFlow<Int>
+        get() = MutableStateFlow(0)
+
+    fun setCreditHoldDays(days: Int) = Unit
+
+    /** Loyalty points given when a customer clears everything they owe within [ON_TIME_DAYS] days; 0 means no bonus. */
+    val onTimeBonusPoints: StateFlow<Int>
+        get() = MutableStateFlow(0)
+
+    fun setOnTimeBonusPoints(points: Int) = Unit
+
+    companion object {
+        /** How soon after the money was first owed a full payment still counts as on time. */
+        const val ON_TIME_DAYS = 30
+        const val MAX_HOLD_DAYS = 365
+        const val MAX_BONUS_POINTS = 10_000
+    }
 }
 
 /** Saves the shop's choices on the device, so they are still there after the app closes. */
@@ -105,7 +124,27 @@ class SharedPrefsShopPreferences(private val prefs: SharedPreferences) : ShopPre
         tableCountState.value = clean
     }
 
+    private val creditHoldState = MutableStateFlow(prefs.getInt(KEY_CREDIT_HOLD_DAYS, 0))
+    override val creditHoldDays: StateFlow<Int> = creditHoldState.asStateFlow()
+
+    override fun setCreditHoldDays(days: Int) {
+        val clean = days.coerceIn(0, ShopPreferences.MAX_HOLD_DAYS)
+        prefs.edit { putInt(KEY_CREDIT_HOLD_DAYS, clean) }
+        creditHoldState.value = clean
+    }
+
+    private val onTimeBonusState = MutableStateFlow(prefs.getInt(KEY_ON_TIME_BONUS, 0))
+    override val onTimeBonusPoints: StateFlow<Int> = onTimeBonusState.asStateFlow()
+
+    override fun setOnTimeBonusPoints(points: Int) {
+        val clean = points.coerceIn(0, ShopPreferences.MAX_BONUS_POINTS)
+        prefs.edit { putInt(KEY_ON_TIME_BONUS, clean) }
+        onTimeBonusState.value = clean
+    }
+
     companion object {
+        const val KEY_CREDIT_HOLD_DAYS = "credit_hold_days"
+        const val KEY_ON_TIME_BONUS = "on_time_bonus_points"
         const val KEY_TABLE_COUNT = "table_count"
         const val KEY_METAL_RATES = "metal_rates"
         const val FILE = "shop"

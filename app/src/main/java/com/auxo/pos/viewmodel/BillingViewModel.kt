@@ -937,7 +937,15 @@ class BillingViewModel(
     }
 
     private fun creditAccount(state: BillingUiState): CreditAccount? =
-        state.account?.let { CreditAccount(it.balance, it.customer.creditLimit) }
+        state.account?.let { CreditAccount(it.balance, it.customer.creditLimit, onHold = isOnHold(it)) }
+
+    /** True when the shop holds credit after a number of days and this customer has owed money for longer than that. */
+    private fun isOnHold(account: com.auxo.pos.domain.model.CustomerAccount): Boolean {
+        val holdDays = shop?.creditHoldDays?.value ?: 0
+        if (holdDays <= 0 || account.balance <= Money.ZERO) return false
+        val age = com.auxo.pos.domain.customers.DuesReminder.ageInDays(account.owingSinceMillis, java.time.LocalDate.now(clock), clock.zone)
+        return age != null && age > holdDays
+    }
 
     private fun updatePayment(key: Int, transform: (PaymentDraft) -> PaymentDraft) =
         updatePayments(_uiState.value.payments.map { if (it.key == key) transform(it) else it })

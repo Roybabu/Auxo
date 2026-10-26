@@ -435,6 +435,12 @@
     <string name="payment_error_reference">রেফারেন্স দেখে নিন</string>
     <string name="payment_error_credit_customer">এই বিল ক্রেতার খাতায় রাখতে একজন সংরক্ষিত ক্রেতা বেছে নিন</string>
     <string name="payment_error_credit_limit">এতে ক্রেতার বাকির সীমা পার হয়ে যাবে</string>
+    <string name="payment_error_credit_hold">এই গ্রাহকের অনেক দিন ধরে টাকা বাকি। আরও বাকি দেওয়ার আগে তাঁকে পরিশোধ করতে বলুন।</string>
+    <string name="shop_credit_rules_title">বাকির নিয়ম</string>
+    <string name="shop_credit_hold_body">যে গ্রাহকের এত দিনের বেশি সময় ধরে টাকা বাকি, তাঁকে নতুন বাকি দেওয়া বন্ধ করুন। কখনও বন্ধ না করতে ফাঁকা রাখুন।</string>
+    <string name="shop_credit_hold_field">এত দিন পরে বাকি বন্ধ (দিন)</string>
+    <string name="shop_on_time_body">গ্রাহক ৩০ দিনের মধ্যে সব বাকি মিটিয়ে দিলে লয়্যালটি পয়েন্ট দিন। এর জন্য লয়্যালটি পয়েন্ট চালু থাকতে হবে। বোনস না দিতে ফাঁকা রাখুন।</string>
+    <string name="shop_on_time_field">সময়মতো পরিশোধের বোনাস (পয়েন্ট)</string>
     <string name="sale_completed">বিক্রি সংরক্ষিত হয়েছে: %1$s</string>
     <string name="sale_completed_change">বিক্রি সংরক্ষিত হয়েছে: %1$s। %2$s খুচরো ফেরত দিন।</string>
 

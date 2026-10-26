@@ -435,6 +435,12 @@
     <string name="payment_error_reference">Check the reference</string>
     <string name="payment_error_credit_customer">Choose a saved customer to put this bill on their account</string>
     <string name="payment_error_credit_limit">This takes the customer over their credit limit</string>
+    <string name="payment_error_credit_hold">This customer has owed money for too long. Ask them to pay before giving more credit.</string>
+    <string name="shop_credit_rules_title">Credit rules</string>
+    <string name="shop_credit_hold_body">Stop giving new credit to a customer who has owed money for longer than this many days. Leave empty to never stop.</string>
+    <string name="shop_credit_hold_field">Hold credit after (days)</string>
+    <string name="shop_on_time_body">Give loyalty points when a customer pays off everything they owe within 30 days. Needs loyalty points to be switched on. Leave empty for no bonus.</string>
+    <string name="shop_on_time_field">On-time payment bonus (points)</string>
     <string name="sale_completed">Sale saved: %1$s</string>
     <string name="sale_completed_change">Sale saved: %1$s. Return %2$s change.</string>
 

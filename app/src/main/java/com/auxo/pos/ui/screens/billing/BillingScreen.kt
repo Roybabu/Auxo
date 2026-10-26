@@ -1489,7 +1489,7 @@ fun PaymentContent(state: BillingUiState, actions: BillingActions, modifier: Mod
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            if (error == PaymentError.CREDIT_NEEDS_CUSTOMER || error == PaymentError.CREDIT_OVER_LIMIT) {
+                            if (error == PaymentError.CREDIT_NEEDS_CUSTOMER || error == PaymentError.CREDIT_OVER_LIMIT || error == PaymentError.CREDIT_ON_HOLD) {
                                 Text(stringResource(error.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                             }
                         }

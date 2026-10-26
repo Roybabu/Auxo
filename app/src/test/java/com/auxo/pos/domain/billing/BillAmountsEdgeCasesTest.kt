@@ -144,6 +144,14 @@ class BillAmountsEdgeCasesTest {
     }
 
     @Test
+    fun onAccount_isRefused_whileTheCustomerIsOnHold_butCashStillWorks() {
+        val held = CreditAccount(balance = Money(10_000), limit = null, onHold = true)
+        val credit = PaymentValidator.check(listOf(draft(1, PaymentMethod.CREDIT, "998")), total, held) as PaymentCheck.Invalid
+        assertEquals(PaymentError.CREDIT_ON_HOLD, credit.errors[1])
+        assertTrue(PaymentValidator.check(listOf(draft(1, PaymentMethod.CASH, "998", tendered = "998")), total, held) is PaymentCheck.Valid)
+    }
+
+    @Test
     fun cashTendered_belowTheAmount_isRefused_andChangeIsPerLine() {
         val low = PaymentValidator.check(listOf(draft(1, PaymentMethod.CASH, "998", tendered = "997.99")), total) as PaymentCheck.Invalid
         assertEquals(PaymentError.TENDERED_TOO_LOW, low.errors[1])
