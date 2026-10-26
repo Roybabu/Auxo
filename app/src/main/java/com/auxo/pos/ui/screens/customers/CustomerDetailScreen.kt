@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -165,6 +166,8 @@ fun CustomerDetailContent(
     val customer = state.account.customer
     val balance = state.account.balance
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var bookFilter by rememberSaveable { mutableStateOf(BookFilter.ALL) }
+    var billFilter by rememberSaveable { mutableStateOf(BillFilter.ALL) }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -284,8 +287,8 @@ fun CustomerDetailContent(
         }
         item(key = "tabs") {
             PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
-                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.customer_statement)) })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.customer_bills, state.invoices.size)) })
+                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.customer_book_tab)) })
+                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.customer_bills_tab, state.invoices.size)) })
                 if (state.hasPoints) {
                     Tab(
                         selected = tab == 2,
@@ -297,20 +300,7 @@ fun CustomerDetailContent(
             }
         }
         if (tab == 0) {
-            if (state.statement.isEmpty()) {
-                item(key = "no_entries") { EmptyLine(stringResource(R.string.customer_statement_empty)) }
-            } else {
-                item(key = "statement") {
-                    AuxoCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.testTag("customer_statement")) {
-                            state.statement.forEachIndexed { index, line ->
-                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                                LedgerRow(line, onOpenInvoice)
-                            }
-                        }
-                    }
-                }
-            }
+            creditBookTab(state, bookFilter, { bookFilter = it }, onOpenInvoice)
         } else if (tab == 2 && state.hasPoints) {
             item(key = "points") {
                 AuxoCard(modifier = Modifier.fillMaxWidth()) {
@@ -323,25 +313,9 @@ fun CustomerDetailContent(
                 }
             }
         } else {
-            if (state.invoices.isEmpty()) {
-                item(key = "no_bills") { EmptyLine(stringResource(R.string.customer_bills_empty)) }
-            } else {
-                items(state.invoices, key = { "invoice-${it.id}" }) { invoice ->
-                    InvoiceSummaryRow(invoice, onClick = { onOpenInvoice(invoice.id) })
-                }
-            }
+            allBillsTab(state, billFilter, { billFilter = it }, onOpenInvoice)
         }
     }
-}
-
-@Composable
-private fun EmptyLine(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(vertical = Spacing.md),
-    )
 }
 
 @Composable
@@ -368,46 +342,5 @@ private fun PointsRow(entry: LedgerEntry, onOpenInvoice: (Long) -> Unit) {
             style = MaterialTheme.typography.titleSmall,
             color = if (gained) status.success.accent else status.warning.content,
         )
-    }
-}
-
-@Composable
-private fun LedgerRow(line: LedgerLine, onOpenInvoice: (Long) -> Unit) {
-    val formatter = LocalMoneyFormatter.current
-    val status = AuxoThemeExtras.statusColors
-    val entry = line.entry
-    val owesMore = entry.amount > Money.ZERO
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(entry.invoiceId?.let { id -> Modifier.clickable { onOpenInvoice(id) } } ?: Modifier)
-            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-            Text(stringResource(entry.type.labelRes()), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = listOfNotNull(
-                    DateFormats.dateTime(entry.createdAtMillis),
-                    entry.invoiceNumber,
-                    entry.method?.let { stringResource(it.labelRes()) },
-                    entry.reference,
-                    entry.note,
-                ).joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = (if (owesMore) "+" else "−") + formatter.format(if (owesMore) entry.amount else Money(-entry.amount.minorUnits)),
-                style = MaterialTheme.typography.titleSmall,
-                color = if (owesMore) status.warning.content else status.success.accent,
-            )
-            StatusChip(
-                text = stringResource(R.string.customer_entry_balance, formatter.format(line.balanceAfter)),
-                tone = status.neutral,
-            )
-        }
     }
 }
