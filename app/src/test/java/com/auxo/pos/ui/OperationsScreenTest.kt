@@ -167,7 +167,7 @@ class OperationsScreenTest {
             account = CustomerAccount(anita, Money(50_000)),
             statement = Ledger.statement(entries).asReversed(),
             invoices = emptyList(),
-            charged = Money(80_000),
+            bought = Money(80_000),
             paid = Money(30_000),
         )
         show { CustomerDetailContent(state, onReceivePayment = { paid = true }, onOpenInvoice = {}) }

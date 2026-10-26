@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 The Auxo authors. See the LICENSE file in the project root.
+
+package com.auxo.pos.domain.customers
+
+import com.auxo.pos.domain.model.InvoiceSummary
+import com.auxo.pos.domain.model.InvoiceType
+import com.auxo.pos.domain.model.LedgerEntry
+import com.auxo.pos.domain.model.LedgerEntryType
+import com.auxo.pos.domain.model.Money
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class PurchaseTotalsTest {
+
+    private fun bill(id: Long, type: InvoiceType, total: Long, at: Long) =
+        InvoiceSummary(id, "N$id", type, at, "Asha", null, Money(total), 1)
+
+    private fun entry(type: LedgerEntryType, amount: Long) =
+        LedgerEntry(customerId = 1, type = type, amount = Money(amount), createdAtMillis = 1)
+
+    @Test
+    fun bought_isBillsLessCreditNotes_andPaidIsWhatIsNotStillOwed() {
+        val bills = listOf(bill(1, InvoiceType.SALE, 100_000, 10), bill(2, InvoiceType.SALE, 50_000, 20), bill(3, InvoiceType.RETURN, 20_000, 30))
+        val ledger = listOf(entry(LedgerEntryType.SALE, 80_000), entry(LedgerEntryType.PAYMENT, -30_000))
+        val (bought, paid) = Ledger.purchases(bills, ledger)
+        assertEquals(Money(130_000), bought)
+        assertEquals(Money(80_000), paid) // 1,300 bought, 500 still owed
+    }
+
+    @Test
+    fun anOpeningBalance_isNotABill_andIsLeftOut() {
+        val bills = listOf(bill(1, InvoiceType.SALE, 100_000, 10))
+        val ledger = listOf(entry(LedgerEntryType.OPENING_BALANCE, 70_000), entry(LedgerEntryType.SALE, 40_000))
+        val (bought, paid) = Ledger.purchases(bills, ledger)
+        assertEquals(Money(100_000), bought)
+        assertEquals(Money(60_000), paid)
+    }
+
+    @Test
+    fun lifetime_isTheLastSaleAndTheAverageBill_ignoringCreditNotes() {
+        val bills = listOf(bill(1, InvoiceType.SALE, 100_000, 10), bill(2, InvoiceType.SALE, 50_000, 20), bill(3, InvoiceType.RETURN, 20_000, 30))
+        val lifetime = Ledger.lifetime(bills)
+        assertEquals(20L, lifetime.lastPurchaseMillis)
+        assertEquals(Money(75_000), lifetime.averageBill)
+        assertNull(Ledger.lifetime(emptyList()).lastPurchaseMillis)
+    }
+}

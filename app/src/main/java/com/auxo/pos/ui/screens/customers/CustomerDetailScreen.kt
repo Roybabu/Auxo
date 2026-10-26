@@ -244,6 +244,18 @@ fun CustomerDetailContent(
                 StatTile(stringResource(R.string.customer_paid), formatter.format(state.paid), Modifier.weight(1f))
             }
         }
+        if (state.lastPurchaseMillis != null && state.averageBill != null) {
+            item(key = "lifetime") {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                    StatTile(
+                        stringResource(R.string.customer_last_purchase),
+                        DateFormats.date(java.time.Instant.ofEpochMilli(state.lastPurchaseMillis).atZone(com.auxo.pos.domain.billing.BusinessTime.ZONE).toLocalDate()),
+                        Modifier.weight(1f).testTag("customer_last_purchase"),
+                    )
+                    StatTile(stringResource(R.string.customer_average_bill), formatter.format(state.averageBill), Modifier.weight(1f).testTag("customer_average_bill"))
+                }
+            }
+        }
         if (state.hasPoints) {
             item(key = "points_balance") {
                 StatTile(

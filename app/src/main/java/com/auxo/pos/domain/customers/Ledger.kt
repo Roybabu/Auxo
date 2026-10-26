@@ -83,6 +83,13 @@ object Ledger {
      * the counter as well as payments received later. A balance brought in when the account was opened is not a bill
      * and is left out of both.
      */
+    fun lifetime(invoices: List<InvoiceSummary>): CustomerLifetime {
+        val sales = invoices.filter { it.type == InvoiceType.SALE }
+        if (sales.isEmpty()) return CustomerLifetime(null, null)
+        val total = sales.fold(Money.ZERO) { acc, invoice -> acc + invoice.grandTotal }
+        return CustomerLifetime(sales.maxOf { it.createdAtMillis }, Money(total.minorUnits / sales.size))
+    }
+
     fun purchases(invoices: List<InvoiceSummary>, entries: List<LedgerEntry>): Pair<Money, Money> {
         val bought = invoices.fold(Money.ZERO) { acc, invoice ->
             if (invoice.type == InvoiceType.RETURN) acc - invoice.grandTotal else acc + invoice.grandTotal
@@ -92,6 +99,9 @@ object Ledger {
         return bought to (bought - stillOwed)
     }
 }
+
+/** When the customer last bought something and what an average bill comes to. */
+data class CustomerLifetime(val lastPurchaseMillis: Long?, val averageBill: Money?)
 
 enum class AccountPaymentError { AMOUNT_REQUIRED, AMOUNT_INVALID, MORE_THAN_DUE, NOTHING_DUE, REFERENCE_INVALID, NOTE_TOO_LONG }
 
