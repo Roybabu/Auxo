@@ -601,7 +601,10 @@ fun NavHostController.popOnce() {
 fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
     // What you were doing is only saved when it all belongs to one tab. A page opened from another tab (an invoice
     // from a customer's history, say) would otherwise be saved with that tab and brought back when the tab is tapped.
-    val keepPlace = stackBelongsToOneTab()
+    // In Billing only the bill being built is worth coming back to: a finished invoice or a credit note is not, so
+    // leaving from one of those means the Billing tab opens on a new bill next time.
+    val inBilling = currentDestination?.hierarchy?.any { it.route == TopLevelDestination.BILLING.route } == true
+    val keepPlace = stackBelongsToOneTab() && (!inBilling || currentDestination?.route == BillingRoutes.POS)
     if (destination == TopLevelDestination.HOME) {
         val home = TopLevelDestination.HOME.route
         if (popBackStack(home, inclusive = false, saveState = keepPlace)) return
