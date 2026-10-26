@@ -109,6 +109,49 @@ object Ledger {
         return AgeBuckets(Money(week), Money(month), Money(older))
     }
 
+    /**
+     * How much of each bill is still owed, by invoice id. Payments and returns settle the oldest charges first (as in
+     * [owingSince]); bills with nothing left owed are not in the map. A balance brought in when the account was opened
+     * has no bill and is not listed.
+     */
+    fun owedByInvoice(entries: List<LedgerEntry>): Map<Long, Money> {
+        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        val open = ArrayDeque<Pair<Long?, Long>>()
+        var credit = 0L
+        for (entry in money) {
+            val amount = entry.amount.minorUnits
+            if (amount > 0) {
+                val used = minOf(credit, amount)
+                credit -= used
+                if (amount - used > 0) open.addLast((if (entry.type == LedgerEntryType.SALE) entry.invoiceId else null) to amount - used)
+            } else if (amount < 0) {
+                var pay = -amount
+                while (pay > 0 && open.isNotEmpty()) {
+                    val (id, remaining) = open.first()
+                    if (remaining <= pay) {
+                        pay -= remaining
+                        open.removeFirst()
+                    } else {
+                        open[0] = id to remaining - pay
+                        pay = 0
+                    }
+                }
+                credit += pay
+            }
+        }
+        val owed = LinkedHashMap<Long, Long>()
+        for ((id, remaining) in open) if (id != null) owed[id] = (owed[id] ?: 0L) + remaining
+        return owed.mapValues { Money(it.value) }
+    }
+
+    /** Paid, part paid (some still owed), unpaid (all still owed) or a return, for a bill of [total] with [owed] left to pay. */
+    fun billStatus(type: InvoiceType, total: Money, owed: Money): BillStatus = when {
+        type == InvoiceType.RETURN -> BillStatus.RETURN
+        owed <= Money.ZERO -> BillStatus.PAID
+        owed >= total -> BillStatus.UNPAID
+        else -> BillStatus.PART_PAID
+    }
+
     /** Loyalty point entries, newest first. */
     fun pointsHistory(entries: List<LedgerEntry>): List<LedgerEntry> =
         entries.filter { it.type.isPoints }.sortedWith(compareByDescending<LedgerEntry> { it.createdAtMillis }.thenByDescending { it.id })
@@ -151,6 +194,9 @@ data class CustomerLifetime(val lastPurchaseMillis: Long?, val averageBill: Mone
 data class AgeBuckets(val upTo7Days: Money, val upTo30Days: Money, val over30Days: Money) {
     val total: Money get() = upTo7Days + upTo30Days + over30Days
 }
+
+/** Where a bill stands on the customer's page. */
+enum class BillStatus { PAID, PART_PAID, UNPAID, RETURN }
 
 enum class AccountPaymentError { AMOUNT_REQUIRED, AMOUNT_INVALID, MORE_THAN_DUE, NOTHING_DUE, REFERENCE_INVALID, NOTE_TOO_LONG }
 

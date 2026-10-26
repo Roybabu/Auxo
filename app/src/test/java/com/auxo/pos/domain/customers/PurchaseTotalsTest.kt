@@ -65,4 +65,22 @@ class PurchaseTotalsTest {
         assertEquals(Money(40_00), buckets.over30Days)
         assertEquals(Money(110_00), buckets.total)
     }
+
+    @Test
+    fun owedByInvoice_settlesTheOldestBillFirst_andBillStatusFollows() {
+        fun sale(invoiceId: Long, amount: Long, at: Long) =
+            LedgerEntry(customerId = 1, type = LedgerEntryType.SALE, amount = Money(amount), invoiceId = invoiceId, createdAtMillis = at)
+        val entries = listOf(
+            sale(1, 100_00, 1),
+            sale(2, 50_00, 2),
+            LedgerEntry(customerId = 1, type = LedgerEntryType.PAYMENT, amount = Money(-120_00), createdAtMillis = 3),
+        )
+        val owed = Ledger.owedByInvoice(entries)
+        assertNull(owed[1L]) // paid in full
+        assertEquals(Money(30_00), owed[2L]) // 20 of 50 paid
+        assertEquals(BillStatus.PAID, Ledger.billStatus(InvoiceType.SALE, Money(100_00), Money.ZERO))
+        assertEquals(BillStatus.PART_PAID, Ledger.billStatus(InvoiceType.SALE, Money(100_00), Money(30_00)))
+        assertEquals(BillStatus.UNPAID, Ledger.billStatus(InvoiceType.SALE, Money(100_00), Money(100_00)))
+        assertEquals(BillStatus.RETURN, Ledger.billStatus(InvoiceType.RETURN, Money(100_00), Money.ZERO))
+    }
 }
