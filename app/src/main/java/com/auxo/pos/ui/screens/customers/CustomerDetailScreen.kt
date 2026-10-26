@@ -135,6 +135,16 @@ fun CustomerDetailScreen(
                         scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.reminder_failed)) }
                     }
                 },
+                onShareStatement = {
+                    val shop = state.reminderShop
+                    if (shop != null) {
+                        scope.launch {
+                            if (!shareStatement(context, state, shop, formatter)) {
+                                snackbarHostState.showSnackbar(resources.getString(R.string.reminder_failed))
+                            }
+                        }
+                    }
+                },
                 modifier = modifier,
             )
         }
@@ -149,6 +159,7 @@ fun CustomerDetailContent(
     modifier: Modifier = Modifier,
     onOpenHistory: () -> Unit = {},
     onRemind: (() -> Unit)? = null,
+    onShareStatement: (() -> Unit)? = null,
 ) {
     val formatter = LocalMoneyFormatter.current
     val customer = state.account.customer
@@ -230,6 +241,12 @@ fun CustomerDetailContent(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                    if (onShareStatement != null && state.statement.isNotEmpty() && state.reminderShop != null) {
+                        OutlinedButton(onClick = onShareStatement, modifier = Modifier.testTag("customer_share_statement")) {
+                            Icon(painterResource(R.drawable.ic_chat), contentDescription = null)
+                            Text(stringResource(R.string.statement_share_button), modifier = Modifier.padding(start = Spacing.sm))
+                        }
                     }
                     OutlinedButton(onClick = onOpenHistory, modifier = Modifier.testTag("customer_history")) {
                         Icon(painterResource(R.drawable.ic_history), contentDescription = null)

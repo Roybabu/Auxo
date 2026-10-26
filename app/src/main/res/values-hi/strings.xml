@@ -633,6 +633,15 @@
     <string name="customer_bills_empty">इस ग्राहक का अभी कोई बिल नहीं।</string>
     <string name="customer_not_found">यह ग्राहक नहीं मिला।</string>
     <string name="customer_entry_balance">बाकी %1$s</string>
+    <string name="statement_pdf_title">खाते का विवरण</string>
+    <string name="statement_pdf_on">%1$s तक</string>
+    <string name="statement_col_date">तारीख</string>
+    <string name="statement_col_entry">प्रविष्टि</string>
+    <string name="statement_col_amount">राशि</string>
+    <string name="statement_col_balance">बाकी</string>
+    <string name="statement_share_button">WhatsApp पर विवरण भेजें</string>
+    <string name="statement_share_caption">%1$s की ओर से खाते का विवरण</string>
+    <string name="statement_share_title">विवरण भेजें</string>
     <string name="customer_editor_new">नया ग्राहक</string>
     <string name="customer_editor_edit">ग्राहक बदलें</string>
     <string name="customer_field_phone_hint">10 अंकों का मोबाइल नंबर; एक नंबर पर एक ग्राहक</string>

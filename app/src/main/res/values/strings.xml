@@ -633,6 +633,15 @@
     <string name="customer_bills_empty">No bills for this customer yet.</string>
     <string name="customer_not_found">This customer could not be found.</string>
     <string name="customer_entry_balance">Balance %1$s</string>
+    <string name="statement_pdf_title">Statement of account</string>
+    <string name="statement_pdf_on">As on %1$s</string>
+    <string name="statement_col_date">Date</string>
+    <string name="statement_col_entry">Entry</string>
+    <string name="statement_col_amount">Amount</string>
+    <string name="statement_col_balance">Balance</string>
+    <string name="statement_share_button">Send statement on WhatsApp</string>
+    <string name="statement_share_caption">Account statement from %1$s</string>
+    <string name="statement_share_title">Send statement</string>
     <string name="customer_editor_new">New customer</string>
     <string name="customer_editor_edit">Edit customer</string>
     <string name="customer_field_phone_hint">10-digit mobile number; one customer per number</string>

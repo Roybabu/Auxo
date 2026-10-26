@@ -633,6 +633,15 @@
     <string name="customer_bills_empty">এই ক্রেতার এখনও কোনো বিল নেই।</string>
     <string name="customer_not_found">এই ক্রেতাকে পাওয়া যায়নি।</string>
     <string name="customer_entry_balance">বাকি %1$s</string>
+    <string name="statement_pdf_title">হিসাবের বিবরণ</string>
+    <string name="statement_pdf_on">%1$s পর্যন্ত</string>
+    <string name="statement_col_date">তারিখ</string>
+    <string name="statement_col_entry">এন্ট্রি</string>
+    <string name="statement_col_amount">অঙ্ক</string>
+    <string name="statement_col_balance">বাকি</string>
+    <string name="statement_share_button">WhatsApp-এ বিবরণ পাঠান</string>
+    <string name="statement_share_caption">%1$s-এর হিসাবের বিবরণ</string>
+    <string name="statement_share_title">বিবরণ পাঠান</string>
     <string name="customer_editor_new">নতুন ক্রেতা</string>
     <string name="customer_editor_edit">ক্রেতা সম্পাদনা করুন</string>
     <string name="customer_field_phone_hint">10 অঙ্কের মোবাইল নম্বর; এক নম্বরে একজন ক্রেতা</string>
