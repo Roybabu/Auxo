@@ -25,6 +25,7 @@ enum class ReportType(
     LOW_STOCK(false),
     EXPIRY(false),
     CUSTOMER_BALANCES(false),
+    CUSTOMER_AGING(false),
 }
 
 enum class PeriodPreset { TODAY, YESTERDAY, LAST_7_DAYS, THIS_MONTH, LAST_MONTH, THIS_FINANCIAL_YEAR, ALL, CUSTOM }

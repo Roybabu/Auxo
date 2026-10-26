@@ -46,4 +46,23 @@ class PurchaseTotalsTest {
         assertEquals(Money(75_000), lifetime.averageBill)
         assertNull(Ledger.lifetime(emptyList()).lastPurchaseMillis)
     }
+
+    @Test
+    fun aging_putsPaymentsAgainstTheOldestChargeFirst() {
+        val day = 24L * 60 * 60 * 1000
+        val now = 100 * day
+        fun at(type: LedgerEntryType, amount: Long, daysAgo: Long) =
+            LedgerEntry(customerId = 1, type = type, amount = Money(amount), createdAtMillis = now - daysAgo * day)
+        val entries = listOf(
+            at(LedgerEntryType.SALE, 100_00, 40),
+            at(LedgerEntryType.SALE, 50_00, 10),
+            at(LedgerEntryType.SALE, 20_00, 2),
+            at(LedgerEntryType.PAYMENT, -60_00, 1),
+        )
+        val buckets = Ledger.aging(entries, now, java.time.ZoneOffset.UTC)
+        assertEquals(Money(20_00), buckets.upTo7Days)
+        assertEquals(Money(50_00), buckets.upTo30Days)
+        assertEquals(Money(40_00), buckets.over30Days)
+        assertEquals(Money(110_00), buckets.total)
+    }
 }

@@ -66,6 +66,49 @@ object Ledger {
         return open.firstOrNull()?.first
     }
 
+    /**
+     * How much of the money owed is 0–7, 8–30 and over 30 days old at [now]. Payments and returns settle the oldest
+     * charges first (as in [owingSince]); money paid in advance is used up by the next charges.
+     */
+    fun aging(entries: List<LedgerEntry>, now: Long, zone: java.time.ZoneId): AgeBuckets {
+        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        val open = ArrayDeque<Pair<Long, Long>>()
+        var credit = 0L
+        for (entry in money) {
+            val amount = entry.amount.minorUnits
+            if (amount > 0) {
+                val used = minOf(credit, amount)
+                credit -= used
+                if (amount - used > 0) open.addLast(entry.createdAtMillis to amount - used)
+            } else if (amount < 0) {
+                var pay = -amount
+                while (pay > 0 && open.isNotEmpty()) {
+                    val (time, remaining) = open.first()
+                    if (remaining <= pay) {
+                        pay -= remaining
+                        open.removeFirst()
+                    } else {
+                        open[0] = time to remaining - pay
+                        pay = 0
+                    }
+                }
+                credit += pay
+            }
+        }
+        var week = 0L
+        var month = 0L
+        var older = 0L
+        for ((time, remaining) in open) {
+            val days = DuesReminder.ageInDays(time, java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate(), zone) ?: 0
+            when {
+                days <= 7 -> week += remaining
+                days <= 30 -> month += remaining
+                else -> older += remaining
+            }
+        }
+        return AgeBuckets(Money(week), Money(month), Money(older))
+    }
+
     /** Loyalty point entries, newest first. */
     fun pointsHistory(entries: List<LedgerEntry>): List<LedgerEntry> =
         entries.filter { it.type.isPoints }.sortedWith(compareByDescending<LedgerEntry> { it.createdAtMillis }.thenByDescending { it.id })
@@ -77,12 +120,7 @@ object Ledger {
         return charged to paid
     }
 
-    /**
-     * What the customer has bought from the shop and what they have paid for it, all time. Bought is every bill
-     * minus the credit notes; paid is that less what is still owed on those bills, so it counts money handed over at
-     * the counter as well as payments received later. A balance brought in when the account was opened is not a bill
-     * and is left out of both.
-     */
+    /** When the customer last bought something and what an average bill comes to. */
     fun lifetime(invoices: List<InvoiceSummary>): CustomerLifetime {
         val sales = invoices.filter { it.type == InvoiceType.SALE }
         if (sales.isEmpty()) return CustomerLifetime(null, null)
@@ -90,6 +128,12 @@ object Ledger {
         return CustomerLifetime(sales.maxOf { it.createdAtMillis }, Money(total.minorUnits / sales.size))
     }
 
+    /**
+     * What the customer has bought from the shop and what they have paid for it, all time. Bought is every bill
+     * minus the credit notes; paid is that less what is still owed on those bills, so it counts money handed over at
+     * the counter as well as payments received later. A balance brought in when the account was opened is not a bill
+     * and is left out of both.
+     */
     fun purchases(invoices: List<InvoiceSummary>, entries: List<LedgerEntry>): Pair<Money, Money> {
         val bought = invoices.fold(Money.ZERO) { acc, invoice ->
             if (invoice.type == InvoiceType.RETURN) acc - invoice.grandTotal else acc + invoice.grandTotal
@@ -102,6 +146,11 @@ object Ledger {
 
 /** When the customer last bought something and what an average bill comes to. */
 data class CustomerLifetime(val lastPurchaseMillis: Long?, val averageBill: Money?)
+
+/** Money owed, split by how long ago it was charged. */
+data class AgeBuckets(val upTo7Days: Money, val upTo30Days: Money, val over30Days: Money) {
+    val total: Money get() = upTo7Days + upTo30Days + over30Days
+}
 
 enum class AccountPaymentError { AMOUNT_REQUIRED, AMOUNT_INVALID, MORE_THAN_DUE, NOTHING_DUE, REFERENCE_INVALID, NOTE_TOO_LONG }
 

@@ -856,6 +856,7 @@
     <string name="report_low_stock">কম স্টক</string>
     <string name="report_expiry">মেয়াদ</string>
     <string name="report_customer_balances">ক্রেতাদের বাকি</string>
+    <string name="report_customer_aging">ক্রেতাদের বকেয়ার বয়স</string>
     <string name="period_yesterday">গতকাল</string>
     <string name="period_last_month">গত মাস</string>
     <string name="period_financial_year">এই অর্থবছর</string>

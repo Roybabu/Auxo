@@ -45,6 +45,9 @@ interface CustomerRepository {
 
     fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>>
 
+    /** Every customer's money entries (no loyalty points), for reports that look at how old the dues are. */
+    fun observeMoneyLedger(): Flow<List<LedgerEntry>> = kotlinx.coroutines.flow.flowOf(emptyList())
+
     /**
      * Records money received against the account, refusing more than the customer
      * owes. A [requestId] that was already used is not recorded again.

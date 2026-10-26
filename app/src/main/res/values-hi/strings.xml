@@ -856,6 +856,7 @@
     <string name="report_low_stock">कम स्टॉक</string>
     <string name="report_expiry">एक्सपायरी</string>
     <string name="report_customer_balances">ग्राहकों की बाकी राशि</string>
+    <string name="report_customer_aging">ग्राहकों की बकाया उम्र</string>
     <string name="period_yesterday">कल</string>
     <string name="period_last_month">पिछला महीना</string>
     <string name="period_financial_year">यह वित्त वर्ष</string>
