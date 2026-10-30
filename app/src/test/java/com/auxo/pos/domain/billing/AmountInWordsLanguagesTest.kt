@@ -62,11 +62,19 @@ class AmountInWordsLanguagesTest {
         assertEquals("শূন্য টকা মাত্ৰ", words(0, Language.ASSAMESE))
         assertEquals("এশ ওঠৰ টকা মাত্ৰ", words(118_00, Language.ASSAMESE))
         assertEquals("এক হাজাৰ পাঁচশ সাতাৱন্ন টকা মাত্ৰ", words(1_557_00, Language.ASSAMESE))
-        assertEquals("এক লাখ পাঁচশ টকা আৰু পঞ্চাশ পইচা মাত্ৰ", words(1_00_500_50, Language.ASSAMESE))
+        assertEquals("এক লাখ পাঁচশ টকা পঞ্চাশ পইচা মাত্ৰ", words(1_00_500_50, Language.ASSAMESE))
         assertEquals(
             "বাৰ কোটি চৌত্ৰিশ লাখ ছাপন্ন হাজাৰ সাতশ ঊননব্বৈ টকা মাত্ৰ",
             words(12_34_56_789_00, Language.ASSAMESE),
         )
+    }
+
+    @Test
+    fun assamese_paiseFollowTheRupeesWithNoAnd() {
+        assertEquals("শূন্য টকা পঞ্চাশ পইচা মাত্ৰ", words(50, Language.ASSAMESE))
+        assertEquals("এক টকা পঁচিশ পইচা মাত্ৰ", words(1_25, Language.ASSAMESE))
+        assertEquals("দহ টকা পঞ্চাশ পইচা মাত্ৰ", words(10_50, Language.ASSAMESE))
+        assertEquals("এশ পঁচিশ টকা মাত্ৰ", words(125_00, Language.ASSAMESE))
     }
 
     @Test

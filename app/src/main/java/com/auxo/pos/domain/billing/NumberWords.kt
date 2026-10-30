@@ -271,7 +271,7 @@ internal class NumberWords(
 
         /**
          * Assamese. The words for 1 to 99 and for hundreds were supplied by the shop owner and have not been checked by a
-         * second native reader; "মাত্ৰ" (only), "আৰু" (and) and "পইচা" (paisa) complete the sentence.
+         * second native reader; "টকা" (rupees), "পইচা" (paisa, said straight after the rupees with no "and") and "মাত্ৰ" (only) complete the sentence.
          */
         val ASSAMESE = NumberWords(
             below100 = listOf(
@@ -378,7 +378,7 @@ internal class NumberWords(
             ),
             hundred = "শ", thousand = "হাজাৰ", lakh = "লাখ", crore = "কোটি",
             hundreds = listOf("", "এশ", "দুশ", "তিনিশ", "চাৰিশ", "পাঁচশ", "ছয়শ", "সাতশ", "আঠশ", "নশ"),
-            sentence = { rupees, paise -> rupees + " টকা" + (paise?.let { " আৰু $it পইচা" } ?: "") + " মাত্ৰ" },
+            sentence = { rupees, paise -> rupees + " টকা" + (paise?.let { " $it পইচা" } ?: "") + " মাত্ৰ" },
         )
     }
 }
