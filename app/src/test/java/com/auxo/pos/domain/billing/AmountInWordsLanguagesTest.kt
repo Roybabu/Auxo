@@ -75,6 +75,9 @@ class AmountInWordsLanguagesTest {
         assertEquals("এক টকা পঁচিশ পইচা মাত্ৰ", words(1_25, Language.ASSAMESE))
         assertEquals("দহ টকা পঞ্চাশ পইচা মাত্ৰ", words(10_50, Language.ASSAMESE))
         assertEquals("এশ পঁচিশ টকা মাত্ৰ", words(125_00, Language.ASSAMESE))
+        assertEquals("পাঁচ টকা পঁচাত্তৰ পইচা মাত্ৰ", words(5_75, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ টকা মাত্ৰ", words(1_000_00, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ দুশ পঞ্চাশ টকা পঁচাত্তৰ পইচা মাত্ৰ", words(1_250_75, Language.ASSAMESE))
     }
 
     @Test
