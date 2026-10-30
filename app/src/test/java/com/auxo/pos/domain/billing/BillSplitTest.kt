@@ -8,6 +8,7 @@ import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.testutil.TestData
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -114,5 +115,15 @@ class BillSplitTest {
         assertEquals(customer, result.moved.customer)
         assertNull(result.moved.billDiscount)
         assertTrue(result.remaining.customer == customer)
+    }
+
+    @Test
+    fun splitting_isOfferedOnARestaurantBill_butNotOnAShopBill() {
+        val dish = line(1, 1).copy(isRestaurantItem = true)
+        assertTrue(BillSplit.isOffered(Cart(lines = listOf(dish))))
+        // A restaurant dish anywhere on the bill is enough.
+        assertTrue(BillSplit.isOffered(Cart(lines = listOf(line(2, 1), dish))))
+        assertFalse(BillSplit.isOffered(Cart(lines = listOf(line(2, 1)))))
+        assertFalse(BillSplit.isOffered(Cart()))
     }
 }

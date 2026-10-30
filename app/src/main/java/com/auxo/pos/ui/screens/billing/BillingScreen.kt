@@ -86,6 +86,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.auth.Permission
+import com.auxo.pos.domain.billing.BillSplit
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.DiscountLimits
 import com.auxo.pos.ui.can
@@ -322,7 +323,6 @@ fun BillingScreen(
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
-                            ActionIcon(R.drawable.ic_invoice, stringResource(R.string.split_icon), { showSplit = true }, Modifier.testTag("split_open"))
                             ActionIcon(
                                 R.drawable.ic_pause,
                                 stringResource(R.string.hold_icon),
@@ -372,6 +372,8 @@ fun BillingScreen(
                 ChargeBar(
                     total = formatter.format(uiState.totals.grandTotal),
                     inPayment = inPayment,
+                    showSplit = uiState.canHold && BillSplit.isOffered(uiState.cart),
+                    onSplit = { showSplit = true },
                     canComplete = uiState.paymentRemaining.isZero && uiState.paymentErrors.isEmpty(),
                     isSaving = uiState.isSaving,
                     onCharge = actions::onCharge,
@@ -469,6 +471,8 @@ fun BillingScreen(
 private fun ChargeBar(
     total: String,
     inPayment: Boolean,
+    showSplit: Boolean,
+    onSplit: () -> Unit,
     canComplete: Boolean,
     isSaving: Boolean,
     onCharge: () -> Unit,
@@ -499,6 +503,11 @@ private fun ChargeBar(
                     }
                 }
             } else {
+                if (showSplit) {
+                    // Splitting a restaurant bill, right beside the button that charges it.
+                    ActionIcon(R.drawable.ic_split, stringResource(R.string.split_icon), onSplit, Modifier.testTag("split_open"))
+                    Spacer(Modifier.width(Spacing.sm))
+                }
                 Button(onClick = onCharge, modifier = Modifier.testTag("billing_charge")) {
                     Text(stringResource(R.string.billing_charge, total))
                 }

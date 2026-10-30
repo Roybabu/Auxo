@@ -37,6 +37,9 @@ object BillSplit {
     const val MIN_PEOPLE = 2
     const val MAX_PEOPLE = 20
 
+    /** Splitting a bill is offered on a restaurant bill (one with a dish on it), not on shop bills. */
+    fun isOffered(cart: Cart): Boolean = cart.needsTable
+
     /**
      * [total] divided between [people], to the paisa. When it does not divide evenly the first people pay one paisa
      * more, so the shares always add up to exactly [total].
