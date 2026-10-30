@@ -25,8 +25,8 @@ class DocumentsBackupStorageTest {
         val saved = DocumentsBackupStorage(context, testFileUri(context)).save("Auxo-backup-test.zip") { it.write("zip-bytes".toByteArray()) }
 
         assertEquals("Auxo-backup-test.zip", saved.fileName)
-        assertTrue(saved.folder.endsWith("files/Auxo"))
-        val file = File(File(context.getExternalFilesDir(null), "Auxo"), "Auxo-backup-test.zip")
+        assertTrue(saved.folder.endsWith("files/${DocumentsBackupStorage.FOLDER}"))
+        val file = File(File(context.getExternalFilesDir(null), DocumentsBackupStorage.FOLDER), "Auxo-backup-test.zip")
         assertEquals("zip-bytes", file.readText())
     }
 }
