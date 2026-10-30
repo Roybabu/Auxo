@@ -22,7 +22,8 @@ enum class SettingsError {
 }
 
 object SettingsValidator {
-    const val STORE_NAME_MAX = 60
+    /** The same limit as the business name asked for at first-time setup, so a name accepted there can always be saved here. */
+    const val STORE_NAME_MAX = 70
     const val ADDRESS_MAX = 200
     const val FOOTER_MAX = 120
     const val UPI_PAYEE_MAX = 50

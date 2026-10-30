@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
+import com.auxo.pos.domain.billing.SettingsValidator
 import com.auxo.pos.domain.billing.InvoiceNumbers
 import com.auxo.pos.domain.billing.SettingsError
 import com.auxo.pos.domain.billing.SettingsField
@@ -204,7 +205,7 @@ fun StoreSection(
     if (showName) {
         AuxoTextField(
             value = settings.storeName,
-            onValueChange = { v -> onChange { it.copy(storeName = v.take(70)) } },
+            onValueChange = { v -> onChange { it.copy(storeName = v.take(SettingsValidator.STORE_NAME_MAX)) } },
             label = stringResource(R.string.settings_store_name),
             error = errorOf(errors, SettingsField.STORE_NAME),
             capitalization = KeyboardCapitalization.Words,
@@ -384,7 +385,7 @@ fun UpiSection(
     )
     AuxoTextField(
         value = settings.upiPayeeName,
-        onValueChange = { v -> onChange { it.copy(upiPayeeName = v.take(60)) } },
+        onValueChange = { v -> onChange { it.copy(upiPayeeName = v.take(SettingsValidator.UPI_PAYEE_MAX)) } },
         label = stringResource(R.string.settings_upi_payee),
         error = errorOf(errors, SettingsField.UPI_PAYEE),
         capitalization = KeyboardCapitalization.Words,
