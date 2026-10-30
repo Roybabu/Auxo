@@ -217,6 +217,14 @@ fun HeldBillsDialog(
     var confirming by remember { mutableStateOf<HeldBillSummary?>(null) }
     var filter by rememberSaveable { mutableStateOf(HeldFilter.ALL) }
     val shown = bills.filter { filter.matches(it) }
+    // Re-read the clock every minute so "waiting" times keep moving while the list is open.
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            value = System.currentTimeMillis()
+        }
+    }
+    val stale = HeldBills.staleCount(bills, now)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.held_title)) },
@@ -229,6 +237,14 @@ fun HeldBillsDialog(
                         stringResource(R.string.held_counter_busy),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (stale > 0) {
+                    Text(
+                        pluralStringResource(R.plurals.held_stale_note, stale, stale, HeldBills.STALE_HOURS),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("held_stale_note"),
                     )
                 }
                 if (bills.isNotEmpty()) {
@@ -257,6 +273,16 @@ fun HeldBillsDialog(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            if (bill.id != resumedId) {
+                                val minutes = HeldBills.waitingMinutes(bill, now)
+                                Text(
+                                    if (minutes < 60) stringResource(R.string.held_waiting_min, minutes.toInt())
+                                    else stringResource(R.string.held_waiting_hours, (minutes / 60).toInt(), (minutes % 60).toInt()),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (HeldBills.isStale(bill, now)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.testTag("held_waiting_${bill.id}"),
+                                )
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (bill.id == resumedId) {
                                     Text(stringResource(R.string.held_on_counter), style = MaterialTheme.typography.labelMedium)

@@ -1512,6 +1512,12 @@
     <string name="hold_icon">बिल होल्ड करें</string>
     <string name="held_icon">होल्ड किए गए बिल (%1$d)</string>
     <string name="held_title">होल्ड किए गए बिल</string>
+    <string name="held_waiting_min">%1$d मिनट से इंतज़ार में</string>
+    <string name="held_waiting_hours">%1$d घंटा %2$d मिनट से इंतज़ार में</string>
+    <plurals name="held_stale_note">
+        <item quantity="one">%1$d होल्ड किया गया बिल %2$d घंटे से ज़्यादा से इंतज़ार में है</item>
+        <item quantity="other">%1$d होल्ड किए गए बिल %2$d घंटे से ज़्यादा से इंतज़ार में हैं</item>
+    </plurals>
     <string name="held_empty">कोई बिल होल्ड पर नहीं है।</string>
     <string name="held_counter_busy">दूसरा बिल खोलने से पहले मौजूदा बिल को होल्ड करें या साफ़ करें।</string>
     <string name="held_unnamed">होल्ड किया गया बिल</string>

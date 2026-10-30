@@ -333,7 +333,22 @@ fun BillingScreen(
                         }
                         if (uiState.canHold && (uiState.heldBills.isNotEmpty() || uiState.resumedHeldId != null)) {
                             IconButton(onClick = { showHeld = true }, modifier = Modifier.testTag("held_open")) {
-                                BadgedBox(badge = { Badge { Text(uiState.heldBills.size.toString()) } }) {
+                                // The badge turns red while any parked bill has waited too long.
+                                val clockNow by androidx.compose.runtime.produceState(System.currentTimeMillis()) {
+                                    while (true) {
+                                        kotlinx.coroutines.delay(60_000)
+                                        value = System.currentTimeMillis()
+                                    }
+                                }
+                                val anyStale = HeldBills.staleCount(uiState.heldBills, clockNow) > 0
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = if (anyStale) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.testTag("held_badge"),
+                                        ) { Text(uiState.heldBills.size.toString()) }
+                                    },
+                                ) {
                                     Icon(painterResource(R.drawable.ic_bookmark), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
                                 }
                             }

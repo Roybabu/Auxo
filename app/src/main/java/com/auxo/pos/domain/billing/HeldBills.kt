@@ -41,6 +41,18 @@ object HeldBills {
     /** A table count as the owner typed it, or null when it is not a number from 1 to [MAX_TABLES]. */
     fun parseTableCount(text: String): Int? = text.trim().takeIf { it.length in 1..2 && it.all(Char::isDigit) }?.toInt()?.takeIf { it in 1..MAX_TABLES }
 
+    /** A parked bill that has waited this long is flagged, so a customer's bill is not forgotten. */
+    const val STALE_HOURS = 2
+
+    /** Whole minutes a bill has been parked (since it was last saved), never negative. */
+    fun waitingMinutes(bill: HeldBillSummary, nowMillis: Long): Long = ((nowMillis - bill.updatedAtMillis) / 60_000L).coerceAtLeast(0)
+
+    /** True when [bill] has waited at least [STALE_HOURS] hours. */
+    fun isStale(bill: HeldBillSummary, nowMillis: Long): Boolean = waitingMinutes(bill, nowMillis) >= STALE_HOURS * 60L
+
+    /** How many of [bills] are stale. */
+    fun staleCount(bills: List<HeldBillSummary>, nowMillis: Long): Int = bills.count { isStale(it, nowMillis) }
+
     /** The label as it is kept: one line, trimmed, not longer than [LABEL_MAX]. */
     fun cleanLabel(label: String): String = label.replace(Regex("\\s+"), " ").trim().take(LABEL_MAX)
 }

@@ -1512,6 +1512,12 @@ in %2$s</string>
     <string name="hold_icon">Hold bill</string>
     <string name="held_icon">Held bills (%1$d)</string>
     <string name="held_title">Held bills</string>
+    <string name="held_waiting_min">Waiting %1$d min</string>
+    <string name="held_waiting_hours">Waiting %1$d h %2$d min</string>
+    <plurals name="held_stale_note">
+        <item quantity="one">%1$d parked bill has been waiting more than %2$d hours</item>
+        <item quantity="other">%1$d parked bills have been waiting more than %2$d hours</item>
+    </plurals>
     <string name="held_empty">No bills are on hold.</string>
     <string name="held_counter_busy">Hold or clear the current bill before resuming another.</string>
     <string name="held_unnamed">Held bill</string>

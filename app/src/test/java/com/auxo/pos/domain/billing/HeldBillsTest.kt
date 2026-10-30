@@ -38,4 +38,30 @@ class HeldBillsTest {
         assertNull(HeldBills.parseTableCount(""))
         assertNull(HeldBills.parseTableCount("a"))
     }
+
+    private fun parkedAt(id: Long, updated: Long) = HeldBillSummary(id, "", 0, updated, 1, Money(100), tokenNumber = 1)
+
+    @Test
+    fun aBill_isStaleAfterTwoHours_andNotBefore() {
+        val minute = 60_000L
+        val bill = parkedAt(1, updated = 0)
+        assertEquals(0, HeldBills.waitingMinutes(bill, 0))
+        assertEquals(119, HeldBills.waitingMinutes(bill, 119 * minute + 59_000))
+        assertEquals(false, HeldBills.isStale(bill, 119 * minute))
+        assertEquals(true, HeldBills.isStale(bill, 120 * minute))
+    }
+
+    @Test
+    fun theClockBeingBehind_neverGivesNegativeWaiting() {
+        assertEquals(0, HeldBills.waitingMinutes(parkedAt(1, updated = 10_000_000), 5_000_000))
+    }
+
+    @Test
+    fun staleCount_countsOnlyTheOldBills() {
+        val hour = 3_600_000L
+        val bills = listOf(parkedAt(1, 0), parkedAt(2, 2 * hour), parkedAt(3, 3 * hour))
+        assertEquals(1, HeldBills.staleCount(bills, 3 * hour))
+        assertEquals(2, HeldBills.staleCount(bills, 4 * hour))
+        assertEquals(0, HeldBills.staleCount(emptyList(), 4 * hour))
+    }
 }

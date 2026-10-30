@@ -1512,6 +1512,12 @@
     <string name="hold_icon">বিল হোল্ড করুন</string>
     <string name="held_icon">হোল্ড করা বিল (%1$d)</string>
     <string name="held_title">হোল্ড করা বিল</string>
+    <string name="held_waiting_min">%1$d মিনিট ধরে অপেক্ষায়</string>
+    <string name="held_waiting_hours">%1$d ঘণ্টা %2$d মিনিট ধরে অপেক্ষায়</string>
+    <plurals name="held_stale_note">
+        <item quantity="one">%1$dটি হোল্ড করা বিল %2$d ঘণ্টার বেশি অপেক্ষায় আছে</item>
+        <item quantity="other">%1$dটি হোল্ড করা বিল %2$d ঘণ্টার বেশি অপেক্ষায় আছে</item>
+    </plurals>
     <string name="held_empty">কোনো বিল হোল্ডে নেই।</string>
     <string name="held_counter_busy">অন্য বিল চালু করার আগে বর্তমান বিল হোল্ড করুন বা মুছে দিন।</string>
     <string name="held_unnamed">হোল্ড করা বিল</string>
