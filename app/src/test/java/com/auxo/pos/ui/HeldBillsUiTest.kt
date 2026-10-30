@@ -58,6 +58,19 @@ class HeldBillsUiTest {
     }
 
     @Test
+    fun holdForm_showsTheCustomersSavedPhone_orTheOptionalLabelWhenThereIsNone() {
+        var phone by androidx.compose.runtime.mutableStateOf("9830012345")
+        composeRule.setContent {
+            AuxoTheme { HoldBillForm(label = "Anita Das", onLabelChange = {}, phone = phone, onPhoneChange = { phone = it }) }
+        }
+        composeRule.onNodeWithText("9830012345").assertIsDisplayed()
+
+        phone = ""
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Customer phone (optional)").assertIsDisplayed()
+    }
+
+    @Test
     fun heldList_showsEachBill_andResumeNeedsAnEmptyCounter() {
         var resumed: Long? = null
         composeRule.setContent {

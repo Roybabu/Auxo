@@ -64,4 +64,12 @@ class HeldBillsTest {
         assertEquals(2, HeldBills.staleCount(bills, 4 * hour))
         assertEquals(0, HeldBills.staleCount(emptyList(), 4 * hour))
     }
+
+    @Test
+    fun phoneDigits_keepsTheLastTenDigits() {
+        assertEquals("9830012345", HeldBills.phoneDigits("98300 12345"))
+        assertEquals("9830012345", HeldBills.phoneDigits("+91 98300-12345"))
+        assertEquals("", HeldBills.phoneDigits(""))
+        assertEquals("", HeldBills.phoneDigits("none"))
+    }
 }
