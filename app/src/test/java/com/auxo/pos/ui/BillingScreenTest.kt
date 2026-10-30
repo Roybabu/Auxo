@@ -21,6 +21,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -184,6 +185,33 @@ class BillingScreenTest {
         composeRule.onNodeWithTag("billing_search").performKeyInput { pressKey(Key.Enter) }
         composeRule.waitForIdle()
         assertEquals(1, submitted)
+    }
+
+    @Test
+    fun theScanButton_sitsInsideTheSearchBox_andStartsAScan() {
+        var scans = 0
+        show {
+            CartContent(
+                state = cartState(Cart()),
+                actions = object : BillingActions {
+                    override fun onScan() {
+                        scans++
+                    }
+                },
+            )
+        }
+        composeRule.onNodeWithTag("billing_scan").assertIsDisplayed()
+        composeRule.onNodeWithTag("billing_scan").performClick()
+        assertEquals(1, scans)
+    }
+
+    @Test
+    fun theScanButton_staysInTheSearchBox_whileTypedTextCanBeCleared() {
+        show {
+            CartContent(state = cartState(Cart()).copy(searchText = "shirt"), actions = object : BillingActions {})
+        }
+        composeRule.onNodeWithTag("billing_scan").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clear").assertIsDisplayed()
     }
 
     @Test

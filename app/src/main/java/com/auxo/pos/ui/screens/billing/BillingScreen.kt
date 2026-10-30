@@ -138,6 +138,8 @@ import java.time.LocalDate
 interface BillingActions {
     fun onSearchTextChange(text: String) = Unit
     fun onSearchSubmitted() = Unit
+    /** The scan button inside the search box. */
+    fun onScan() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
     fun onQuickSectionChange(section: String?) = Unit
     fun onBrowseCategoryChange(category: ProductCategory?) = Unit
@@ -272,6 +274,7 @@ fun BillingScreen(
         object : BillingActions {
             override fun onSearchTextChange(text: String) = viewModel.onSearchTextChange(text)
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
+            override fun onScan() = scan()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
             override fun onQuickSectionChange(section: String?) = viewModel.onQuickSectionChange(section)
             override fun onBrowseCategoryChange(category: ProductCategory?) = viewModel.onBrowseCategoryChange(category)
@@ -321,7 +324,6 @@ fun BillingScreen(
                 onBack = if (inPayment) viewModel::backToCart else null,
                 actions = {
                     if (!inPayment) {
-                        ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
                             ActionIcon(
                                 R.drawable.ic_pause,
@@ -567,14 +569,18 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 imeAction = ImeAction.Search,
                 keyboardActions = KeyboardActions(onSearch = { actions.onSearchSubmitted() }),
                 leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
-                trailingIcon = if (state.searchText.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { actions.onSearchTextChange("") }) {
-                            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.action_clear))
+                // The scan button sits at the far right inside the search box; a clear button joins it once there is text.
+                trailingIcon = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (state.searchText.isNotEmpty()) {
+                            IconButton(onClick = { actions.onSearchTextChange("") }) {
+                                Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.action_clear))
+                            }
+                        }
+                        IconButton(onClick = actions::onScan, modifier = Modifier.testTag("billing_scan")) {
+                            Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.action_scan))
                         }
                     }
-                } else {
-                    null
                 },
             )
         }
