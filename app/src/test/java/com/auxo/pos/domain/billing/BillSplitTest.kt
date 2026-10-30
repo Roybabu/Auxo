@@ -3,6 +3,7 @@
 
 package com.auxo.pos.domain.billing
 
+import com.auxo.pos.domain.loyalty.LoyaltyRedemption
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.StockUnit
 import com.auxo.pos.testutil.TestData
