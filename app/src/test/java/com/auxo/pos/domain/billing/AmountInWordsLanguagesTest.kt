@@ -45,7 +45,7 @@ class AmountInWordsLanguagesTest {
 
     @Test
     fun theWordsForOneToNinetyNine_areAllFilledInAndDistinct() {
-        for (table in listOf(NumberWords.HINDI, NumberWords.BENGALI)) {
+        for (table in listOf(NumberWords.HINDI, NumberWords.BENGALI, NumberWords.ASSAMESE)) {
             val spelled = (1..99).map { table.belowHundred(it) }
             assertTrue(spelled.none { it.isBlank() })
             assertEquals(99, spelled.toSet().size)
@@ -58,7 +58,22 @@ class AmountInWordsLanguagesTest {
     }
 
     @Test
-    fun assamese_usesEnglishWordsForNow() {
-        assertEquals(words(1_557_00, Language.ENGLISH), words(1_557_00, Language.ASSAMESE))
+    fun assamese_spellsAmountsWithLakhAndCrore() {
+        assertEquals("শূন্য টকা মাত্ৰ", words(0, Language.ASSAMESE))
+        assertEquals("এশ ওঠৰ টকা মাত্ৰ", words(118_00, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ পাঁচশ সাতাৱন্ন টকা মাত্ৰ", words(1_557_00, Language.ASSAMESE))
+        assertEquals("এক লাখ পাঁচশ টকা আৰু পঞ্চাশ পইচা মাত্ৰ", words(1_00_500_50, Language.ASSAMESE))
+        assertEquals(
+            "বাৰ কোটি চৌত্ৰিশ লাখ ছাপন্ন হাজাৰ সাতশ ঊননব্বৈ টকা মাত্ৰ",
+            words(12_34_56_789_00, Language.ASSAMESE),
+        )
+    }
+
+    @Test
+    fun assamese_hasAWordForEachWholeHundred() {
+        val spelled = (1..9).map { words(it * 100_00, Language.ASSAMESE) }
+        assertEquals(9, spelled.toSet().size)
+        assertEquals("দুশ টকা মাত্ৰ", words(200_00, Language.ASSAMESE))
+        assertEquals("নশ টকা মাত্ৰ", words(900_00, Language.ASSAMESE))
     }
 }

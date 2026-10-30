@@ -15,6 +15,11 @@ internal class NumberWords(
     private val thousand: String,
     private val lakh: String,
     private val crore: String,
+    /**
+     * Some languages write each whole hundred as one word (Assamese "দুশ", "তিনিশ"); then this holds those words, indexed
+     * 1 to 9, and [hundred] is not used. Null means the usual "[number] [hundred]".
+     */
+    private val hundreds: List<String>? = null,
     /** How a whole number of rupees, the paise and the closing word are put together. */
     private val sentence: (rupees: String, paise: String?) -> String,
 ) {
@@ -44,7 +49,7 @@ internal class NumberWords(
         if (thousandCount > 0) parts += below100[thousandCount] + " " + thousand
         val hundredCount = (n / 100).toInt()
         n %= 100
-        if (hundredCount > 0) parts += below100[hundredCount] + " " + hundred
+        if (hundredCount > 0) parts += hundreds?.get(hundredCount) ?: (below100[hundredCount] + " " + hundred)
         if (n > 0) parts += below100[n.toInt()]
         return parts.joinToString(" ")
     }
@@ -262,6 +267,118 @@ internal class NumberWords(
             ),
             hundred = "শত", thousand = "হাজার", lakh = "লক্ষ", crore = "কোটি",
             sentence = { rupees, paise -> rupees + " টাকা" + (paise?.let { " এবং $it পয়সা" } ?: "") + " মাত্র" },
+        )
+
+        /**
+         * Assamese. The words for 1 to 99 and for hundreds were supplied by the shop owner and have not been checked by a
+         * second native reader; "মাত্ৰ" (only), "আৰু" (and) and "পইচা" (paisa) complete the sentence.
+         */
+        val ASSAMESE = NumberWords(
+            below100 = listOf(
+            "শূন্য",
+            "এক",
+            "দুই",
+            "তিনি",
+            "চাৰি",
+            "পাঁচ",
+            "ছয়",
+            "সাত",
+            "আঠ",
+            "ন",
+            "দহ",
+            "এঘাৰ",
+            "বাৰ",
+            "তেৰ",
+            "চৈধ্য",
+            "পোন্ধৰ",
+            "ষোল্ল",
+            "সোতৰ",
+            "ওঠৰ",
+            "ঊনৈছ",
+            "বিশ",
+            "একৈশ",
+            "বাইশ",
+            "তেইশ",
+            "চৌব্বিশ",
+            "পঁচিশ",
+            "ছাব্বিশ",
+            "সাতাইশ",
+            "আঠাইশ",
+            "ঊনত্ৰিশ",
+            "ত্ৰিশ",
+            "একত্ৰিশ",
+            "বত্ৰিশ",
+            "তেত্ৰিশ",
+            "চৌত্ৰিশ",
+            "পঁয়ত্ৰিশ",
+            "ছয়ত্ৰিশ",
+            "সাতত্ৰিশ",
+            "আঠত্ৰিশ",
+            "ঊনচল্লিশ",
+            "চল্লিশ",
+            "একচল্লিশ",
+            "বিয়াল্লিশ",
+            "তিয়াল্লিশ",
+            "চৌৰাল্লিশ",
+            "পঞ্চল্লিশ",
+            "ছয়চল্লিশ",
+            "সাতচল্লিশ",
+            "আঠচল্লিশ",
+            "ঊনপঞ্চাশ",
+            "পঞ্চাশ",
+            "একাৱন্ন",
+            "বাৱন্ন",
+            "তেৱন্ন",
+            "চৌৱন্ন",
+            "পঁচপন্ন",
+            "ছাপন্ন",
+            "সাতাৱন্ন",
+            "আঠাৱন্ন",
+            "ঊনষাঠি",
+            "ষাঠি",
+            "এষষ্ঠি",
+            "বাষষ্ঠি",
+            "তেষষ্ঠি",
+            "চৌষষ্ঠি",
+            "পঁয়ষষ্ঠি",
+            "ছয়ষষ্ঠি",
+            "সাতষষ্ঠি",
+            "আঠষষ্ঠি",
+            "ঊনসত্তৰ",
+            "সত্তৰ",
+            "একসত্তৰ",
+            "বাসত্তৰ",
+            "তেসত্তৰ",
+            "চৌসত্তৰ",
+            "পঁচসত্তৰ",
+            "ছয়সত্তৰ",
+            "সাতসত্তৰ",
+            "আঠসত্তৰ",
+            "ঊনাশী",
+            "আশী",
+            "একাশী",
+            "বিৰাশী",
+            "তিৰাশী",
+            "চৌৰাশী",
+            "পঁচাশী",
+            "ছয়াশী",
+            "সাতাশী",
+            "আঠাশী",
+            "ঊননব্বৈ",
+            "নব্বৈ",
+            "একানব্বৈ",
+            "বিৰানব্বৈ",
+            "তিৰানব্বৈ",
+            "চৌৰানব্বৈ",
+            "পঁচানব্বৈ",
+            "ছয়ানব্বৈ",
+            "সাতানব্বৈ",
+            "আঠানব্বৈ",
+            "নিৰানব্বৈ"
+            ),
+            hundred = "শ", thousand = "হাজাৰ", lakh = "লাখ", crore = "কোটি",
+            hundreds = listOf("", "এশ", "দুশ", "তিনিশ", "চাৰিশ", "পাঁচশ", "ছয়শ", "সাতশ", "আঠশ", "নশ"),
+            sentence = { rupees, paise -> rupees + " টকা" + (paise?.let { " আৰু $it পইচা" } ?: "") + " মাত্ৰ" },
         )
     }
 }

@@ -51,7 +51,7 @@ object AmountInWords {
 
     fun rupees(money: Money): String = rupees(money, Language.ENGLISH)
 
-    /** The amount in words in [language]: English, Hindi or Bengali (Assamese falls back to English). */
+    /** The amount in words in [language]: English, Hindi, Bengali or Assamese. */
     fun rupees(money: Money, language: Language): String {
         val absolute = abs(money.minorUnits)
         val rupees = absolute / 100
@@ -59,8 +59,8 @@ object AmountInWords {
         when (language) {
             Language.HINDI -> return NumberWords.HINDI.rupees(rupees, paise)
             Language.BENGALI -> return NumberWords.BENGALI.rupees(rupees, paise)
-            // Assamese bills print the amount in English words until Assamese number words are added and checked.
-            Language.ENGLISH, Language.ASSAMESE -> Unit
+            Language.ASSAMESE -> return NumberWords.ASSAMESE.rupees(rupees, paise)
+            Language.ENGLISH -> Unit
         }
         val rupeeWords = if (rupees == 0L) "Zero" else words(rupees)
         val paiseWords = if (paise > 0) " and ${belowHundred(paise)} Paise" else ""
