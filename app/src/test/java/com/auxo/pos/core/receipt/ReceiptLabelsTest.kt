@@ -58,9 +58,9 @@ class ReceiptLabelsTest {
     }
 
     @Test
-    fun hindiAndBengali_areNotJustEnglishRepeated() {
+    fun hindiBengaliAndAssamese_areNotJustEnglishRepeated() {
         val english = values(ReceiptLabels.from(context, Language.ENGLISH))
-        for (language in listOf(Language.HINDI, Language.BENGALI)) {
+        for (language in listOf(Language.HINDI, Language.BENGALI, Language.ASSAMESE)) {
             val translated = values(ReceiptLabels.from(context, language))
             val same = english.filter { (name, value) -> name != "thankYou" && translated[name] == value }.keys
             // Only abbreviations and format templates may stay the same.

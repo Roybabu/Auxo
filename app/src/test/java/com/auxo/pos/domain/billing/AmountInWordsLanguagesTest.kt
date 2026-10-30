@@ -56,4 +56,9 @@ class AmountInWordsLanguagesTest {
     fun aNegativeAmount_isSpelledWithoutASign() {
         assertEquals(words(118_00, Language.HINDI), words(-118_00, Language.HINDI))
     }
+
+    @Test
+    fun assamese_usesEnglishWordsForNow() {
+        assertEquals(words(1_557_00, Language.ENGLISH), words(1_557_00, Language.ASSAMESE))
+    }
 }
