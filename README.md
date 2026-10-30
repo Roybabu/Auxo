@@ -86,6 +86,8 @@ Open the folder in Android Studio, let it sync, pick a device and press Run. If 
 ./gradlew lintDebug                 # Android lint
 ./gradlew connectedDebugAndroidTest # device tests (phone or emulator)
 ```
+**Debug and final builds side by side.** The debug build has its own app ID (`com.auxo.pos.debug`) and shows as "Auxo Debug", so it installs next to the final Auxo with separate data. It has no update option (updates are for the final build only) and saves its backups in `Documents/Auxo Debug` instead of `Documents/Auxo`. To move shop data between the two, make a backup in one and restore it in the other.
+
 Before you commit, run `python3 .github/scripts/security_check.py` (the same secret and manifest check CI runs). If you change the database, bump the version, add a migration and its test, and commit the new file in `app/schemas`.
 
 Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.github/workflows/android-ci.yml`) builds, tests, lints and runs device tests on an emulator.

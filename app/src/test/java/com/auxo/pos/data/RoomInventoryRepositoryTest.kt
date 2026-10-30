@@ -90,6 +90,29 @@ class RoomInventoryRepositoryTest {
     }
 
     @Test
+    fun skuOfAnotherProduct_isAConflict_andOnlyTheClashingSkuIsReported() = runTest {
+        val shirt = TestData.tShirt()
+        saveNew(shirt.copy(variants = shirt.variants.mapIndexed { i, v -> v.copy(sku = "TS-$i") }))
+        val biscuits = TestData.biscuits()
+        val clash = biscuits.copy(variants = biscuits.variants.map { it.copy(sku = "TS-0") })
+
+        val result = repository.saveProduct(clash.copy(id = 0, variants = clash.variants.map { it.copy(id = 0) }))
+
+        assertEquals(SaveProductResult.Conflict(skusInUse = setOf("TS-0")), result)
+    }
+
+    @Test
+    fun aVariantWithoutABarcode_isRefusedBeforeAnythingIsSaved() = runTest {
+        val shirt = TestData.tShirt()
+        val blank = shirt.copy(id = 0, variants = shirt.variants.map { it.copy(id = 0, barcode = "  ") })
+
+        val refused = runCatching { repository.saveProduct(blank) }.exceptionOrNull()
+
+        assertTrue(refused is IllegalArgumentException)
+        assertEquals(emptyList<Product>(), repository.observeProducts().first())
+    }
+
+    @Test
     fun editing_updatesFieldsKeepsStockAndRemovesDroppedVariants() = runTest {
         val stored = saveNew(TestData.tShirt())
         val medium = stored.variants.first { it.size == "M" }

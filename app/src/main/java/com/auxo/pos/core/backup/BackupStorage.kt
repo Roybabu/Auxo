@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Environment
 import androidx.annotation.RequiresApi
 import android.provider.MediaStore
+import com.auxo.pos.BuildConfig
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
@@ -131,8 +132,8 @@ class DocumentsBackupStorage(
     }
 
     companion object {
-        /** The folder named after the app. */
-        const val FOLDER = "Auxo"
+        /** The folder named after the app: "Auxo", or "Auxo Debug" in a debug build so test backups never mix with real ones. */
+        const val FOLDER = BuildConfig.BACKUP_FOLDER
         const val MIME_TYPE = "application/zip"
 
         /** A locked backup is not a zip file, so it is not labelled as one. */

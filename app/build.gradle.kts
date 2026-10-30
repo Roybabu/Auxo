@@ -22,6 +22,10 @@ android {
         versionCode = 5
         versionName = "1.0.0"
 
+        // The final build checks GitHub for updates and keeps backups in Documents/Auxo. The debug build overrides both.
+        buildConfigField("boolean", "UPDATES_ENABLED", "true")
+        buildConfigField("String", "BACKUP_FOLDER", "\"Auxo\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -58,6 +62,14 @@ android {
         debug {
             // Off by default (it slows the tests). CI's coverage job turns it on with -Pcoverage.
             enableUnitTestCoverage = providers.gradleProperty("coverage").isPresent
+
+            // A debug build installs beside the final build instead of clashing with it: its own app ID (so the two
+            // have separate data and different signing keys do not matter), its own name (see src/debug/res), no
+            // update check (updates are for the final build only) and its own backup folder.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            buildConfigField("boolean", "UPDATES_ENABLED", "false")
+            buildConfigField("String", "BACKUP_FOLDER", "\"Auxo Debug\"")
         }
         release {
             // R8 shrinks and obfuscates the code and removes unused resources, which makes the app much smaller.
@@ -86,6 +98,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

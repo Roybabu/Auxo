@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.auxo.pos.BuildConfig
 import com.auxo.pos.R
 import com.auxo.pos.core.auth.Permission
 import com.auxo.pos.core.auth.Role
@@ -251,7 +252,8 @@ fun MoreScreen(
                 actions::onOpenAppearance,
                 modifier = Modifier.testTag("more_appearance"),
             )
-            UpdateCard()
+            // The final build only: a debug build has no update option.
+            if (BuildConfig.UPDATES_ENABLED) UpdateCard()
         }
     }
 

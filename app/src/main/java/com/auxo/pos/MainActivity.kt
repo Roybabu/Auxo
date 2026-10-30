@@ -131,7 +131,8 @@ class MainActivity : FragmentActivity() {
                     // Signing in ends the "make a sign-in after a restore" step.
                     LaunchedEffect(authState) { if (authState is AuthState.SignedIn) container.restoredSignIn.clear() }
                     // Once someone is signed in, look quietly for a newer version and offer it if there is one.
-                    if (authState is AuthState.SignedIn) {
+                    // Debug builds never do: updates are for the final build only.
+                    if (BuildConfig.UPDATES_ENABLED && authState is AuthState.SignedIn) {
                         LaunchedEffect(Unit) { container.appUpdater.checkOnLaunch() }
                         com.auxo.pos.ui.screens.more.UpdatePrompt()
                     }
