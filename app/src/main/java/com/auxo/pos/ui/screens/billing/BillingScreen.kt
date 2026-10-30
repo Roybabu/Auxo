@@ -193,6 +193,7 @@ fun BillingScreen(
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var showHold by rememberSaveable { mutableStateOf(false) }
     var showHeld by rememberSaveable { mutableStateOf(false) }
+    var showSplit by rememberSaveable { mutableStateOf(false) }
     var showQuotes by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -231,6 +232,7 @@ fun BillingScreen(
                 BillingEvent.FixCart -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_fix_cart))
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
                 BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
+                BillingEvent.BillSplitOff -> snackbarHostState.showSnackbar(resources.getString(R.string.split_done))
                 BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
                 is BillingEvent.QuotationSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_quote_saved, event.number))
                 is BillingEvent.QuotationLoaded -> {
@@ -320,6 +322,7 @@ fun BillingScreen(
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
+                            ActionIcon(R.drawable.ic_invoice, stringResource(R.string.split_icon), { showSplit = true }, Modifier.testTag("split_open"))
                             ActionIcon(
                                 R.drawable.ic_pause,
                                 stringResource(R.string.hold_icon),
@@ -418,6 +421,17 @@ fun BillingScreen(
             onShare = viewModel::shareQuotation,
             onDelete = viewModel::deleteQuotation,
             onDismiss = { showQuotes = false },
+        )
+    }
+    if (showSplit) {
+        SplitBillDialog(
+            cart = uiState.cart,
+            total = uiState.totals.grandTotal,
+            onSplitOff = { quantities ->
+                showSplit = false
+                viewModel.splitOffBill(quantities, context.resources.getString(R.string.split_label))
+            },
+            onDismiss = { showSplit = false },
         )
     }
     if (showHeld) {
