@@ -1967,4 +1967,15 @@
     <string name="find_none_short">उस फ़ोल्डर में कोई बैकअप नहीं मिला।</string>
     <string name="auth_restored_title">बैकअप बहाल हो गया</string>
     <string name="auth_restored_body">आपकी दुकान वापस आ गई है। बैकअप में साइन-इन विवरण नहीं होते, इसलिए इस फ़ोन के लिए साइन-इन बनाएँ। दुकान का नाम और विवरण बैकअप के साथ आ गए हैं।</string>
+    <string name="wizard_step_details">विवरण</string>
+    <string name="wizard_step_pricing">कीमत</string>
+    <string name="wizard_step_review">जाँच</string>
+    <string name="wizard_next">आगे</string>
+    <string name="wizard_save_product">प्रोडक्ट सेव करें</string>
+    <string name="wizard_fix_to_continue">आगे बढ़ने के लिए लाल निशान वाली जानकारी ठीक करें</string>
+    <string name="wizard_review_variants">वेरिएंट (%1$d)</string>
+    <string name="wizard_review_ready">सब ठीक है। जानकारी देखें, फिर सेव करें।</string>
+    <string name="wizard_review_fix">ठीक करें</string>
+    <string name="wizard_review_no_name">नाम नहीं है</string>
+    <string name="wizard_review_tax">GST और HSN</string>
 </resources>

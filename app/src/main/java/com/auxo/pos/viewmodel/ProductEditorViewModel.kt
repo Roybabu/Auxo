@@ -375,6 +375,8 @@ class ProductEditorViewModel(
 
     // Saving
 
+    fun revealErrors() = _uiState.update { it.copy(showErrors = true) }
+
     fun save() {
         val state = _uiState.value
         if (state.isSaving || state.isLoading) return

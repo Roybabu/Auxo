@@ -116,6 +116,8 @@ class AppFlowTest {
         waitForTag("editor_name")
 
         composeRule.onNodeWithTag("editor_name").performTextInput("Linen Shirt")
+        // Step 1 (details) to step 2 (pricing and variants).
+        composeRule.onNodeWithTag("wizard_next").performClick()
         composeRule.onNodeWithTag("product_editor").performScrollToNode(hasText("M") and hasClickAction())
         composeRule.onNode(hasText("M") and hasClickAction()).performClick()
         composeRule.onNodeWithTag("product_editor").performScrollToNode(hasTestTag("editor_colour"))
@@ -124,7 +126,9 @@ class AppFlowTest {
 
         composeRule.onNodeWithTag("product_editor").performScrollToNode(hasTestTag("variant_price_0"))
         composeRule.onNodeWithTag("variant_price_0").performTextInput("899")
-        composeRule.onNodeWithTag("product_editor").performScrollToNode(hasTestTag("editor_save"))
+        // Step 3 (review) holds the Save button.
+        composeRule.onNodeWithTag("wizard_next").performClick()
+        composeRule.onNodeWithTag("wizard_review_name").assertExists()
         composeRule.onNodeWithTag("editor_save").performClick()
 
         // After saving, the editor is replaced by the product page.

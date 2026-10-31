@@ -133,6 +133,8 @@ interface ProductEditorActions {
     fun onScanBarcode(key: String)
     fun onPickExpiry(key: String)
     fun onSave()
+    /** Shows the field errors without saving, so a step that is not ready can say why. */
+    fun onRevealErrors() = Unit
     fun onTakePhoto() = Unit
     fun onChoosePhoto() = Unit
     fun onRemovePhoto() = Unit
@@ -233,6 +235,7 @@ fun ProductEditorScreen(
                 expiryTarget = key
             }
             override fun onSave() = viewModel.save()
+            override fun onRevealErrors() = viewModel.revealErrors()
             override fun onChoosePhoto() {
                 photoColour = null
                 gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -278,8 +281,11 @@ fun ProductEditorScreen(
                 title = stringResource(if (uiState.form.isNew) R.string.editor_title_new else R.string.editor_title_edit),
                 onBack = onBack,
                 actions = {
-                    TextButton(onClick = actions::onSave, enabled = !uiState.isSaving && !uiState.isLoading) {
-                        Text(stringResource(R.string.action_save))
+                    // A new product is saved from the last step; the top Save is for editing.
+                    if (!uiState.form.isNew) {
+                        TextButton(onClick = actions::onSave, enabled = !uiState.isSaving && !uiState.isLoading) {
+                            Text(stringResource(R.string.action_save))
+                        }
                     }
                 },
             )
@@ -295,6 +301,7 @@ fun ProductEditorScreen(
                 onRetry = viewModel::retry,
                 modifier = contentModifier,
             )
+            uiState.form.isNew -> ProductWizard(uiState = uiState, actions = actions, modifier = contentModifier)
             else -> ProductEditorContent(uiState = uiState, actions = actions, modifier = contentModifier)
         }
     }
@@ -323,14 +330,6 @@ fun ProductEditorContent(
     val form = uiState.form
     val errors = uiState.visibleErrors
     val suppliersEnabled = LocalSuppliersEnabled.current
-    val shopCategories = selectableCategories(form.categoryId)
-    // A new product starts in the first category the shop sells in that fits the kind already chosen.
-    LaunchedEffect(form.isNew, form.categoryId, shopCategories.size) {
-        if (form.isNew && form.categoryId == null && shopCategories.isNotEmpty()) {
-            val pick = shopCategories.firstOrNull { it.profile == form.category } ?: shopCategories.first()
-            actions.onShopCategoryChange(pick.id, pick.profile)
-        }
-    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -339,37 +338,7 @@ fun ProductEditorContent(
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         if (form.isNew) {
-            item(key = "category") {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    SectionHeader(stringResource(R.string.editor_category))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                        if (shopCategories.isEmpty()) {
-                            visibleCategories().forEach { category ->
-                                FilterChip(
-                                    selected = form.category == category,
-                                    onClick = { actions.onCategoryChange(category) },
-                                    label = { Text(stringResource(category.labelRes())) },
-                                    leadingIcon = {
-                                        Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
-                                    },
-                                )
-                            }
-                        } else {
-                            shopCategories.forEach { row ->
-                                FilterChip(
-                                    selected = form.categoryId == row.id,
-                                    onClick = { actions.onShopCategoryChange(row.id, row.profile) },
-                                    label = { Text(row.label()) },
-                                    leadingIcon = {
-                                        Icon(painterResource(row.profile.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
-                                    },
-                                    modifier = Modifier.testTag("category_chip_${row.id}"),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            item(key = "category") { CategoryPicker(form, actions) }
         }
 
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
@@ -453,8 +422,51 @@ fun ProductEditorContent(
     }
 }
 
+/** The category cards a new product is filed under: the shop's own categories, or the built-in kinds when it has none. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PhotoSection(form: ProductForm, busy: Boolean, actions: ProductEditorActions) {
+internal fun CategoryPicker(form: ProductForm, actions: ProductEditorActions) {
+    val shopCategories = selectableCategories(form.categoryId)
+    // A new product starts in the first category the shop sells in that fits the kind already chosen.
+    LaunchedEffect(form.isNew, form.categoryId, shopCategories.size) {
+        if (form.isNew && form.categoryId == null && shopCategories.isNotEmpty()) {
+            val pick = shopCategories.firstOrNull { it.profile == form.category } ?: shopCategories.first()
+            actions.onShopCategoryChange(pick.id, pick.profile)
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SectionHeader(stringResource(R.string.editor_category))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            if (shopCategories.isEmpty()) {
+                visibleCategories().forEach { category ->
+                    FilterChip(
+                        selected = form.category == category,
+                        onClick = { actions.onCategoryChange(category) },
+                        label = { Text(stringResource(category.labelRes())) },
+                        leadingIcon = {
+                            Icon(painterResource(category.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                    )
+                }
+            } else {
+                shopCategories.forEach { row ->
+                    FilterChip(
+                        selected = form.categoryId == row.id,
+                        onClick = { actions.onShopCategoryChange(row.id, row.profile) },
+                        label = { Text(row.label()) },
+                        leadingIcon = {
+                            Icon(painterResource(row.profile.iconRes()), contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        modifier = Modifier.testTag("category_chip_${row.id}"),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun PhotoSection(form: ProductForm, busy: Boolean, actions: ProductEditorActions) {
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_photo")) {
         Row(
             modifier = Modifier.padding(Spacing.lg),
@@ -498,7 +510,7 @@ private fun PhotoSection(form: ProductForm, busy: Boolean, actions: ProductEdito
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+internal fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             SectionHeader(stringResource(R.string.editor_details))
@@ -614,7 +626,7 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
 /** A free-text grouping inside the category, with the subcategories the admin listed offered as one-tap choices. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SubcategorySection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+internal fun SubcategorySection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     val listed = LocalCategories.current.firstOrNull { it.id == form.categoryId }?.subcategories.orEmpty()
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_subcategory_card")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -646,7 +658,7 @@ private fun SubcategorySection(form: ProductForm, errors: ProductFormErrors, act
 }
 
 @Composable
-private fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+internal fun RestaurantSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("editor_restaurant")) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             SectionHeader(stringResource(R.string.editor_restaurant))
@@ -682,7 +694,7 @@ private fun SwitchRow(title: String, body: String, checked: Boolean, onCheckedCh
 /** The supplier reorders go to. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, actions: ProductEditorActions) {
+internal fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, actions: ProductEditorActions) {
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             SectionHeader(stringResource(R.string.editor_purchasing))
@@ -726,7 +738,7 @@ private fun PurchasingSection(form: ProductForm, suppliers: List<Supplier>, acti
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+internal fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             SectionHeader(stringResource(R.string.editor_tax))
@@ -801,7 +813,7 @@ private fun TaxSection(form: ProductForm, errors: ProductFormErrors, actions: Pr
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
+internal fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: ProductEditorActions) {
     var customSize by rememberSaveable { mutableStateOf("") }
     val presetSizes = form.category.presetSizes
     val customSizes = form.sizes.filterNot { size -> presetSizes.any { it.equals(size, ignoreCase = true) } }
@@ -854,7 +866,7 @@ private fun SizesSection(form: ProductForm, errors: ProductFormErrors, actions: 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColoursSection(form: ProductForm, errors: ProductFormErrors, busy: Boolean, actions: ProductEditorActions) {
+internal fun ColoursSection(form: ProductForm, errors: ProductFormErrors, busy: Boolean, actions: ProductEditorActions) {
     var colour by rememberSaveable { mutableStateOf("") }
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -960,7 +972,7 @@ private fun ColourPhotoRow(form: ProductForm, colour: String, busy: Boolean, act
 }
 
 @Composable
-private fun DefaultsSection(defaults: VariantDefaults, actions: ProductEditorActions) {
+internal fun DefaultsSection(defaults: VariantDefaults, actions: ProductEditorActions) {
     val currency = stringResource(R.string.currency_prefix)
     AuxoCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -1021,7 +1033,7 @@ private fun perUnitLabel(label: String, unit: StockUnit): String =
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun VariantEditorCard(
+internal fun VariantEditorCard(
     row: VariantForm,
     index: Int,
     category: ProductCategory,

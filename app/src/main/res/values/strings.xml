@@ -1967,4 +1967,15 @@ in %2$s</string>
     <string name="find_none_short">No backups found in that folder.</string>
     <string name="auth_restored_title">Backup restored</string>
     <string name="auth_restored_body">Your shop is back. Backups do not carry sign-in details, so create the sign-in for this phone. Your shop name and details came with the backup.</string>
+    <string name="wizard_step_details">Details</string>
+    <string name="wizard_step_pricing">Pricing</string>
+    <string name="wizard_step_review">Review</string>
+    <string name="wizard_next">Next</string>
+    <string name="wizard_save_product">Save product</string>
+    <string name="wizard_fix_to_continue">Fix the highlighted fields to continue</string>
+    <string name="wizard_review_variants">Variants (%1$d)</string>
+    <string name="wizard_review_ready">Everything looks good. Check the details, then save.</string>
+    <string name="wizard_review_fix">Fix</string>
+    <string name="wizard_review_no_name">Name missing</string>
+    <string name="wizard_review_tax">GST and HSN</string>
 </resources>
