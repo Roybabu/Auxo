@@ -326,7 +326,7 @@ fun BillingScreen(
                     if (!inPayment) {
                         if (uiState.canHold && !uiState.cart.isEmpty) {
                             ActionIcon(
-                                R.drawable.ic_pause,
+                                R.drawable.ic_hold,
                                 stringResource(R.string.hold_icon),
                                 {
                                     // A resumed table bill goes back to its table without being asked again.
@@ -354,7 +354,7 @@ fun BillingScreen(
                                         ) { Text(uiState.heldBills.size.toString()) }
                                     },
                                 ) {
-                                    Icon(painterResource(R.drawable.ic_bookmark), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
+                                    Icon(painterResource(R.drawable.ic_held_list), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
                                 }
                             }
                         }
@@ -364,7 +364,7 @@ fun BillingScreen(
                         if (!uiState.cart.isEmpty) {
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
-                        ActionIcon(R.drawable.ic_history, stringResource(R.string.billing_history), onOpenHistory)
+                        ActionIcon(R.drawable.ic_bill_history, stringResource(R.string.billing_history), onOpenHistory)
                     }
                 },
             )

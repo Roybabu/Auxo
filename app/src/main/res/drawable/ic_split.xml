@@ -1,16 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A "Y": one path that forks into two. Used for Split bill. -->
+<!-- A bill torn into two halves that lean apart. Used for Split bill. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:autoMirrored="false"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <group android:pivotX="7" android:pivotY="12" android:rotation="-7">
     <path
         android:fillColor="#00000000"
-        android:pathData="M12,21V12M12,12L5,4M12,12L19,4"
+        android:pathData="M4.8,4h4.4a1.8,1.8 0 0 1 1.8,1.8v12.4a1.8,1.8 0 0 1 -1.8,1.8h-4.4a1.8,1.8 0 0 1 -1.8,-1.8V5.8a1.8,1.8 0 0 1 1.8,-1.8z"
         android:strokeColor="#FF000000"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:strokeWidth="2.4" />
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M5.6,9h2.8M5.6,13h2.8"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    </group>
+    <group android:pivotX="17" android:pivotY="12" android:rotation="7">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M14.8,4h4.4a1.8,1.8 0 0 1 1.8,1.8v12.4a1.8,1.8 0 0 1 -1.8,1.8h-4.4a1.8,1.8 0 0 1 -1.8,-1.8V5.8a1.8,1.8 0 0 1 1.8,-1.8z"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M15.6,9h2.8M15.6,13h2.8"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    </group>
 </vector>
