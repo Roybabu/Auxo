@@ -190,7 +190,8 @@ class RoomCustomerRepository(
 
     /**
      * The bonus points for a payment that clears the whole balance within [ShopPreferences.ON_TIME_DAYS] of the
-     * customer first owing: 0 when the bonus is off, loyalty is off, or the payment leaves something owing.
+     * customer first owing: 0 when the bonus is off, loyalty is off, the payment leaves something owing, or the
+     * customer already got the bonus in the last [ShopPreferences.ON_TIME_DAYS] days.
      */
     private suspend fun onTimeBonusFor(customerId: Long, amount: Money, balance: Long, now: Long): Int {
         val points = onTimeBonus()
@@ -198,7 +199,11 @@ class RoomCustomerRepository(
         if (!dao.getLoyalty().toRules().enabled) return 0
         val since = Ledger.owingSince(dao.moneyEntriesOf(customerId).map { it.toDomain() }) ?: return 0
         val days = (now - since) / MILLIS_PER_DAY
-        return if (days <= com.auxo.pos.core.shop.ShopPreferences.ON_TIME_DAYS) points else 0
+        if (days > com.auxo.pos.core.shop.ShopPreferences.ON_TIME_DAYS) return 0
+        // At most once every 30 days, so taking a tiny amount on credit and paying it straight back cannot be repeated for points.
+        val last = dao.lastOnTimeBonusAt(customerId)
+        if (last != null && now - last < com.auxo.pos.core.shop.ShopPreferences.ON_TIME_DAYS * MILLIS_PER_DAY) return 0
+        return points
     }
 
     private companion object {

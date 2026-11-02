@@ -72,6 +72,10 @@ abstract class CustomerDao {
     @Query("SELECT * FROM customer_ledger WHERE customer_id = :customerId AND type IN ('OPENING_BALANCE', 'SALE', 'RETURN', 'PAYMENT') ORDER BY created_at, id")
     abstract suspend fun moneyEntriesOf(customerId: Long): List<LedgerEntryEntity>
 
+    /** When this customer last got the on-time payment bonus (a points entry that belongs to no bill); null if never. */
+    @Query("SELECT MAX(created_at) FROM customer_ledger WHERE customer_id = :customerId AND type = 'POINTS_EARNED' AND invoice_id IS NULL")
+    abstract suspend fun lastOnTimeBonusAt(customerId: Long): Long?
+
     @Insert
     abstract suspend fun insertEntry(entry: LedgerEntryEntity): Long
 

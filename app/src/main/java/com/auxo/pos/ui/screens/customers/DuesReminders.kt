@@ -12,14 +12,14 @@ import com.auxo.pos.domain.billing.Upi
 import com.auxo.pos.domain.customers.ReminderShop
 import com.auxo.pos.domain.customers.ReminderTone
 import java.time.LocalDate
-import java.time.ZoneId
+import com.auxo.pos.domain.billing.BusinessTime
 import com.auxo.pos.domain.model.CustomerAccount
 import com.auxo.pos.core.format.MoneyFormatter
 
 /** The reminder text for [account], in the shop's bill language: the customer's name, what they owe, the shop's name and (if valid) its UPI ID. */
 internal fun reminderMessage(context: Context, account: CustomerAccount, shop: ReminderShop, formatter: MoneyFormatter): String {
     val resources = LocaleContext.wrap(context, shop.language).resources
-    val age = DuesReminder.ageInDays(account.owingSinceMillis, LocalDate.now(), ZoneId.systemDefault())
+    val age = DuesReminder.ageInDays(account.owingSinceMillis, LocalDate.now(BusinessTime.ZONE), BusinessTime.ZONE)
     val body = when (DuesReminder.toneFor(age)) {
         ReminderTone.FRIENDLY -> R.string.reminder_body
         ReminderTone.FIRM -> R.string.reminder_body_firm
