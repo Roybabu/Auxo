@@ -127,6 +127,8 @@ class BackupManagerTest {
         }
         assertEquals(AppAccent.VIOLET, appearance.settings.value.accent)
         assertTrue(appearance.settings.value.darkMode)
+        // The safety copy taken before the restore is not left on the phone afterwards.
+        assertTrue(!java.io.File(context.filesDir, "pre-restore").exists())
     }
 
     @Test

@@ -16,10 +16,14 @@ object ReportCsv {
     private val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
     fun write(table: ReportTable, zone: ZoneId): String = buildString {
-        appendRow(table.columns.map { it.title })
-        table.rows.forEach { row -> appendRow(row.map { cell(it, zone) }) }
-        table.totals?.let { totals -> appendRow(totals.map { cell(it, zone) }) }
+        appendRow(table.columns.map { it.title }.map { escape(it) })
+        table.rows.forEach { row -> appendRow(row.map { field(it, zone) }) }
+        table.totals?.let { totals -> appendRow(totals.map { field(it, zone) }) }
     }
+
+    /** A cell ready for the file. Only text is guarded against formulas; numbers (also negative ones) stay numbers. */
+    private fun field(value: ReportValue, zone: ZoneId): String =
+        escape(cell(value, zone), isText = value is ReportValue.Text)
 
     fun cell(value: ReportValue, zone: ZoneId): String = when (value) {
         is ReportValue.Text -> value.value
@@ -33,19 +37,27 @@ object ReportCsv {
     }
 
     private fun StringBuilder.appendRow(cells: List<String>) {
-        append(cells.joinToString(",") { escape(it) })
+        append(cells.joinToString(","))
         append("\r\n")
     }
 
-    /** Quotes a field when it holds a comma, quote or line break, doubling inner quotes. */
-    fun escape(field: String): String {
-        // Text starting with =, + or @ would be run as a formula by spreadsheets.
-        // (Negative amounts start with - and must stay numbers.)
-        val safe = if (field.isNotEmpty() && field[0] in "=+@") "'$field" else field
+    /**
+     * Quotes a field when it holds a comma, quote or line break, doubling inner quotes. With [isText], text that a
+     * spreadsheet would run as a formula (starting with =, +, @, a dash followed by more, a tab or a carriage return)
+     * gets a leading apostrophe.
+     */
+    fun escape(field: String, isText: Boolean = true): String {
+        val safe = if (isText && startsLikeFormula(field)) "'$field" else field
         return if (safe.any { it == ',' || it == '"' || it == '\n' || it == '\r' }) {
             "\"" + safe.replace("\"", "\"\"") + "\""
         } else {
             safe
         }
+    }
+
+    private fun startsLikeFormula(field: String): Boolean {
+        if (field.isEmpty()) return false
+        val first = field[0]
+        return first in "=+@\t\r" || (first == '-' && field.length > 1)
     }
 }

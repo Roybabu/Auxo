@@ -200,6 +200,10 @@ class ReportCsvTest {
         assertEquals("12.5%", ReportCsv.cell(ReportValue.Rate(1_250), ZoneOffset.UTC))
         assertEquals("plain", ReportCsv.escape("plain"))
         assertEquals("'+91", ReportCsv.escape("+91"))
+        assertEquals("'-2+3", ReportCsv.escape("-2+3"))
+        assertEquals("'\tcmd", ReportCsv.escape("\tcmd"))
+        assertEquals("-", ReportCsv.escape("-"))
+        assertEquals("-12.50", ReportCsv.escape("-12.50", isText = false))
     }
 }
 
