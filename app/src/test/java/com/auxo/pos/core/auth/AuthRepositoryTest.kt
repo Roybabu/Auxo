@@ -285,4 +285,18 @@ class AuthRepositoryTest {
         assertTrue(hasher.matches("Green-Leaf-42", account))
         assertFalse(hasher.matches("green-leaf-42", account))
     }
+
+    @Test
+    fun theWaitAfterWrongPasswords_isNotSkippedByMovingThePhonesDateForward() = runBlocking {
+        launch().setUp(pw = "Green-Leaf-42")
+        val lockTime = MutableClock(1_000_000L) // stands in for the clock that only counts time since start-up
+        val auth = LocalAuthRepository(FileAccountStore(dir), hasher, clock, Dispatchers.Default, lockClock = lockTime)
+        repeat(5) { assertEquals(SignInResult.Rejected, auth.signIn("sample.user", "bad-Pass-$it")) }
+        // Someone sets the phone's date a day ahead: the real wait has not passed.
+        clock.now += 86_400_000L
+        assertEquals(SignInResult.LockedOut(30), auth.signIn("sample.user", "Green-Leaf-42"))
+        // Only time that really passes ends it.
+        lockTime.now += 31_000L
+        assertEquals(SignInResult.Success, auth.signIn("sample.user", "Green-Leaf-42"))
+    }
 }

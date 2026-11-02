@@ -104,6 +104,7 @@ class AppContainer(context: Context) {
             FileAccountStore(appContext.filesDir),
             sessions = sessionVault,
             clock = clock,
+            lockClock = com.auxo.pos.core.auth.ElapsedRealtimeClock(),
             lockSettings = SharedPrefsLockSettings(appContext),
             lockouts = SharedPrefsLockoutStore(appContext),
             listener = AccountEventListener { event ->

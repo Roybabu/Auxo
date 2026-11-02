@@ -222,6 +222,25 @@ private fun Note(text: String) {
     Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
+/** The trend points with weekday and month names in the language the app is showing; the figures hold them in English. */
+@Composable
+private fun Insights.trendInAppLanguage(): List<com.auxo.pos.domain.insights.SeriesPoint> {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val labels = androidx.compose.runtime.remember(period, to, locale) { com.auxo.pos.domain.insights.TimeBuckets.trend(period, to, locale).labels }
+    return trend.mapIndexed { i, point -> point.copy(label = labels.getOrElse(i) { point.label }) }
+}
+
+/** The sales-and-purchases buckets with their labels in the language the app is showing. */
+@Composable
+private fun Insights.comparisonInAppLanguage(): List<com.auxo.pos.domain.insights.ComparisonBucket> {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val today = stringResource(R.string.home_today)
+    val labels = androidx.compose.runtime.remember(period, to, locale, today) {
+        com.auxo.pos.domain.insights.TimeBuckets.comparison(period, to, locale, today).labels
+    }
+    return comparison.mapIndexed { i, bucket -> bucket.copy(label = labels.getOrElse(i) { bucket.label }) }
+}
+
 @Composable
 private fun TrendCard(insights: Insights, formatter: MoneyFormatter) {
     val bills = pluralStringResource(R.plurals.insights_bills, insights.billCount, insights.billCount)
@@ -233,9 +252,10 @@ private fun TrendCard(insights: Insights, formatter: MoneyFormatter) {
         if (!insights.hasSales) {
             Note(stringResource(R.string.insights_trend_empty))
         } else {
-            val peak = insights.trend.maxByOrNull { it.amount }
+            val trend = insights.trendInAppLanguage()
+            val peak = trend.maxByOrNull { it.amount }
             LineChart(
-                points = insights.trend,
+                points = trend,
                 description = stringResource(
                     R.string.insights_trend_description,
                     formatter.format(insights.sales),
@@ -262,7 +282,7 @@ private fun ComparisonCard(insights: Insights, formatter: MoneyFormatter) {
             ),
         )
         PairedBarChart(
-            buckets = insights.comparison,
+            buckets = insights.comparisonInAppLanguage(),
             description = stringResource(
                 R.string.insights_compare_description,
                 formatter.format(insights.sales),
