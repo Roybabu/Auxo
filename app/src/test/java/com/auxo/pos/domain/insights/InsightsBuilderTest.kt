@@ -290,6 +290,19 @@ class InsightsBuilderTest {
         assertEquals("Item 6", insights.topProducts.first().name)
         assertEquals("Item 2", insights.topProducts.last().name)
     }
+
+    @Test
+    fun chartLabels_followTheAppLanguage_andEnglishIsTheDefault() {
+        val english = TimeBuckets.trend(InsightsPeriod.LAST_7_DAYS, today).labels
+        val hindi = TimeBuckets.trend(InsightsPeriod.LAST_7_DAYS, today, Locale.forLanguageTag("hi")).labels
+        assertEquals(7, hindi.size)
+        assertEquals(english.size, hindi.size)
+        assertTrue(english.zip(hindi).any { (e, h) -> e != h })
+        assertEquals("Today", TimeBuckets.comparison(InsightsPeriod.TODAY, today).labels.single())
+        assertEquals("आज", TimeBuckets.comparison(InsightsPeriod.TODAY, today, Locale.forLanguageTag("hi"), "आज").labels.single())
+        val year = TimeBuckets.trend(InsightsPeriod.THIS_YEAR, today, Locale.forLanguageTag("hi")).labels
+        assertTrue(year.none { it.length == 3 && it.all { c -> c in 'A'..'Z' || c in 'a'..'z' } })
+    }
 }
 
 class CompactMoneyTest {
@@ -321,18 +334,5 @@ class CompactMoneyTest {
     fun negativeAmounts_keepTheirSign_butNotAtZero() {
         assertEquals("-₹1.2K", format(-120_000))
         assertEquals("₹0", format(-10))
-    }
-
-    @Test
-    fun chartLabels_followTheAppLanguage_andEnglishIsTheDefault() {
-        val english = TimeBuckets.trend(InsightsPeriod.LAST_7_DAYS, today).labels
-        val hindi = TimeBuckets.trend(InsightsPeriod.LAST_7_DAYS, today, Locale.forLanguageTag("hi")).labels
-        assertEquals(7, hindi.size)
-        assertEquals(english.size, hindi.size)
-        assertTrue(english.zip(hindi).any { (e, h) -> e != h })
-        assertEquals("Today", TimeBuckets.comparison(InsightsPeriod.TODAY, today).labels.single())
-        assertEquals("आज", TimeBuckets.comparison(InsightsPeriod.TODAY, today, Locale.forLanguageTag("hi"), "आज").labels.single())
-        val year = TimeBuckets.trend(InsightsPeriod.THIS_YEAR, today, Locale.forLanguageTag("hi")).labels
-        assertTrue(year.none { it.length == 3 && it.all { c -> c in 'A'..'Z' || c in 'a'..'z' } })
     }
 }
