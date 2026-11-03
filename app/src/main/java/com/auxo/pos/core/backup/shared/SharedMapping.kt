@@ -90,7 +90,7 @@ object SharedMapping {
         "dietType" to p.dietType,
         "hsnCode" to p.hsnCode,
         "preferredSupplierId" to p.preferredSupplierId?.let { ids.of("supplier", it) },
-        "photoId" to p.photoFile?.let { SharedIds.derive("photo", it) },
+        "photoId" to p.photoFile?.let { SharedIds.photo(it) },
         "warrantyMonths" to p.warrantyMonths,
         "prescriptionRequired" to p.prescriptionRequired,
         "metal" to p.metal,
@@ -112,7 +112,7 @@ object SharedMapping {
         "reorderQuantity" to v.reorderQuantity,
         "netQuantityMilli" to v.netQuantityMilli,
         "netQuantityUnit" to v.netQuantityUnit,
-        "photoId" to v.photoFile?.let { SharedIds.derive("photo", it) },
+        "photoId" to v.photoFile?.let { SharedIds.photo(it) },
     )
 
     fun stockBatch(b: StockBatchEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(

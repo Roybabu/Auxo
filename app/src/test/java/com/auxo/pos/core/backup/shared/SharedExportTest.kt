@@ -172,5 +172,18 @@ class SharedExportTest {
         assertEquals(SharedIds.derive("photo", "store-logo"), settingsRow["storeLogoPhotoId"])
         assertEquals(1, (file["photos"] as List<*>).size)
     }
+
+    @Test
+    fun aProductPhoto_exportsWithTheIdItWasRestoredWith() = kotlinx.coroutines.runBlocking {
+        val photoFile = java.io.File.createTempFile("photo", ".jpg").apply { writeBytes(byteArrayOf(9, 8)) }
+        val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
+            dietType = null, createdAt = 1, updatedAt = 2, photoFile = "0123456789abcdef0123456789abcdef.jpg")
+        val file = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product)), photo = { photoFile }).build(createdAt = 5, appVersion = "1.0")
+        val uuid = "01234567-89ab-cdef-0123-456789abcdef"
+        val productRow = ((file["tables"] as Map<*, *>)["products"] as List<*>).first() as Map<*, *>
+        assertEquals(uuid, productRow["photoId"])
+        assertEquals(uuid, ((file["photos"] as List<*>).first() as Map<*, *>)["id"])
+        photoFile.delete()
+    }
 }
 

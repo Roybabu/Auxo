@@ -220,7 +220,8 @@ object SharedRestorePlanner {
     private fun newPhotoNames(document: SharedBackupDocument): Map<String, String> {
         val ids = document.photos.map { it.id }
         if (ids.toSet().size != ids.size) throw RestoreProblem("The backup holds two photos with the same id.")
-        return ids.associateWith { PhotoFiles.newName() }
+        // A photo whose ID is a UUID keeps it: its file is named from the UUID, so a re-export gives the same ID.
+        return ids.associateWith { id -> SharedIds.photoFileName(id) ?: PhotoFiles.newName() }
     }
 
     private fun uniqueIds(table: String, rows: List<SharedRow>): Set<String> {

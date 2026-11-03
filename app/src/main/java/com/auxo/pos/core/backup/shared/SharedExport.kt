@@ -65,7 +65,7 @@ class SharedExport(
         val photos = photoNames.map { name ->
             val file = photoFile(name) ?: throw IllegalStateException("A product photo is missing: $name")
             mapOf(
-                "id" to SharedIds.derive("photo", name),
+                "id" to SharedIds.photo(name),
                 "mimeType" to "image/jpeg",
                 "dataBase64" to java.util.Base64.getEncoder().encodeToString(file.readBytes()),
             )

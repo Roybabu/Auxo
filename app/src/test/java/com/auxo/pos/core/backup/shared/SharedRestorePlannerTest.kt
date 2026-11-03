@@ -171,5 +171,39 @@ class SharedRestorePlannerTest {
         assertEquals("logo bytes", String(plan.logoBytes!!, Charsets.UTF_8))
         assertTrue(plan.photos.isEmpty())
     }
+
+    @Test
+    fun aRestoredPhoto_keepsItsIdentity_throughTheFileName() {
+        val uuid = "01234567-89ab-cdef-0123-456789abcdef"
+        val photo = mapOf<String, Any?>(
+            "id" to uuid, "mimeType" to "image/jpeg",
+            "dataBase64" to java.util.Base64.getEncoder().encodeToString(byteArrayOf(1, 2, 3)),
+        )
+        val product = mugWithPhoto(uuid)
+        val tables = SharedFile.TABLES.associateWith { emptyList<Map<String, Any?>>() }.toMutableMap()
+        tables["settings"] = listOf(shopSettings)
+        tables["categories"] = listOf(general)
+        tables["products"] = listOf(product)
+        val document = SharedBackupReader.check(
+            mapOf(
+                "format" to "auxo-backup", "version" to 1L, "sharedModelVersion" to 1L, "createdAt" to 5L,
+                "source" to mapOf("platform" to "web", "appVersion" to "1"), "shopName" to "Shop",
+                "tables" to tables, "photos" to listOf(photo),
+            ),
+        )
+
+        val plan = SharedRestorePlanner.plan(document)
+
+        assertEquals("01234567-89ab-cdef-0123-456789abcdef", SharedIds.photo(plan.photos[0].name))
+        assertEquals(plan.photos[0].name, plan.products[0].build(LocalIds { _, _ -> 0L }).photoFile)
+    }
+
+    private fun mugWithPhoto(photoId: String) = mapOf<String, Any?>(
+        "id" to "p1", "name" to "Mug", "category" to "GENERAL", "brand" to null, "description" to null, "material" to null,
+        "dietType" to null, "hsnCode" to null, "gstRateBasisPoints" to null, "apparelGst" to false,
+        "createdAt" to 1L, "updatedAt" to 2L, "stockUnit" to "UNIT", "available" to true, "tracksStock" to true,
+        "categoryId" to "cat-general", "subcategory" to null, "preferredSupplierId" to null, "photoId" to photoId,
+        "warrantyMonths" to null, "prescriptionRequired" to false, "metal" to null, "makingChargeBasisPoints" to null,
+    )
 }
 

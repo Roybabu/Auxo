@@ -38,6 +38,25 @@ object SharedIds {
         "RESTAURANT" to "27533c16-dbd0-5a7f-b95a-cddc6e984278",
     )
 
+    private val PHOTO_FILE = Regex("[0-9a-f]{32}\\.jpg")
+    private val UUID_TEXT = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+    /**
+     * The shared ID of a product photo. A photo's file name is 32 hex digits, which is a UUID without its dashes, so the
+     * ID is that UUID. Any other name gets a derived ID.
+     */
+    fun photo(fileName: String): String {
+        if (!PHOTO_FILE.matches(fileName)) return derive("photo", fileName)
+        return withDashes(fileName.substring(0, 32))
+    }
+
+    /** The file name a restored photo is stored under: its UUID's digits, or null when the ID is not a UUID. */
+    fun photoFileName(sharedId: String): String? =
+        if (UUID_TEXT.matches(sharedId)) sharedId.replace("-", "").lowercase() + ".jpg" else null
+
+    private fun withDashes(hex: String): String =
+        "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}"
+
     /** The shared ID for a category: the fixed ID for a built-in category, otherwise a derived one. */
     fun category(profile: String, builtIn: Boolean, id: Long): String =
         if (builtIn) builtInCategory[profile] ?: derive("category", id.toString()) else derive("category", id.toString())
