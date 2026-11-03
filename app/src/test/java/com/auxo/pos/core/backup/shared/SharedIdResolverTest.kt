@@ -31,8 +31,13 @@ class SharedIdResolverTest {
     }
 
     @Test
-    fun aBuiltInCategory_keepsItsFixedId() {
-        val linkedCategories = SharedIdResolver(mapOf("category" to mapOf(3L to "linked-category")))
-        assertEquals("21698313-7bd8-56ea-9c69-9ebe0fc84a82", linkedCategories.category("GARMENT", true, 3L))
+    fun aBuiltInCategory_withoutALink_getsItsFixedId() {
+        assertEquals("21698313-7bd8-56ea-9c69-9ebe0fc84a82", SharedIdResolver().category("GARMENT", true, 3L))
+    }
+
+    @Test
+    fun aBuiltInCategory_withALink_keepsTheLinkedId() {
+        val linked = SharedIdResolver(mapOf("category" to mapOf(3L to "linked-category")))
+        assertEquals("linked-category", linked.category("GARMENT", true, 3L))
     }
 }
