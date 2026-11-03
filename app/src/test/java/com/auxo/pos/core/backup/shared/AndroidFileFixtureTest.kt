@@ -26,16 +26,19 @@ class AndroidFileFixtureTest {
         assertEquals("d1469d77-6036-544b-95bf-8c88f53bae97", plan.customers[0].sharedId)
     }
 
-    /** Android's re-export of the web app's rich file; the web app restores it in a real browser (see the e2e notes). */
+    /**
+     * Android's re-export of the web app's rich file, restored by the web app in a real browser. The plan is built by the
+     * device round trip (it needs Android's JSON library), so this checks that the file opens and holds every table.
+     */
     @Test
-    fun theRichAndroidFile_plansWithEveryFilledTable() {
+    fun theRichAndroidFile_opensWithEveryFilledTable() {
         val bytes = javaClass.classLoader!!.getResourceAsStream("shared/android-rich.auxoshared")!!.use { it.readBytes() }
-        val plan = SharedRestorePlanner.plan(SharedBackupFile.open(bytes, "long shared phrase 91"))
-        assertEquals("Sample Shop", plan.shopName)
-        assertEquals(2, plan.rowCounts["variants"])
-        assertEquals(1, plan.rowCounts["stockBatches"])
-        assertEquals(1, plan.rowCounts["numberSequences"])
-        assertEquals(1, plan.photos.size)
+        val doc = SharedBackupFile.open(bytes, "long shared phrase 91")
+        assertEquals("Sample Shop", doc.shopName)
+        assertEquals("android", doc.sourcePlatform)
+        assertEquals(2, doc.rowCount("variants"))
+        assertEquals(1, doc.rowCount("stockBatches"))
+        assertEquals(1, doc.rowCount("numberSequences"))
+        assertEquals(1, doc.photos.size)
     }
 }
-
