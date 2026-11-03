@@ -161,4 +161,16 @@ class SharedExportTest {
         val unlinkedProducts = (unlinked["tables"] as Map<*, *>)["products"] as List<*>
         assertEquals(SharedIds.derive("product", "7"), (unlinkedProducts[0] as Map<*, *>)["id"])
     }
+
+    /** Temporary: prints an Android-made shared file so the web app can open it (see the round-trip check). */
+    @Test
+    fun printsTheAndroidFileForTheWebRoundTrip() = kotlinx.coroutines.runBlocking {
+        val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
+            dietType = null, createdAt = 1, updatedAt = 2, photoFile = null)
+        val customer = CustomerEntity(id = 3, name = "Asha", phone = "9999900000", email = null, gstin = null, stateCode = null,
+            address = null, creditLimitMinor = null, notes = null, createdAt = 1, updatedAt = 1)
+        val bytes = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product), customerRows = listOf(customer)))
+            .encrypt("long shared phrase 91", 1_700_000_000_000L, "1.0")
+        println("AUXO-FIXTURE-BEGIN " + java.util.Base64.getEncoder().encodeToString(bytes) + " AUXO-FIXTURE-END")
+    }
 }
