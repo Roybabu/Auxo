@@ -184,6 +184,7 @@ class SharedExportTest {
         assertEquals(uuid, productRow["photoId"])
         assertEquals(uuid, ((file["photos"] as List<*>).first() as Map<*, *>)["id"])
         photoFile.delete()
+        Unit
     }
 }
 
