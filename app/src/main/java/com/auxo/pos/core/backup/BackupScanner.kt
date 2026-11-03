@@ -6,6 +6,7 @@ package com.auxo.pos.core.backup
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import com.auxo.pos.core.backup.shared.SharedBackupFile
 import java.io.BufferedInputStream
 import java.io.InputStream
 
@@ -42,6 +43,9 @@ class BackupScanner(private val context: Context) {
 
     /** The manifest of a locked backup, read with its [passphrase]; throws [BackupProblem.WRONG_PASSPHRASE] if it does not open. */
     fun peekLocked(uri: Uri, passphrase: String): BackupManifest {
+        if (SharedBackupFile.isSharedFile(context, uri)) {
+            return SharedBackupFile.manifestOf(SharedBackupFile.open(SharedBackupFile.readBytes(context, uri), passphrase))
+        }
         val input = runCatching { context.contentResolver.openInputStream(uri) }.getOrNull() ?: throw BackupException(BackupProblem.UNREADABLE)
         return input.use { BackupArchive.readManifest(BackupCrypto.decrypt(BufferedInputStream(it), passphrase)) }
     }
@@ -89,7 +93,8 @@ class BackupScanner(private val context: Context) {
         private const val MAX_FOUND = 200
 
         /** Only locked backups can be restored, so only files named like one are opened at all. */
-        fun isCandidate(fileName: String): Boolean = fileName.lowercase().endsWith(BackupCrypto.FILE_EXTENSION)
+        fun isCandidate(fileName: String): Boolean =
+            fileName.lowercase().endsWith(BackupCrypto.FILE_EXTENSION) || SharedBackupFile.isSharedName(fileName)
 
         /** Says what [input] is: a locked backup, a plain one (with its manifest), or something else. */
         fun inspect(input: InputStream): Inspection {
@@ -103,6 +108,7 @@ class BackupScanner(private val context: Context) {
                 filled += read
             }
             buffered.reset()
+            if (SharedBackupFile.startsWithSignature(head, filled)) return Inspection.Locked
             if (BackupCrypto.looksEncrypted(head, filled)) return Inspection.Locked
             return try {
                 Inspection.Plain(BackupArchive.readManifest(buffered))

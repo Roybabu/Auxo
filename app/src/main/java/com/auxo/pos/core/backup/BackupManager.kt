@@ -10,6 +10,8 @@ import com.auxo.pos.core.appearance.AppAccent
 import com.auxo.pos.core.appearance.AppearanceRepository
 import com.auxo.pos.data.local.AuxoDatabase
 import com.auxo.pos.data.local.DatabaseEncryption
+import com.auxo.pos.core.backup.shared.SharedBackupFile
+import com.auxo.pos.core.backup.shared.SharedRestoreApplier
 import com.auxo.pos.data.local.DatabaseKeyStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -155,6 +157,11 @@ class BackupManager(
     }
 
     override suspend fun restore(source: Uri, passphrase: String?) = withContext(Dispatchers.IO) {
+        if (SharedBackupFile.isSharedFile(context, source)) {
+            restoreShared(source, passphrase)
+            DebugLog.event("Backup", "Shared backup restored")
+            return@withContext
+        }
         val input = runCatching { context.contentResolver.openInputStream(source) }
             .getOrElse { throw BackupException(BackupProblem.UNREADABLE, cause = it) }
             ?: throw BackupException(BackupProblem.UNREADABLE)
@@ -164,6 +171,23 @@ class BackupManager(
         } catch (e: Exception) {
             DebugLog.error("Backup", "Restore failed", e)
             throw e
+        }
+    }
+
+    /**
+     * Restores a shared backup (the format the web app also writes). It is always locked, so [passphrase] is needed.
+     * Everything is checked before anything is written, and the records are replaced in one transaction.
+     */
+    private suspend fun restoreShared(source: Uri, passphrase: String?) {
+        val pass = passphrase ?: throw BackupException(BackupProblem.PASSPHRASE_NEEDED)
+        val plan = SharedBackupFile.plan(SharedBackupFile.readBytes(context, source), pass)
+        try {
+            SharedRestoreApplier(database, photos, context.cacheDir).apply(plan)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            DebugLog.error("Backup", "Shared restore failed", e)
+            throw BackupException(BackupProblem.RESTORE_FAILED, cause = e)
         }
     }
 
