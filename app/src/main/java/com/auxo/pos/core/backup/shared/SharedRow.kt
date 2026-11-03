@@ -38,6 +38,8 @@ class SharedRow(private val table: String, private val number: Int, private val 
 
     fun bool(key: String): Boolean = values[key] as? Boolean ?: fail(key, "is missing")
 
+    fun boolOrNull(key: String): Boolean? = if (values[key] == null) null else bool(key)
+
     fun int(key: String): Int {
         val value = values[key] as? Long ?: fail(key, "is missing")
         if (value < Int.MIN_VALUE || value > Int.MAX_VALUE) fail(key, "is too large")

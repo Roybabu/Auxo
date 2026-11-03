@@ -365,7 +365,7 @@ object SharedRestorePlanner {
                 tracksStock = row.bool("tracksStock"),
                 categoryId = row.refOrNull("categoryId")?.let { ids.of("category", it) },
                 warrantyMonths = row.intOrNull("warrantyMonths"),
-                prescriptionRequired = row.bool("prescriptionRequired"),
+                prescriptionRequired = row.boolOrNull("prescriptionRequired") ?: false,
                 metal = row.stringOrNull("metal"),
                 makingChargeBasisPoints = row.intOrNull("makingChargeBasisPoints"),
             )
@@ -442,7 +442,7 @@ object SharedRestorePlanner {
                 sellerPhone = seller.string("phone"),
                 sellerGstin = seller.string("gstin"),
                 sellerStateCode = seller.string("stateCode"),
-                sellerFssai = seller.string("fssai"),
+                sellerFssai = seller.stringOrNull("fssai") ?: "",
                 buyerName = buyer?.stringOrNull("name"),
                 buyerPhone = buyer?.stringOrNull("phone"),
                 buyerGstin = buyer?.stringOrNull("gstin"),
