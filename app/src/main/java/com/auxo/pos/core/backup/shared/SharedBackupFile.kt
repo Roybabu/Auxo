@@ -6,6 +6,7 @@ package com.auxo.pos.core.backup.shared
 import android.content.Context
 import android.net.Uri
 import com.auxo.pos.core.backup.BackupException
+import com.auxo.pos.core.backup.SharedBackupContainer
 import com.auxo.pos.core.backup.BackupManifest
 import com.auxo.pos.core.backup.BackupProblem
 import java.io.InputStream

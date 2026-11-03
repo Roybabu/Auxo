@@ -4,6 +4,7 @@
 package com.auxo.pos.core.backup.shared
 
 import com.auxo.pos.core.backup.BackupException
+import com.auxo.pos.core.backup.SharedBackupContainer
 import com.auxo.pos.core.backup.BackupProblem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
