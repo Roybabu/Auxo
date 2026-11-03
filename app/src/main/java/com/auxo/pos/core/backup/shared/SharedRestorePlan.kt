@@ -152,6 +152,12 @@ object SharedRestorePlanner {
         val suppliers = planSuppliers(tables.getValue("suppliers"))
         val products = planProducts(tables.getValue("products"), ctx)
         val variants = planVariants(tables.getValue("variants"), ctx)
+        // This app keeps one variant per barcode and per SKU, so a file that repeats one cannot be restored as it is.
+        for ((field, label) in listOf("barcode" to "barcode", "sku" to "SKU")) {
+            val seen = tables.getValue("variants").mapNotNull { it.stringOrNull(field)?.takeIf { v -> v.isNotEmpty() } }
+            val repeated = seen.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.firstOrNull()
+            if (repeated != null) throw RestoreProblem("Two variants share the $label \"$repeated\". This app needs each $label to be different.")
+        }
         val batches = planBatches(tables.getValue("stockBatches"))
         val customers = planCustomers(tables.getValue("customers"))
         val invoices = planInvoices(parentsFirst(tables.getValue("invoices"), "originalInvoiceId"))
