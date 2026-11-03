@@ -35,7 +35,11 @@ import java.time.LocalDate
 object SharedMapping {
     private const val GST_RULE_APPAREL = "APPAREL"
 
-    fun settings(s: StoreSettingsEntity): Map<String, Any?> = mapOf(
+    fun settings(
+        s: StoreSettingsEntity,
+        metalRatesPaise: Map<String, String> = emptyMap(),
+        storeLogoPhotoId: String? = null,
+    ): Map<String, Any?> = mapOf(
         "id" to "shop",
         "storeName" to s.storeName,
         "address" to s.address,
@@ -61,9 +65,9 @@ object SharedMapping {
         "receiptShowUpiQr" to s.receiptShowUpiQr,
         "employeeDiscountLimitBp" to s.employeeDiscountLimitBp,
         "expiryWarningDays" to s.expiryWarningDays,
-        // Metal rates are kept in app preferences, not the database; they are mapped in a later step.
-        "metalRatesPaise" to emptyMap<String, String>(),
-        "storeLogoPhotoId" to null,
+        // Metal rates and the logo are not in the database; the caller passes them in.
+        "metalRatesPaise" to metalRatesPaise,
+        "storeLogoPhotoId" to storeLogoPhotoId,
     )
 
     /** [categoryIdOf] gives the shared ID of a category row, so built-in categories match the web app. */

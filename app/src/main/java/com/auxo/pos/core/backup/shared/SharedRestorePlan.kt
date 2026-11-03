@@ -35,6 +35,7 @@ import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.inventory.CountLine
 import com.auxo.pos.domain.inventory.StockCounts
+import com.auxo.pos.domain.jewellery.JewelleryMetal
 import com.auxo.pos.domain.model.GstRate
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.StockUnit
@@ -87,6 +88,10 @@ class RestorePlan(
     val stockCounts: List<PlannedRow<StockCountEntity>>,
     val auditLog: List<PlannedRow<AuditLogEntity>>,
     val photos: List<PlannedPhoto>,
+    /** Today's rate per gram for each metal; empty when the file has none. */
+    val metalRates: Map<JewelleryMetal, Money>,
+    /** The shop logo as a JPEG, or null when the file has none. */
+    val logoBytes: ByteArray?,
 )
 
 /**
@@ -126,6 +131,19 @@ object SharedRestorePlanner {
         }
 
         val settings = planSettings(tables.getValue("settings"))
+        val settingsRow = tables.getValue("settings").singleOrNull()
+        val metalRates = settingsRow?.record("metalRatesPaise")?.let { record ->
+            record.keys().associate { key ->
+                val metal = JewelleryMetal.entries.firstOrNull { it.name == key }
+                    ?: throw RestoreProblem("The backup has a metal rate for a metal this app does not know ($key).")
+                metal to Money(record.money(key))
+            }
+        }.orEmpty()
+        val logoPhotoId = settingsRow?.refOrNull("storeLogoPhotoId")
+        val logoBytes = logoPhotoId?.let { id ->
+            document.photos.firstOrNull { it.id == id }?.bytes
+                ?: throw RestoreProblem("The shop logo refers to a photo that is not in the file.")
+        }
         val loyaltyRows = tables.getValue("loyaltySettings")
         if (loyaltyRows.size > 1) throw RestoreProblem("The backup has more than one loyalty settings row.")
         val points = matchLoyalty(tables.getValue("customerLedger"), tables.getValue("loyaltyLedger"))
@@ -189,7 +207,10 @@ object SharedRestorePlanner {
             quotations = quotations,
             stockCounts = stockCounts,
             auditLog = auditLog,
-            photos = document.photos.map { PlannedPhoto(photoNames.getValue(it.id), it.bytes) },
+            // The logo is not a product photo, so it is kept apart from the photos put back for products.
+            photos = document.photos.filter { it.id != logoPhotoId }.map { PlannedPhoto(photoNames.getValue(it.id), it.bytes) },
+            metalRates = metalRates,
+            logoBytes = logoBytes,
         )
     }
 

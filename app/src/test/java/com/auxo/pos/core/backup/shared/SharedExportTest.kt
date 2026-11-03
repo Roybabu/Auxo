@@ -161,4 +161,16 @@ class SharedExportTest {
         val unlinkedProducts = (unlinked["tables"] as Map<*, *>)["products"] as List<*>
         assertEquals(SharedIds.derive("product", "7"), (unlinkedProducts[0] as Map<*, *>)["id"])
     }
+
+    @Test
+    fun theMetalRatesAndTheLogo_areWrittenToTheSettings_andTheLogoIsAPhoto() = kotlinx.coroutines.runBlocking {
+        val file = export(FakeDao(settingRows = listOf(shop))).build(
+            createdAt = 5, appVersion = "1.0", metalRates = mapOf("GOLD_22K" to "612300"), logoJpeg = byteArrayOf(1, 2, 3),
+        )
+        val settingsRow = ((file["tables"] as Map<*, *>)["settings"] as List<*>).first() as Map<*, *>
+        assertEquals(mapOf("GOLD_22K" to "612300"), settingsRow["metalRatesPaise"])
+        assertEquals(SharedIds.derive("photo", "store-logo"), settingsRow["storeLogoPhotoId"])
+        assertEquals(1, (file["photos"] as List<*>).size)
+    }
 }
+

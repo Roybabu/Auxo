@@ -24,7 +24,16 @@ class SharedExport(
     /** Finds a product or variant photo file by name, or null when it is missing. */
     private val photoFile: (String) -> File?,
 ) {
-    suspend fun build(createdAt: Long, appVersion: String): Map<String, Any?> {
+    suspend fun build(
+        createdAt: Long,
+        appVersion: String,
+        metalRates: Map<String, String> = emptyMap(),
+        logoJpeg: ByteArray? = null,
+    ): Map<String, Any?> {
+        val logoPhotoId = logoJpeg?.let { SharedIds.derive("photo", STORE_LOGO_NAME) }
+        val logoPhoto = logoJpeg?.let {
+            mapOf<String, Any?>("id" to logoPhotoId, "mimeType" to "image/jpeg", "dataBase64" to java.util.Base64.getEncoder().encodeToString(it))
+        }
         val settings = dao.storeSettings().firstOrNull() ?: throw IllegalStateException("There are no shop details to back up.")
         val ids = SharedIdResolver(
             dao.sharedIdLinks().groupBy({ it.tableName }, { it.localId to it.sharedId }).mapValues { (_, pairs) -> pairs.toMap() },
@@ -63,7 +72,7 @@ class SharedExport(
         }
 
         val tables = linkedMapOf<String, List<Map<String, Any?>>>(
-            "settings" to listOf(SharedMapping.settings(settings)),
+            "settings" to listOf(SharedMapping.settings(settings, metalRatesPaise = metalRates, storeLogoPhotoId = logoPhotoId)),
             "categories" to categories.map { SharedMapping.category(it, ids = ids) },
             "subcategories" to dao.subcategories().map { SharedMapping.subcategory(it, categoryIdOf = { id -> categoryById[id]?.let { c -> ids.category(c.profile, c.builtIn, id) } ?: ids.of("category", id) }, ids = ids) },
             "products" to products.map { SharedMapping.product(it, categoryIdOf, ids = ids) },
@@ -93,13 +102,24 @@ class SharedExport(
             "numberSequences" to dao.numberSequences().map { SharedMapping.numberSequence(it) },
             "extensions" to emptyList(),
         )
-        return SharedFile.assemble(tables, shopName = settings.storeName, createdAt = createdAt, appVersion = appVersion, photos = photos)
+        return SharedFile.assemble(tables, shopName = settings.storeName, createdAt = createdAt, appVersion = appVersion, photos = photos + listOfNotNull(logoPhoto))
     }
 
     /** The encrypted file, ready to be written. Uses the same container as the web app. */
-    suspend fun encrypt(passphrase: String, createdAt: Long, appVersion: String): ByteArray {
-        val json = SharedFile.toJson(build(createdAt, appVersion)).toByteArray(Charsets.UTF_8)
+    suspend fun encrypt(
+        passphrase: String,
+        createdAt: Long,
+        appVersion: String,
+        metalRates: Map<String, String> = emptyMap(),
+        logoJpeg: ByteArray? = null,
+    ): ByteArray {
+        val json = SharedFile.toJson(build(createdAt, appVersion, metalRates, logoJpeg)).toByteArray(Charsets.UTF_8)
         return SharedBackupContainer.encrypt(json, passphrase)
+    }
+
+    private companion object {
+        /** The name the logo is stored under in the photos list. */
+        const val STORE_LOGO_NAME = "store-logo"
     }
 
     private fun readCart(payload: String, what: String): Cart =

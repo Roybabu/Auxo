@@ -213,6 +213,9 @@ class AppContainer(context: Context) {
 
     val storeLogoRepository: StoreLogoRepository by lazy { AuthorizedStoreLogoRepository(FileStoreLogoRepository(appContext), authorizer) }
 
+    /** The logo without the permission check, for backups and the first-run restore (no one may be signed in yet). */
+    private val rawStoreLogo: StoreLogoRepository by lazy { FileStoreLogoRepository(appContext) }
+
     /** Holds the passphrase that locks backups, when the owner has set one. */
     private val backupPassphrase: com.auxo.pos.core.backup.BackupPassphraseStore by lazy {
         com.auxo.pos.core.backup.KeystoreBackupPassphraseStore(appContext)
@@ -224,7 +227,7 @@ class AppContainer(context: Context) {
      * screen that uses it is only reachable while no business exists on the phone.
      */
     val firstRunRestore: BackupService by lazy {
-        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys)
+        BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys, rawStoreLogo)
     }
 
     val restoredSignIn: com.auxo.pos.core.backup.RestoredSignInFlag by lazy { com.auxo.pos.core.backup.RestoredSignInFlag(appContext) }
@@ -244,7 +247,7 @@ class AppContainer(context: Context) {
 
     val backupService: BackupService by lazy {
         AuthorizedBackupService(
-            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys),
+            BackupManager(appContext, database, appearanceRepository, DocumentsBackupStorage(appContext), clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys, rawStoreLogo),
             authorizer,
             auditTrail,
         )
@@ -260,7 +263,7 @@ class AppContainer(context: Context) {
         AutoBackupRunner(
             store = autoBackupSettings,
             folder = { DocumentsAutoFolder(appContext) },
-            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys).backUp() },
+            backUpTo = { storage -> BackupManager(appContext, database, appearanceRepository, storage, clock, rawShopPreferences, productPhotos, backupPassphrase, databaseKeys, rawStoreLogo).backUp() },
             clock = clock,
             log = { draft -> auditTrail.record(draft, system) },
             needsPassphrase = { !backupPassphrase.isSet() },

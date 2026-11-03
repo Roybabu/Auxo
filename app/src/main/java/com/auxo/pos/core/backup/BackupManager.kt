@@ -66,6 +66,7 @@ class BackupManager(
     private val photos: com.auxo.pos.core.photos.ProductPhotoStore? = null,
     private val passphrases: BackupPassphraseStore? = null,
     private val databaseKeys: DatabaseKeyStore? = null,
+    private val logo: com.auxo.pos.core.shop.StoreLogoRepository? = null,
 ) : BackupService {
 
     private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -92,7 +93,11 @@ class BackupManager(
             val now = clock.millis()
             val photoFiles = photos?.files().orEmpty().associateBy { it.name }
             val export = com.auxo.pos.core.backup.shared.SharedExport(database.sharedExportDao(), photoFile = { photoFiles[it] })
-            val bytes = export.encrypt(passphrase, now, appVersion())
+            val metalRates = shop?.metalRates?.value?.perGram.orEmpty().entries.associate { it.key.name to it.value.minorUnits.toString() }
+            val logoJpeg = logo?.logo?.value?.let { bitmap ->
+                java.io.ByteArrayOutputStream().also { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }.toByteArray()
+            }
+            val bytes = export.encrypt(passphrase, now, appVersion(), metalRates = metalRates, logoJpeg = logoJpeg)
             storage.save(sharedFileName(now)) { out -> out.write(bytes) }
         }
     }
@@ -188,6 +193,13 @@ class BackupManager(
         } catch (e: Exception) {
             DebugLog.error("Backup", "Shared restore failed", e)
             throw BackupException(BackupProblem.RESTORE_FAILED, cause = e)
+        }
+        // Settings that live outside the database are put back once the records are. The file is the whole truth
+        // for them: a file with no metal rates clears the rates on this phone.
+        shop?.setMetalRates(com.auxo.pos.domain.jewellery.MetalRates(plan.metalRates))
+        plan.logoBytes?.let { bytes ->
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            if (bitmap != null) logo?.save(bitmap) else DebugLog.warn("Backup", "The shop logo in the backup could not be read")
         }
     }
 

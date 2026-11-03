@@ -22,6 +22,9 @@ class SharedRow(private val table: String, private val number: Int, private val 
     private fun fail(key: String, problem: String): Nothing =
         throw RestoreProblem("In row $number of ${plainName(table)}, \"${plainName(key)}\" $problem.")
 
+    /** The names in a record, such as the metal names in the metal rates. */
+    fun keys(): Set<String> = values.keys
+
     /** The shared ID of this row. */
     fun id(): String = string("id")
 
