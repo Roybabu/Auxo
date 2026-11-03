@@ -37,11 +37,12 @@ class SharedRichRoundTripDeviceTest {
     }
 
     private fun check(table: String) = runBlocking {
+        val store = com.auxo.pos.core.photos.FileProductPhotoStore(context)
         val doc = original()
         val db = AuxoDatabase.builder(context, name).build()
         try {
-            SharedRestoreApplier(db, photos = null, workDir = context.cacheDir).apply(SharedRestorePlanner.plan(doc))
-            val exported = SharedExport(db.sharedExportDao(), photoFile = { null }).build(1L, "test")
+            SharedRestoreApplier(db, photos = store, workDir = context.cacheDir).apply(SharedRestorePlanner.plan(doc))
+            val exported = SharedExport(db.sharedExportDao(), photoFile = { n -> store.files().firstOrNull { it.name == n } }).build(1L, "test")
             @Suppress("UNCHECKED_CAST")
             val rows = ((exported["tables"] as Map<String, List<Map<String, Any?>>>)[table]).orEmpty()
             val expected = doc.tables.getValue(table)
@@ -80,6 +81,8 @@ class SharedRichRoundTripDeviceTest {
     }
 
     @Test fun table_settings() = check("settings")
+    @Test fun table_stockBatches() = check("stockBatches")
+    @Test fun table_numberSequences() = check("numberSequences")
     @Test fun table_categories() = check("categories")
     @Test fun table_subcategories() = check("subcategories")
     @Test fun table_products() = check("products")
@@ -105,4 +108,21 @@ class SharedRichRoundTripDeviceTest {
     @Test fun table_stockCounts() = check("stockCounts")
     @Test fun table_stockCountLines() = check("stockCountLines")
     @Test fun table_auditLog() = check("auditLog")
+
+    @Test
+    fun photos_keepTheirIdAndBytes() = runBlocking {
+        val doc = original()
+        val store = com.auxo.pos.core.photos.FileProductPhotoStore(context)
+        val db = AuxoDatabase.builder(context, name).build()
+        try {
+            SharedRestoreApplier(db, photos = store, workDir = context.cacheDir).apply(SharedRestorePlanner.plan(doc))
+            val exported = SharedExport(db.sharedExportDao(), photoFile = { n -> store.files().firstOrNull { it.name == n } }).build(1L, "test")
+            @Suppress("UNCHECKED_CAST")
+            val photos = exported["photos"] as List<Map<String, Any?>>
+            assertEquals(doc.photos.map { it.id }, photos.map { it["id"] })
+            assertEquals(java.util.Base64.getEncoder().encodeToString(doc.photos[0].bytes), photos[0]["dataBase64"])
+        } finally {
+            db.close()
+        }
+    }
 }
