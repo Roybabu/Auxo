@@ -50,7 +50,8 @@ class SharedMappingTest {
     @Test
     fun product_maps_gst_rule_and_references() {
         val product = SharedMapping.product(
-            ProductEntity(
+            categoryIdOf = { SharedIds.derive("category", it.toString()) },
+            p = ProductEntity(
                 id = 7, name = "Shirt", brand = null, category = "GARMENT", description = null, material = null,
                 dietType = null, createdAt = 1000, updatedAt = 2000, gstRule = "APPAREL", categoryId = 3,
                 photoFile = "p.jpg", preferredSupplierId = 5,

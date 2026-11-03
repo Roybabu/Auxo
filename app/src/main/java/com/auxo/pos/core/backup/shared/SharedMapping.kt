@@ -9,6 +9,13 @@ import com.auxo.pos.data.local.entity.InvoiceLineEntity
 import com.auxo.pos.data.local.entity.LedgerEntryEntity
 import com.auxo.pos.data.local.entity.PaymentEntity
 import com.auxo.pos.data.local.entity.ProductEntity
+import com.auxo.pos.data.local.entity.PurchaseOrderEntity
+import com.auxo.pos.data.local.entity.PurchaseOrderLineEntity
+import com.auxo.pos.data.local.entity.PurchaseReceiptEntity
+import com.auxo.pos.data.local.entity.PurchaseReceiptLineEntity
+import com.auxo.pos.data.local.entity.ShopCategoryEntity
+import com.auxo.pos.data.local.entity.ShopSubcategoryEntity
+import com.auxo.pos.data.local.entity.SupplierEntity
 import com.auxo.pos.data.local.entity.ProductVariantEntity
 import com.auxo.pos.data.local.entity.StockBatchEntity
 import com.auxo.pos.data.local.entity.StoreSettingsEntity
@@ -52,7 +59,8 @@ object SharedMapping {
         "storeLogoPhotoId" to null,
     )
 
-    fun product(p: ProductEntity): Map<String, Any?> = mapOf(
+    /** [categoryIdOf] gives the shared ID of a category row, so built-in categories match the web app. */
+    fun product(p: ProductEntity, categoryIdOf: (Long) -> String?): Map<String, Any?> = mapOf(
         "id" to SharedIds.derive("product", p.id.toString()),
         "name" to p.name,
         "category" to p.category,
@@ -64,7 +72,7 @@ object SharedMapping {
         "apparelGst" to (p.gstRule == GST_RULE_APPAREL),
         "available" to p.available,
         "tracksStock" to p.tracksStock,
-        "categoryId" to p.categoryId?.let { SharedIds.derive("category", it.toString()) },
+        "categoryId" to p.categoryId?.let(categoryIdOf),
         "subcategory" to p.subcategory,
         "description" to p.description,
         "material" to p.material,
@@ -231,5 +239,89 @@ object SharedMapping {
         "tenderedPaise" to p.tenderedMinor?.toString(),
         "changePaise" to p.changeMinor?.toString(),
         "createdAt" to p.createdAt,
+    )
+
+    fun category(c: ShopCategoryEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.category(c.profile, c.builtIn, c.id),
+        "name" to c.name,
+        "profile" to c.profile,
+        "enabled" to c.enabled,
+        "sortOrder" to c.sortOrder,
+        "builtIn" to c.builtIn,
+    )
+
+    fun subcategory(s: ShopSubcategoryEntity, categoryIdOf: (Long) -> String): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("subcategory", s.id.toString()),
+        "categoryId" to categoryIdOf(s.categoryId),
+        "name" to s.name,
+        "sortOrder" to s.sortOrder,
+    )
+
+    fun supplier(s: SupplierEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("supplier", s.id.toString()),
+        "name" to s.name,
+        "contactPerson" to s.contactPerson,
+        "phone" to s.phone,
+        "email" to s.email,
+        "gstin" to s.gstin,
+        "stateCode" to s.stateCode,
+        "address" to s.address,
+        "notes" to s.notes,
+        "active" to s.active,
+        "createdAt" to s.createdAt,
+        "updatedAt" to s.updatedAt,
+    )
+
+    fun purchaseOrder(o: PurchaseOrderEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("purchaseOrder", o.id.toString()),
+        "number" to o.number,
+        "supplierId" to SharedIds.derive("supplier", o.supplierId.toString()),
+        "status" to o.status,
+        "createdAt" to o.createdAt,
+        "updatedAt" to o.updatedAt,
+        "expectedDate" to o.expectedEpochDay?.let { LocalDate.ofEpochDay(it).toString() },
+        "note" to o.note,
+    )
+
+    fun purchaseOrderLine(l: PurchaseOrderLineEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("purchaseOrderLine", l.id.toString()),
+        "orderId" to SharedIds.derive("purchaseOrder", l.orderId.toString()),
+        "variantId" to l.variantId?.let { SharedIds.derive("variant", it.toString()) },
+        "productName" to l.productName,
+        "variantLabel" to l.variantLabel,
+        "stockUnit" to l.stockUnit,
+        "quantityOrdered" to l.quantityOrdered,
+        "quantityReceived" to l.quantityReceived,
+        "unitCostPaise" to l.unitCostMinor.toString(),
+    )
+
+    /** The app does not keep a request ID per receipt, so one is made from the receipt's own ID. */
+    fun receipt(r: PurchaseReceiptEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("receipt", r.id.toString()),
+        "number" to r.number,
+        "supplierId" to r.supplierId?.let { SharedIds.derive("supplier", it.toString()) },
+        "supplierName" to null,
+        "orderId" to r.orderId?.let { SharedIds.derive("purchaseOrder", it.toString()) },
+        "orderNumber" to null,
+        "supplierInvoiceNumber" to r.supplierInvoiceNumber,
+        "receivedAt" to r.receivedAt,
+        "note" to r.note,
+        "totalPaise" to r.totalMinor.toString(),
+        "requestId" to "receipt-${r.id}",
+    )
+
+    fun receiptLine(l: PurchaseReceiptLineEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("receiptLine", l.id.toString()),
+        "receiptId" to SharedIds.derive("receipt", l.receiptId.toString()),
+        "variantId" to l.variantId?.let { SharedIds.derive("variant", it.toString()) },
+        "orderLineId" to l.orderLineId?.let { SharedIds.derive("purchaseOrderLine", it.toString()) },
+        "productName" to l.productName,
+        "variantLabel" to l.variantLabel,
+        "stockUnit" to l.stockUnit,
+        "quantity" to l.quantity,
+        "unitCostPaise" to l.unitCostMinor.toString(),
+        "batchNumber" to l.batchNumber,
+        "expiryDate" to l.expiryEpochDay?.let { LocalDate.ofEpochDay(it).toString() },
+        "batchId" to l.batchId?.let { SharedIds.derive("batch", it.toString()) },
     )
 }
