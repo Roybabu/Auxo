@@ -641,7 +641,10 @@ object SharedRestorePlanner {
                     gstin = row.stringOrNull("buyerGstin") ?: "",
                     customerId = row.refOrNull("customerId")?.let { ids.of("customer", it) },
                 )
-                val cart = cartOf(billLines, customer, discount?.let { discountOf(it, zeroMeansNone = true) }, discount?.stringOrNull("reason") ?: "", ids)
+                val cart = cartOf(
+                    billLines, customer, discount?.let { discountOf(it, zeroMeansNone = true) }, discount?.stringOrNull("reason") ?: "", ids,
+                    placeOfSupply = row.stringOrNull("placeOfSupplyStateCode")?.takeIf { it.isNotEmpty() },
+                )
                 HeldBillEntity(
                     id = 0,
                     label = row.string("label"),
@@ -728,7 +731,14 @@ object SharedRestorePlanner {
     }
 
     /** A cart from its lines, in the order the file gives them. */
-    private fun cartOf(lines: List<SharedRow>, customer: CustomerDetails, billDiscount: Discount?, billReason: String, ids: LocalIds): Cart =
+    private fun cartOf(
+        lines: List<SharedRow>,
+        customer: CustomerDetails,
+        billDiscount: Discount?,
+        billReason: String,
+        ids: LocalIds,
+        placeOfSupply: String? = null,
+    ): Cart =
         Cart(
             lines = lines.sortedBy { it.long("sortOrder") }.mapIndexed { index, line ->
                 cartLine(line.requireRecord("snapshot"), index, ids)
@@ -736,6 +746,7 @@ object SharedRestorePlanner {
             billDiscount = billDiscount,
             billDiscountReason = billReason,
             customer = customer,
+            placeOfSupplyStateCode = placeOfSupply,
         )
 
     private fun cartLine(snapshot: SharedRow, index: Int, ids: LocalIds): CartLine {

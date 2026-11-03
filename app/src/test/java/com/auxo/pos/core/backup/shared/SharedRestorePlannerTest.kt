@@ -140,4 +140,18 @@ class SharedRestorePlannerTest {
         assertEquals("i1", plan.invoices[0].sharedId)
         assertEquals("i2", plan.invoices[1].sharedId)
     }
+
+    @Test
+    fun aHeldBill_keepsItsPlaceOfSupply_whenTheFileGivesOne() {
+        val bill = mapOf<String, Any?>(
+            "id" to "h1", "label" to "Table 2", "createdAt" to 1L, "updatedAt" to 1L, "itemCount" to 0L, "totalPaise" to "0",
+            "tableNumber" to 2L, "tokenNumber" to null, "discount" to mapOf("kind" to "AMOUNT", "value" to "0", "reason" to ""),
+            "interState" to true, "placeOfSupplyStateCode" to "29", "customerId" to "", "buyerName" to null,
+            "buyerPhone" to null, "buyerGstin" to null,
+        )
+        val plan = SharedRestorePlanner.plan(document("settings" to listOf(shopSettings), "heldBills" to listOf(bill)))
+        val payload = plan.heldBills[0].build(LocalIds { _, _ -> 0L }).payload
+        assertEquals("29", com.auxo.pos.data.repository.HeldCartCodec.decode(payload)!!.placeOfSupplyStateCode)
+    }
 }
+

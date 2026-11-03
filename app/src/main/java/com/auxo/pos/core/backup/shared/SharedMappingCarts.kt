@@ -60,6 +60,7 @@ object SharedMappingCarts {
             "tokenNumber" to entity.tokenNumber,
             "discount" to discountMap(cart.billDiscount, cart.billDiscountReason),
             "interState" to (placeOfSupply != null && placeOfSupply != shopStateCode),
+            "placeOfSupplyStateCode" to placeOfSupply,
             "customerId" to (customer.customerId?.let { ids.of("customer", it) } ?: ""),
             "buyerName" to customer.name.ifBlank { null },
             "buyerPhone" to customer.phone.ifBlank { null },
