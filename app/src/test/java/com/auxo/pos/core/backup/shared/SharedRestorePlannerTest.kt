@@ -205,5 +205,19 @@ class SharedRestorePlannerTest {
         "categoryId" to "cat-general", "subcategory" to null, "preferredSupplierId" to null, "photoId" to photoId,
         "warrantyMonths" to null, "prescriptionRequired" to false, "metal" to null, "makingChargeBasisPoints" to null,
     )
+
+    @Test
+    fun aPhotoWhoseIdIsNotAUuid_isRefused() {
+        val photo = mapOf<String, Any?>("id" to "photo-1", "mimeType" to "image/jpeg", "dataBase64" to "AQID")
+        val tables = SharedFile.TABLES.associateWith { emptyList<Map<String, Any?>>() }.toMutableMap()
+        tables["settings"] = listOf(shopSettings)
+        val doc = SharedBackupReader.check(mapOf(
+            "format" to "auxo-backup", "version" to 1L, "sharedModelVersion" to 1L, "createdAt" to 5L,
+            "source" to mapOf("platform" to "web", "appVersion" to "1"), "shopName" to "Shop",
+            "tables" to tables, "photos" to listOf(photo),
+        ))
+        val problem = assertThrows(RestoreProblem::class.java) { SharedRestorePlanner.plan(doc) }
+        assertTrue(problem.message!!.contains("UUID"))
+    }
 }
 
