@@ -47,18 +47,17 @@ class SharedMappingSalesTest {
     }
 
     @Test
-    fun invoice_splits_one_discount_into_line_and_bill_parts() {
-        // Lines discounted 300 in total, invoice discount 500: the bill discount is the 200 difference.
-        val row = SharedMapping.invoice(invoice(discountMinor = 500), lineDiscountMinor = 300, customerId = 5)
-        assertEquals("300", row["lineDiscountPaise"])
-        assertEquals("200", row["billDiscountPaise"])
+    fun invoice_keeps_the_whole_discount_because_the_app_does_not_store_the_split() {
+        val row = SharedMapping.invoice(invoice(discountMinor = 500), customerId = 5)
         assertEquals("500", row["discountPaise"])
+        assertEquals("500", row["lineDiscountPaise"])
+        assertEquals("0", row["billDiscountPaise"])
         assertEquals(SharedIds.derive("customer", "5"), row["customerId"])
     }
 
     @Test
     fun invoice_has_a_seller_object_and_no_buyer_when_none_was_entered() {
-        val row = SharedMapping.invoice(invoice(), lineDiscountMinor = 0, customerId = null)
+        val row = SharedMapping.invoice(invoice(), customerId = null)
         assertEquals("Shop", (row["seller"] as Map<*, *>)["storeName"])
         assertNull(row["buyer"])
         assertNull(row["customerId"])

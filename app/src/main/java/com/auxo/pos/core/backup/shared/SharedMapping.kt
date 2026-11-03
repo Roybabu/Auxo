@@ -138,12 +138,12 @@ object SharedMapping {
     )
 
     /**
-     * The Android app keeps one discount per invoice. The shared format has a line discount and a bill discount:
-     * the line discounts are the sum of the lines, and the rest of the invoice discount is the bill discount.
+     * The Android app stores one discount for the invoice (line discounts plus each line's share of the bill discount).
+     * It does not keep the two parts apart, so the whole amount is written as the line discount and the bill discount
+     * is zero. The total discount is correct; only the split is not recorded.
      * Loyalty redemption is not stored on the invoice in this app, so those fields are zero.
      */
-    fun invoice(i: InvoiceEntity, lineDiscountMinor: Long, customerId: Long?): Map<String, Any?> {
-        val billDiscount = (i.discountMinor - lineDiscountMinor).coerceAtLeast(0L)
+    fun invoice(i: InvoiceEntity, customerId: Long?): Map<String, Any?> {
         val buyer = if (i.buyerName == null && i.buyerPhone == null && i.buyerGstin == null) null else mapOf(
             "name" to i.buyerName,
             "phone" to i.buyerPhone,
@@ -174,8 +174,8 @@ object SharedMapping {
             "pricesIncludeTax" to i.pricesIncludeTax,
             "interState" to i.interState,
             "subtotalPaise" to i.subtotalMinor.toString(),
-            "lineDiscountPaise" to lineDiscountMinor.toString(),
-            "billDiscountPaise" to billDiscount.toString(),
+            "lineDiscountPaise" to i.discountMinor.toString(),
+            "billDiscountPaise" to "0",
             "discountPaise" to i.discountMinor.toString(),
             "billDiscountReason" to i.discountReason,
             "loyaltyPointsRedeemed" to 0,
@@ -207,7 +207,7 @@ object SharedMapping {
         "stockUnit" to (l.stockUnit ?: "UNIT"),
         "unitPricePaise" to l.unitPriceMinor.toString(),
         "mrpPaise" to l.mrpMinor?.toString(),
-        // The app stores one discount per line, so it is the line discount; no part of the bill discount is spread to lines.
+        // The app stores one discount per line, including that line's share of any bill discount, so it is written as the line discount.
         "lineDiscountPaise" to l.discountMinor.toString(),
         "billDiscountSharePaise" to "0",
         "discountPaise" to l.discountMinor.toString(),
