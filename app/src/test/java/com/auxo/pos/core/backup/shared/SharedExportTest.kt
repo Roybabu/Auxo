@@ -171,6 +171,6 @@ class SharedExportTest {
             address = null, creditLimitMinor = null, notes = null, createdAt = 1, updatedAt = 1)
         val bytes = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product), customerRows = listOf(customer)))
             .encrypt("long shared phrase 91", 1_700_000_000_000L, "1.0")
-        println("AUXO-FIXTURE-BEGIN " + java.util.Base64.getEncoder().encodeToString(bytes) + " AUXO-FIXTURE-END")
+        throw AssertionError("AUXO-FIXTURE-BEGIN " + java.util.Base64.getEncoder().encodeToString(bytes) + " AUXO-FIXTURE-END")
     }
 }
