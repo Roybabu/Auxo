@@ -1,6 +1,6 @@
 [versions]
 # Build tooling
-agp = "9.4.1"
+agp = "9.5.0"
 kotlin = "2.4.21"
 ksp = "2.3.12"
 
@@ -25,7 +25,7 @@ coroutines = "1.11.0"
 tink = "1.24.0"
 
 # Encrypts the database file on the phone (SQLCipher, AES-256)
-sqlcipher = "4.6.1"
+sqlcipher = "4.20.0"
 
 # Barcodes
 zxing = "3.5.4"
