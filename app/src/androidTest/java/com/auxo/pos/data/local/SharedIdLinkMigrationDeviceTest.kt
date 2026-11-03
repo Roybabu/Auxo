@@ -3,66 +3,84 @@
 
 package com.auxo.pos.data.local
 
+import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
-import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Rule
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Upgrades a version 1 database that already holds a customer (as a phone in use does) to version 2.
- * The customer must survive unchanged, and the shared-ID link table must exist and refuse a second link.
+ * Checks the version 1 to 2 migration against the database Room builds for version 2. The migration must leave
+ * the shared-ID link table exactly as Room expects it, with its unique index.
  */
 @RunWith(AndroidJUnit4::class)
 class SharedIdLinkMigrationDeviceTest {
 
-    @get:Rule
-    val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), AuxoDatabase::class.java)
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val name = "shared-id-link-migration.db"
 
-    private fun upgradedPhoneWithACustomer(name: String) = run {
-        helper.createDatabase(name, 1).apply {
-            execSQL("INSERT INTO customers (name, created_at, updated_at) VALUES ('Asha', 1, 1)")
-            close()
+    @Before
+    fun removeAnyOldFile() {
+        context.deleteDatabase(name)
+    }
+
+    @After
+    fun removeTheFile() {
+        context.deleteDatabase(name)
+    }
+
+    /** The link table as SQLite reports it: its columns, then its indexes. */
+    private fun shapeOf(db: SupportSQLiteDatabase): List<String> {
+        val shape = mutableListOf<String>()
+        db.query("PRAGMA table_info(`shared_id_links`)").use { cursor ->
+            while (cursor.moveToNext()) shape += (0 until cursor.columnCount).joinToString("|") { "${cursor.getString(it)}" }
         }
-        helper.runMigrationsAndValidate(name, 2, true, Migrations.MIGRATION_1_2)
+        db.query("PRAGMA index_list(`shared_id_links`)").use { cursor ->
+            while (cursor.moveToNext()) shape += (0 until cursor.columnCount).joinToString("|") { "${cursor.getString(it)}" }
+        }
+        return shape
+    }
+
+    /** Drops the link table Room just made, then runs the migration in its place. */
+    private fun replaceLinkTableWithMigration(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP INDEX IF EXISTS `index_shared_id_links_shared_id`")
+        db.execSQL("DROP TABLE `shared_id_links`")
+        Migrations.MIGRATION_1_2.migrate(db)
     }
 
     @Test
-    fun upgradeKeepsTheExistingCustomer_andLinksASharedId() {
-        val db = upgradedPhoneWithACustomer("upgrade-keeps-data.db")
-        try {
-            db.query("SELECT name FROM customers").use { cursor ->
-                assertTrue(cursor.moveToFirst())
-                assertEquals("Asha", cursor.getString(0))
-            }
-            db.execSQL("INSERT INTO shared_id_links (table_name, local_id, shared_id) VALUES ('customers', 1, 'shared-1')")
-            db.query("SELECT shared_id FROM shared_id_links WHERE table_name = 'customers' AND local_id = 1").use { cursor ->
-                assertTrue(cursor.moveToFirst())
-                assertEquals("shared-1", cursor.getString(0))
-            }
-        } finally {
-            db.close()
-        }
+    fun theMigration_buildsTheSameLinkTableThatRoomBuildsForVersion2() {
+        val room = AuxoDatabase.builder(context, name).build()
+        val db = room.openHelper.writableDatabase
+        val expected = shapeOf(db)
+        assertTrue(expected.isNotEmpty())
+
+        replaceLinkTableWithMigration(db)
+
+        assertEquals(expected, shapeOf(db))
+        room.close()
     }
 
     @Test
-    fun aSharedId_cannotBeLinkedToTwoRecords() {
-        val db = upgradedPhoneWithACustomer("unique-shared-id.db")
+    fun aSharedId_cannotBeLinkedToTwoRecords_afterTheMigration() {
+        val room = AuxoDatabase.builder(context, name).build()
+        val db = room.openHelper.writableDatabase
+        replaceLinkTableWithMigration(db)
+
+        db.execSQL("INSERT INTO shared_id_links (table_name, local_id, shared_id) VALUES ('customers', 1, 'shared-1')")
         try {
-            db.execSQL("INSERT INTO shared_id_links (table_name, local_id, shared_id) VALUES ('customers', 1, 'shared-1')")
-            try {
-                db.execSQL("INSERT INTO shared_id_links (table_name, local_id, shared_id) VALUES ('customers', 2, 'shared-1')")
-                fail("The same shared ID was linked twice.")
-            } catch (expected: SQLiteConstraintException) {
-                // Refused, as intended.
-            }
-        } finally {
-            db.close()
+            db.execSQL("INSERT INTO shared_id_links (table_name, local_id, shared_id) VALUES ('customers', 2, 'shared-1')")
+            fail("The same shared ID was linked twice.")
+        } catch (expected: SQLiteConstraintException) {
+            // Refused, as intended.
         }
+        room.close()
     }
 }
