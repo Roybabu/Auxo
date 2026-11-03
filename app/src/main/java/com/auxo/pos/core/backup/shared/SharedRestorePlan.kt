@@ -779,16 +779,17 @@ object SharedRestorePlanner {
         )
 
     private fun cartLine(snapshot: SharedRow, index: Int, ids: LocalIds): CartLine {
-        val custom = snapshot.bool("customItem")
-        val apparel = snapshot.bool("apparelGst")
+        // The web app writes its cart lines in the invoice-line shape, so these Android-only flags may be absent.
+        val custom = snapshot.boolOrNull("customItem") ?: (snapshot.refOrNull("variantId") == null)
+        val apparel = snapshot.boolOrNull("apparelGst") ?: false
         val fixedRate = snapshot.intOrNull("gstRateBasisPoints")
         return CartLine(
             // A one-off item has no product; it gets a key of its own within the cart.
             variantId = if (custom) CartLine.CUSTOM_KEY_BASE - index else ids.of("variant", snapshot.ref("variantId")),
             productId = if (custom) 0L else ids.of("product", snapshot.ref("productId")),
             productName = snapshot.string("name"),
-            variantLabel = snapshot.string("variantLabel"),
-            barcode = snapshot.string("barcode"),
+            variantLabel = snapshot.stringOrNull("variantLabel") ?: "",
+            barcode = snapshot.stringOrNull("barcode") ?: "",
             hsnCode = snapshot.stringOrNull("hsnCode"),
             unitPrice = Money(snapshot.money("unitPricePaise")),
             mrp = snapshot.moneyOrNull("mrpPaise")?.let { Money(it) },
@@ -798,12 +799,13 @@ object SharedRestorePlanner {
                 else -> null
             },
             quantity = snapshot.int("quantity"),
-            discount = snapshot.record("discount")?.let { discountOf(it, zeroMeansNone = false) },
+            discount = snapshot.record("discount")?.let { discountOf(it, zeroMeansNone = false) }
+                ?: snapshot.moneyOrNull("lineDiscountPaise")?.takeIf { it > 0 }?.let { Discount.Amount(Money(it)) },
             discountReason = snapshot.stringOrNull("discountReason") ?: "",
             availableStock = if (custom) CartLine.UNLIMITED else null,
             isCustom = custom,
             stockUnit = stockUnitOf(snapshot.string("stockUnit")),
-            isRestaurantItem = snapshot.bool("restaurantItem"),
+            isRestaurantItem = snapshot.boolOrNull("restaurantItem") ?: false,
         )
     }
 
