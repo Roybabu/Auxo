@@ -9,6 +9,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.auxo.pos.data.local.dao.AuditDao
 import com.auxo.pos.data.local.dao.CategoryDao
+import com.auxo.pos.data.local.dao.SharedExportDao
 import com.auxo.pos.data.local.dao.DayEndDao
 import com.auxo.pos.data.local.dao.HeldBillDao
 import com.auxo.pos.data.local.dao.QuotationDao
@@ -102,6 +103,8 @@ abstract class AuxoDatabase : RoomDatabase() {
     abstract fun stockCountDao(): StockCountDao
 
     abstract fun categoryDao(): CategoryDao
+
+    abstract fun sharedExportDao(): SharedExportDao
 
     companion object {
         const val NAME = "auxo.db"
