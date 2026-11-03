@@ -4,6 +4,10 @@
 package com.auxo.pos.core.backup.shared
 
 import com.auxo.pos.data.local.entity.AuditLogEntity
+import com.auxo.pos.data.local.entity.LoyaltySettingsEntity
+import com.auxo.pos.data.local.entity.NumberSequenceEntity
+import com.auxo.pos.data.local.entity.StockCountEntity
+import com.auxo.pos.domain.inventory.CountLine
 import com.auxo.pos.data.local.entity.CustomerEntity
 import com.auxo.pos.data.local.entity.DayClosingEntity
 import com.auxo.pos.data.local.entity.StockMovementEntity
@@ -370,5 +374,56 @@ object SharedMapping {
         "batchId" to m.batchId?.let { SharedIds.derive("batch", it.toString()) },
         "invoiceId" to m.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
         "sourceInvoiceId" to null,
+    )
+
+    fun loyaltySettings(l: LoyaltySettingsEntity): Map<String, Any?> = mapOf(
+        "id" to "rules",
+        "enabled" to l.enabled,
+        "spendPerPointPaise" to l.spendPerPointMinor.toString(),
+        "pointValuePaise" to l.pointValueMinor.toString(),
+    )
+
+    /**
+     * Points are stored on customer ledger entries. Positive points are written as EARNED and negative as REDEEMED.
+     * The app does not record the difference between earned, reversed and bonus points, so those are not told apart.
+     * Returns null for entries that carry no points.
+     */
+    fun loyaltyEntry(e: LedgerEntryEntity): Map<String, Any?>? {
+        if (e.points == 0) return null
+        return mapOf(
+            "id" to SharedIds.derive("loyalty", e.id.toString()),
+            "customerId" to SharedIds.derive("customer", e.customerId.toString()),
+            "type" to if (e.points > 0) "EARNED" else "REDEEMED",
+            "points" to e.points,
+            "invoiceId" to e.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+            "sourceInvoiceId" to null,
+            "createdAt" to e.createdAt,
+            "note" to e.note,
+        )
+    }
+
+    fun numberSequence(n: NumberSequenceEntity): Map<String, Any?> = mapOf(
+        "name" to n.name,
+        "nextValue" to n.nextValue,
+    )
+
+    /** Matched lines are the ones where the count agreed with the expected stock. */
+    fun stockCount(c: StockCountEntity, lines: List<CountLine>): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("stockCount", c.id.toString()),
+        "status" to c.status,
+        "startedAt" to c.startedAt,
+        "finishedAt" to c.finishedAt,
+        "reason" to c.reason,
+        "note" to c.note,
+        "adjustedCount" to c.adjustedCount,
+        "matchedCount" to lines.count { it.counted == it.expected },
+    )
+
+    fun stockCountLine(countId: Long, index: Int, line: CountLine): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("stockCountLine", "$countId|$index"),
+        "stockCountId" to SharedIds.derive("stockCount", countId.toString()),
+        "variantId" to SharedIds.derive("variant", line.variantId.toString()),
+        "expectedQuantity" to line.expected,
+        "countedQuantity" to line.counted,
     )
 }
