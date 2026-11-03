@@ -6,6 +6,7 @@ package com.auxo.pos.core.backup.shared
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.auxo.pos.data.local.AuxoDatabase
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -76,6 +77,36 @@ class SharedRestoreDeviceTest {
             ),
         )
         return SharedRestorePlanner.plan(document)
+    }
+
+    @Test
+    fun aFileMadeByTheWebApp_restoresIntoAFreshDatabase_withItsCategoriesLinked() = runBlocking {
+        val bytes = InstrumentationRegistry.getInstrumentation().context.assets
+            .open("shared/web-backup.auxoshared").use { it.readBytes() }
+        val plan = SharedRestorePlanner.plan(SharedBackupFile.open(bytes, "long shared phrase 91"))
+        val db = AuxoDatabase.builder(context, name).build()
+        try {
+            SharedRestoreApplier(db, photos = null, workDir = context.cacheDir).apply(plan)
+
+            val categories = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM shop_categories").use { cursor ->
+                cursor.moveToFirst()
+                cursor.getInt(0)
+            }
+            assertEquals(12, categories)
+            val linked = db.openHelper.readableDatabase
+                .query("SELECT COUNT(*) FROM shared_id_links WHERE table_name = 'category'").use { cursor ->
+                    cursor.moveToFirst()
+                    cursor.getInt(0)
+                }
+            assertEquals(12, linked)
+            val shop = db.openHelper.readableDatabase.query("SELECT store_name FROM store_settings").use { cursor ->
+                cursor.moveToFirst()
+                cursor.getString(0)
+            }
+            assertEquals("E2E Shop", shop)
+        } finally {
+            db.close()
+        }
     }
 
     @Test
