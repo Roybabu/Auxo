@@ -67,8 +67,8 @@ object SharedMapping {
     )
 
     /** [categoryIdOf] gives the shared ID of a category row, so built-in categories match the web app. */
-    fun product(p: ProductEntity, categoryIdOf: (Long) -> String?): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("product", p.id.toString()),
+    fun product(p: ProductEntity, categoryIdOf: (Long) -> String?, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("product", p.id),
         "name" to p.name,
         "category" to p.category,
         "brand" to p.brand,
@@ -85,7 +85,7 @@ object SharedMapping {
         "material" to p.material,
         "dietType" to p.dietType,
         "hsnCode" to p.hsnCode,
-        "preferredSupplierId" to p.preferredSupplierId?.let { SharedIds.derive("supplier", it.toString()) },
+        "preferredSupplierId" to p.preferredSupplierId?.let { ids.of("supplier", it) },
         "photoId" to p.photoFile?.let { SharedIds.derive("photo", it) },
         "warrantyMonths" to p.warrantyMonths,
         "prescriptionRequired" to p.prescriptionRequired,
@@ -93,9 +93,9 @@ object SharedMapping {
         "makingChargeBasisPoints" to p.makingChargeBasisPoints,
     )
 
-    fun variant(v: ProductVariantEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("variant", v.id.toString()),
-        "productId" to SharedIds.derive("product", v.productId.toString()),
+    fun variant(v: ProductVariantEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("variant", v.id),
+        "productId" to ids.of("product", v.productId),
         "sku" to (v.sku ?: ""),
         "barcode" to v.barcode,
         "size" to (v.size ?: ""),
@@ -111,9 +111,9 @@ object SharedMapping {
         "photoId" to v.photoFile?.let { SharedIds.derive("photo", it) },
     )
 
-    fun stockBatch(b: StockBatchEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("batch", b.id.toString()),
-        "variantId" to SharedIds.derive("variant", b.variantId.toString()),
+    fun stockBatch(b: StockBatchEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("batch", b.id),
+        "variantId" to ids.of("variant", b.variantId),
         "batchNumber" to b.batchNumber,
         "expiryDate" to b.expiryEpochDay?.let { LocalDate.ofEpochDay(it).toString() },
         "quantity" to b.quantity,
@@ -122,8 +122,8 @@ object SharedMapping {
     )
 
     /** The customer's balance is the sum of their ledger entries; positive means the customer owes the shop. */
-    fun customer(c: CustomerEntity, balanceMinor: Long): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("customer", c.id.toString()),
+    fun customer(c: CustomerEntity, balanceMinor: Long, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("customer", c.id),
         "name" to c.name,
         "phone" to c.phone,
         "email" to c.email,
@@ -139,12 +139,12 @@ object SharedMapping {
         "updatedAt" to c.updatedAt,
     )
 
-    fun ledgerEntry(e: LedgerEntryEntity, invoiceNumber: (Long) -> String?): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("ledger", e.id.toString()),
-        "customerId" to SharedIds.derive("customer", e.customerId.toString()),
+    fun ledgerEntry(e: LedgerEntryEntity, invoiceNumber: (Long) -> String?, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("ledger", e.id),
+        "customerId" to ids.of("customer", e.customerId),
         "type" to e.type,
         "amountPaise" to e.amountMinor.toString(),
-        "invoiceId" to e.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+        "invoiceId" to e.invoiceId?.let { ids.of("invoice", it) },
         "invoiceNumber" to e.invoiceId?.let(invoiceNumber),
         "method" to e.method,
         "reference" to e.reference,
@@ -158,7 +158,7 @@ object SharedMapping {
      * is zero. The total discount is correct; only the split is not recorded.
      * Loyalty redemption is not stored on the invoice in this app, so those fields are zero.
      */
-    fun invoice(i: InvoiceEntity, customerId: Long?): Map<String, Any?> {
+    fun invoice(i: InvoiceEntity, customerId: Long?, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> {
         val buyer = if (i.buyerName == null && i.buyerPhone == null && i.buyerGstin == null) null else mapOf(
             "name" to i.buyerName,
             "phone" to i.buyerPhone,
@@ -166,7 +166,7 @@ object SharedMapping {
             "stateCode" to null,
         )
         return mapOf(
-            "id" to SharedIds.derive("invoice", i.id.toString()),
+            "id" to ids.of("invoice", i.id),
             "number" to i.number,
             "type" to i.type,
             "createdAt" to i.createdAt,
@@ -179,8 +179,8 @@ object SharedMapping {
                 "fssai" to i.sellerFssai,
             ),
             "buyer" to buyer,
-            "customerId" to customerId?.let { SharedIds.derive("customer", it.toString()) },
-            "originalInvoiceId" to i.originalInvoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+            "customerId" to customerId?.let { ids.of("customer", it) },
+            "originalInvoiceId" to i.originalInvoiceId?.let { ids.of("invoice", it) },
             "originalInvoiceNumber" to i.originalInvoiceNumber,
             "note" to i.note,
             "returnReason" to null,
@@ -207,12 +207,12 @@ object SharedMapping {
     }
 
     /** [productIdOf] finds the product a variant belongs to, because the shared line names the product as well. */
-    fun invoiceLine(l: InvoiceLineEntity, productIdOf: (Long) -> Long?): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("invoiceLine", l.id.toString()),
-        "invoiceId" to SharedIds.derive("invoice", l.invoiceId.toString()),
-        "productId" to l.variantId?.let(productIdOf)?.let { SharedIds.derive("product", it.toString()) },
-        "variantId" to l.variantId?.let { SharedIds.derive("variant", it.toString()) },
-        "originalLineId" to l.originalLineId?.let { SharedIds.derive("invoiceLine", it.toString()) },
+    fun invoiceLine(l: InvoiceLineEntity, productIdOf: (Long) -> Long?, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("invoiceLine", l.id),
+        "invoiceId" to ids.of("invoice", l.invoiceId),
+        "productId" to l.variantId?.let(productIdOf)?.let { ids.of("product", it) },
+        "variantId" to l.variantId?.let { ids.of("variant", it) },
+        "originalLineId" to l.originalLineId?.let { ids.of("invoiceLine", it) },
         "name" to l.productName,
         "variantLabel" to l.variantLabel,
         "barcode" to l.barcode,
@@ -236,9 +236,9 @@ object SharedMapping {
         "returnedQuantity" to l.returnedQuantity,
     )
 
-    fun payment(p: PaymentEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("payment", p.id.toString()),
-        "invoiceId" to SharedIds.derive("invoice", p.invoiceId.toString()),
+    fun payment(p: PaymentEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("payment", p.id),
+        "invoiceId" to ids.of("invoice", p.invoiceId),
         "method" to p.method,
         "kind" to p.kind,
         "amountPaise" to p.amountMinor.toString(),
@@ -248,8 +248,8 @@ object SharedMapping {
         "createdAt" to p.createdAt,
     )
 
-    fun category(c: ShopCategoryEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.category(c.profile, c.builtIn, c.id),
+    fun category(c: ShopCategoryEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.category(c.profile, c.builtIn, c.id),
         "name" to c.name,
         "profile" to c.profile,
         "enabled" to c.enabled,
@@ -257,15 +257,15 @@ object SharedMapping {
         "builtIn" to c.builtIn,
     )
 
-    fun subcategory(s: ShopSubcategoryEntity, categoryIdOf: (Long) -> String): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("subcategory", s.id.toString()),
+    fun subcategory(s: ShopSubcategoryEntity, categoryIdOf: (Long) -> String, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("subcategory", s.id),
         "categoryId" to categoryIdOf(s.categoryId),
         "name" to s.name,
         "sortOrder" to s.sortOrder,
     )
 
-    fun supplier(s: SupplierEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("supplier", s.id.toString()),
+    fun supplier(s: SupplierEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("supplier", s.id),
         "name" to s.name,
         "contactPerson" to s.contactPerson,
         "phone" to s.phone,
@@ -279,10 +279,10 @@ object SharedMapping {
         "updatedAt" to s.updatedAt,
     )
 
-    fun purchaseOrder(o: PurchaseOrderEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("purchaseOrder", o.id.toString()),
+    fun purchaseOrder(o: PurchaseOrderEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("purchaseOrder", o.id),
         "number" to o.number,
-        "supplierId" to SharedIds.derive("supplier", o.supplierId.toString()),
+        "supplierId" to ids.of("supplier", o.supplierId),
         "status" to o.status,
         "createdAt" to o.createdAt,
         "updatedAt" to o.updatedAt,
@@ -290,10 +290,10 @@ object SharedMapping {
         "note" to o.note,
     )
 
-    fun purchaseOrderLine(l: PurchaseOrderLineEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("purchaseOrderLine", l.id.toString()),
-        "orderId" to SharedIds.derive("purchaseOrder", l.orderId.toString()),
-        "variantId" to l.variantId?.let { SharedIds.derive("variant", it.toString()) },
+    fun purchaseOrderLine(l: PurchaseOrderLineEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("purchaseOrderLine", l.id),
+        "orderId" to ids.of("purchaseOrder", l.orderId),
+        "variantId" to l.variantId?.let { ids.of("variant", it) },
         "productName" to l.productName,
         "variantLabel" to l.variantLabel,
         "stockUnit" to l.stockUnit,
@@ -303,12 +303,12 @@ object SharedMapping {
     )
 
     /** The app does not keep a request ID per receipt, so one is made from the receipt's own ID. */
-    fun receipt(r: PurchaseReceiptEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("receipt", r.id.toString()),
+    fun receipt(r: PurchaseReceiptEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("receipt", r.id),
         "number" to r.number,
-        "supplierId" to r.supplierId?.let { SharedIds.derive("supplier", it.toString()) },
+        "supplierId" to r.supplierId?.let { ids.of("supplier", it) },
         "supplierName" to null,
-        "orderId" to r.orderId?.let { SharedIds.derive("purchaseOrder", it.toString()) },
+        "orderId" to r.orderId?.let { ids.of("purchaseOrder", it) },
         "orderNumber" to null,
         "supplierInvoiceNumber" to r.supplierInvoiceNumber,
         "receivedAt" to r.receivedAt,
@@ -317,11 +317,11 @@ object SharedMapping {
         "requestId" to "receipt-${r.id}",
     )
 
-    fun receiptLine(l: PurchaseReceiptLineEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("receiptLine", l.id.toString()),
-        "receiptId" to SharedIds.derive("receipt", l.receiptId.toString()),
-        "variantId" to l.variantId?.let { SharedIds.derive("variant", it.toString()) },
-        "orderLineId" to l.orderLineId?.let { SharedIds.derive("purchaseOrderLine", it.toString()) },
+    fun receiptLine(l: PurchaseReceiptLineEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("receiptLine", l.id),
+        "receiptId" to ids.of("receipt", l.receiptId),
+        "variantId" to l.variantId?.let { ids.of("variant", it) },
+        "orderLineId" to l.orderLineId?.let { ids.of("purchaseOrderLine", it) },
         "productName" to l.productName,
         "variantLabel" to l.variantLabel,
         "stockUnit" to l.stockUnit,
@@ -329,11 +329,11 @@ object SharedMapping {
         "unitCostPaise" to l.unitCostMinor.toString(),
         "batchNumber" to l.batchNumber,
         "expiryDate" to l.expiryEpochDay?.let { LocalDate.ofEpochDay(it).toString() },
-        "batchId" to l.batchId?.let { SharedIds.derive("batch", it.toString()) },
+        "batchId" to l.batchId?.let { ids.of("batch", it) },
     )
 
-    fun dayClosing(d: DayClosingEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("dayClosing", d.id.toString()),
+    fun dayClosing(d: DayClosingEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("dayClosing", d.id),
         "businessDate" to d.businessDate,
         "bills" to d.bills,
         "returns" to d.returns,
@@ -351,8 +351,8 @@ object SharedMapping {
     )
 
     /** Actor IDs are kept as text for history only; they never create or match an account. */
-    fun auditLog(a: AuditLogEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("audit", a.id.toString()),
+    fun auditLog(a: AuditLogEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("audit", a.id),
         "createdAt" to a.createdAt,
         "actorId" to a.actorId.toString(),
         "actorName" to a.actorName,
@@ -364,15 +364,15 @@ object SharedMapping {
     )
 
     /** The receipt link is not a shared column yet, so it is not written here. */
-    fun stockMovement(m: StockMovementEntity): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("stockMovement", m.id.toString()),
-        "variantId" to SharedIds.derive("variant", m.variantId.toString()),
+    fun stockMovement(m: StockMovementEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("stockMovement", m.id),
+        "variantId" to ids.of("variant", m.variantId),
         "quantityChange" to m.quantityChange,
         "reason" to m.reason,
         "note" to m.note,
         "createdAt" to m.createdAt,
-        "batchId" to m.batchId?.let { SharedIds.derive("batch", it.toString()) },
-        "invoiceId" to m.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+        "batchId" to m.batchId?.let { ids.of("batch", it) },
+        "invoiceId" to m.invoiceId?.let { ids.of("invoice", it) },
         "sourceInvoiceId" to null,
     )
 
@@ -388,14 +388,14 @@ object SharedMapping {
      * The app does not record the difference between earned, reversed and bonus points, so those are not told apart.
      * Returns null for entries that carry no points.
      */
-    fun loyaltyEntry(e: LedgerEntryEntity): Map<String, Any?>? {
+    fun loyaltyEntry(e: LedgerEntryEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?>? {
         if (e.points == 0) return null
         return mapOf(
-            "id" to SharedIds.derive("loyalty", e.id.toString()),
-            "customerId" to SharedIds.derive("customer", e.customerId.toString()),
+            "id" to ids.of("loyalty", e.id),
+            "customerId" to ids.of("customer", e.customerId),
             "type" to if (e.points > 0) "EARNED" else "REDEEMED",
             "points" to e.points,
-            "invoiceId" to e.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+            "invoiceId" to e.invoiceId?.let { ids.of("invoice", it) },
             "sourceInvoiceId" to null,
             "createdAt" to e.createdAt,
             "note" to e.note,
@@ -408,8 +408,8 @@ object SharedMapping {
     )
 
     /** Matched lines are the ones where the count agreed with the expected stock. */
-    fun stockCount(c: StockCountEntity, lines: List<CountLine>): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("stockCount", c.id.toString()),
+    fun stockCount(c: StockCountEntity, lines: List<CountLine>, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("stockCount", c.id),
         "status" to c.status,
         "startedAt" to c.startedAt,
         "finishedAt" to c.finishedAt,
@@ -419,10 +419,10 @@ object SharedMapping {
         "matchedCount" to lines.count { it.counted == it.expected },
     )
 
-    fun stockCountLine(countId: Long, index: Int, line: CountLine): Map<String, Any?> = mapOf(
+    fun stockCountLine(countId: Long, index: Int, line: CountLine, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
         "id" to SharedIds.derive("stockCountLine", "$countId|$index"),
-        "stockCountId" to SharedIds.derive("stockCount", countId.toString()),
-        "variantId" to SharedIds.derive("variant", line.variantId.toString()),
+        "stockCountId" to ids.of("stockCount", countId),
+        "variantId" to ids.of("variant", line.variantId),
         "expectedQuantity" to line.expected,
         "countedQuantity" to line.counted,
     )

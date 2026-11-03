@@ -4,6 +4,7 @@
 package com.auxo.pos.core.backup.shared
 
 import com.auxo.pos.data.local.dao.SharedExportDao
+import com.auxo.pos.data.local.entity.SharedIdLinkEntity
 import com.auxo.pos.data.local.entity.AuditLogEntity
 import com.auxo.pos.data.local.entity.CustomerEntity
 import com.auxo.pos.data.local.entity.DayClosingEntity
@@ -46,8 +47,10 @@ private class FakeDao(
     val heldRows: List<HeldBillEntity> = emptyList(),
     val ledgerRows: List<LedgerEntryEntity> = emptyList(),
     val customerRows: List<CustomerEntity> = emptyList(),
+    val linkRows: List<SharedIdLinkEntity> = emptyList(),
 ) : SharedExportDao {
     override suspend fun storeSettings() = settingRows
+    override suspend fun sharedIdLinks(): List<SharedIdLinkEntity> = linkRows
     override suspend fun loyaltySettings(): List<LoyaltySettingsEntity> = emptyList()
     override suspend fun categories(): List<ShopCategoryEntity> = emptyList()
     override suspend fun subcategories(): List<ShopSubcategoryEntity> = emptyList()
@@ -142,5 +145,20 @@ class SharedExportTest {
             .build(5, "1.0")
         val lines = (file["tables"] as Map<*, *>)["heldBillLines"] as List<*>
         assertEquals(1, lines.size)
+    }
+
+    @Test
+    fun aRecordWithAStoredLink_keepsTheLinkedSharedId_andOthersGetTheDerivedOne() = kotlinx.coroutines.runBlocking {
+        val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
+            dietType = null, createdAt = 1, updatedAt = 2, photoFile = null)
+        val link = SharedIdLinkEntity(tableName = "product", localId = 7L, sharedId = "linked-product-id")
+
+        val linked = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product), linkRows = listOf(link))).build(5, "1.0")
+        val linkedProducts = (linked["tables"] as Map<*, *>)["products"] as List<*>
+        assertEquals("linked-product-id", (linkedProducts[0] as Map<*, *>)["id"])
+
+        val unlinked = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product))).build(5, "1.0")
+        val unlinkedProducts = (unlinked["tables"] as Map<*, *>)["products"] as List<*>
+        assertEquals(SharedIds.derive("product", "7"), (unlinkedProducts[0] as Map<*, *>)["id"])
     }
 }

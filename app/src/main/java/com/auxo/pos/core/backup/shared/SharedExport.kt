@@ -26,9 +26,12 @@ class SharedExport(
 ) {
     suspend fun build(createdAt: Long, appVersion: String): Map<String, Any?> {
         val settings = dao.storeSettings().firstOrNull() ?: throw IllegalStateException("There are no shop details to back up.")
+        val ids = SharedIdResolver(
+            dao.sharedIdLinks().groupBy({ it.tableName }, { it.localId to it.sharedId }).mapValues { (_, pairs) -> pairs.toMap() },
+        )
         val categories = dao.categories()
         val categoryById = categories.associateBy { it.id }
-        val categoryIdOf: (Long) -> String? = { id -> categoryById[id]?.let { SharedIds.category(it.profile, it.builtIn, id) } }
+        val categoryIdOf: (Long) -> String? = { id -> categoryById[id]?.let { ids.category(it.profile, it.builtIn, id) } }
 
         val products = dao.products()
         val variants = dao.variants()
@@ -42,7 +45,7 @@ class SharedExport(
         val heldBills = dao.heldBills()
         val heldRows = heldBills.map { bill ->
             val cart = readCart(bill.payload, "held bill ${bill.id}")
-            Triple(bill, cart, SharedMappingCarts.heldBill(bill, cart, settings.stateCode))
+            Triple(bill, cart, SharedMappingCarts.heldBill(bill, cart, settings.stateCode, ids = ids))
         }
         val quotations = dao.quotations()
         val quoteRows = quotations.map { q -> Triple(q, readCart(q.payload, "quotation ${q.number}"), Unit) }
@@ -61,32 +64,32 @@ class SharedExport(
 
         val tables = linkedMapOf<String, List<Map<String, Any?>>>(
             "settings" to listOf(SharedMapping.settings(settings)),
-            "categories" to categories.map { SharedMapping.category(it) },
-            "subcategories" to dao.subcategories().map { SharedMapping.subcategory(it, categoryIdOf = { id -> categoryById[id]?.let { c -> SharedIds.category(c.profile, c.builtIn, id) } ?: SharedIds.derive("category", id.toString()) }) },
-            "products" to products.map { SharedMapping.product(it, categoryIdOf) },
-            "variants" to variants.map { SharedMapping.variant(it) },
-            "stockBatches" to dao.stockBatches().map { SharedMapping.stockBatch(it) },
-            "stockMovements" to dao.stockMovements().map { SharedMapping.stockMovement(it) },
-            "customers" to dao.customers().map { SharedMapping.customer(it, balanceByCustomer[it.id] ?: 0L) },
-            "customerLedger" to ledger.map { SharedMapping.ledgerEntry(it) { id -> invoiceNumber[id] } },
-            "invoices" to invoices.map { SharedMapping.invoice(it, it.customerId) },
-            "invoiceLines" to dao.invoiceLines().map { line -> SharedMapping.invoiceLine(line) { variantId -> variantProduct[variantId] } },
-            "payments" to dao.payments().map { SharedMapping.payment(it) },
-            "suppliers" to dao.suppliers().map { SharedMapping.supplier(it) },
-            "purchaseOrders" to dao.purchaseOrders().map { SharedMapping.purchaseOrder(it) },
-            "purchaseOrderLines" to dao.purchaseOrderLines().map { SharedMapping.purchaseOrderLine(it) },
-            "receipts" to dao.purchaseReceipts().map { SharedMapping.receipt(it) },
-            "receiptLines" to dao.purchaseReceiptLines().map { SharedMapping.receiptLine(it) },
-            "dayClosings" to dao.dayClosings().map { SharedMapping.dayClosing(it) },
+            "categories" to categories.map { SharedMapping.category(it, ids = ids) },
+            "subcategories" to dao.subcategories().map { SharedMapping.subcategory(it, categoryIdOf = { id -> categoryById[id]?.let { c -> ids.category(c.profile, c.builtIn, id) } ?: ids.of("category", id) }, ids = ids) },
+            "products" to products.map { SharedMapping.product(it, categoryIdOf, ids = ids) },
+            "variants" to variants.map { SharedMapping.variant(it, ids = ids) },
+            "stockBatches" to dao.stockBatches().map { SharedMapping.stockBatch(it, ids = ids) },
+            "stockMovements" to dao.stockMovements().map { SharedMapping.stockMovement(it, ids = ids) },
+            "customers" to dao.customers().map { SharedMapping.customer(it, balanceByCustomer[it.id] ?: 0L, ids = ids) },
+            "customerLedger" to ledger.map { SharedMapping.ledgerEntry(it, ids = ids) { id -> invoiceNumber[id] } },
+            "invoices" to invoices.map { SharedMapping.invoice(it, it.customerId, ids = ids) },
+            "invoiceLines" to dao.invoiceLines().map { line -> SharedMapping.invoiceLine(line, ids = ids) { variantId -> variantProduct[variantId] } },
+            "payments" to dao.payments().map { SharedMapping.payment(it, ids = ids) },
+            "suppliers" to dao.suppliers().map { SharedMapping.supplier(it, ids = ids) },
+            "purchaseOrders" to dao.purchaseOrders().map { SharedMapping.purchaseOrder(it, ids = ids) },
+            "purchaseOrderLines" to dao.purchaseOrderLines().map { SharedMapping.purchaseOrderLine(it, ids = ids) },
+            "receipts" to dao.purchaseReceipts().map { SharedMapping.receipt(it, ids = ids) },
+            "receiptLines" to dao.purchaseReceiptLines().map { SharedMapping.receiptLine(it, ids = ids) },
+            "dayClosings" to dao.dayClosings().map { SharedMapping.dayClosing(it, ids = ids) },
             "loyaltySettings" to dao.loyaltySettings().map { SharedMapping.loyaltySettings(it) },
-            "loyaltyLedger" to ledger.mapNotNull { SharedMapping.loyaltyEntry(it) },
+            "loyaltyLedger" to ledger.mapNotNull { SharedMapping.loyaltyEntry(it, ids = ids) },
             "heldBills" to heldRows.map { it.third },
-            "heldBillLines" to heldRows.flatMap { (bill, cart, _) -> SharedMappingCarts.heldBillLines(bill.id, cart) },
-            "quotations" to quoteRows.map { (q, cart, _) -> SharedMappingCarts.quotation(q, cart) },
-            "quotationLines" to quoteRows.flatMap { (q, cart, _) -> SharedMappingCarts.quotationLines(q.id, cart) },
-            "stockCounts" to countRows.map { (c, lines, _) -> SharedMapping.stockCount(c, lines) },
-            "stockCountLines" to countRows.flatMap { (c, lines, _) -> lines.mapIndexed { i, line -> SharedMapping.stockCountLine(c.id, i, line) } },
-            "auditLog" to dao.auditLog().map { SharedMapping.auditLog(it) },
+            "heldBillLines" to heldRows.flatMap { (bill, cart, _) -> SharedMappingCarts.heldBillLines(bill.id, cart, ids = ids) },
+            "quotations" to quoteRows.map { (q, cart, _) -> SharedMappingCarts.quotation(q, cart, ids = ids) },
+            "quotationLines" to quoteRows.flatMap { (q, cart, _) -> SharedMappingCarts.quotationLines(q.id, cart, ids = ids) },
+            "stockCounts" to countRows.map { (c, lines, _) -> SharedMapping.stockCount(c, lines, ids = ids) },
+            "stockCountLines" to countRows.flatMap { (c, lines, _) -> lines.mapIndexed { i, line -> SharedMapping.stockCountLine(c.id, i, line, ids = ids) } },
+            "auditLog" to dao.auditLog().map { SharedMapping.auditLog(it, ids = ids) },
             "numberSequences" to dao.numberSequences().map { SharedMapping.numberSequence(it) },
             "extensions" to emptyList(),
         )

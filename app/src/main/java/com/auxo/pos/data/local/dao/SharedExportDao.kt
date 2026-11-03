@@ -33,6 +33,10 @@ import com.auxo.pos.data.local.entity.SupplierEntity
 /** Read-only queries that gather every table for a shared backup export. Nothing here writes. */
 @Dao
 interface SharedExportDao {
+    /** Every stored link from a record to the shared ID it had in a shared backup. */
+    @Query("SELECT * FROM shared_id_links")
+    suspend fun sharedIdLinks(): List<com.auxo.pos.data.local.entity.SharedIdLinkEntity>
+
     @Query("SELECT * FROM store_settings")
     suspend fun storeSettings(): List<StoreSettingsEntity>
 

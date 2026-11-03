@@ -23,11 +23,11 @@ object SharedMappingCarts {
     }
 
     /** One cart line in the shape the web app uses. Custom items have no product or variant ID. */
-    fun cartLine(line: CartLine): Map<String, Any?> {
+    fun cartLine(line: CartLine, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> {
         val fixedRate = (line.gstRate as? GstRate.Fixed)?.basisPoints
         return mapOf(
-            "productId" to if (line.isCustom) null else SharedIds.derive("product", line.productId.toString()),
-            "variantId" to if (line.isCustom) null else SharedIds.derive("variant", line.variantId.toString()),
+            "productId" to if (line.isCustom) null else ids.of("product", line.productId),
+            "variantId" to if (line.isCustom) null else ids.of("variant", line.variantId),
             "name" to line.productName,
             "variantLabel" to line.variantLabel,
             "barcode" to line.barcode,
@@ -46,11 +46,11 @@ object SharedMappingCarts {
     }
 
     /** The held bill row. [shopStateCode] is used to tell whether a sale is inter-state. */
-    fun heldBill(entity: HeldBillEntity, cart: Cart, shopStateCode: String): Map<String, Any?> {
+    fun heldBill(entity: HeldBillEntity, cart: Cart, shopStateCode: String, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> {
         val customer = cart.customer
         val placeOfSupply = cart.placeOfSupplyStateCode
         return mapOf(
-            "id" to SharedIds.derive("heldBill", entity.id.toString()),
+            "id" to ids.of("heldBill", entity.id),
             "label" to entity.label,
             "createdAt" to entity.createdAt,
             "updatedAt" to entity.updatedAt,
@@ -60,24 +60,24 @@ object SharedMappingCarts {
             "tokenNumber" to entity.tokenNumber,
             "discount" to discountMap(cart.billDiscount, cart.billDiscountReason),
             "interState" to (placeOfSupply != null && placeOfSupply != shopStateCode),
-            "customerId" to (customer.customerId?.let { SharedIds.derive("customer", it.toString()) } ?: ""),
+            "customerId" to (customer.customerId?.let { ids.of("customer", it) } ?: ""),
             "buyerName" to customer.name.ifBlank { null },
             "buyerPhone" to customer.phone.ifBlank { null },
             "buyerGstin" to customer.gstin.ifBlank { null },
         )
     }
 
-    fun heldBillLines(heldBillId: Long, cart: Cart): List<Map<String, Any?>> = cart.lines.mapIndexed { index, line ->
+    fun heldBillLines(heldBillId: Long, cart: Cart, ids: SharedIdResolver = SharedIdResolver()): List<Map<String, Any?>> = cart.lines.mapIndexed { index, line ->
         mapOf(
             "id" to SharedIds.derive("heldBillLine", "$heldBillId|$index"),
-            "heldBillId" to SharedIds.derive("heldBill", heldBillId.toString()),
+            "heldBillId" to ids.of("heldBill", heldBillId),
             "sortOrder" to index,
-            "snapshot" to cartLine(line),
+            "snapshot" to cartLine(line, ids = ids),
         )
     }
 
-    fun quotation(entity: QuotationEntity, cart: Cart): Map<String, Any?> = mapOf(
-        "id" to SharedIds.derive("quotation", entity.id.toString()),
+    fun quotation(entity: QuotationEntity, cart: Cart, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+        "id" to ids.of("quotation", entity.id),
         "number" to entity.number,
         "createdAt" to entity.createdAt,
         "validUntil" to LocalDate.ofEpochDay(entity.validUntilDay).toString(),
@@ -86,16 +86,16 @@ object SharedMappingCarts {
         "itemCount" to entity.itemCount,
         "totalPaise" to entity.totalMinor.toString(),
         "status" to entity.status,
-        "convertedInvoiceId" to entity.convertedInvoiceId?.let { SharedIds.derive("invoice", it.toString()) },
-        "customerId" to (cart.customer.customerId?.let { SharedIds.derive("customer", it.toString()) }),
+        "convertedInvoiceId" to entity.convertedInvoiceId?.let { ids.of("invoice", it) },
+        "customerId" to (cart.customer.customerId?.let { ids.of("customer", it) }),
     )
 
-    fun quotationLines(quotationId: Long, cart: Cart): List<Map<String, Any?>> = cart.lines.mapIndexed { index, line ->
+    fun quotationLines(quotationId: Long, cart: Cart, ids: SharedIdResolver = SharedIdResolver()): List<Map<String, Any?>> = cart.lines.mapIndexed { index, line ->
         mapOf(
             "id" to SharedIds.derive("quotationLine", "$quotationId|$index"),
-            "quotationId" to SharedIds.derive("quotation", quotationId.toString()),
+            "quotationId" to ids.of("quotation", quotationId),
             "sortOrder" to index,
-            "snapshot" to cartLine(line),
+            "snapshot" to cartLine(line, ids = ids),
         )
     }
 }
