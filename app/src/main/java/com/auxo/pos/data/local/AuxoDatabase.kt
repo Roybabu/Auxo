@@ -10,6 +10,7 @@ import androidx.room.RoomDatabase
 import com.auxo.pos.data.local.dao.AuditDao
 import com.auxo.pos.data.local.dao.CategoryDao
 import com.auxo.pos.data.local.dao.SharedExportDao
+import com.auxo.pos.data.local.dao.RestoreDao
 import com.auxo.pos.data.local.dao.SharedIdLinkDao
 import com.auxo.pos.data.local.dao.DayEndDao
 import com.auxo.pos.data.local.dao.HeldBillDao
@@ -110,6 +111,8 @@ abstract class AuxoDatabase : RoomDatabase() {
     abstract fun sharedExportDao(): SharedExportDao
 
     abstract fun sharedIdLinkDao(): SharedIdLinkDao
+
+    abstract fun restoreDao(): RestoreDao
 
     companion object {
         const val NAME = "auxo.db"
