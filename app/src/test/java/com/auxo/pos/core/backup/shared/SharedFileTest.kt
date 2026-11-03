@@ -37,14 +37,15 @@ class SharedFileTest {
     }
 
     @Test
-    fun loyalty_points_are_earned_or_redeemed_by_sign_and_zero_is_skipped() {
+    fun points_only_entries_become_loyalty_rows_and_other_entries_do_not() {
         val earned = SharedMapping.loyaltyEntry(
-            LedgerEntryEntity(id = 1, customerId = 5, type = "SALE", amountMinor = 0, invoiceId = 4, method = null,
+            LedgerEntryEntity(id = 1, customerId = 5, type = "POINTS_EARNED", amountMinor = 0, invoiceId = 4, method = null,
                 reference = null, note = null, createdAt = 10, points = 20),
         )
         assertEquals("EARNED", earned?.get("type"))
+        assertEquals(20, earned?.get("points"))
         val redeemed = SharedMapping.loyaltyEntry(
-            LedgerEntryEntity(id = 2, customerId = 5, type = "PAYMENT", amountMinor = 0, invoiceId = null, method = null,
+            LedgerEntryEntity(id = 2, customerId = 5, type = "POINTS_REDEEMED", amountMinor = 0, invoiceId = null, method = null,
                 reference = null, note = null, createdAt = 11, points = -5),
         )
         assertEquals("REDEEMED", redeemed?.get("type"))

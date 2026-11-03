@@ -80,7 +80,7 @@ class SharedExport(
             "stockBatches" to dao.stockBatches().map { SharedMapping.stockBatch(it, ids = ids) },
             "stockMovements" to dao.stockMovements().map { SharedMapping.stockMovement(it, ids = ids) },
             "customers" to dao.customers().map { SharedMapping.customer(it, balanceByCustomer[it.id] ?: 0L, ids = ids) },
-            "customerLedger" to ledger.map { SharedMapping.ledgerEntry(it, { id -> invoiceNumber[id] }, ids = ids) },
+            "customerLedger" to ledger.filterNot { SharedMapping.isPointsEntry(it) }.map { SharedMapping.ledgerEntry(it, { id -> invoiceNumber[id] }, ids = ids) },
             "invoices" to invoices.map { SharedMapping.invoice(it, it.customerId, ids = ids) },
             "invoiceLines" to dao.invoiceLines().map { line -> SharedMapping.invoiceLine(line, { variantId -> variantProduct[variantId] }, ids = ids) },
             "payments" to dao.payments().map { SharedMapping.payment(it, ids = ids) },

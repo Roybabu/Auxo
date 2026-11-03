@@ -112,24 +112,29 @@ class SharedRestorePlannerTest {
     }
 
     @Test
-    fun aLoyaltyRow_thatMatchesNoLedgerEntry_isRefused() {
-        val problem = assertThrows(RestoreProblem::class.java) {
-            SharedRestorePlanner.plan(document("settings" to listOf(shopSettings), "customers" to listOf(asha()), "loyaltyLedger" to listOf(loyaltyRow("lp1", 99L))))
-        }
-        assertTrue(problem.message!!.contains("loyalty"))
-    }
-
-    @Test
-    fun aLoyaltyRow_thatMatchesALedgerEntry_givesItThePoints_andItsOwnLink() {
+    fun aLoyaltyRow_becomesAPointsOnlyLedgerEntry_withItsOwnLink() {
         val plan = SharedRestorePlanner.plan(
             document(
                 "settings" to listOf(shopSettings), "customers" to listOf(asha()),
                 "customerLedger" to listOf(ledgerEntry("e1", 99L)), "loyaltyLedger" to listOf(loyaltyRow("lp1", 99L)),
             ),
         )
-        val entry = plan.ledger[0].build(LocalIds { _, _ -> 1L })
-        assertEquals(5, entry.points)
-        assertEquals(listOf("ledger" to "e1", "loyalty" to "lp1"), plan.ledger[0].links)
+        assertEquals(listOf("ledger" to "e1"), plan.ledger[0].links)
+        assertEquals(listOf("loyalty" to "lp1"), plan.ledger[1].links)
+        val points = plan.ledger[1].build(LocalIds { _, _ -> 1L })
+        assertEquals("POINTS_EARNED", points.type)
+        assertEquals(0L, points.amountMinor)
+        assertEquals(5, points.points)
+        assertEquals(0, plan.ledger[0].build(LocalIds { _, _ -> 1L }).points)
+    }
+
+    @Test
+    fun aLoyaltyRowOfAnUnknownType_isRefused() {
+        val row = loyaltyRow("lp1", 99L) + ("type" to "MYSTERY")
+        val problem = assertThrows(RestoreProblem::class.java) {
+            SharedRestorePlanner.plan(document("settings" to listOf(shopSettings), "customers" to listOf(asha()), "loyaltyLedger" to listOf(row)))
+        }
+        assertTrue(problem.message!!.contains("MYSTERY"))
     }
 
     @Test

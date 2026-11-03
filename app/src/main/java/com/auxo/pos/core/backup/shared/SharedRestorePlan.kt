@@ -146,7 +146,6 @@ object SharedRestorePlanner {
         }
         val loyaltyRows = tables.getValue("loyaltySettings")
         if (loyaltyRows.size > 1) throw RestoreProblem("The backup has more than one loyalty settings row.")
-        val points = matchLoyalty(tables.getValue("customerLedger"), tables.getValue("loyaltyLedger"))
 
         val categories = planCategories(tables.getValue("categories"))
         val subcategories = planSubcategories(tables.getValue("subcategories"))
@@ -157,7 +156,7 @@ object SharedRestorePlanner {
         val customers = planCustomers(tables.getValue("customers"))
         val invoices = planInvoices(parentsFirst(tables.getValue("invoices"), "originalInvoiceId"))
         val invoiceLines = planInvoiceLines(parentsFirst(tables.getValue("invoiceLines"), "originalLineId"))
-        val ledger = planLedger(tables.getValue("customerLedger"), points)
+        val ledger = planLedger(tables.getValue("customerLedger")) + planLoyalty(tables.getValue("loyaltyLedger"))
         val payments = planPayments(tables.getValue("payments"))
         val purchaseOrders = planPurchaseOrders(tables.getValue("purchaseOrders"))
         val purchaseOrderLines = planPurchaseOrderLines(tables.getValue("purchaseOrderLines"))
@@ -257,23 +256,6 @@ object SharedRestorePlanner {
         val orphan = grouped.keys.firstOrNull { it !in parents }
         if (orphan != null) throw RestoreProblem("A $what line refers to a $what that is not in the file ($orphan).")
         return grouped
-    }
-
-    /**
-     * Loyalty points are stored on customer ledger entries. Each loyalty row is matched to the ledger entry with the
-     * same customer, invoice and time. A loyalty row with no match is refused, rather than guessed at.
-     */
-    private fun matchLoyalty(ledger: List<SharedRow>, loyalty: List<SharedRow>): Map<String, Pair<Int, String>> {
-        val result = HashMap<String, Pair<Int, String>>()
-        for (row in loyalty) {
-            val key = Triple(row.ref("customerId"), row.refOrNull("invoiceId"), row.long("createdAt"))
-            val match = ledger.firstOrNull { entry ->
-                entry.id() !in result &&
-                    Triple(entry.ref("customerId"), entry.refOrNull("invoiceId"), entry.long("createdAt")) == key
-            } ?: throw RestoreProblem("A loyalty row (\"${row.id()}\") matches no customer ledger entry.")
-            result[match.id()] = row.int("points") to row.id()
-        }
-        return result
     }
 
     private fun <T> planRow(sharedId: String, key: String, build: (LocalIds) -> T): PlannedRow<T> =
@@ -516,9 +498,8 @@ object SharedRestorePlanner {
         }
     }
 
-    private fun planLedger(rows: List<SharedRow>, points: Map<String, Pair<Int, String>>): List<PlannedRow<LedgerEntryEntity>> = rows.map { row ->
-        val matched = points[row.id()]
-        PlannedRow(row.id(), listOfNotNull("ledger" to row.id(), matched?.let { "loyalty" to it.second })) { ids ->
+    private fun planLedger(rows: List<SharedRow>): List<PlannedRow<LedgerEntryEntity>> = rows.map { row ->
+        planRow(row.id(), "ledger") { ids ->
             LedgerEntryEntity(
                 id = 0,
                 customerId = ids.of("customer", row.ref("customerId")),
@@ -529,7 +510,31 @@ object SharedRestorePlanner {
                 reference = row.stringOrNull("reference"),
                 note = row.stringOrNull("note"),
                 createdAt = row.long("createdAt"),
-                points = matched?.first ?: 0,
+                points = 0,
+            )
+        }
+    }
+
+    /** Each loyalty row becomes a points-only ledger entry (zero money), as the app already stores points. */
+    private fun planLoyalty(rows: List<SharedRow>): List<PlannedRow<LedgerEntryEntity>> = rows.map { row ->
+        val type = when (val kind = row.string("type")) {
+            "EARNED", "ON_TIME_BONUS" -> "POINTS_EARNED"
+            "REDEEMED" -> "POINTS_REDEEMED"
+            "REVERSED" -> "POINTS_REVERSED"
+            else -> throw RestoreProblem("A loyalty row has a type this app does not know ($kind).")
+        }
+        planRow(row.id(), "loyalty") { ids ->
+            LedgerEntryEntity(
+                id = 0,
+                customerId = ids.of("customer", row.ref("customerId")),
+                type = type,
+                amountMinor = 0,
+                invoiceId = row.refOrNull("invoiceId")?.let { ids.of("invoice", it) },
+                method = null,
+                reference = null,
+                note = row.stringOrNull("note"),
+                createdAt = row.long("createdAt"),
+                points = row.int("points"),
             )
         }
     }

@@ -387,17 +387,18 @@ object SharedMapping {
         "pointValuePaise" to l.pointValueMinor.toString(),
     )
 
-    /**
-     * Points are stored on customer ledger entries. Positive points are written as EARNED and negative as REDEEMED.
-     * The app does not record the difference between earned, reversed and bonus points, so those are not told apart.
-     * Returns null for entries that carry no points.
-     */
+    /** Entry types that carry points only (zero money). They are written to the loyalty ledger, not the customer ledger. */
+    private val POINT_TYPES = mapOf("POINTS_EARNED" to "EARNED", "POINTS_REDEEMED" to "REDEEMED", "POINTS_REVERSED" to "REVERSED")
+
+    fun isPointsEntry(e: LedgerEntryEntity): Boolean = e.type in POINT_TYPES
+
+    /** A points-only ledger entry as a loyalty row, or null for any other entry. */
     fun loyaltyEntry(e: LedgerEntryEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?>? {
-        if (e.points == 0) return null
+        val type = POINT_TYPES[e.type] ?: return null
         return mapOf(
             "id" to ids.of("loyalty", e.id),
             "customerId" to ids.of("customer", e.customerId),
-            "type" to if (e.points > 0) "EARNED" else "REDEEMED",
+            "type" to type,
             "points" to e.points,
             "invoiceId" to e.invoiceId?.let { ids.of("invoice", it) },
             "sourceInvoiceId" to null,
