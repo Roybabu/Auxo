@@ -43,18 +43,34 @@ class SharedRichRoundTripDeviceTest {
             SharedRestoreApplier(db, photos = null, workDir = context.cacheDir).apply(SharedRestorePlanner.plan(doc))
             val exported = SharedExport(db.sharedExportDao(), photoFile = { null }).build(1L, "test")
             @Suppress("UNCHECKED_CAST")
-            val rows = ((exported["tables"] as Map<String, List<Map<String, Any?>>>)[table]).orEmpty().associateBy { (it["id"] ?: it["name"]).toString() }
+            val rows = ((exported["tables"] as Map<String, List<Map<String, Any?>>>)[table]).orEmpty()
             val expected = doc.tables.getValue(table)
+            // Line rows of held bills, quotations and stock counts have no row of their own on Android, so they are
+            // matched by parent and position rather than by id. Audit actor and entity ids are history text only.
+            val lineKeys = mapOf(
+                "heldBillLines" to listOf("heldBillId", "sortOrder"),
+                "quotationLines" to listOf("quotationId", "sortOrder"),
+                "stockCountLines" to listOf("stockCountId", "variantId"),
+            )
+            val skip = (if (table in lineKeys) setOf("id") else emptySet()) +
+                (if (table == "auditLog") setOf("actorId", "entityId") else emptySet()) +
+                (if (table == "receipts") setOf("requestId") else emptySet())
+            fun keyOf(row: Map<String, Any?>) = lineKeys[table]?.joinToString("|") { row[it].toString() } ?: (row["id"] ?: row["name"]).toString()
+            fun same(a: Any?, b: Any?): Boolean = when {
+                (a == null || a == "") && (b == null || b == "") -> true
+                a is Long && b is Int -> a == b.toLong()
+                a is Map<*, *> && b is Map<*, *> -> a.all { (k, v) -> !b.containsKey(k) || same(v, b[k]) }
+                else -> a == b
+            }
+            val byKey = rows.associateBy { keyOf(it) }
             val problems = ArrayList<String>()
             if (expected.size != rows.size) problems += "count ${expected.size} became ${rows.size}"
             for (row in expected) {
-                val key = (row["id"] ?: row["name"]).toString()
-                val got = rows[key]
-                if (got == null) { problems += "row $key missing"; continue }
+                val got = byKey[keyOf(row)]
+                if (got == null) { problems += "row ${keyOf(row)} missing"; continue }
                 for ((field, value) in row) {
-                    if (got.containsKey(field) && got[field] != value && !(value is Long && got[field] == value.toInt())) {
-                        problems += "$field: $value became ${got[field]}"
-                    }
+                    if (field in skip || !got.containsKey(field)) continue
+                    if (!same(value, got[field])) problems += "$field: $value became ${got[field]}"
                 }
             }
             assertTrue("$table: " + problems.joinToString("; ").take(900), problems.isEmpty())

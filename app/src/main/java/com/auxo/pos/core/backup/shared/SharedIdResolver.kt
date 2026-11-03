@@ -13,5 +13,5 @@ class SharedIdResolver(private val linked: Map<String, Map<Long, String>> = empt
 
     /** The shared ID of a product category: fixed for a built-in one, otherwise as for [of]. */
     fun category(profile: String, builtIn: Boolean, id: Long): String =
-        if (builtIn) SharedIds.category(profile, true, id) else of("category", id)
+        linked["category"]?.get(id) ?: if (builtIn) SharedIds.category(profile, true, id) else of("category", id)
 }

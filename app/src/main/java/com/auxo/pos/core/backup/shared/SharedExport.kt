@@ -61,6 +61,11 @@ class SharedExport(
         val counts = dao.stockCounts()
         val countRows = counts.map { c -> Triple(c, decodeCounts(c.payload), Unit) }
 
+        val supplierRows = dao.suppliers()
+        val orderRows = dao.purchaseOrders()
+        val supplierName = supplierRows.associate { it.id to it.name }
+        val orderNumber = orderRows.associate { it.id to it.number }
+
         val photoNames = (products.mapNotNull { it.photoFile } + variants.mapNotNull { it.photoFile }).distinct()
         val photos = photoNames.map { name ->
             val file = photoFile(name) ?: throw IllegalStateException("A product photo is missing: $name")
@@ -84,10 +89,10 @@ class SharedExport(
             "invoices" to invoices.map { SharedMapping.invoice(it, it.customerId, ids = ids) },
             "invoiceLines" to dao.invoiceLines().map { line -> SharedMapping.invoiceLine(line, { variantId -> variantProduct[variantId] }, ids = ids) },
             "payments" to dao.payments().map { SharedMapping.payment(it, ids = ids) },
-            "suppliers" to dao.suppliers().map { SharedMapping.supplier(it, ids = ids) },
-            "purchaseOrders" to dao.purchaseOrders().map { SharedMapping.purchaseOrder(it, ids = ids) },
+            "suppliers" to supplierRows.map { SharedMapping.supplier(it, ids = ids) },
+            "purchaseOrders" to orderRows.map { SharedMapping.purchaseOrder(it, ids = ids) },
             "purchaseOrderLines" to dao.purchaseOrderLines().map { SharedMapping.purchaseOrderLine(it, ids = ids) },
-            "receipts" to dao.purchaseReceipts().map { SharedMapping.receipt(it, ids = ids) },
+            "receipts" to dao.purchaseReceipts().map { SharedMapping.receipt(it, supplierName = it.supplierId?.let { id -> supplierName[id] }, orderNumber = it.orderId?.let { id -> orderNumber[id] }, ids = ids) },
             "receiptLines" to dao.purchaseReceiptLines().map { SharedMapping.receiptLine(it, ids = ids) },
             "dayClosings" to dao.dayClosings().map { SharedMapping.dayClosing(it, ids = ids) },
             "loyaltySettings" to dao.loyaltySettings().map { SharedMapping.loyaltySettings(it) },

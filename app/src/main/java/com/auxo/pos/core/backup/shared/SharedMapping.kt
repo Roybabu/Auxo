@@ -307,13 +307,18 @@ object SharedMapping {
     )
 
     /** The app does not keep a request ID per receipt, so one is made from the receipt's own ID. */
-    fun receipt(r: PurchaseReceiptEntity, ids: SharedIdResolver = SharedIdResolver()): Map<String, Any?> = mapOf(
+    fun receipt(
+        r: PurchaseReceiptEntity,
+        supplierName: String? = null,
+        orderNumber: String? = null,
+        ids: SharedIdResolver = SharedIdResolver(),
+    ): Map<String, Any?> = mapOf(
         "id" to ids.of("receipt", r.id),
         "number" to r.number,
         "supplierId" to r.supplierId?.let { ids.of("supplier", it) },
-        "supplierName" to null,
+        "supplierName" to supplierName,
         "orderId" to r.orderId?.let { ids.of("purchaseOrder", it) },
-        "orderNumber" to null,
+        "orderNumber" to orderNumber,
         "supplierInvoiceNumber" to r.supplierInvoiceNumber,
         "receivedAt" to r.receivedAt,
         "note" to r.note,
