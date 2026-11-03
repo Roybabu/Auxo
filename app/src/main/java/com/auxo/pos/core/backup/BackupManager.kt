@@ -29,6 +29,12 @@ interface BackupService {
     suspend fun backUp(): SavedBackup
 
     /**
+     * Saves the shared-format backup, the one the web app can also open, in the Auxo folder. It is locked with the
+     * backup passphrase like every other backup, so it needs one to exist.
+     */
+    suspend fun backUpShared(): SavedBackup
+
+    /**
      * Replaces everything on this phone with the backup in [source]. The app must be restarted
      * afterwards. Nothing is changed if the file is not a sound Auxo backup. A locked backup needs its
      * [passphrase]; without it this throws [BackupProblem.PASSPHRASE_NEEDED].
@@ -75,6 +81,17 @@ class BackupManager(
                 DebugLog.error("Backup", "Backup failed", e)
                 throw e
             }
+        }
+    }
+
+    override suspend fun backUpShared(): SavedBackup = withContext(Dispatchers.IO) {
+        BACKUP_LOCK.withLock {
+            val passphrase = passphrases?.takeIf { it.isSet() }?.get() ?: throw BackupException(BackupProblem.PASSPHRASE_UNAVAILABLE)
+            val now = clock.millis()
+            val photoFiles = photos?.files().orEmpty().associateBy { it.name }
+            val export = com.auxo.pos.core.backup.shared.SharedExport(database.sharedExportDao(), photoFile = { photoFiles[it] })
+            val bytes = export.encrypt(passphrase, now, appVersion())
+            storage.save(sharedFileName(now)) { out -> out.write(bytes) }
         }
     }
 
@@ -257,6 +274,11 @@ class BackupManager(
 
     private fun appVersion(): String =
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
+
+    private fun sharedFileName(epochMillis: Long): String {
+        val time = Instant.ofEpochMilli(epochMillis).atZone(clock.zone)
+        return "Auxo-shared-backup-${FILE_TIME.format(time)}.auxoshared"
+    }
 
     private fun fileName(epochMillis: Long, locked: Boolean): String {
         val time = Instant.ofEpochMilli(epochMillis).atZone(clock.zone)

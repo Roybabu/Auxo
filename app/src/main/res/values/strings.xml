@@ -916,6 +916,7 @@
     <string name="backup_make_title">Back up this phone</string>
     <string name="backup_make_body">Saves everything you have entered into one file: products and stock, bills and returns, customers and balances, suppliers and purchases, your store settings and your app colour. The file goes into the Auxo folder in Documents on this phone.</string>
     <string name="backup_now">Back up now</string>
+    <string name="backup_shared_now">Back up for the web app</string>
     <string name="backup_working">Working…</string>
     <string name="backup_last">Last backup: %1$s</string>
     <string name="backup_never">No backup made on this phone yet</string>

@@ -916,6 +916,7 @@
     <string name="backup_make_title">এই ফোনের ব্যাকআপ নিন</string>
     <string name="backup_make_body">আপনি যা কিছু লিখেছেন তা একটি ফাইলে সংরক্ষণ করে: পণ্য ও স্টক, বিল ও ফেরত, ক্রেতা ও বাকি, সরবরাহকারী ও ক্রয়, দোকানের সেটিংস এবং অ্যাপের রং। ফাইলটি এই ফোনের Documents-এর Auxo ফোল্ডারে যায়।</string>
     <string name="backup_now">এখনই ব্যাকআপ নিন</string>
+    <string name="backup_shared_now">ওয়েব অ্যাপের জন্য ব্যাকআপ নিন</string>
     <string name="backup_working">কাজ চলছে…</string>
     <string name="backup_last">শেষ ব্যাকআপ: %1$s</string>
     <string name="backup_never">এই ফোনে এখনও কোনো ব্যাকআপ নেওয়া হয়নি</string>

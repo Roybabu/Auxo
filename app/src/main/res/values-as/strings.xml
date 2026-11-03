@@ -916,6 +916,7 @@
     <string name="backup_make_title">এই ফোনৰ বেকআপ লওক</string>
     <string name="backup_make_body">আপুনি দিয়া সকলো এটা ফাইলত সংৰক্ষণ কৰে: সামগ্ৰী আৰু মজুত, বিল আৰু ঘূৰাই দিয়া, গ্ৰাহক আৰু বাকী, যোগানকাৰী আৰু ক্ৰয়, আপোনাৰ দোকানৰ ছেটিংচ আৰু এপৰ ৰং। ফাইলটো এই ফোনৰ Documents ত থকা Auxo ফোল্ডাৰত যায়।</string>
     <string name="backup_now">এতিয়া বেকআপ লওক</string>
+    <string name="backup_shared_now">ৱেব এপৰ বাবে বেকআপ লওক</string>
     <string name="backup_working">কাম চলি আছে…</string>
     <string name="backup_last">শেষ বেকআপ: %1$s</string>
     <string name="backup_never">এই ফোনত এতিয়াও কোনো বেকআপ লোৱা হোৱা নাই</string>

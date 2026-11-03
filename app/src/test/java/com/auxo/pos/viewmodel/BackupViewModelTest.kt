@@ -62,6 +62,14 @@ class BackupViewModelTest {
             storedPassphrase = null
         }
 
+        var sharedSaved = 0
+
+        override suspend fun backUpShared(): SavedBackup {
+            failBackup?.let { throw it }
+            sharedSaved++
+            return SavedBackup("Auxo-shared-backup.auxoshared", "Documents/Auxo", Uri.parse("content://test/s.auxoshared"))
+        }
+
         override fun lastBackupMillis() = last
     }
 
@@ -229,5 +237,32 @@ class BackupViewModelTest {
         assertTrue(viewModel.uiState.value.isProtected)
         assertFalse(viewModel.uiState.value.choosingPassphrase)
         assertEquals("a long passphrase", service.storedPassphrase)
+    }
+
+    @Test
+    fun sharedBackUp_makesTheSharedFile_andLeavesTheOrdinaryOneAlone() {
+        service.storedPassphrase = "a long passphrase"
+        val viewModel = BackupViewModel(service)
+
+        viewModel.onSharedBackUp()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isWorking)
+        assertEquals(1, service.sharedSaved)
+        assertEquals("Auxo-shared-backup.auxoshared", state.saved?.fileName)
+        assertNull(service.last)
+    }
+
+    @Test
+    fun sharedBackUp_withoutAPassphrase_asksForOne_thenMakesTheSharedFile() {
+        val viewModel = BackupViewModel(service)
+
+        viewModel.onSharedBackUp()
+        assertTrue(viewModel.uiState.value.choosingPassphrase)
+        assertEquals(0, service.sharedSaved)
+
+        viewModel.onPassphraseSet("copper river lamp window")
+        assertEquals(1, service.sharedSaved)
+        assertEquals("Auxo-shared-backup.auxoshared", viewModel.uiState.value.saved?.fileName)
     }
 }

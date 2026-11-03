@@ -87,6 +87,13 @@ class AuthorizedBackupService(
         return saved
     }
 
+    override suspend fun backUpShared(): SavedBackup {
+        auth.require(Permission.BACKUP_AND_RESTORE)
+        val saved = inner.backUpShared()
+        audit.record(AuditDraft(AuditAction.BACKUP_CREATED, AuditEntity.BACKUP, null, "Shared backup saved as ${saved.fileName}"))
+        return saved
+    }
+
     override suspend fun restore(source: Uri, passphrase: String?) {
         auth.require(Permission.BACKUP_AND_RESTORE)
         inner.restore(source, passphrase)

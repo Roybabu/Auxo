@@ -48,6 +48,9 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
     /** Set when a backup was asked for before any passphrase existed: it is made as soon as one is chosen. */
     private var backUpAfterPassphrase = false
 
+    /** Set with [backUpAfterPassphrase] when the pending backup is the shared format. */
+    private var sharedAfterPassphrase = false
+
     fun onBackUp() {
         if (_uiState.value.isWorking) return
         // Backups are always locked. With no passphrase yet, ask for one first and make the backup right after.
@@ -59,11 +62,23 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
         startBackUp()
     }
 
-    private fun startBackUp() {
+    /** The same backup in the shared format, which the web app can open. Same passphrase rule as any backup. */
+    fun onSharedBackUp() {
+        if (_uiState.value.isWorking) return
+        if (!service.isProtected()) {
+            backUpAfterPassphrase = true
+            sharedAfterPassphrase = true
+            _uiState.update { it.copy(choosingPassphrase = true, problem = null) }
+            return
+        }
+        startBackUp(shared = true)
+    }
+
+    private fun startBackUp(shared: Boolean = false) {
         _uiState.update { it.copy(isWorking = true, problem = null, saved = null) }
         viewModelScope.launch {
             try {
-                val saved = service.backUp()
+                val saved = if (shared) service.backUpShared() else service.backUp()
                 _uiState.update { it.copy(isWorking = false, saved = saved, lastBackupMillis = service.lastBackupMillis()) }
             } catch (e: CancellationException) {
                 throw e
@@ -118,6 +133,7 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
 
     fun onChoosePassphraseCancelled() {
         backUpAfterPassphrase = false
+        sharedAfterPassphrase = false
         _uiState.update { it.copy(choosingPassphrase = false) }
     }
 
@@ -129,11 +145,14 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             _uiState.update { it.copy(choosingPassphrase = false, isProtected = service.isProtected(), problem = null) }
             if (backUpAfterPassphrase) {
                 backUpAfterPassphrase = false
-                startBackUp()
+                val shared = sharedAfterPassphrase
+                sharedAfterPassphrase = false
+                startBackUp(shared = shared)
             }
         } catch (e: Exception) {
             com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
             backUpAfterPassphrase = false
+            sharedAfterPassphrase = false
             _uiState.update { it.copy(choosingPassphrase = false, problem = (e as? BackupException)?.problem ?: BackupProblem.SAVE_FAILED) }
         }
     }

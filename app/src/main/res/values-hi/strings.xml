@@ -916,6 +916,7 @@
     <string name="backup_make_title">इस फ़ोन का बैकअप लें</string>
     <string name="backup_make_body">आपने जो कुछ दर्ज किया है वह एक फ़ाइल में सहेजता है: उत्पाद और स्टॉक, बिल और वापसी, ग्राहक और बाकी राशि, सप्लायर और खरीद, दुकान की सेटिंग और ऐप का रंग। फ़ाइल इस फ़ोन में Documents के Auxo फ़ोल्डर में जाती है।</string>
     <string name="backup_now">अभी बैकअप लें</string>
+    <string name="backup_shared_now">वेब ऐप के लिए बैकअप लें</string>
     <string name="backup_working">काम चल रहा है…</string>
     <string name="backup_last">आखिरी बैकअप: %1$s</string>
     <string name="backup_never">इस फ़ोन पर अभी कोई बैकअप नहीं बना</string>

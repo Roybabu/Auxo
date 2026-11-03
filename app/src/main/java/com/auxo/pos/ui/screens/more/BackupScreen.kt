@@ -71,12 +71,21 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
     }
     // Android 9 and older need the storage permission to save into Documents/Auxo, where a backup survives
     // uninstalling the app. If it is refused the backup is still made, in the app's own folder, and says so.
-    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { viewModel.onBackUp() }
-    val onBackUp = {
+    var awaitingSharedBackUp by remember { mutableStateOf(false) }
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (awaitingSharedBackUp) viewModel.onSharedBackUp() else viewModel.onBackUp()
+        awaitingSharedBackUp = false
+    }
+    val backUpWith = { shared: Boolean ->
         val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-        if (needsPermission) storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE) else viewModel.onBackUp()
+        if (needsPermission) {
+            awaitingSharedBackUp = shared
+            storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        } else if (shared) viewModel.onSharedBackUp() else viewModel.onBackUp()
     }
+    val onBackUp = { backUpWith(false) }
+    val onSharedBackUp = { backUpWith(true) }
     // The restored data is only picked up by a fresh start of the app.
     LaunchedEffect(state.restored) {
         if (state.restored) RestartApp.restart(context)
@@ -85,6 +94,7 @@ fun BackupScreen(onBack: () -> Unit, viewModel: BackupViewModel = viewModel(fact
         state = state,
         onBack = onBack,
         onBackUp = onBackUp,
+        onSharedBackUp = onSharedBackUp,
         onChooseFile = { picker.launch(arrayOf("*/*")) },
         onConfirmRestore = viewModel::onRestoreConfirmed,
         onCancelRestore = viewModel::onRestoreCancelled,
@@ -102,6 +112,7 @@ fun BackupContent(
     state: BackupUiState,
     onBack: () -> Unit,
     onBackUp: () -> Unit,
+    onSharedBackUp: () -> Unit = {},
     onChooseFile: () -> Unit,
     onConfirmRestore: () -> Unit,
     onCancelRestore: () -> Unit,
@@ -161,6 +172,9 @@ fun BackupContent(
                             Icon(painterResource(R.drawable.ic_backup), contentDescription = null, modifier = Modifier.size(18.dp))
                             Text(stringResource(R.string.backup_now), modifier = Modifier.padding(start = Spacing.sm))
                         }
+                    }
+                    OutlinedButton(onClick = onSharedBackUp, enabled = !state.isWorking, modifier = Modifier.fillMaxWidth().testTag("backup_shared_now")) {
+                        Text(stringResource(R.string.backup_shared_now))
                     }
                 }
             }

@@ -43,6 +43,7 @@ class FindBackupDialogTest {
 
     private val service = object : BackupService {
         override suspend fun backUp(): SavedBackup = error("not used")
+        override suspend fun backUpShared(): SavedBackup = error("not used")
         override suspend fun restore(source: Uri, passphrase: String?) { restored += source; passphrases += passphrase }
         override fun isProtected() = false
         override fun setPassphrase(passphrase: String) = Unit
