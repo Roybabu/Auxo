@@ -145,10 +145,10 @@ class SharedRestorePlannerTest {
     fun metalRatesAndTheLogo_areReadFromTheSettings_andTheLogoIsNotAProductPhoto() {
         val settings = shopSettings + mapOf(
             "metalRatesPaise" to mapOf("GOLD_22K" to "612300", "SILVER" to "9500"),
-            "storeLogoPhotoId" to "logo1",
+            "storeLogoPhotoId" to "11111111-2222-3333-4444-555555555555",
         )
         val photo = mapOf<String, Any?>(
-            "id" to "logo1", "mimeType" to "image/jpeg",
+            "id" to "11111111-2222-3333-4444-555555555555", "mimeType" to "image/jpeg",
             "dataBase64" to java.util.Base64.getEncoder().encodeToString("logo bytes".toByteArray()),
         )
         val tables = SharedFile.TABLES.associateWith { emptyList<Map<String, Any?>>() }.toMutableMap()
