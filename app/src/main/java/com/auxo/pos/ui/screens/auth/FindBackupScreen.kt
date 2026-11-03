@@ -165,6 +165,14 @@ private fun ListStep(state: FindBackupUiState, viewModel: FindBackupViewModel, o
                 modifier = Modifier.padding(top = Spacing.md).testTag("find_problem"),
             )
         }
+        state.problemDetail?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = Spacing.sm),
+            )
+        }
         Row(modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg, bottom = Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.find_available), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = AuthInk, modifier = Modifier.weight(1f))
             Text(stringResource(R.string.find_found, found.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

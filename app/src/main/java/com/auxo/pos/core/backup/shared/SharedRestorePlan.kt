@@ -121,7 +121,7 @@ object SharedRestorePlanner {
             if (knownIds[table]?.contains(sharedId) == true) {
                 0L
             } else {
-                throw RestoreProblem("The backup refers to a record ($key $sharedId) that is not in the file.")
+                throw RestoreProblem("A link points to a ${plainName(key)} (\"$sharedId\") that is not in the file.")
             }
         }
 
@@ -204,7 +204,7 @@ object SharedRestorePlanner {
 
     private fun uniqueIds(table: String, rows: List<SharedRow>): Set<String> {
         val ids = rows.mapNotNull { it.stringOrNull("id") }
-        if (ids.toSet().size != ids.size) throw RestoreProblem("The backup's $table has two rows with the same id.")
+        if (ids.toSet().size != ids.size) throw RestoreProblem("Two rows in ${plainName(table)} have the same id.")
         return ids.toSet()
     }
 
@@ -246,7 +246,7 @@ object SharedRestorePlanner {
             val match = ledger.firstOrNull { entry ->
                 entry.id() !in result &&
                     Triple(entry.ref("customerId"), entry.refOrNull("invoiceId"), entry.long("createdAt")) == key
-            } ?: throw RestoreProblem("The backup's loyalty row ${row.id()} matches no customer ledger entry.")
+            } ?: throw RestoreProblem("A loyalty row (\"${row.id()}\") matches no customer ledger entry.")
             result[match.id()] = row.int("points") to row.id()
         }
         return result

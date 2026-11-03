@@ -44,14 +44,14 @@ object SharedBackupFile {
         SharedBackupReader.read(bytes, passphrase)
     } catch (e: IllegalArgumentException) {
         val problem = if (e.message?.startsWith("Wrong passphrase") == true) BackupProblem.WRONG_PASSPHRASE else BackupProblem.CORRUPT
-        throw BackupException(problem, cause = e)
+        throw BackupException(problem, message = e.message, cause = e)
     }
 
     /** The restore plan for [bytes]; a file whose contents do not check out is a [BackupException]. */
     fun plan(bytes: ByteArray, passphrase: String): RestorePlan = try {
         SharedRestorePlanner.plan(open(bytes, passphrase))
     } catch (e: RestoreProblem) {
-        throw BackupException(BackupProblem.CORRUPT, cause = e)
+        throw BackupException(BackupProblem.CORRUPT, message = e.message, cause = e)
     }
 
     /** What the backup lists show about a shared file: its shop, when it was made and how much it holds. */

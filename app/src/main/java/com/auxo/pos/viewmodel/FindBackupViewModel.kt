@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.backup.BackupException
+import com.auxo.pos.core.backup.plainDetail
 import com.auxo.pos.core.backup.BackupManifest
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupScanner
@@ -39,6 +40,8 @@ data class FindBackupUiState(
     val restoring: Boolean = false,
     val restored: Boolean = false,
     val problem: BackupProblem? = null,
+    /** A plain reason for a damaged file, shown under the message. */
+    val problemDetail: String? = null,
     /** The folder picker was closed without a choice, so the person is offered a new shop instead. */
     val skipped: Boolean = false,
 )
@@ -136,7 +139,7 @@ class FindBackupViewModel(
         }
     }
 
-    fun onProblemDismissed() = _uiState.update { it.copy(problem = null) }
+    fun onProblemDismissed() = _uiState.update { it.copy(problem = null, problemDetail = null) }
 
     /** Back to choosing a folder. */
     fun onChooseAnother() {
@@ -151,7 +154,7 @@ class FindBackupViewModel(
             _uiState.update { it.copy(selected = null, unlocking = false, problem = BackupProblem.RESTORE_FAILED) }
             return
         }
-        _uiState.update { it.copy(restoring = true, problem = null) }
+        _uiState.update { it.copy(restoring = true, problem = null, problemDetail = null) }
         viewModelScope.launch {
             try {
                 service.restore(uri, passphrase)
@@ -162,13 +165,14 @@ class FindBackupViewModel(
             } catch (e: Exception) {
                 com.auxo.pos.core.debuglog.DebugLog.error("FindBackupViewModel", "Failed and showed an error", e)
                 val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
+                val detail = (e as? BackupException)?.plainDetail()
                 _uiState.update {
                     when (problem) {
                         BackupProblem.WRONG_PASSPHRASE -> {
                             openedWith = null
                             it.copy(restoring = false, selected = null, unlocking = true, problem = problem)
                         }
-                        else -> it.copy(restoring = false, selected = null, problem = problem)
+                        else -> it.copy(restoring = false, selected = null, problem = problem, problemDetail = detail)
                     }
                 }
             }

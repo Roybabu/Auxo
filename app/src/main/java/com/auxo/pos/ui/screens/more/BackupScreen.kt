@@ -148,7 +148,7 @@ fun BackupContent(
                 .testTag("backup_screen"),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            state.problem?.let { ProblemCard(it, onDismissProblem) }
+            state.problem?.let { ProblemCard(it, state.problemDetail, onDismissProblem) }
 
             AuxoCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
@@ -347,7 +347,7 @@ internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit, error:
 }
 
 @Composable
-private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
+private fun ProblemCard(problem: BackupProblem, detail: String?, onDismiss: () -> Unit) {
     val message = when (problem) {
         BackupProblem.NOT_A_BACKUP -> R.string.backup_error_not_a_backup
         BackupProblem.NOT_LOCKED -> R.string.backup_error_not_locked
@@ -366,12 +366,16 @@ private fun ProblemCard(problem: BackupProblem, onDismiss: () -> Unit) {
         modifier = Modifier.fillMaxWidth().testTag("backup_problem"),
     ) {
         Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                detail?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                }
+            }
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.backup_dismiss)) }
         }
     }

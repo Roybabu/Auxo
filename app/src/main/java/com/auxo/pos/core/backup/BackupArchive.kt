@@ -55,6 +55,9 @@ enum class BackupProblem {
 class BackupException(val problem: BackupProblem, message: String? = null, cause: Throwable? = null) :
     Exception(message ?: problem.name, cause)
 
+/** The plain reason a damaged file was refused, shown under the message; null when there is none to show. */
+fun BackupException.plainDetail(): String? = message?.takeIf { problem == BackupProblem.CORRUPT && it != problem.name }
+
 /** What a backup says about itself. */
 data class BackupManifest(
     val app: String = BackupArchive.APP_ID,
