@@ -162,15 +162,58 @@ class SharedExportTest {
         assertEquals(SharedIds.derive("product", "7"), (unlinkedProducts[0] as Map<*, *>)["id"])
     }
 
-    /** Temporary: prints an Android-made shared file so the web app can open it (see the round-trip check). */
-    @Test
-    fun printsTheAndroidFileForTheWebRoundTrip() = kotlinx.coroutines.runBlocking {
+    /** Temporary: the Android-made shared file, reported in pieces through failure messages (see the round trip). */
+    private fun fixtureText(): String = kotlinx.coroutines.runBlocking {
         val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
             dietType = null, createdAt = 1, updatedAt = 2, photoFile = null)
         val customer = CustomerEntity(id = 3, name = "Asha", phone = "9999900000", email = null, gstin = null, stateCode = null,
             address = null, creditLimitMinor = null, notes = null, createdAt = 1, updatedAt = 1)
         val bytes = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product), customerRows = listOf(customer)))
             .encrypt("long shared phrase 91", 1_700_000_000_000L, "1.0")
-        org.junit.Assert.fail("AUXO-FIXTURE-BEGIN " + java.util.Base64.getEncoder().encodeToString(bytes) + " AUXO-FIXTURE-END")
+        java.util.Base64.getEncoder().encodeToString(bytes)
     }
+    private fun reportChunk(index: Int) {
+        val part = fixtureText().chunked(200).getOrNull(index) ?: return
+        org.junit.Assert.fail("CHUNK " + String.format("%02d", index) + " " + part)
+    }
+    @Test
+    fun reportChunk00() { reportChunk(0) }
+    @Test
+    fun reportChunk01() { reportChunk(1) }
+    @Test
+    fun reportChunk02() { reportChunk(2) }
+    @Test
+    fun reportChunk03() { reportChunk(3) }
+    @Test
+    fun reportChunk04() { reportChunk(4) }
+    @Test
+    fun reportChunk05() { reportChunk(5) }
+    @Test
+    fun reportChunk06() { reportChunk(6) }
+    @Test
+    fun reportChunk07() { reportChunk(7) }
+    @Test
+    fun reportChunk08() { reportChunk(8) }
+    @Test
+    fun reportChunk09() { reportChunk(9) }
+    @Test
+    fun reportChunk10() { reportChunk(10) }
+    @Test
+    fun reportChunk11() { reportChunk(11) }
+    @Test
+    fun reportChunk12() { reportChunk(12) }
+    @Test
+    fun reportChunk13() { reportChunk(13) }
+    @Test
+    fun reportChunk14() { reportChunk(14) }
+    @Test
+    fun reportChunk15() { reportChunk(15) }
+    @Test
+    fun reportChunk16() { reportChunk(16) }
+    @Test
+    fun reportChunk17() { reportChunk(17) }
+    @Test
+    fun reportChunk18() { reportChunk(18) }
+    @Test
+    fun reportChunk19() { reportChunk(19) }
 }
