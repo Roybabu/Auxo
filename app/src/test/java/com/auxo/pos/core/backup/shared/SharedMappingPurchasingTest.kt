@@ -30,9 +30,9 @@ class SharedMappingPurchasingTest {
     fun category_and_subcategory_rows_link_by_shared_id() {
         val category = SharedMapping.category(ShopCategoryEntity(id = 1, name = null, profile = "GARMENT", enabled = true, sortOrder = 0, builtIn = true))
         assertEquals("21698313-7bd8-56ea-9c69-9ebe0fc84a82", category["id"])
-        val sub = SharedMapping.subcategory(ShopSubcategoryEntity(id = 3, categoryId = 1, name = "Shirts", sortOrder = 1)) { id ->
+        val sub = SharedMapping.subcategory(ShopSubcategoryEntity(id = 3, categoryId = 1, name = "Shirts", sortOrder = 1), { id ->
             SharedIds.category("GARMENT", builtIn = true, id = id)
-        }
+        })
         assertEquals("21698313-7bd8-56ea-9c69-9ebe0fc84a82", sub["categoryId"])
     }
 

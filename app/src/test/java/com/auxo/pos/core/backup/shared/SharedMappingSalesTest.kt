@@ -40,7 +40,7 @@ class SharedMappingSalesTest {
         val entry = SharedMapping.ledgerEntry(
             LedgerEntryEntity(id = 9, customerId = 5, type = "SALE", amountMinor = 20000, invoiceId = 4, method = null,
                 reference = null, note = null, createdAt = 500),
-        ) { id -> if (id == 4L) "INV/26-27/00001" else null }
+        { id -> if (id == 4L) "INV/26-27/00001" else null })
         assertEquals("INV/26-27/00001", entry["invoiceNumber"])
         assertEquals(SharedIds.derive("invoice", "4"), entry["invoiceId"])
         assertEquals("SALE", entry["type"])
@@ -70,7 +70,7 @@ class SharedMappingSalesTest {
                 barcode = "890", hsnCode = null, quantity = 2, unitPriceMinor = 10000, mrpMinor = null, discountMinor = 300,
                 taxableMinor = 19000, gstRateBasisPoints = 500, cgstMinor = 450, sgstMinor = 450, igstMinor = 0,
                 totalMinor = 19000, returnedQuantity = 0, originalLineId = null),
-        ) { variantId -> if (variantId == 11L) 7L else null }
+        { variantId -> if (variantId == 11L) 7L else null })
         assertEquals(SharedIds.derive("product", "7"), line["productId"])
         assertEquals(SharedIds.derive("variant", "11"), line["variantId"])
         assertEquals(false, line["customItem"])
@@ -85,7 +85,7 @@ class SharedMappingSalesTest {
                 barcode = "", hsnCode = null, quantity = 1, unitPriceMinor = 500, mrpMinor = null, discountMinor = 0,
                 taxableMinor = 500, gstRateBasisPoints = 1800, cgstMinor = 45, sgstMinor = 45, igstMinor = 0,
                 totalMinor = 590, returnedQuantity = 0, originalLineId = null),
-        ) { null }
+        { null })
         assertEquals(true, line["customItem"])
         assertNull(line["productId"])
     }
