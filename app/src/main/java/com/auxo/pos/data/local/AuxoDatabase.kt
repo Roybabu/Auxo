@@ -10,6 +10,7 @@ import androidx.room.RoomDatabase
 import com.auxo.pos.data.local.dao.AuditDao
 import com.auxo.pos.data.local.dao.CategoryDao
 import com.auxo.pos.data.local.dao.SharedExportDao
+import com.auxo.pos.data.local.dao.SharedIdLinkDao
 import com.auxo.pos.data.local.dao.DayEndDao
 import com.auxo.pos.data.local.dao.HeldBillDao
 import com.auxo.pos.data.local.dao.QuotationDao
@@ -43,6 +44,7 @@ import com.auxo.pos.data.local.entity.StockMovementEntity
 import com.auxo.pos.data.local.entity.StoreSettingsEntity
 import com.auxo.pos.data.local.entity.ShopCategoryEntity
 import com.auxo.pos.data.local.entity.ShopSubcategoryEntity
+import com.auxo.pos.data.local.entity.SharedIdLinkEntity
 import com.auxo.pos.data.local.entity.SupplierEntity
 
 /**
@@ -76,6 +78,7 @@ import com.auxo.pos.data.local.entity.SupplierEntity
         StockCountEntity::class,
         ShopCategoryEntity::class,
         ShopSubcategoryEntity::class,
+        SharedIdLinkEntity::class,
     ],
     version = AuxoDatabase.VERSION,
     exportSchema = true,
@@ -106,15 +109,18 @@ abstract class AuxoDatabase : RoomDatabase() {
 
     abstract fun sharedExportDao(): SharedExportDao
 
+    abstract fun sharedIdLinkDao(): SharedIdLinkDao
+
     companion object {
         const val NAME = "auxo.db"
 
         /** The database version above, for code that checks a file against it. */
-        const val VERSION = 1
+        const val VERSION = 2
 
         /** A builder for the database. All code that opens the database file goes through this. */
         fun builder(context: Context, name: String = NAME): RoomDatabase.Builder<AuxoDatabase> =
             Room.databaseBuilder(context.applicationContext, AuxoDatabase::class.java, name)
+                .addMigrations(Migrations.MIGRATION_1_2)
                 .addCallback(object : RoomDatabase.Callback() {
                     // Debug builds only record this (any upgrade has already run by now).
                     override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {

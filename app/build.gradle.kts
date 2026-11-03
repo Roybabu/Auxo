@@ -135,6 +135,11 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Device tests read the exported schemas, so each migration can be run and checked against them.
+android {
+    sourceSets.getByName("androidTest").assets.srcDirs(files("$projectDir/schemas"))
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -183,6 +188,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
