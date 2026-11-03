@@ -163,15 +163,7 @@ class SharedExportTest {
     }
 
     /** Temporary: the Android-made shared file, reported in pieces through failure messages (see the round trip). */
-    private fun fixtureText(): String = kotlinx.coroutines.runBlocking {
-        val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
-            dietType = null, createdAt = 1, updatedAt = 2, photoFile = null)
-        val customer = CustomerEntity(id = 3, name = "Asha", phone = "9999900000", email = null, gstin = null, stateCode = null,
-            address = null, creditLimitMinor = null, notes = null, createdAt = 1, updatedAt = 1)
-        val bytes = export(FakeDao(settingRows = listOf(shop), productRows = listOf(product), customerRows = listOf(customer)))
-            .encrypt("long shared phrase 91", 1_700_000_000_000L, "1.0")
-        java.util.Base64.getEncoder().encodeToString(bytes)
-    }
+    private fun fixtureText(): String = webRoundTripFile
     private fun reportChunk(index: Int) {
         val part = fixtureText().chunked(200).getOrNull(index) ?: return
         org.junit.Assert.fail("CHUNK " + String.format("%02d", index) + " " + part)
@@ -217,3 +209,24 @@ class SharedExportTest {
     @Test
     fun reportChunk19() { reportChunk(19) }
 }
+
+/** Temporary: one Android-made file, built once, so every reported piece comes from the same encryption. */
+private val webRoundTripFile: String by lazy {
+    val shop = StoreSettingsEntity(storeName = "Shop", address = "Road", phone = "", gstin = "27AAPFU0939F1ZV",
+        stateCode = "27", gstRegistered = true, pricesIncludeTax = true, roundOff = true, invoicePrefix = "INV",
+        creditNotePrefix = "CN", upiId = "", upiPayeeName = "", receiptPaper = "THERMAL_80", receiptFooter = "Thanks",
+        receiptShowHsn = true, receiptShowTaxBreakup = true, receiptShowSavings = true, receiptShowCustomer = true,
+        receiptShowBarcode = true)
+    val product = ProductEntity(id = 7, name = "Mug", brand = null, category = "GENERAL", description = null, material = null,
+        dietType = null, createdAt = 1, updatedAt = 2, photoFile = null)
+    val customer = CustomerEntity(id = 3, name = "Asha", phone = "9999900000", email = null, gstin = null, stateCode = null,
+        address = null, creditLimitMinor = null, notes = null, createdAt = 1, updatedAt = 1)
+    val bytes = kotlinx.coroutines.runBlocking {
+        SharedExport(
+            FakeDao(settingRows = listOf(shop), productRows = listOf(product), customerRows = listOf(customer)),
+            decodeCart = { Cart() }, decodeCounts = { emptyList() }, photoFile = { null },
+        ).encrypt("long shared phrase 91", 1_700_000_000_000L, "1.0")
+    }
+    java.util.Base64.getEncoder().encodeToString(bytes)
+}
+
