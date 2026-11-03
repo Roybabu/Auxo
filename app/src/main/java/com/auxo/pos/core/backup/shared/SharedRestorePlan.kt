@@ -439,7 +439,7 @@ object SharedRestorePlanner {
                 createdAt = row.long("createdAt"),
                 sellerName = seller.string("storeName"),
                 sellerAddress = seller.string("address"),
-                sellerPhone = seller.string("phone"),
+                sellerPhone = seller.stringOrNull("phone") ?: "",
                 sellerGstin = seller.string("gstin"),
                 sellerStateCode = seller.string("stateCode"),
                 sellerFssai = seller.stringOrNull("fssai") ?: "",
