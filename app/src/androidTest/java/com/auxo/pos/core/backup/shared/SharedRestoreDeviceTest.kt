@@ -80,6 +80,42 @@ class SharedRestoreDeviceTest {
     }
 
     @Test
+    fun aHeldBill_keepsItsPlaceOfSupply_throughARestore() = runBlocking {
+        val bill = mapOf<String, Any?>(
+            "id" to "h1", "label" to "Table 2", "createdAt" to 1L, "updatedAt" to 1L, "itemCount" to 0L, "totalPaise" to "0",
+            "tableNumber" to 2L, "tokenNumber" to null, "discount" to mapOf("kind" to "AMOUNT", "value" to "0", "reason" to ""),
+            "interState" to true, "placeOfSupplyStateCode" to "29", "customerId" to "", "buyerName" to null,
+            "buyerPhone" to null, "buyerGstin" to null,
+        )
+        val document = SharedBackupReader.check(
+            mapOf(
+                "format" to "auxo-backup", "version" to 1L, "sharedModelVersion" to 1L, "createdAt" to 5L,
+                "source" to mapOf("platform" to "web", "appVersion" to "1"), "shopName" to "Shop",
+                "tables" to SharedFile.TABLES.associateWith { table ->
+                    when (table) {
+                        "settings" -> listOf(
+                            mapOf<String, Any?>(
+                                "id" to "shop", "storeName" to "Shop", "address" to "Road", "gstin" to "27AAPFU0939F1ZV",
+                                "stateCode" to "27", "gstRegistered" to true, "pricesIncludeTax" to true, "roundOff" to true,
+                                "invoicePrefix" to "INV", "creditNotePrefix" to "CN", "phone" to "", "fssai" to "", "upiId" to "",
+                                "upiPayeeName" to "", "receiptPaper" to "THERMAL_80", "receiptFooter" to "Thanks",
+                                "receiptLanguage" to "en", "receiptShowHsn" to true, "receiptShowTaxBreakdown" to true,
+                                "receiptShowCustomer" to true, "receiptShowSavings" to true, "receiptShowBarcode" to true,
+                                "receiptShowUpiQr" to false, "employeeDiscountLimitBp" to 0L, "expiryWarningDays" to 30L,
+                            ),
+                        )
+                        "heldBills" -> listOf(bill)
+                        else -> emptyList<Map<String, Any?>>()
+                    }
+                },
+                "photos" to emptyList<Any?>(),
+            ),
+        )
+        val payload = SharedRestorePlanner.plan(document).heldBills[0].build(LocalIds { _, _ -> 0L }).payload
+        assertEquals("29", com.auxo.pos.data.repository.HeldCartCodec.decode(payload)!!.placeOfSupplyStateCode)
+    }
+
+    @Test
     fun aFileMadeByTheWebApp_restoresIntoAFreshDatabase_withItsCategoriesLinked() = runBlocking {
         val bytes = InstrumentationRegistry.getInstrumentation().context.assets
             .open("shared/web-backup.auxoshared").use { it.readBytes() }
