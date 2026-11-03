@@ -3,7 +3,10 @@
 
 package com.auxo.pos.core.backup.shared
 
+import com.auxo.pos.data.local.entity.AuditLogEntity
 import com.auxo.pos.data.local.entity.CustomerEntity
+import com.auxo.pos.data.local.entity.DayClosingEntity
+import com.auxo.pos.data.local.entity.StockMovementEntity
 import com.auxo.pos.data.local.entity.InvoiceEntity
 import com.auxo.pos.data.local.entity.InvoiceLineEntity
 import com.auxo.pos.data.local.entity.LedgerEntryEntity
@@ -323,5 +326,49 @@ object SharedMapping {
         "batchNumber" to l.batchNumber,
         "expiryDate" to l.expiryEpochDay?.let { LocalDate.ofEpochDay(it).toString() },
         "batchId" to l.batchId?.let { SharedIds.derive("batch", it.toString()) },
+    )
+
+    fun dayClosing(d: DayClosingEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("dayClosing", d.id.toString()),
+        "businessDate" to d.businessDate,
+        "bills" to d.bills,
+        "returns" to d.returns,
+        "netSalesPaise" to d.netSalesMinor.toString(),
+        "cashReceivedPaise" to d.cashReceivedMinor.toString(),
+        "cashRefundedPaise" to d.cashRefundedMinor.toString(),
+        "cashFromAccountsPaise" to d.cashFromAccountsMinor.toString(),
+        "upiNetPaise" to d.upiNetMinor.toString(),
+        "cardNetPaise" to d.cardNetMinor.toString(),
+        "onAccountNetPaise" to d.onAccountNetMinor.toString(),
+        "countedCashPaise" to d.countedCashMinor.toString(),
+        "note" to d.note,
+        "closedAt" to d.closedAt,
+        "closedBy" to d.closedBy,
+    )
+
+    /** Actor IDs are kept as text for history only; they never create or match an account. */
+    fun auditLog(a: AuditLogEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("audit", a.id.toString()),
+        "createdAt" to a.createdAt,
+        "actorId" to a.actorId.toString(),
+        "actorName" to a.actorName,
+        "actorRole" to a.actorRole,
+        "action" to a.action,
+        "entityType" to a.entityType,
+        "entityId" to a.entityId?.toString(),
+        "summary" to a.summary,
+    )
+
+    /** The receipt link is not a shared column yet, so it is not written here. */
+    fun stockMovement(m: StockMovementEntity): Map<String, Any?> = mapOf(
+        "id" to SharedIds.derive("stockMovement", m.id.toString()),
+        "variantId" to SharedIds.derive("variant", m.variantId.toString()),
+        "quantityChange" to m.quantityChange,
+        "reason" to m.reason,
+        "note" to m.note,
+        "createdAt" to m.createdAt,
+        "batchId" to m.batchId?.let { SharedIds.derive("batch", it.toString()) },
+        "invoiceId" to m.invoiceId?.let { SharedIds.derive("invoice", it.toString()) },
+        "sourceInvoiceId" to null,
     )
 }
