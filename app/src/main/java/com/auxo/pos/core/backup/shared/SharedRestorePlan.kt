@@ -128,7 +128,7 @@ object SharedRestorePlanner {
             if (knownIds[table]?.contains(sharedId) == true) {
                 0L
             } else {
-                throw RestoreProblem("A link points to a ${plainName(key)} (\"$sharedId\") that is not in the file.")
+                throw RestoreProblem("A link points to a ${plainName(key)} (\"$sharedId\") that is not in the file.", RestoreDetail(DetailKind.LINK_TARGET_MISSING, listOf(plainName(key), sharedId)))
             }
         }
 
@@ -137,17 +137,17 @@ object SharedRestorePlanner {
         val metalRates = settingsRow?.record("metalRatesPaise")?.let { record ->
             record.keys().associate { key ->
                 val metal = JewelleryMetal.entries.firstOrNull { it.name == key }
-                    ?: throw RestoreProblem("The backup has a metal rate for a metal this app does not know ($key).")
+                    ?: throw RestoreProblem("The backup has a metal rate for a metal this app does not know ($key).", RestoreDetail(DetailKind.UNKNOWN_METAL, listOf(key)))
                 metal to Money(record.money(key))
             }
         }.orEmpty()
         val logoPhotoId = settingsRow?.refOrNull("storeLogoPhotoId")
         val logoBytes = logoPhotoId?.let { id ->
             document.photos.firstOrNull { it.id == id }?.bytes
-                ?: throw RestoreProblem("The shop logo refers to a photo that is not in the file.")
+                ?: throw RestoreProblem("The shop logo refers to a photo that is not in the file.", RestoreDetail(DetailKind.LOGO_PHOTO_MISSING))
         }
         val loyaltyRows = tables.getValue("loyaltySettings")
-        if (loyaltyRows.size > 1) throw RestoreProblem("The backup has more than one loyalty settings row.")
+        if (loyaltyRows.size > 1) throw RestoreProblem("The backup has more than one loyalty settings row.", RestoreDetail(DetailKind.LOYALTY_SETTINGS_COUNT))
 
         val categories = planCategories(tables.getValue("categories"))
         val subcategories = planSubcategories(tables.getValue("subcategories"))
@@ -158,7 +158,7 @@ object SharedRestorePlanner {
         for ((field, label) in listOf("barcode" to "barcode", "sku" to "SKU")) {
             val seen = tables.getValue("variants").mapNotNull { it.stringOrNull(field)?.takeIf { v -> v.isNotEmpty() } }
             val repeated = seen.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.firstOrNull()
-            if (repeated != null) throw RestoreProblem("Two variants share the $label \"$repeated\". This app needs each $label to be different.")
+            if (repeated != null) throw RestoreProblem("Two variants share the $label \"$repeated\". This app needs each $label to be different.", RestoreDetail(if (field == "sku") DetailKind.DUPLICATE_SKU else DetailKind.DUPLICATE_BARCODE, listOf(repeated)))
         }
         val batches = planBatches(tables.getValue("stockBatches"))
         val customers = planCustomers(tables.getValue("customers"))
@@ -226,17 +226,17 @@ object SharedRestorePlanner {
     /** Photos get new file names, so the names never come from the file. */
     private fun newPhotoNames(document: SharedBackupDocument): Map<String, String> {
         val ids = document.photos.map { it.id }
-        if (ids.toSet().size != ids.size) throw RestoreProblem("The backup holds two photos with the same id.")
+        if (ids.toSet().size != ids.size) throw RestoreProblem("The backup holds two photos with the same id.", RestoreDetail(DetailKind.PHOTO_DUPLICATE))
         // A photo whose ID is a UUID keeps it: its file is named from the UUID, so a re-export gives the same ID.
         return ids.associateWith { id ->
-            SharedIds.photoFileName(id) ?: throw RestoreProblem("A photo has an id (\"$id\") that is not a valid UUID.")
+            SharedIds.photoFileName(id) ?: throw RestoreProblem("A photo has an id (\"$id\") that is not a valid UUID.", RestoreDetail(DetailKind.PHOTO_NOT_UUID, listOf(id)))
         }
     }
 
     private fun uniqueIds(table: String, rows: List<SharedRow>): Set<String> {
         // The shop settings and loyalty rules are single rows with fixed names; every other row needs a UUID.
         val ids = if (table in FIXED_ID_TABLES) rows.mapNotNull { it.stringOrNull("id") } else rows.map { it.id() }
-        if (ids.toSet().size != ids.size) throw RestoreProblem("Two rows in ${plainName(table)} have the same id.")
+        if (ids.toSet().size != ids.size) throw RestoreProblem("Two rows in ${plainName(table)} have the same id.", RestoreDetail(DetailKind.DUPLICATE_ID, listOf(plainName(table))))
         return ids.toSet()
     }
 
@@ -251,7 +251,7 @@ object SharedRestorePlanner {
                 val parent = row.refOrNull(key)
                 parent == null || parent !in inFile || parent in placed
             }
-            if (ready.isEmpty()) throw RestoreProblem("Some rows refer to each other in a loop (\"$key\").")
+            if (ready.isEmpty()) throw RestoreProblem("Some rows refer to each other in a loop (\"$key\").", RestoreDetail(DetailKind.REFERENCE_LOOP, listOf(key)))
             ordered += ready
             ready.forEach { placed += it.id() }
             pending = pending.filterNot { it in ready.toSet() }
@@ -263,7 +263,10 @@ object SharedRestorePlanner {
     private fun groupLines(lines: List<SharedRow>, parentKey: String, parents: Set<String>, what: String): Map<String, List<SharedRow>> {
         val grouped = lines.groupBy { it.ref(parentKey) }
         val orphan = grouped.keys.firstOrNull { it !in parents }
-        if (orphan != null) throw RestoreProblem("A $what line refers to a $what that is not in the file ($orphan).")
+        if (orphan != null) throw RestoreProblem(
+            "A $what line refers to a $what that is not in the file ($orphan).",
+            RestoreDetail(when (what) { "held bill" -> DetailKind.ORPHAN_HELD_BILL_LINE; "quotation" -> DetailKind.ORPHAN_QUOTATION_LINE; else -> DetailKind.ORPHAN_COUNT_LINE }, listOf(orphan)),
+        )
         return grouped
     }
 
@@ -271,7 +274,7 @@ object SharedRestorePlanner {
         PlannedRow(sharedId, listOf(key to sharedId), build)
 
     private fun planSettings(rows: List<SharedRow>): StoreSettingsEntity {
-        val row = rows.singleOrNull() ?: throw RestoreProblem("The backup must hold exactly one shop settings row.")
+        val row = rows.singleOrNull() ?: throw RestoreProblem("The backup must hold exactly one shop settings row.", RestoreDetail(DetailKind.SETTINGS_COUNT))
         return StoreSettingsEntity(
             id = 1,
             storeName = row.string("storeName"),
@@ -530,7 +533,7 @@ object SharedRestorePlanner {
             "EARNED", "ON_TIME_BONUS" -> "POINTS_EARNED"
             "REDEEMED" -> "POINTS_REDEEMED"
             "REVERSED" -> "POINTS_REVERSED"
-            else -> throw RestoreProblem("A loyalty row has a type this app does not know ($kind).")
+            else -> throw RestoreProblem("A loyalty row has a type this app does not know ($kind).", RestoreDetail(DetailKind.UNKNOWN_LOYALTY_TYPE, listOf(kind)))
         }
         planRow(row.id(), "loyalty") { ids ->
             LedgerEntryEntity(
@@ -824,17 +827,17 @@ object SharedRestorePlanner {
         return when (record.string("kind")) {
             "AMOUNT" -> if (value == 0L && zeroMeansNone) null else Discount.Amount(Money(value))
             "PERCENT" -> Discount.Percent(value.toInt())
-            else -> throw RestoreProblem("The backup has a discount kind that this app does not know.")
+            else -> throw RestoreProblem("The backup has a discount kind that this app does not know.", RestoreDetail(DetailKind.UNKNOWN_DISCOUNT))
         }
     }
 
     private fun stockUnitOf(name: String): StockUnit =
-        StockUnit.entries.firstOrNull { it.name == name } ?: throw RestoreProblem("The backup has a stock unit that this app does not know ($name).")
+        StockUnit.entries.firstOrNull { it.name == name } ?: throw RestoreProblem("The backup has a stock unit that this app does not know ($name).", RestoreDetail(DetailKind.UNKNOWN_STOCK_UNIT, listOf(name)))
 
     /** Photo lookups used while building rows. */
     private class Ctx(private val photoNames: Map<String, String>) {
         fun photoFile(row: SharedRow, key: String): String? = row.refOrNull(key)?.let { photoId ->
-            photoNames[photoId] ?: throw RestoreProblem("A product or variant refers to a photo that is not in the file.")
+            photoNames[photoId] ?: throw RestoreProblem("A product or variant refers to a photo that is not in the file.", RestoreDetail(DetailKind.PRODUCT_PHOTO_MISSING))
         }
     }
 }

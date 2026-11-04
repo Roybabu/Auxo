@@ -5,6 +5,7 @@ package com.auxo.pos.core.backup.shared
 
 import com.auxo.pos.core.backup.BackupException
 import com.auxo.pos.core.backup.SharedBackupContainer
+import com.auxo.pos.core.backup.restoreDetail
 import com.auxo.pos.core.backup.BackupProblem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,4 +47,26 @@ class SharedBackupFileTest {
         assertEquals(0, manifest.products)
         assertEquals(0, manifest.customers)
     }
+
+    @Test
+    fun brokenJson_isReportedAsDamaged_withATranslatableDetail() {
+        val file = SharedBackupContainer.encrypt("{not json".toByteArray(Charsets.UTF_8), "the right passphrase")
+        val problem = assertThrows(BackupException::class.java) { SharedBackupFile.open(file, "the right passphrase") }
+        assertEquals(BackupProblem.CORRUPT, problem.problem)
+        assertEquals(DetailKind.FILE_DAMAGED, problem.restoreDetail()?.kind)
+    }
+
+    @Test
+    fun aFileFromAnotherApp_isReportedAsNotABackup() {
+        val file = SharedBackupContainer.encrypt("""{"format":"other"}""".toByteArray(Charsets.UTF_8), "the right passphrase")
+        val problem = assertThrows(BackupException::class.java) { SharedBackupFile.open(file, "the right passphrase") }
+        assertEquals(DetailKind.NOT_A_BACKUP, problem.restoreDetail()?.kind)
+    }
+
+    @Test
+    fun aWrongPassphrase_hasNoDetail() {
+        val problem = assertThrows(BackupException::class.java) { SharedBackupFile.open(fileBytes("the right passphrase"), "the wrong passphrase") }
+        assertEquals(null, problem.restoreDetail())
+    }
 }
+

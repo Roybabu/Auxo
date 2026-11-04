@@ -167,7 +167,7 @@ private fun ListStep(state: FindBackupUiState, viewModel: FindBackupViewModel, o
         }
         state.problemDetail?.let {
             Text(
-                it,
+                com.auxo.pos.ui.screens.more.restoreDetailText(it),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = Spacing.sm),

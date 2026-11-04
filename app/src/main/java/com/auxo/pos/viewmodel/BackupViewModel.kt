@@ -10,7 +10,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.backup.BackupException
-import com.auxo.pos.core.backup.plainDetail
+import com.auxo.pos.core.backup.restoreDetail
+import com.auxo.pos.core.backup.shared.RestoreDetail
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupService
 import com.auxo.pos.core.backup.SavedBackup
@@ -29,7 +30,7 @@ data class BackupUiState(
     val saved: SavedBackup? = null,
     val problem: BackupProblem? = null,
     /** A plain reason for a damaged file, shown under the message. */
-    val problemDetail: String? = null,
+    val problemDetail: RestoreDetail? = null,
     /** A file the person picked, waiting for them to confirm replacing their data. */
     val pendingRestore: Uri? = null,
     /** The restore finished; the screen restarts the app. */
@@ -124,7 +125,7 @@ class BackupViewModel(private val service: BackupService) : ViewModel() {
             } catch (e: Exception) {
                 com.auxo.pos.core.debuglog.DebugLog.error("BackupViewModel", "Failed and showed an error", e)
                 val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
-                val detail = (e as? BackupException)?.plainDetail()
+                val detail = (e as? BackupException)?.restoreDetail()
                 when (problem) {
                     // A locked file: ask for the passphrase (again, after a wrong one) instead of failing.
                     BackupProblem.PASSPHRASE_NEEDED -> _uiState.update { it.copy(isWorking = false, unlocking = uri) }

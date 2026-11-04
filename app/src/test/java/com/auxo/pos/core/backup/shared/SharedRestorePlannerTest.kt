@@ -231,6 +231,8 @@ class SharedRestorePlannerTest {
             SharedRestorePlanner.plan(document("settings" to listOf(shopSettings), "customers" to listOf(asha("customer-1"))))
         }
         assertTrue(problem.message!!.contains("not a valid UUID"))
+        assertEquals(DetailKind.FIELD_NOT_UUID, problem.detail?.kind)
+        assertEquals(listOf("1", "customers", "id"), problem.detail?.args)
     }
 
     @Test

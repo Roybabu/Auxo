@@ -43,8 +43,10 @@ object SharedBackupFile {
     fun open(bytes: ByteArray, passphrase: String): SharedBackupDocument = try {
         SharedBackupReader.read(bytes, passphrase)
     } catch (e: IllegalArgumentException) {
-        val problem = if (e.message?.startsWith("Wrong passphrase") == true) BackupProblem.WRONG_PASSPHRASE else BackupProblem.CORRUPT
-        throw BackupException(problem, message = e.message, cause = e)
+        val wrong = e.message?.startsWith("Wrong passphrase") == true
+        // Problems from the reader carry their own detail; anything else (broken JSON, a bad container) is "damaged".
+        val cause = if (e is RestoreProblem || wrong) e else RestoreProblem(e.message ?: "The backup data is damaged.", RestoreDetail(DetailKind.FILE_DAMAGED))
+        throw BackupException(if (wrong) BackupProblem.WRONG_PASSPHRASE else BackupProblem.CORRUPT, message = e.message, cause = cause)
     }
 
     /** The restore plan for [bytes]; a file whose contents do not check out is a [BackupException]. */

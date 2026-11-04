@@ -1979,4 +1979,30 @@ in %2$s</string>
     <string name="wizard_review_fix">Fix</string>
     <string name="wizard_review_no_name">Name missing</string>
     <string name="wizard_review_tax">GST and HSN</string>
+    <!-- Reasons a shared backup is refused -->
+    <string name="restore_detail_field_missing">In row %1$s of %2$s, “%3$s” is missing.</string>
+    <string name="restore_detail_field_invalid">In row %1$s of %2$s, “%3$s” has a value that is not valid.</string>
+    <string name="restore_detail_field_not_uuid">In row %1$s of %2$s, “%3$s” is not a valid UUID.</string>
+    <string name="restore_detail_link_target_missing">A link points to a %1$s (“%2$s”) that is not in the file.</string>
+    <string name="restore_detail_unknown_metal">The backup has a rate for a metal this app does not know (%1$s).</string>
+    <string name="restore_detail_unknown_loyalty_type">A loyalty row has a type this app does not know (%1$s).</string>
+    <string name="restore_detail_unknown_discount">The backup has a kind of discount this app does not know.</string>
+    <string name="restore_detail_unknown_stock_unit">The backup has a stock unit this app does not know (%1$s).</string>
+    <string name="restore_detail_logo_photo_missing">The shop logo refers to a photo that is not in the file.</string>
+    <string name="restore_detail_product_photo_missing">A product or variant refers to a photo that is not in the file.</string>
+    <string name="restore_detail_photo_not_uuid">A photo has an id (“%1$s”) that is not a valid UUID.</string>
+    <string name="restore_detail_photo_duplicate">The backup holds two photos with the same id.</string>
+    <string name="restore_detail_duplicate_id">Two rows in %1$s have the same id.</string>
+    <string name="restore_detail_duplicate_barcode">Two variants share the barcode “%1$s”. Each barcode must be different.</string>
+    <string name="restore_detail_duplicate_sku">Two variants share the SKU “%1$s”. Each SKU must be different.</string>
+    <string name="restore_detail_reference_loop">Some rows refer to each other in a loop (“%1$s”).</string>
+    <string name="restore_detail_orphan_held_bill_line">A held bill line refers to a held bill that is not in the file (%1$s).</string>
+    <string name="restore_detail_orphan_quotation_line">A quotation line refers to a quotation that is not in the file (%1$s).</string>
+    <string name="restore_detail_orphan_count_line">A stock count line refers to a count that is not in the file (%1$s).</string>
+    <string name="restore_detail_settings_count">The backup must hold exactly one row of shop settings.</string>
+    <string name="restore_detail_loyalty_settings_count">The backup has more than one row of loyalty settings.</string>
+    <string name="restore_detail_not_a_backup">This file is not an Auxo backup.</string>
+    <string name="restore_detail_unsupported_version">This backup is in a format version this app cannot read.</string>
+    <string name="restore_detail_missing_table">The backup is missing the %1$s table.</string>
+    <string name="restore_detail_file_damaged">The backup data is damaged or not written correctly.</string>
 </resources>

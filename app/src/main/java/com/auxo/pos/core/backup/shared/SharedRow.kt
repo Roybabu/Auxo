@@ -14,8 +14,25 @@ fun isUuid(text: String): Boolean = UUID_PATTERN.matches(text)
 fun plainName(name: String): String =
     name.replace(Regex("([a-z])([A-Z])")) { "${it.groupValues[1]} ${it.groupValues[2]}" }.lowercase()
 
-/** A problem in a shared backup that stops the restore. The message is plain text for the person restoring. */
-class RestoreProblem(message: String) : IllegalArgumentException(message)
+/** The kinds of problem a shared backup can have. Each has a text in every language the app speaks. */
+enum class DetailKind {
+    FIELD_MISSING, FIELD_INVALID, FIELD_NOT_UUID, LINK_TARGET_MISSING,
+    UNKNOWN_METAL, UNKNOWN_LOYALTY_TYPE, UNKNOWN_DISCOUNT, UNKNOWN_STOCK_UNIT,
+    LOGO_PHOTO_MISSING, PRODUCT_PHOTO_MISSING, PHOTO_NOT_UUID, PHOTO_DUPLICATE,
+    DUPLICATE_ID, DUPLICATE_BARCODE, DUPLICATE_SKU, REFERENCE_LOOP,
+    ORPHAN_HELD_BILL_LINE, ORPHAN_QUOTATION_LINE, ORPHAN_COUNT_LINE,
+    SETTINGS_COUNT, LOYALTY_SETTINGS_COUNT,
+    NOT_A_BACKUP, UNSUPPORTED_VERSION, MISSING_TABLE, FILE_DAMAGED,
+}
+
+/** What is wrong, as a kind and the values to put in its text. */
+data class RestoreDetail(val kind: DetailKind, val args: List<String> = emptyList())
+
+/**
+ * A problem in a shared backup that stops the restore. [message] is plain English for the log; [detail] is what the
+ * screens translate.
+ */
+class RestoreProblem(message: String, val detail: RestoreDetail? = null) : IllegalArgumentException(message)
 
 /**
  * One row of a table in the file. Each accessor names the table, the row and the field when something is missing
@@ -23,8 +40,17 @@ class RestoreProblem(message: String) : IllegalArgumentException(message)
  */
 class SharedRow(private val table: String, private val number: Int, private val values: Map<String, Any?>) {
 
-    private fun fail(key: String, problem: String): Nothing =
-        throw RestoreProblem("In row $number of ${plainName(table)}, \"${plainName(key)}\" $problem.")
+    private fun fail(key: String, problem: String): Nothing {
+        val kind = when (problem) {
+            "is missing" -> DetailKind.FIELD_MISSING
+            "is not a valid UUID" -> DetailKind.FIELD_NOT_UUID
+            else -> DetailKind.FIELD_INVALID
+        }
+        throw RestoreProblem(
+            "In row $number of ${plainName(table)}, \"${plainName(key)}\" $problem.",
+            RestoreDetail(kind, listOf(number.toString(), plainName(table), plainName(key))),
+        )
+    }
 
     /** The names in a record, such as the metal names in the metal rates. */
     fun keys(): Set<String> = values.keys

@@ -11,7 +11,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.auxo.pos.core.auth.AuthState
 import com.auxo.pos.core.backup.BackupException
-import com.auxo.pos.core.backup.plainDetail
+import com.auxo.pos.core.backup.restoreDetail
+import com.auxo.pos.core.backup.shared.RestoreDetail
 import com.auxo.pos.core.backup.BackupManifest
 import com.auxo.pos.core.backup.BackupProblem
 import com.auxo.pos.core.backup.BackupScanner
@@ -41,7 +42,7 @@ data class FindBackupUiState(
     val restored: Boolean = false,
     val problem: BackupProblem? = null,
     /** A plain reason for a damaged file, shown under the message. */
-    val problemDetail: String? = null,
+    val problemDetail: RestoreDetail? = null,
     /** The folder picker was closed without a choice, so the person is offered a new shop instead. */
     val skipped: Boolean = false,
 )
@@ -165,7 +166,7 @@ class FindBackupViewModel(
             } catch (e: Exception) {
                 com.auxo.pos.core.debuglog.DebugLog.error("FindBackupViewModel", "Failed and showed an error", e)
                 val problem = (e as? BackupException)?.problem ?: BackupProblem.RESTORE_FAILED
-                val detail = (e as? BackupException)?.plainDetail()
+                val detail = (e as? BackupException)?.restoreDetail()
                 _uiState.update {
                     when (problem) {
                         BackupProblem.WRONG_PASSPHRASE -> {

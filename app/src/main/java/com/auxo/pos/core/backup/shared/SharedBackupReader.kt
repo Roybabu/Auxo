@@ -34,14 +34,14 @@ object SharedBackupReader {
     }
 
     fun check(root: Any?): SharedBackupDocument {
-        val doc = root as? Map<*, *> ?: fail("The backup data is not a backup.")
-        if (doc["format"] != FORMAT) fail("This file is not an Auxo backup.")
+        val doc = root as? Map<*, *> ?: fail("The backup data is not a backup.", DetailKind.NOT_A_BACKUP)
+        if (doc["format"] != FORMAT) fail("This file is not an Auxo backup.", DetailKind.NOT_A_BACKUP)
         if (doc["version"] != VERSION || doc["sharedModelVersion"] != VERSION) {
-            fail("This backup uses a format version this app does not read.")
+            fail("This backup uses a format version this app does not read.", DetailKind.UNSUPPORTED_VERSION)
         }
         val rawTables = doc["tables"] as? Map<*, *> ?: fail("The backup has no tables.")
         val tables = SharedFile.TABLES.associateWith { name ->
-            val rows = rawTables[name] as? List<*> ?: fail("The backup is missing the $name table.")
+            val rows = rawTables[name] as? List<*> ?: fail("The backup is missing the $name table.", DetailKind.MISSING_TABLE, listOf(name))
             rows.mapIndexed { index, row ->
                 val record = row as? Map<*, *> ?: fail("Row ${index + 1} of $name is not a record.")
                 record.entries.associate { (key, value) -> key as String to value }
@@ -71,5 +71,6 @@ object SharedBackupReader {
         )
     }
 
-    private fun fail(message: String): Nothing = throw IllegalArgumentException(message)
+    private fun fail(message: String, kind: DetailKind = DetailKind.FILE_DAMAGED, args: List<String> = emptyList()): Nothing =
+        throw RestoreProblem(message, RestoreDetail(kind, args))
 }

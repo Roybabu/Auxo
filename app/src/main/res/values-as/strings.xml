@@ -1979,4 +1979,30 @@
     <string name="wizard_review_fix">শুদ্ধ কৰক</string>
     <string name="wizard_review_no_name">নাম নাই</string>
     <string name="wizard_review_tax">GST আৰু HSN</string>
+    <!-- Reasons a shared backup is refused -->
+    <string name="restore_detail_field_missing">%2$s ৰ শাৰী %1$s ত “%3$s” নাই।</string>
+    <string name="restore_detail_field_invalid">%2$s ৰ শাৰী %1$s ত “%3$s” ৰ মান শুদ্ধ নহয়।</string>
+    <string name="restore_detail_field_not_uuid">%2$s ৰ শাৰী %1$s ত “%3$s” শুদ্ধ UUID নহয়।</string>
+    <string name="restore_detail_link_target_missing">এটা লিংকে %1$s (“%2$s”) লৈ ইংগিত কৰে, যিটো ফাইলত নাই।</string>
+    <string name="restore_detail_unknown_metal">বেকআপত এনে ধাতুৰ দাম আছে যিটো এই এপে নাজানে (%1$s)।</string>
+    <string name="restore_detail_unknown_loyalty_type">এটা লয়েলটি শাৰীৰ প্ৰকাৰ এই এপে নাজানে (%1$s)।</string>
+    <string name="restore_detail_unknown_discount">বেকআপত এনে ৰেহাইৰ প্ৰকাৰ আছে যিটো এই এপে নাজানে।</string>
+    <string name="restore_detail_unknown_stock_unit">বেকআপত এনে ষ্টক একক আছে যিটো এই এপে নাজানে (%1$s)।</string>
+    <string name="restore_detail_logo_photo_missing">দোকানৰ লোগোৱে এনে ফটোলৈ ইংগিত কৰে যিটো ফাইলত নাই।</string>
+    <string name="restore_detail_product_photo_missing">কোনো সামগ্ৰী বা ভেৰিয়েন্টে এনে ফটোলৈ ইংগিত কৰে যিটো ফাইলত নাই।</string>
+    <string name="restore_detail_photo_not_uuid">এখন ফটোৰ আইডি (“%1$s”) শুদ্ধ UUID নহয়।</string>
+    <string name="restore_detail_photo_duplicate">বেকআপত একে আইডিৰ দুখন ফটো আছে।</string>
+    <string name="restore_detail_duplicate_id">%1$s ৰ দুটা শাৰীৰ আইডি একে।</string>
+    <string name="restore_detail_duplicate_barcode">দুটা ভেৰিয়েন্টৰ বাৰকোড একে (“%1$s”)। প্ৰতিটো বাৰকোড বেলেগ হ’ব লাগিব।</string>
+    <string name="restore_detail_duplicate_sku">দুটা ভেৰিয়েন্টৰ SKU একে (“%1$s”)। প্ৰতিটো SKU বেলেগ হ’ব লাগিব।</string>
+    <string name="restore_detail_reference_loop">কিছুমান শাৰীয়ে ইটোৱে সিটোক চক্ৰাকাৰে উল্লেখ কৰে (“%1$s”)।</string>
+    <string name="restore_detail_orphan_held_bill_line">ৰখা বিলৰ এটা লাইনে এনে বিললৈ ইংগিত কৰে যিটো ফাইলত নাই (%1$s)।</string>
+    <string name="restore_detail_orphan_quotation_line">কোটেচনৰ এটা লাইনে এনে কোটেচনলৈ ইংগিত কৰে যিটো ফাইলত নাই (%1$s)।</string>
+    <string name="restore_detail_orphan_count_line">ষ্টক গণনাৰ এটা লাইনে এনে গণনালৈ ইংগিত কৰে যিটো ফাইলত নাই (%1$s)।</string>
+    <string name="restore_detail_settings_count">বেকআপত দোকানৰ ছেটিংছৰ ঠিক এটা শাৰী থাকিব লাগিব।</string>
+    <string name="restore_detail_loyalty_settings_count">বেকআপত লয়েলটি ছেটিংছৰ এটাতকৈ অধিক শাৰী আছে।</string>
+    <string name="restore_detail_not_a_backup">এই ফাইলটো Auxo ৰ বেকআপ নহয়।</string>
+    <string name="restore_detail_unsupported_version">এই বেকআপৰ ফৰ্মেট সংস্কৰণ এই এপে পঢ়িব নোৱাৰে।</string>
+    <string name="restore_detail_missing_table">বেকআপত %1$s টেবুল নাই।</string>
+    <string name="restore_detail_file_damaged">বেকআপৰ তথ্য ক্ষতিগ্ৰস্ত বা শুদ্ধকৈ লিখা হোৱা নাই।</string>
 </resources>

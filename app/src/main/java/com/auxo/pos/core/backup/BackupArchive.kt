@@ -55,8 +55,9 @@ enum class BackupProblem {
 class BackupException(val problem: BackupProblem, message: String? = null, cause: Throwable? = null) :
     Exception(message ?: problem.name, cause)
 
-/** The plain reason a damaged file was refused, shown under the message; null when there is none to show. */
-fun BackupException.plainDetail(): String? = message?.takeIf { problem == BackupProblem.CORRUPT && it != problem.name }
+/** What was wrong with a damaged shared file, for the screens to say in the person's language; null when there is nothing to add. */
+fun BackupException.restoreDetail(): com.auxo.pos.core.backup.shared.RestoreDetail? =
+    if (problem == BackupProblem.CORRUPT) (cause as? com.auxo.pos.core.backup.shared.RestoreProblem)?.detail else null
 
 /** What a backup says about itself. */
 data class BackupManifest(

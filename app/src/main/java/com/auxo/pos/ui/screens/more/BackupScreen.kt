@@ -347,7 +347,7 @@ internal fun UnlockForm(onUnlock: (String) -> Unit, onCancel: () -> Unit, error:
 }
 
 @Composable
-private fun ProblemCard(problem: BackupProblem, detail: String?, onDismiss: () -> Unit) {
+private fun ProblemCard(problem: BackupProblem, detail: com.auxo.pos.core.backup.shared.RestoreDetail?, onDismiss: () -> Unit) {
     val message = when (problem) {
         BackupProblem.NOT_A_BACKUP -> R.string.backup_error_not_a_backup
         BackupProblem.NOT_LOCKED -> R.string.backup_error_not_locked
@@ -373,7 +373,7 @@ private fun ProblemCard(problem: BackupProblem, detail: String?, onDismiss: () -
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 detail?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                    Text(restoreDetailText(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
                 }
             }
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.backup_dismiss)) }

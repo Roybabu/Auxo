@@ -1979,4 +1979,30 @@
     <string name="wizard_review_fix">ঠিক করুন</string>
     <string name="wizard_review_no_name">নাম নেই</string>
     <string name="wizard_review_tax">GST ও HSN</string>
+    <!-- Reasons a shared backup is refused -->
+    <string name="restore_detail_field_missing">%2$s-এর সারি %1$s-এ “%3$s” নেই।</string>
+    <string name="restore_detail_field_invalid">%2$s-এর সারি %1$s-এ “%3$s”-এর মান সঠিক নয়।</string>
+    <string name="restore_detail_field_not_uuid">%2$s-এর সারি %1$s-এ “%3$s” সঠিক UUID নয়।</string>
+    <string name="restore_detail_link_target_missing">একটি লিঙ্ক %1$s (“%2$s”)-এর দিকে যায়, যা ফাইলে নেই।</string>
+    <string name="restore_detail_unknown_metal">ব্যাকআপে এমন ধাতুর দর আছে যা এই অ্যাপ চেনে না (%1$s)।</string>
+    <string name="restore_detail_unknown_loyalty_type">একটি লয়্যালটি সারির ধরন এই অ্যাপ চেনে না (%1$s)।</string>
+    <string name="restore_detail_unknown_discount">ব্যাকআপে এমন ছাড়ের ধরন আছে যা এই অ্যাপ চেনে না।</string>
+    <string name="restore_detail_unknown_stock_unit">ব্যাকআপে এমন স্টক একক আছে যা এই অ্যাপ চেনে না (%1$s)।</string>
+    <string name="restore_detail_logo_photo_missing">দোকানের লোগো এমন ছবির দিকে যায় যা ফাইলে নেই।</string>
+    <string name="restore_detail_product_photo_missing">কোনো পণ্য বা ভ্যারিয়েন্ট এমন ছবির দিকে যায় যা ফাইলে নেই।</string>
+    <string name="restore_detail_photo_not_uuid">একটি ছবির আইডি (“%1$s”) সঠিক UUID নয়।</string>
+    <string name="restore_detail_photo_duplicate">ব্যাকআপে একই আইডির দুটি ছবি আছে।</string>
+    <string name="restore_detail_duplicate_id">%1$s-এর দুটি সারির আইডি একই।</string>
+    <string name="restore_detail_duplicate_barcode">দুটি ভ্যারিয়েন্টের বারকোড একই (“%1$s”)। প্রতিটি বারকোড আলাদা হতে হবে।</string>
+    <string name="restore_detail_duplicate_sku">দুটি ভ্যারিয়েন্টের SKU একই (“%1$s”)। প্রতিটি SKU আলাদা হতে হবে।</string>
+    <string name="restore_detail_reference_loop">কিছু সারি একে অপরকে চক্রাকারে উল্লেখ করে (“%1$s”)।</string>
+    <string name="restore_detail_orphan_held_bill_line">হোল্ড করা বিলের একটি লাইন এমন বিলের দিকে যায় যা ফাইলে নেই (%1$s)।</string>
+    <string name="restore_detail_orphan_quotation_line">কোটেশনের একটি লাইন এমন কোটেশনের দিকে যায় যা ফাইলে নেই (%1$s)।</string>
+    <string name="restore_detail_orphan_count_line">স্টক গণনার একটি লাইন এমন গণনার দিকে যায় যা ফাইলে নেই (%1$s)।</string>
+    <string name="restore_detail_settings_count">ব্যাকআপে দোকানের সেটিংসের ঠিক একটি সারি থাকতে হবে।</string>
+    <string name="restore_detail_loyalty_settings_count">ব্যাকআপে লয়্যালটি সেটিংসের একাধিক সারি আছে।</string>
+    <string name="restore_detail_not_a_backup">এই ফাইলটি Auxo-র ব্যাকআপ নয়।</string>
+    <string name="restore_detail_unsupported_version">এই ব্যাকআপের ফরম্যাট সংস্করণ এই অ্যাপ পড়তে পারে না।</string>
+    <string name="restore_detail_missing_table">ব্যাকআপে %1$s টেবিল নেই।</string>
+    <string name="restore_detail_file_damaged">ব্যাকআপের ডেটা নষ্ট বা সঠিকভাবে লেখা নয়।</string>
 </resources>
