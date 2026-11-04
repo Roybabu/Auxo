@@ -102,6 +102,8 @@ object SharedRestorePlanner {
 
     private const val GST_RULE_APPAREL = "APPAREL"
 
+    private val FIXED_ID_TABLES = setOf("settings", "loyaltySettings", "numberSequences", "extensions")
+
     /** The file table behind each link key that references use. */
     private val TABLE_OF_KEY: Map<String, String> = mapOf(
         "category" to "categories", "subcategory" to "subcategories", "supplier" to "suppliers",
@@ -232,7 +234,8 @@ object SharedRestorePlanner {
     }
 
     private fun uniqueIds(table: String, rows: List<SharedRow>): Set<String> {
-        val ids = rows.mapNotNull { it.stringOrNull("id") }
+        // The shop settings and loyalty rules are single rows with fixed names; every other row needs a UUID.
+        val ids = if (table in FIXED_ID_TABLES) rows.mapNotNull { it.stringOrNull("id") } else rows.map { it.id() }
         if (ids.toSet().size != ids.size) throw RestoreProblem("Two rows in ${plainName(table)} have the same id.")
         return ids.toSet()
     }

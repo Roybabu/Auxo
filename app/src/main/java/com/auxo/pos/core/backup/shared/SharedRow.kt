@@ -6,6 +6,10 @@ package com.auxo.pos.core.backup.shared
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
+private val UUID_PATTERN = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+fun isUuid(text: String): Boolean = UUID_PATTERN.matches(text)
+
 /** A name as people read it: "customerLedger" becomes "customer ledger". */
 fun plainName(name: String): String =
     name.replace(Regex("([a-z])([A-Z])")) { "${it.groupValues[1]} ${it.groupValues[2]}" }.lowercase()
@@ -25,8 +29,8 @@ class SharedRow(private val table: String, private val number: Int, private val 
     /** The names in a record, such as the metal names in the metal rates. */
     fun keys(): Set<String> = values.keys
 
-    /** The shared ID of this row. */
-    fun id(): String = string("id")
+    /** The shared ID of this row; it must be a UUID. */
+    fun id(): String = string("id").also { if (!isUuid(it)) fail("id", "is not a valid UUID") }
 
     fun string(key: String): String = values[key] as? String ?: fail(key, "is missing")
 
@@ -75,8 +79,12 @@ class SharedRow(private val table: String, private val number: Int, private val 
     /** A link to another record, written as that record's shared ID. */
     fun ref(key: String): String = refOrNull(key) ?: fail(key, "is missing")
 
-    /** An optional link; blank means no link. */
-    fun refOrNull(key: String): String? = stringOrNull(key)?.takeIf { it.isNotEmpty() }
+    /** An optional link; blank means no link. A link that is not a UUID is refused. */
+    fun refOrNull(key: String): String? {
+        val value = stringOrNull(key)?.takeIf { it.isNotEmpty() } ?: return null
+        if (!isUuid(value)) fail(key, "is not a valid UUID")
+        return value
+    }
 
     /** A nested record, such as a seller or a cart line snapshot, or null when the file leaves it out. */
     fun record(key: String): SharedRow? = when (val value = values[key]) {

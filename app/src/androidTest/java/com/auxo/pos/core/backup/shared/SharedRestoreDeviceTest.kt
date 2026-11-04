@@ -46,17 +46,17 @@ class SharedRestoreDeviceTest {
             "employeeDiscountLimitBp" to 0L, "expiryWarningDays" to 30L,
         )
         val general = mapOf<String, Any?>(
-            "id" to "cat-general", "name" to "General", "profile" to "GENERAL", "enabled" to true, "sortOrder" to 1L, "builtIn" to true,
+            "id" to "d135779f-66d9-4444-8599-8e98d6fff86c", "name" to "General", "profile" to "GENERAL", "enabled" to true, "sortOrder" to 1L, "builtIn" to true,
         )
         val mug = mapOf<String, Any?>(
-            "id" to "p1", "name" to "Mug", "category" to "GENERAL", "brand" to null, "description" to null, "material" to null,
+            "id" to "ec6ef230-f182-4039-8e79-4566b9c58adc", "name" to "Mug", "category" to "GENERAL", "brand" to null, "description" to null, "material" to null,
             "dietType" to null, "hsnCode" to null, "gstRateBasisPoints" to null, "apparelGst" to false,
             "createdAt" to 1L, "updatedAt" to 2L, "stockUnit" to "UNIT", "available" to true, "tracksStock" to true,
-            "categoryId" to "cat-general", "subcategory" to null, "preferredSupplierId" to null, "photoId" to null,
+            "categoryId" to "d135779f-66d9-4444-8599-8e98d6fff86c", "subcategory" to null, "preferredSupplierId" to null, "photoId" to null,
             "warrantyMonths" to null, "prescriptionRequired" to false, "metal" to null, "makingChargeBasisPoints" to null,
         )
         val variant = mapOf<String, Any?>(
-            "id" to "v1", "productId" to "p1", "sku" to "", "barcode" to "890", "size" to "", "colour" to "",
+            "id" to "6654c734-ccab-4f44-8ff0-825eb443dc7f", "productId" to "ec6ef230-f182-4039-8e79-4566b9c58adc", "sku" to "", "barcode" to "890", "size" to "", "colour" to "",
             "netQuantityMilli" to null, "netQuantityUnit" to null, "pricePaise" to "1000", "mrpPaise" to null, "costPaise" to null,
             "stockQuantity" to 3L, "lowStockThreshold" to 1L, "reorderQuantity" to 2L, "photoId" to null,
         )
@@ -82,7 +82,7 @@ class SharedRestoreDeviceTest {
     @Test
     fun aHeldBill_keepsItsPlaceOfSupply_throughARestore() = runBlocking {
         val bill = mapOf<String, Any?>(
-            "id" to "h1", "label" to "Table 2", "createdAt" to 1L, "updatedAt" to 1L, "itemCount" to 0L, "totalPaise" to "0",
+            "id" to "346b81a3-2e70-47ec-8adf-60252bb599f0", "label" to "Table 2", "createdAt" to 1L, "updatedAt" to 1L, "itemCount" to 0L, "totalPaise" to "0",
             "tableNumber" to 2L, "tokenNumber" to null, "discount" to mapOf("kind" to "AMOUNT", "value" to "0", "reason" to ""),
             "interState" to true, "placeOfSupplyStateCode" to "29", "customerId" to "", "buyerName" to null,
             "buyerPhone" to null, "buyerGstin" to null,
@@ -158,7 +158,7 @@ class SharedRestoreDeviceTest {
                 cursor.moveToFirst()
                 cursor.getLong(0)
             }
-            assertEquals("p1", db.sharedIdLinkDao().sharedIdOf("product", productId))
+            assertEquals("ec6ef230-f182-4039-8e79-4566b9c58adc", db.sharedIdLinkDao().sharedIdOf("product", productId))
             val variantProduct = db.openHelper.readableDatabase.query("SELECT product_id FROM product_variants").use { cursor ->
                 assertEquals(1, cursor.count)
                 cursor.moveToFirst()
