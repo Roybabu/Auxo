@@ -253,4 +253,24 @@ class ProductImportViewModelTest {
         vm.onStartOver()
         assertEquals(ProductImportUiState(), vm.uiState.value)
     }
+
+    @Test
+    fun exportInventory_makesTheFileOfEveryProduct() = runTest {
+        val vm = viewModel()
+        val result = vm.exportInventory()
+        assertTrue(result is InventoryExportResult.Ready)
+        result as InventoryExportResult.Ready
+        assertEquals(1, result.productCount)
+        assertTrue(result.file.fileName.startsWith("auxo-inventory-"))
+        assertTrue(result.file.content.lines().first().startsWith("name,category,"))
+        assertTrue(result.file.content.contains("Cotton T-Shirt"))
+        assertFalse(vm.uiState.value.isExporting)
+    }
+
+    @Test
+    fun exportInventory_withNoProducts_saysThereIsNothing() = runTest {
+        val vm = viewModel(FakeInventoryRepository(emptyList()))
+        assertEquals(InventoryExportResult.Empty, vm.exportInventory())
+        assertFalse(vm.uiState.value.isExporting)
+    }
 }

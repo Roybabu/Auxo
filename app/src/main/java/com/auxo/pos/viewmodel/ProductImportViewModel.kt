@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.auxo.pos.core.export.ExportFile
 import com.auxo.pos.data.repository.InventoryRepository
 import com.auxo.pos.domain.imports.ColumnMapping
 import com.auxo.pos.domain.imports.CsvParseResult
@@ -18,6 +19,7 @@ import com.auxo.pos.domain.imports.ImportColumn
 import com.auxo.pos.domain.imports.ImportFileReader
 import com.auxo.pos.domain.imports.ImportOptions
 import com.auxo.pos.domain.imports.ImportPreview
+import com.auxo.pos.domain.imports.ProductExport
 import com.auxo.pos.domain.imports.ProductImport
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
@@ -30,6 +32,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+
+/** What exporting the inventory produced. */
+sealed interface InventoryExportResult {
+    data class Ready(val file: ExportFile, val productCount: Int) : InventoryExportResult
+    data object Empty : InventoryExportResult
+    data object Failed : InventoryExportResult
+}
 
 enum class ImportReadError { UNREADABLE, TOO_LARGE, EMPTY, TOO_MANY_ROWS, MALFORMED }
 
@@ -45,6 +55,8 @@ data class ProductImportUiState(
     val isImporting: Boolean = false,
     /** Set once products have been saved; the screen then shows the result instead of the preview. */
     val outcome: ImportOutcome? = null,
+    /** The inventory file is being made. */
+    val isExporting: Boolean = false,
 ) {
     val canImport: Boolean get() = preview?.canImport == true && !isImporting
 }
@@ -57,6 +69,7 @@ class ProductImportViewModel(
     private val repository: InventoryRepository,
     private val importProducts: ImportProductsUseCase,
     private val reader: ImportFileReader,
+    private val today: () -> LocalDate = { LocalDate.now() },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductImportUiState())
@@ -98,6 +111,20 @@ class ProductImportViewModel(
     } catch (e: Exception) {
         com.auxo.pos.core.debuglog.DebugLog.error("ProductImportViewModel", "Failed and showed an error", e)
         null
+    }
+
+    /** Makes the file of every product with all its details. The screen then hands it to the share sheet. */
+    suspend fun exportInventory(): InventoryExportResult {
+        if (_uiState.value.isExporting) return InventoryExportResult.Failed
+        _uiState.update { it.copy(isExporting = true) }
+        try {
+            val products = loadExisting() ?: return InventoryExportResult.Failed
+            if (products.isEmpty()) return InventoryExportResult.Empty
+            val file = ExportFile(ProductExport.fileName(today()), ProductExport.csv(products))
+            return InventoryExportResult.Ready(file, products.size)
+        } finally {
+            _uiState.update { it.copy(isExporting = false) }
+        }
     }
 
     fun onMappingChange(column: ImportColumn, index: Int?) {

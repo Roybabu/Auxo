@@ -67,6 +67,7 @@ import com.auxo.pos.ui.screens.inventory.messageRes
 import com.auxo.pos.ui.theme.AuxoThemeExtras
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.ImportReadError
+import com.auxo.pos.viewmodel.InventoryExportResult
 import com.auxo.pos.viewmodel.ProductImportUiState
 import com.auxo.pos.viewmodel.ProductImportViewModel
 import kotlinx.coroutines.launch
@@ -75,6 +76,7 @@ import kotlinx.coroutines.launch
 interface ProductImportActions {
     fun onDownloadTemplate() = Unit
     fun onChooseFile() = Unit
+    fun onExportInventory() = Unit
     fun onMappingChange(column: ImportColumn, index: Int?) = Unit
     fun onDefaultCategoryChange(category: ProductCategory?) = Unit
     fun onImport() = Unit
@@ -98,6 +100,9 @@ fun ProductImportScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val templateFailed = stringResource(R.string.import_template_failed)
     val templateTitle = stringResource(R.string.import_template)
+    val exportChooser = stringResource(R.string.export_chooser)
+    val exportEmpty = stringResource(R.string.inventory_export_empty)
+    val exportFailed = stringResource(R.string.export_failed)
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) viewModel.onFilePicked(uri.toString(), displayName(context, uri))
@@ -113,6 +118,16 @@ fun ProductImportScreen(
                         templateTitle,
                     )
                     if (!shared) snackbarHostState.showSnackbar(templateFailed)
+                }
+            }
+            override fun onExportInventory() {
+                scope.launch {
+                    val message = when (val result = viewModel.exportInventory()) {
+                        is InventoryExportResult.Ready -> if (FileExport.share(context, result.file, exportChooser)) null else exportFailed
+                        InventoryExportResult.Empty -> exportEmpty
+                        InventoryExportResult.Failed -> exportFailed
+                    }
+                    if (message != null) snackbarHostState.showSnackbar(message)
                 }
             }
             override fun onChooseFile() = picker.launch(arrayOf("text/*", "application/csv", "application/vnd.ms-excel"))
@@ -204,7 +219,24 @@ private fun PickStage(state: ProductImportUiState, actions: ProductImportActions
                 modifier = Modifier.testTag("import_read_error"),
             )
         }
+        ExportCard(state, actions)
         ImportGuide()
+    }
+}
+
+/** Export of the whole inventory, in the same columns the import reads. */
+@Composable
+private fun ExportCard(state: ProductImportUiState, actions: ProductImportActions) {
+    AuxoCard(Modifier.fillMaxWidth().testTag("export_card")) {
+        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(stringResource(R.string.inventory_export_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.inventory_export_body), style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(
+                onClick = actions::onExportInventory,
+                enabled = !state.isExporting,
+                modifier = Modifier.fillMaxWidth().testTag("export_inventory"),
+            ) { Text(stringResource(R.string.inventory_export_button)) }
+        }
     }
 }
 

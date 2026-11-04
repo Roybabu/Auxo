@@ -1683,8 +1683,12 @@ in %2$s</string>
     <string name="count_failed">Could not save. Please try again.</string>
     <string name="count_barcode_missing">No item with barcode %1$s.</string>
     <string name="count_scanner_unavailable">The scanner could not be opened. Type the barcode instead.</string>
-    <string name="import_title">Import products</string>
-    <string name="more_import_body">Add many products from a CSV file</string>
+    <string name="import_title">Import / export products</string>
+    <string name="more_import_body">Add products from a CSV file, or export your whole inventory</string>
+    <string name="inventory_export_title">Export your inventory</string>
+    <string name="inventory_export_body">Get every product with its prices, stock, barcodes, batches and other details as a CSV file. Open it in Excel or Google Sheets, or keep it as a copy. It uses the same columns as the import, so you can edit it and import it again.</string>
+    <string name="inventory_export_button">Export all products</string>
+    <string name="inventory_export_empty">There are no products to export yet.</string>
     <string name="import_intro_title">Add products from a spreadsheet</string>
     <string name="import_intro_body">1. Download the template and fill it in. Excel and Google Sheets can save it as CSV.\n2. Choose the file here.\n3. Check the preview, then import.\n\nThe template has example rows; delete them first. Nothing is saved until you confirm.</string>
     <string name="import_template">Download template</string>

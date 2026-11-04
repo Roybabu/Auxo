@@ -1683,8 +1683,12 @@
     <string name="count_failed">সেভ করা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="count_barcode_missing">বারকোড %1$s-এর কোনো পণ্য নেই।</string>
     <string name="count_scanner_unavailable">স্ক্যানার খোলা যায়নি। বারকোড নিজে লিখুন।</string>
-    <string name="import_title">প্রোডাক্ট ইমপোর্ট করুন</string>
-    <string name="more_import_body">CSV ফাইল থেকে অনেক প্রোডাক্ট যোগ করুন</string>
+    <string name="import_title">প্রোডাক্ট ইমপোর্ট / এক্সপোর্ট করুন</string>
+    <string name="more_import_body">CSV ফাইল থেকে প্রোডাক্ট যোগ করুন, বা আপনার পুরো ইনভেন্টরি এক্সপোর্ট করুন</string>
+    <string name="inventory_export_title">আপনার ইনভেন্টরি এক্সপোর্ট করুন</string>
+    <string name="inventory_export_body">প্রতিটি প্রোডাক্টের দাম, স্টক, বারকোড, ব্যাচ ও অন্যান্য তথ্য CSV ফাইলে পান। Excel বা Google Sheets-এ খুলুন, অথবা কপি হিসেবে রাখুন। এতে ইমপোর্টের মতোই কলাম আছে, তাই এডিট করে আবার ইমপোর্ট করা যাবে।</string>
+    <string name="inventory_export_button">সব প্রোডাক্ট এক্সপোর্ট করুন</string>
+    <string name="inventory_export_empty">এক্সপোর্ট করার মতো কোনো প্রোডাক্ট এখনও নেই।</string>
     <string name="import_intro_title">স্প্রেডশিট থেকে প্রোডাক্ট যোগ করুন</string>
     <string name="import_intro_body">১. টেমপ্লেট ডাউনলোড করে পূরণ করুন। Excel ও Google Sheets এটিকে CSV হিসেবে সেভ করতে পারে।\n২. এখানে ফাইলটি বেছে নিন।\n৩. প্রিভিউ দেখে ইমপোর্ট করুন।\n\nটেমপ্লেটে উদাহরণের সারি আছে; আগে সেগুলো মুছে দিন। নিশ্চিত না করা পর্যন্ত কিছুই সেভ হয় না।</string>
     <string name="import_template">টেমপ্লেট ডাউনলোড করুন</string>

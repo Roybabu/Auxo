@@ -1683,8 +1683,12 @@
     <string name="count_failed">সংৰক্ষণ কৰিব পৰা নগ’ল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।</string>
     <string name="count_barcode_missing">%1$s বাৰকোডৰ কোনো বস্তু নাই।</string>
     <string name="count_scanner_unavailable">স্কেনাৰ খুলিব পৰা নগ’ল। তাৰ সলনি বাৰকোড টাইপ কৰক।</string>
-    <string name="import_title">সামগ্ৰী ইমপৰ্ট কৰক</string>
-    <string name="more_import_body">CSV ফাইলৰ পৰা বহুতো সামগ্ৰী যোগ কৰক</string>
+    <string name="import_title">সামগ্ৰী ইমপৰ্ট / এক্সপৰ্ট কৰক</string>
+    <string name="more_import_body">CSV ফাইলৰ পৰা সামগ্ৰী যোগ কৰক, বা আপোনাৰ গোটেই ইনভেণ্টৰী এক্সপৰ্ট কৰক</string>
+    <string name="inventory_export_title">আপোনাৰ ইনভেণ্টৰী এক্সপৰ্ট কৰক</string>
+    <string name="inventory_export_body">প্ৰতিটো সামগ্ৰীৰ দাম, ষ্টক, বাৰ্ক\'ড, বেচ আৰু অন্য তথ্য CSV ফাইলত লওক। Excel বা Google Sheets-ত খুলক, বা কপি হিচাপে ৰাখক। ইয়াত ইমপৰ্টৰ দৰেই স্তম্ভ আছে, গতিকে সলনি কৰি আকৌ ইমপৰ্ট কৰিব পাৰি।</string>
+    <string name="inventory_export_button">সকলো সামগ্ৰী এক্সপৰ্ট কৰক</string>
+    <string name="inventory_export_empty">এক্সপৰ্ট কৰিবলৈ এতিয়াও কোনো সামগ্ৰী নাই।</string>
     <string name="import_intro_title">স্প্ৰেডশ্বীটৰ পৰা সামগ্ৰী যোগ কৰক</string>
     <string name="import_intro_body">1. টেমপ্লেট ডাউনলোড কৰি পূৰণ কৰক। Excel আৰু Google Sheets এ ইয়াক CSV হিচাপে সংৰক্ষণ কৰিব পাৰে।\n2. ইয়াত ফাইলটো বাছক।\n3. প্ৰিভিউ পৰীক্ষা কৰক, তাৰ পিছত ইমপৰ্ট কৰক।\n\nটেমপ্লেটত উদাহৰণ শাৰী আছে; প্ৰথমে সেইবোৰ মচি পেলাওক। আপুনি নিশ্চিত নকৰালৈকে একো সংৰক্ষণ কৰা নহয়।</string>
     <string name="import_template">টেমপ্লেট ডাউনলোড কৰক</string>
