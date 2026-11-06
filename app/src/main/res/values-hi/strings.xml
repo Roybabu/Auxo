@@ -1788,8 +1788,8 @@
     <string name="categories_body">चुनें कि आपकी दुकान क्या बेचती है। किसी श्रेणी को बंद करने से वह केवल नए उत्पादों के लिए नहीं दिखती; उसके उत्पाद, स्टॉक और बिल सुरक्षित रहते हैं।</string>
     <string name="categories_add">श्रेणी जोड़ें</string>
     <string name="categories_add_sub">उप-श्रेणी जोड़ें</string>
-    <string name="categories_rename">नाम बदलें</string>
-    <string name="categories_rename_hint">मानक नाम के लिए खाली छोड़ें।</string>
+    <string name="categories_sub_hint">उप-श्रेणियाँ इस श्रेणी के अंदर वैकल्पिक समूह हैं, जैसे Starters या Tops। उत्पाद जोड़ते समय इनमें से चुने जा सकते हैं, और रेस्टोरेंट के आइटम बिलिंग पेज पर इन्हीं से समूहित होते हैं। हटाने के लिए किसी एक पर टैप करें।</string>
+    <string name="categories_delete_sub_body">जिन उत्पादों में पहले से यह उप-श्रेणी लिखी है, उनका नाम वैसा ही रहेगा। इसे केवल विकल्पों की सूची से हटाया जाएगा।</string>
     <string name="categories_name">नाम</string>
     <string name="categories_works_like">इसकी तरह काम करती है: %1$s</string>
     <string name="categories_behaves_like">इसकी तरह व्यवहार करे</string>
@@ -1803,7 +1803,7 @@
     <string name="categories_error_in_use">इस श्रेणी में अभी उत्पाद हैं। इसके बजाय इसे बंद करें।</string>
     <string name="categories_error_built_in">बिल्ट-इन श्रेणियाँ बंद या नाम बदली जा सकती हैं, हटाई नहीं जा सकतीं।</string>
     <string name="categories_error_failed">यह बदलाव सहेजा नहीं जा सका। कृपया फिर कोशिश करें।</string>
-    <string name="shop_categories_body">चुनें कि किन श्रेणियों में बेचते हैं, नाम बदलें, अपनी श्रेणी जोड़ें और उप-श्रेणियाँ बनाएँ।</string>
+    <string name="shop_categories_body">चुनें कि किन श्रेणियों में बेचते हैं, अपनी श्रेणी जोड़ें और उप-श्रेणियाँ बनाएँ।</string>
     <string name="category_setup_title">आपकी दुकान क्या बेचती है?</string>
     <string name="category_setup_body">वे सभी श्रेणियाँ चुनें जिनमें आप बेचते हैं। आप जो उत्पाद जोड़ेंगे वे इन्हीं के अंतर्गत दिखेंगे।</string>
     <string name="category_setup_action">आगे बढ़ें</string>

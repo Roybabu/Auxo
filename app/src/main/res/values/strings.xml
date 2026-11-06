@@ -1788,8 +1788,8 @@ in %2$s</string>
     <string name="categories_body">Choose what your shop sells. Switching a category off only stops it being offered for new products; its products, stock and bills are kept.</string>
     <string name="categories_add">Add category</string>
     <string name="categories_add_sub">Add subcategory</string>
-    <string name="categories_rename">Rename</string>
-    <string name="categories_rename_hint">Leave blank to use the standard name.</string>
+    <string name="categories_sub_hint">Subcategories are optional groups inside this category, such as Starters or Tops. Products can pick one from these when they are added, and restaurant items are grouped by them on the billing page. Tap one to delete it.</string>
+    <string name="categories_delete_sub_body">Products already saved with a subcategory keep their name. It is only removed from the list of choices.</string>
     <string name="categories_name">Name</string>
     <string name="categories_works_like">Works like: %1$s</string>
     <string name="categories_behaves_like">Behaves like</string>
@@ -1803,7 +1803,7 @@ in %2$s</string>
     <string name="categories_error_in_use">Products still use this category. Switch it off instead.</string>
     <string name="categories_error_built_in">Built-in categories can be switched off or renamed, but not deleted.</string>
     <string name="categories_error_failed">That change could not be saved. Please try again.</string>
-    <string name="shop_categories_body">Choose the categories you sell in, rename them, add your own and list subcategories.</string>
+    <string name="shop_categories_body">Choose the categories you sell in, add your own and list subcategories.</string>
     <string name="category_setup_title">What does your shop sell?</string>
     <string name="category_setup_body">Choose every category you sell in. Products you add will be listed under these.</string>
     <string name="category_setup_action">Continue</string>
