@@ -1967,4 +1967,15 @@
     <string name="find_none_short">সেই ফোল্ডাৰত কোনো বেকআপ পোৱা নগ’ল।</string>
     <string name="auth_restored_title">বেকআপ পুনৰুদ্ধাৰ হ’ল</string>
     <string name="auth_restored_body">আপোনাৰ দোকান ঘূৰি আহিছে। বেকআপত ছাইন ইনৰ বিৱৰণ নাথাকে, গতিকে এই ফোনৰ বাবে ছাইন ইন বনাওক। আপোনাৰ দোকানৰ নাম আৰু বিৱৰণ বেকআপৰ লগতে আহিছে।</string>
+    <string name="wizard_step_details">বিৱৰণ</string>
+    <string name="wizard_step_pricing">দাম</string>
+    <string name="wizard_step_review">পৰীক্ষা</string>
+    <string name="wizard_next">পৰৱৰ্তী</string>
+    <string name="wizard_save_product">সামগ্ৰী সংৰক্ষণ কৰক</string>
+    <string name="wizard_fix_to_continue">আগবাঢ়িবলৈ চিহ্নিত ঘৰবোৰ শুদ্ধ কৰক</string>
+    <string name="wizard_review_variants">ভেৰিয়েণ্ট (%1$d)</string>
+    <string name="wizard_review_ready">সকলো ঠিক আছে। তথ্য চাই সংৰক্ষণ কৰক।</string>
+    <string name="wizard_review_fix">শুদ্ধ কৰক</string>
+    <string name="wizard_review_no_name">নাম নাই</string>
+    <string name="wizard_review_tax">GST আৰু HSN</string>
 </resources>

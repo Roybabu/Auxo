@@ -86,6 +86,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auxo.pos.R
 import com.auxo.pos.core.auth.Permission
+import com.auxo.pos.domain.billing.BillSplit
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.DiscountLimits
 import com.auxo.pos.ui.can
@@ -137,6 +138,8 @@ import java.time.LocalDate
 interface BillingActions {
     fun onSearchTextChange(text: String) = Unit
     fun onSearchSubmitted() = Unit
+    /** The scan button inside the search box. */
+    fun onScan() = Unit
     fun onAddResult(result: ProductSearchResult) = Unit
     fun onQuickSectionChange(section: String?) = Unit
     fun onBrowseCategoryChange(category: ProductCategory?) = Unit
@@ -271,6 +274,7 @@ fun BillingScreen(
         object : BillingActions {
             override fun onSearchTextChange(text: String) = viewModel.onSearchTextChange(text)
             override fun onSearchSubmitted() = viewModel.onSearchSubmitted()
+            override fun onScan() = scan()
             override fun onAddResult(result: ProductSearchResult) = viewModel.addResult(result)
             override fun onQuickSectionChange(section: String?) = viewModel.onQuickSectionChange(section)
             override fun onBrowseCategoryChange(category: ProductCategory?) = viewModel.onBrowseCategoryChange(category)
@@ -320,11 +324,9 @@ fun BillingScreen(
                 onBack = if (inPayment) viewModel::backToCart else null,
                 actions = {
                     if (!inPayment) {
-                        ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
-                            ActionIcon(R.drawable.ic_invoice, stringResource(R.string.split_icon), { showSplit = true }, Modifier.testTag("split_open"))
                             ActionIcon(
-                                R.drawable.ic_pause,
+                                R.drawable.ic_hold,
                                 stringResource(R.string.hold_icon),
                                 {
                                     // A resumed table bill goes back to its table without being asked again.
@@ -352,7 +354,7 @@ fun BillingScreen(
                                         ) { Text(uiState.heldBills.size.toString()) }
                                     },
                                 ) {
-                                    Icon(painterResource(R.drawable.ic_bookmark), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
+                                    Icon(painterResource(R.drawable.ic_held_list), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
                                 }
                             }
                         }
@@ -362,7 +364,7 @@ fun BillingScreen(
                         if (!uiState.cart.isEmpty) {
                             ActionIcon(R.drawable.ic_delete, stringResource(R.string.billing_clear), { confirmClear = true })
                         }
-                        ActionIcon(R.drawable.ic_history, stringResource(R.string.billing_history), onOpenHistory)
+                        ActionIcon(R.drawable.ic_bill_history, stringResource(R.string.billing_history), onOpenHistory)
                     }
                 },
             )
@@ -372,6 +374,8 @@ fun BillingScreen(
                 ChargeBar(
                     total = formatter.format(uiState.totals.grandTotal),
                     inPayment = inPayment,
+                    showSplit = uiState.canHold && BillSplit.isOffered(uiState.cart),
+                    onSplit = { showSplit = true },
                     canComplete = uiState.paymentRemaining.isZero && uiState.paymentErrors.isEmpty(),
                     isSaving = uiState.isSaving,
                     onCharge = actions::onCharge,
@@ -469,6 +473,8 @@ fun BillingScreen(
 private fun ChargeBar(
     total: String,
     inPayment: Boolean,
+    showSplit: Boolean,
+    onSplit: () -> Unit,
     canComplete: Boolean,
     isSaving: Boolean,
     onCharge: () -> Unit,
@@ -499,6 +505,11 @@ private fun ChargeBar(
                     }
                 }
             } else {
+                if (showSplit) {
+                    // Splitting a restaurant bill, right beside the button that charges it.
+                    ActionIcon(R.drawable.ic_split, stringResource(R.string.split_icon), onSplit, Modifier.testTag("split_open"))
+                    Spacer(Modifier.width(Spacing.sm))
+                }
                 Button(onClick = onCharge, modifier = Modifier.testTag("billing_charge")) {
                     Text(stringResource(R.string.billing_charge, total))
                 }
@@ -558,14 +569,18 @@ fun CartContent(state: BillingUiState, actions: BillingActions, modifier: Modifi
                 imeAction = ImeAction.Search,
                 keyboardActions = KeyboardActions(onSearch = { actions.onSearchSubmitted() }),
                 leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
-                trailingIcon = if (state.searchText.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { actions.onSearchTextChange("") }) {
-                            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.action_clear))
+                // The scan button sits at the far right inside the search box; a clear button joins it once there is text.
+                trailingIcon = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (state.searchText.isNotEmpty()) {
+                            IconButton(onClick = { actions.onSearchTextChange("") }) {
+                                Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.action_clear))
+                            }
+                        }
+                        IconButton(onClick = actions::onScan, modifier = Modifier.testTag("billing_scan")) {
+                            Icon(painterResource(R.drawable.ic_scan), contentDescription = stringResource(R.string.action_scan))
                         }
                     }
-                } else {
-                    null
                 },
             )
         }

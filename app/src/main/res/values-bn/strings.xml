@@ -1967,4 +1967,15 @@
     <string name="find_none_short">ওই ফোল্ডারে কোনো ব্যাকআপ পাওয়া যায়নি।</string>
     <string name="auth_restored_title">ব্যাকআপ পুনরুদ্ধার হয়েছে</string>
     <string name="auth_restored_body">আপনার দোকান ফিরে এসেছে। ব্যাকআপে সাইন-ইন তথ্য থাকে না, তাই এই ফোনের জন্য সাইন-ইন তৈরি করুন। দোকানের নাম ও তথ্য ব্যাকআপের সঙ্গে এসেছে।</string>
+    <string name="wizard_step_details">বিবরণ</string>
+    <string name="wizard_step_pricing">দাম</string>
+    <string name="wizard_step_review">যাচাই</string>
+    <string name="wizard_next">পরবর্তী</string>
+    <string name="wizard_save_product">পণ্য সংরক্ষণ করুন</string>
+    <string name="wizard_fix_to_continue">এগোতে চিহ্নিত ঘরগুলো ঠিক করুন</string>
+    <string name="wizard_review_variants">ভ্যারিয়েন্ট (%1$d)</string>
+    <string name="wizard_review_ready">সব ঠিক আছে। তথ্য দেখে সংরক্ষণ করুন।</string>
+    <string name="wizard_review_fix">ঠিক করুন</string>
+    <string name="wizard_review_no_name">নাম নেই</string>
+    <string name="wizard_review_tax">GST ও HSN</string>
 </resources>
