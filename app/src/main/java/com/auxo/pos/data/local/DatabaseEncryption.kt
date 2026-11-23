@@ -7,7 +7,6 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import androidx.core.content.edit
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.auxo.pos.core.debuglog.DebugLog
 import net.zetetic.database.sqlcipher.SQLiteDatabase
@@ -71,16 +70,16 @@ class KeystoreDatabaseKeyStore(context: Context) : DatabaseKeyStore {
         val previous = prefs.getString(KEY_BLOB, null)
 
         // Written synchronously: never lock or restore a database with a key that was not persisted.
-        val saved = prefs.edit(commit = true) {
-            putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP))
-        }
+        val saved = prefs.edit()
+            .putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP))
+            .commit()
         if (saved) return
 
         // SharedPreferences updates its in-memory map before reporting a disk failure. Put the last known key
         // back so callers that catch this error cannot continue with a key that was not durably saved.
-        val rolledBack = prefs.edit(commit = true) {
-            if (previous == null) remove(KEY_BLOB) else putString(KEY_BLOB, previous)
-        }
+        val rollback = prefs.edit()
+        if (previous == null) rollback.remove(KEY_BLOB) else rollback.putString(KEY_BLOB, previous)
+        val rolledBack = rollback.commit()
         if (!rolledBack) {
             throw IllegalStateException("Could not save the database key or restore its previous value.")
         }
