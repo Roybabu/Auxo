@@ -50,7 +50,6 @@ import com.auxo.pos.viewmodel.CategoryProblem
 interface CategoryActions {
     fun onEnabledChange(id: Long, enabled: Boolean) = Unit
     fun onAdd(name: String, profile: ProductCategory) = Unit
-    fun onRename(id: Long, name: String) = Unit
     fun onDelete(id: Long) = Unit
     fun onAddSubcategory(categoryId: Long, name: String) = Unit
     fun onRenameSubcategory(id: Long, name: String) = Unit
@@ -73,7 +72,6 @@ fun CategoriesScreen(
         object : CategoryActions {
             override fun onEnabledChange(id: Long, enabled: Boolean) = viewModel.onEnabledChange(id, enabled)
             override fun onAdd(name: String, profile: ProductCategory) = viewModel.onAdd(name, profile)
-            override fun onRename(id: Long, name: String) = viewModel.onRename(id, name)
             override fun onDelete(id: Long) = viewModel.onDelete(id)
             override fun onAddSubcategory(categoryId: Long, name: String) = viewModel.onAddSubcategory(categoryId, name)
             override fun onRenameSubcategory(id: Long, name: String) = viewModel.onRenameSubcategory(id, name)
@@ -86,9 +84,9 @@ fun CategoriesScreen(
 
 private sealed interface Editing {
     data object Adding : Editing
-    data class Renaming(val category: ShopCategory) : Editing
     data class AddingSub(val category: ShopCategory) : Editing
-    data class RenamingSub(val id: Long, val name: String) : Editing
+    data class EditingSub(val id: Long, val name: String) : Editing
+    data class DeletingSub(val id: Long, val name: String) : Editing
     data class Deleting(val category: ShopCategory) : Editing
 }
 
@@ -118,9 +116,8 @@ fun CategoriesContent(state: CategoriesUiState, onBack: () -> Unit, actions: Cat
                 CategoryCard(
                     category = category,
                     actions = actions,
-                    onRename = { editing = Editing.Renaming(category) },
                     onAddSub = { editing = Editing.AddingSub(category) },
-                    onRenameSub = { id, name -> editing = Editing.RenamingSub(id, name) },
+                    onEditSub = { id, name -> editing = Editing.EditingSub(id, name) },
                     onDelete = { editing = Editing.Deleting(category) },
                 )
             }
@@ -136,14 +133,6 @@ fun CategoriesContent(state: CategoriesUiState, onBack: () -> Unit, actions: Cat
             onDismiss = { editing = null },
             onAdd = { name, profile -> actions.onAdd(name, profile); editing = null },
         )
-        is Editing.Renaming -> NameDialog(
-            title = stringResource(R.string.categories_rename),
-            initial = e.category.name.orEmpty(),
-            hint = if (e.category.builtIn) stringResource(R.string.categories_rename_hint) else null,
-            tag = "category_name",
-            onDismiss = { editing = null },
-            onSave = { actions.onRename(e.category.id, it); editing = null },
-        )
         is Editing.AddingSub -> NameDialog(
             title = stringResource(R.string.categories_add_sub),
             initial = "",
@@ -152,13 +141,22 @@ fun CategoriesContent(state: CategoriesUiState, onBack: () -> Unit, actions: Cat
             onDismiss = { editing = null },
             onSave = { actions.onAddSubcategory(e.category.id, it); editing = null },
         )
-        is Editing.RenamingSub -> NameDialog(
-            title = stringResource(R.string.categories_rename),
-            initial = e.name,
-            hint = null,
-            tag = "subcategory_name",
+        is Editing.EditingSub -> SubcategoryDialog(
+            name = e.name,
             onDismiss = { editing = null },
             onSave = { actions.onRenameSubcategory(e.id, it); editing = null },
+            onDelete = { editing = Editing.DeletingSub(e.id, e.name) },
+        )
+        is Editing.DeletingSub -> AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text(stringResource(R.string.categories_delete_title, e.name)) },
+            text = { Text(stringResource(R.string.categories_delete_sub_body)) },
+            confirmButton = {
+                TextButton(onClick = { actions.onDeleteSubcategory(e.id); editing = null }, modifier = Modifier.testTag("subcategory_delete_confirm")) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
         is Editing.Deleting -> AlertDialog(
             onDismissRequest = { editing = null },
@@ -198,9 +196,8 @@ private fun ProblemCard(problem: CategoryProblem, onDismiss: () -> Unit) {
 private fun CategoryCard(
     category: ShopCategory,
     actions: CategoryActions,
-    onRename: () -> Unit,
     onAddSub: () -> Unit,
-    onRenameSub: (Long, String) -> Unit,
+    onEditSub: (Long, String) -> Unit,
     onDelete: () -> Unit,
 ) {
     AuxoCard(modifier = Modifier.fillMaxWidth().testTag("category_${category.id}")) {
@@ -224,15 +221,19 @@ private fun CategoryCard(
                 category.subcategories.forEach { sub ->
                     FilterChip(
                         selected = false,
-                        onClick = { onRenameSub(sub.id, sub.name) },
+                        onClick = { onEditSub(sub.id, sub.name) },
                         label = { Text(sub.name) },
                         modifier = Modifier.testTag("subcategory_${sub.id}"),
                     )
                 }
                 AssistChip(onClick = onAddSub, label = { Text(stringResource(R.string.categories_add_sub)) }, modifier = Modifier.testTag("subcategory_add_${category.id}"))
             }
+            Text(
+                stringResource(R.string.categories_sub_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row {
-                TextButton(onClick = onRename, modifier = Modifier.testTag("category_rename_${category.id}")) { Text(stringResource(R.string.categories_rename)) }
                 if (!category.builtIn) {
                     TextButton(onClick = onDelete, modifier = Modifier.testTag("category_delete_${category.id}")) {
                         Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
@@ -241,6 +242,31 @@ private fun CategoryCard(
             }
         }
     }
+}
+
+/** Edit one subcategory: Delete on the far left, then Cancel, then Save. */
+@Composable
+private fun SubcategoryDialog(name: String, onDismiss: () -> Unit, onSave: (String) -> Unit, onDelete: () -> Unit) {
+    var text by remember { mutableStateOf(name) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(name) },
+        text = {
+            AuxoTextField(
+                value = text, onValueChange = { text = it }, label = stringResource(R.string.categories_name),
+                modifier = Modifier.fillMaxWidth().testTag("subcategory_name"),
+            )
+        },
+        confirmButton = { TextButton(onClick = { onSave(text) }, modifier = Modifier.testTag("subcategory_name_save")) { Text(stringResource(R.string.action_save)) } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDelete, modifier = Modifier.testTag("subcategory_delete")) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
+    )
 }
 
 @Composable

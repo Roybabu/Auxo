@@ -1788,8 +1788,8 @@
     <string name="categories_body">আপোনাৰ দোকানে কি বিক্ৰী কৰে বাছক। এটা শ্ৰেণী বন্ধ কৰিলে নতুন সামগ্ৰীৰ বাবে ইয়াক দেখুওৱা বন্ধ হয়; ইয়াৰ সামগ্ৰী, মজুত আৰু বিল ৰখা হয়।</string>
     <string name="categories_add">শ্ৰেণী যোগ কৰক</string>
     <string name="categories_add_sub">উপ-শ্ৰেণী যোগ কৰক</string>
-    <string name="categories_rename">নাম সলনি কৰক</string>
-    <string name="categories_rename_hint">মানক নাম ব্যৱহাৰ কৰিবলৈ খালী ৰাখক।</string>
+    <string name="categories_sub_hint">উপ-শ্ৰেণী হ’ল এই শ্ৰেণীৰ ভিতৰৰ ঐচ্ছিক গোট, যেনে Starters বা Tops। সামগ্ৰী যোগ কৰোঁতে এইবোৰৰ পৰা বাছিব পাৰি, আৰু ৰেষ্টুৰেণ্টৰ আইটেমবোৰ বিলিং পৃষ্ঠাত এই অনুসাৰে ভাগ হয়। মচিবলৈ এটাত টেপ কৰক।</string>
+    <string name="categories_delete_sub_body">আগতে এই উপ-শ্ৰেণী লিখা সামগ্ৰীবোৰৰ নাম একে থাকিব। ই কেৱল বিকল্পৰ তালিকাৰ পৰা আঁতৰিব।</string>
     <string name="categories_name">নাম</string>
     <string name="categories_works_like">ইয়াৰ দৰে কাম কৰে: %1$s</string>
     <string name="categories_behaves_like">ইয়াৰ দৰে আচৰণ কৰে</string>
@@ -1803,7 +1803,7 @@
     <string name="categories_error_in_use">এই শ্ৰেণীত এতিয়াও সামগ্ৰী আছে। তাৰ সলনি ইয়াক বন্ধ কৰক।</string>
     <string name="categories_error_built_in">অন্তৰ্নিৰ্মিত শ্ৰেণী বন্ধ বা নাম সলনি কৰিব পাৰি, কিন্তু মচি পেলাব নোৱাৰি।</string>
     <string name="categories_error_failed">সেই সলনি সংৰক্ষণ কৰিব পৰা নগ’ল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।</string>
-    <string name="shop_categories_body">আপুনি যিবোৰ শ্ৰেণীত বিক্ৰী কৰে বাছক, সেইবোৰৰ নাম সলনি কৰক, নিজৰ শ্ৰেণী যোগ কৰক আৰু উপ-শ্ৰেণী তালিকাভুক্ত কৰক।</string>
+    <string name="shop_categories_body">আপুনি যিবোৰ শ্ৰেণীত বিক্ৰী কৰে বাছক, নিজৰ শ্ৰেণী যোগ কৰক আৰু উপ-শ্ৰেণী তালিকাভুক্ত কৰক।</string>
     <string name="category_setup_title">আপোনাৰ দোকানে কি বিক্ৰী কৰে?</string>
     <string name="category_setup_body">আপুনি বিক্ৰী কৰা প্ৰতিটো শ্ৰেণী বাছক। আপুনি যোগ কৰা সামগ্ৰী এই শ্ৰেণীসমূহৰ তলত তালিকাভুক্ত হ’ব।</string>
     <string name="category_setup_action">আগবাঢ়ক</string>
