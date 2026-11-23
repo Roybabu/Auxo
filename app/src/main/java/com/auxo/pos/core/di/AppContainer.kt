@@ -178,7 +178,7 @@ class AppContainer(context: Context) {
 
     val purchasingRepository: PurchasingRepository by lazy { AuthorizedPurchasingRepository(RoomPurchasingRepository(database, clock), authorizer, auditTrail) }
 
-    val customerRepository: CustomerRepository by lazy { AuthorizedCustomerRepository(RoomCustomerRepository(database, clock), authorizer, auditTrail) }
+    val customerRepository: CustomerRepository by lazy { AuthorizedCustomerRepository(RoomCustomerRepository(database, clock, onTimeBonus = { rawShopPreferences.onTimeBonusPoints.value }), authorizer, auditTrail) }
 
     val gstReportService: com.auxo.pos.data.security.GstReportService by lazy {
         com.auxo.pos.data.security.GstReportService(billingRepository, authorizer)

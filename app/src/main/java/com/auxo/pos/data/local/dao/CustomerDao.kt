@@ -30,7 +30,7 @@ abstract class CustomerDao {
     abstract fun observeMoneyEntries(): Flow<List<LedgerEntryEntity>>
 
     @Query(
-        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity, " +
+        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(CASE WHEN l.type = 'PROMISE' THEN NULL ELSE l.created_at END) AS last_activity, " +
             "COALESCE(SUM(l.points), 0) AS points_balance " +
             "FROM customers c LEFT JOIN customer_ledger l ON l.customer_id = c.id " +
             "GROUP BY c.id ORDER BY c.name COLLATE NOCASE",
@@ -38,7 +38,7 @@ abstract class CustomerDao {
     abstract fun observeAccounts(): Flow<List<CustomerAccountRow>>
 
     @Query(
-        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(l.created_at) AS last_activity, " +
+        "SELECT c.*, COALESCE(SUM(l.amount_minor), 0) AS balance_minor, MAX(CASE WHEN l.type = 'PROMISE' THEN NULL ELSE l.created_at END) AS last_activity, " +
             "COALESCE(SUM(l.points), 0) AS points_balance " +
             "FROM customers c LEFT JOIN customer_ledger l ON l.customer_id = c.id WHERE c.id = :customerId GROUP BY c.id",
     )
@@ -64,6 +64,13 @@ abstract class CustomerDao {
             "WHERE l.customer_id = :customerId ORDER BY l.created_at, l.id",
     )
     abstract fun observeLedger(customerId: Long): Flow<List<LedgerEntryRow>>
+
+    /** Every promised payment date ever recorded, oldest first; the last one for a customer is the one that counts. */
+    @Query("SELECT * FROM customer_ledger WHERE type = 'PROMISE' ORDER BY customer_id, created_at, id")
+    abstract fun observePromises(): Flow<List<LedgerEntryEntity>>
+
+    @Query("SELECT * FROM customer_ledger WHERE customer_id = :customerId AND type IN ('OPENING_BALANCE', 'SALE', 'RETURN', 'PAYMENT') ORDER BY created_at, id")
+    abstract suspend fun moneyEntriesOf(customerId: Long): List<LedgerEntryEntity>
 
     @Insert
     abstract suspend fun insertEntry(entry: LedgerEntryEntity): Long

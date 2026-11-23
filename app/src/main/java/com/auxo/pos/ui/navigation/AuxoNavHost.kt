@@ -641,6 +641,7 @@ fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
 }
 
 /** True when every page above Home belongs to the same tab, so saving the stack under that tab cannot mix tabs. */
+@android.annotation.SuppressLint("RestrictedApi") // currentBackStack is the only way to see every page on the stack.
 private fun NavHostController.stackBelongsToOneTab(): Boolean {
     val tabs = TopLevelDestination.entries.filter { it != TopLevelDestination.HOME }.map { it.route }.toSet()
     val owners = currentBackStack.value.mapNotNull { entry ->

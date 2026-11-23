@@ -503,6 +503,7 @@ object Reports {
         LedgerEntryType.POINTS_EARNED -> "Points earned"
         LedgerEntryType.POINTS_REDEEMED -> "Points used"
         LedgerEntryType.POINTS_REVERSED -> "Points taken back"
+        LedgerEntryType.PROMISE -> "Promised payment date"
     }
 
     /** One customer's account: every entry with the running balance, oldest first. */

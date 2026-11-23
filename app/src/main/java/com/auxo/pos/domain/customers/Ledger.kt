@@ -26,7 +26,7 @@ object Ledger {
     /** Money entries oldest first, each with the running balance. Loyalty point entries are not money and are left out. */
     fun statement(entries: List<LedgerEntry>): List<LedgerLine> {
         var balance = Money.ZERO
-        return entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id })).map { entry ->
+        return entries.filter { it.type.isMoney }.sortedWith(compareBy({ it.createdAtMillis }, { it.id })).map { entry ->
             balance += entry.amount
             LedgerLine(entry, balance)
         }
@@ -38,7 +38,7 @@ object Ledger {
      * one. Money paid in advance is used up by the next charges. Loyalty point entries are ignored.
      */
     fun owingSince(entries: List<LedgerEntry>): Long? {
-        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        val money = entries.filter { it.type.isMoney }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
         if (balance(money) <= Money.ZERO) return null
         val open = ArrayDeque<Pair<Long, Long>>()
         var credit = 0L
@@ -71,7 +71,7 @@ object Ledger {
      * charges first (as in [owingSince]); money paid in advance is used up by the next charges.
      */
     fun aging(entries: List<LedgerEntry>, now: Long, zone: java.time.ZoneId): AgeBuckets {
-        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        val money = entries.filter { it.type.isMoney }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
         val open = ArrayDeque<Pair<Long, Long>>()
         var credit = 0L
         for (entry in money) {
@@ -115,7 +115,7 @@ object Ledger {
      * has no bill and is not listed.
      */
     fun owedByInvoice(entries: List<LedgerEntry>): Map<Long, Money> {
-        val money = entries.filterNot { it.type.isPoints }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
+        val money = entries.filter { it.type.isMoney }.sortedWith(compareBy({ it.createdAtMillis }, { it.id }))
         val open = ArrayDeque<Pair<Long?, Long>>()
         var credit = 0L
         for (entry in money) {
@@ -152,6 +152,12 @@ object Ledger {
         else -> BillStatus.PART_PAID
     }
 
+    /** The promised payment date last recorded in [entries], or null when none was set or it was cleared. */
+    fun promisedOn(entries: List<LedgerEntry>): java.time.LocalDate? =
+        entries.filter { it.type == LedgerEntryType.PROMISE }
+            .maxWithOrNull(compareBy({ it.createdAtMillis }, { it.id }))
+            ?.note?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+
     /** Loyalty point entries, newest first. */
     fun pointsHistory(entries: List<LedgerEntry>): List<LedgerEntry> =
         entries.filter { it.type.isPoints }.sortedWith(compareByDescending<LedgerEntry> { it.createdAtMillis }.thenByDescending { it.id })
@@ -181,7 +187,7 @@ object Ledger {
         val bought = invoices.fold(Money.ZERO) { acc, invoice ->
             if (invoice.type == InvoiceType.RETURN) acc - invoice.grandTotal else acc + invoice.grandTotal
         }
-        val stillOwed = entries.filterNot { it.type.isPoints || it.type == LedgerEntryType.OPENING_BALANCE }
+        val stillOwed = entries.filter { it.type.isMoney && it.type != LedgerEntryType.OPENING_BALANCE }
             .fold(Money.ZERO) { acc, entry -> acc + entry.amount }
         return bought to (bought - stillOwed)
     }

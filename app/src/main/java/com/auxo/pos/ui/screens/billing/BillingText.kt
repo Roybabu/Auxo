@@ -60,6 +60,7 @@ fun PaymentError.messageRes(): Int = when (this) {
     PaymentError.REFERENCE_INVALID -> R.string.payment_error_reference
     PaymentError.CREDIT_NEEDS_CUSTOMER -> R.string.payment_error_credit_customer
     PaymentError.CREDIT_OVER_LIMIT -> R.string.payment_error_credit_limit
+    PaymentError.CREDIT_ON_HOLD -> R.string.payment_error_credit_hold
 }
 
 @StringRes

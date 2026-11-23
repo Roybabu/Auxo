@@ -29,6 +29,16 @@ class AuthorizedShopPreferences(private val inner: ShopPreferences, private val 
         inner.setSuppliers(enabled)
     }
 
+    override fun setCreditHoldDays(days: Int) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setCreditHoldDays(days)
+    }
+
+    override fun setOnTimeBonusPoints(points: Int) {
+        auth.require(Permission.MANAGE_SETTINGS)
+        inner.setOnTimeBonusPoints(points)
+    }
+
     override fun setCategorySetupDone(done: Boolean) {
         auth.require(Permission.MANAGE_SETTINGS)
         inner.setCategorySetupDone(done)

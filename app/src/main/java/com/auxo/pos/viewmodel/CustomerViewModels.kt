@@ -181,6 +181,8 @@ sealed interface CustomerDetailUiState {
         val pointsHistory: List<LedgerEntry> = emptyList(),
         /** What a dues reminder says about the shop; null until the settings are read. */
         val reminderShop: ReminderShop? = null,
+        /** The date the customer promised to pay by; null when none is set or nothing is owed. */
+        val promisedOn: LocalDate? = null,
     ) : CustomerDetailUiState {
         val hasPoints: Boolean get() = pointsHistory.isNotEmpty()
     }
@@ -229,6 +231,7 @@ class CustomerDetailViewModel(
                         billOwed = Ledger.owedByInvoice(ledger),
                         pointsHistory = Ledger.pointsHistory(ledger),
                         reminderShop = reminderShop,
+                        promisedOn = Ledger.promisedOn(ledger).takeIf { account.balance > Money.ZERO },
                     )
                 }
             }.catch<CustomerDetailUiState> { emit(CustomerDetailUiState.Failed) }
@@ -236,6 +239,11 @@ class CustomerDetailViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), CustomerDetailUiState.Loading)
 
     fun retry() = reload.update { it + 1 }
+
+    /** Saves the date the customer promised to pay by, or clears it when [date] is null. */
+    fun setPromise(date: LocalDate?) {
+        viewModelScope.launch { customers.setPromise(customerId, date) }
+    }
 
     /** Statement as a CSV file, oldest entry first. */
     fun exportStatement() {

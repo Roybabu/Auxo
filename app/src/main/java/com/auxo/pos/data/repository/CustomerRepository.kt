@@ -45,6 +45,9 @@ interface CustomerRepository {
 
     fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>>
 
+    /** Saves the date [customerId] promised to pay by, or clears it when [date] is null. Moves no money. */
+    suspend fun setPromise(customerId: Long, date: java.time.LocalDate?) {}
+
     /** Every customer's money entries (no loyalty points), for reports that look at how old the dues are. */
     fun observeMoneyLedger(): Flow<List<LedgerEntry>> = kotlinx.coroutines.flow.flowOf(emptyList())
 

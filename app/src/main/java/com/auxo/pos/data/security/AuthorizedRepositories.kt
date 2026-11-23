@@ -300,6 +300,11 @@ class AuthorizedCustomerRepository(private val inner: CustomerRepository, privat
 
     override fun observeMoneyLedger(): Flow<List<LedgerEntry>> = auth.guarded(Permission.MANAGE_CUSTOMERS) { inner.observeMoneyLedger() }
 
+    override suspend fun setPromise(customerId: Long, date: java.time.LocalDate?) {
+        auth.require(Permission.MANAGE_CUSTOMERS)
+        inner.setPromise(customerId, date)
+    }
+
     override suspend fun receivePayment(
         customerId: Long,
         amount: Money,

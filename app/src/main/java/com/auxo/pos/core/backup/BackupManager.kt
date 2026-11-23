@@ -123,6 +123,8 @@ class BackupManager(
                         put(PREF_DARK, settings.darkMode.toString())
                         shop?.let { put(PREF_RESTAURANT_MENU, it.restaurantMenu.value.toString()) }
                         shop?.let { put(PREF_SUPPLIERS, it.suppliers.value.toString()) }
+                        shop?.let { put(PREF_CREDIT_HOLD_DAYS, it.creditHoldDays.value.toString()) }
+                        shop?.let { put(PREF_ON_TIME_BONUS, it.onTimeBonusPoints.value.toString()) }
                     },
                 )
             }
@@ -182,6 +184,8 @@ class BackupManager(
             backup.preferences[PREF_DARK]?.let { appearance.setDarkMode(it.toBoolean()) }
             backup.preferences[PREF_RESTAURANT_MENU]?.let { shop?.setRestaurantMenu(it.toBoolean()) }
             backup.preferences[PREF_SUPPLIERS]?.let { shop?.setSuppliers(it.toBoolean()) }
+            backup.preferences[PREF_CREDIT_HOLD_DAYS]?.toIntOrNull()?.let { shop?.setCreditHoldDays(it) }
+            backup.preferences[PREF_ON_TIME_BONUS]?.toIntOrNull()?.let { shop?.setOnTimeBonusPoints(it) }
 
             // The photos go with the data they belong to. A backup without photos clears the old ones, because the
             // restored products do not refer to them.
@@ -257,6 +261,8 @@ class BackupManager(
         const val PREF_DARK = "dark_mode"
         const val PREF_RESTAURANT_MENU = "restaurant_menu"
         const val PREF_SUPPLIERS = "suppliers"
+        const val PREF_CREDIT_HOLD_DAYS = "credit_hold_days"
+        const val PREF_ON_TIME_BONUS = "on_time_bonus_points"
         private val FILE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
     }
 }
