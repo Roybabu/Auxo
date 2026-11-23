@@ -192,10 +192,10 @@ class ProductFormValidatorTest {
     }
 
     @Test
-    fun otherCategories_alwaysCountStock_andCanHaveASubcategory() {
+    fun otherCategories_alwaysCountStock_andHaveNoMenuSection() {
         val product = (ProductFormValidator.validate(garmentForm().copy(tracksStock = false, subcategory = "Tops", categoryId = 3)) as ProductValidation.Valid).product
         assertEquals(true, product.tracksStock)
-        assertEquals("Tops", product.subcategory)
+        assertEquals(null, product.subcategory) // a menu section is for restaurant items only
         assertEquals(3L, product.categoryId)
     }
 }

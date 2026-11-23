@@ -76,6 +76,9 @@ enum class ProductCategory {
     /** Restaurant items can be sold without a stock count; every other category always keeps stock. */
     val canSkipStock: Boolean get() = this == RESTAURANT
 
+    /** A dish has no brand; every other kind of product can have one. */
+    val usesBrand: Boolean get() = this != RESTAURANT
+
     /** Veg / non-veg marking applies to packaged food and to restaurant items. */
     val usesDietType: Boolean get() = this == PACKAGED_FOOD || this == RESTAURANT
 

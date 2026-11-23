@@ -13,6 +13,8 @@ import com.auxo.pos.domain.contacts.ContactError
 import com.auxo.pos.domain.contacts.ContactField
 import com.auxo.pos.domain.customers.AccountPaymentError
 import com.auxo.pos.domain.model.Customer
+import com.auxo.pos.domain.model.InvoiceSummary
+import com.auxo.pos.domain.model.InvoiceType
 import com.auxo.pos.domain.model.LedgerEntry
 import com.auxo.pos.domain.model.LedgerEntryType
 import com.auxo.pos.domain.model.Money
@@ -171,14 +173,18 @@ class CustomerViewModelsTest {
 
     @Test
     fun detail_showsTheStatementNewestFirst_andExportsIt() = runTest {
+        customers.invoices.value = listOf(
+            InvoiceSummary(1, "INV/26-27/00001", InvoiceType.SALE, 10, "Anita Das", "9830012345", Money(100_000), 2),
+        )
         val viewModel = CustomerDetailViewModel(1, customers, TestData.clock)
         keepActive(viewModel.uiState)
         val events = record(viewModel.events)
         val state = viewModel.uiState.value as CustomerDetailUiState.Ready
         assertEquals(Money(50_000), state.account.balance)
         assertEquals(listOf(50_000L, 80_000L), state.statement.map { it.balanceAfter.minorUnits })
-        assertEquals(Money(80_000), state.charged)
-        assertEquals(Money(30_000), state.paid)
+        // Bought 1,000.00 over the counter and on account, 500.00 of it still owed: 500.00 has been paid.
+        assertEquals(Money(100_000), state.bought)
+        assertEquals(Money(50_000), state.paid)
 
         viewModel.exportStatement()
         val file = (events.last() as CustomerDetailEvent.Export).file

@@ -170,12 +170,26 @@ fun CustomerDetailContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = formatter.format(if (balance < Money.ZERO) Money(-balance.minorUnits) else balance),
+                        // Green when the customer has to pay the shop; red and negative when the shop owes the customer.
+                        text = if (balance < Money.ZERO) "-" + formatter.format(Money(-balance.minorUnits)) else formatter.format(balance),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (balance > Money.ZERO) AuxoThemeExtras.statusColors.warning.content else MaterialTheme.colorScheme.onSurface,
+                        color = when {
+                            balance > Money.ZERO -> AuxoThemeExtras.statusColors.success.content
+                            balance < Money.ZERO -> AuxoThemeExtras.statusColors.danger.content
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                         modifier = Modifier.testTag("customer_balance"),
                     )
+                    // Says who owes whom, under the amount.
+                    if (balance != Money.ZERO) {
+                        Text(
+                            text = stringResource(if (balance > Money.ZERO) R.string.customer_owes_you else R.string.customer_you_owe),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (balance > Money.ZERO) AuxoThemeExtras.statusColors.success.content else AuxoThemeExtras.statusColors.danger.content,
+                            modifier = Modifier.testTag("customer_balance_note"),
+                        )
+                    }
                     Text(
                         text = customer.creditLimit?.let { stringResource(R.string.customer_credit_limit, formatter.format(it)) }
                             ?: stringResource(R.string.customer_no_limit),
@@ -226,7 +240,7 @@ fun CustomerDetailContent(
         }
         item(key = "totals") {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                StatTile(stringResource(R.string.customer_charged), formatter.format(state.charged), Modifier.weight(1f))
+                StatTile(stringResource(R.string.customer_bought), formatter.format(state.bought), Modifier.weight(1f))
                 StatTile(stringResource(R.string.customer_paid), formatter.format(state.paid), Modifier.weight(1f))
             }
         }

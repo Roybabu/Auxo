@@ -375,7 +375,10 @@ fun ProductEditorContent(
         item(key = "photo") { PhotoSection(form, uiState.photoBusy, actions) }
         item(key = "details") { DetailsSection(form, errors, actions) }
 
-        item(key = "subcategory") { SubcategorySection(form, errors, actions) }
+        // The menu section is only for restaurant items.
+        if (form.category == ProductCategory.RESTAURANT) {
+            item(key = "subcategory") { SubcategorySection(form, errors, actions) }
+        }
 
         if (form.category.canSkipStock) {
             item(key = "restaurant") { RestaurantSection(form, errors, actions) }
@@ -509,14 +512,16 @@ private fun DetailsSection(form: ProductForm, errors: ProductFormErrors, actions
                     .fillMaxWidth()
                     .testTag("editor_name"),
             )
-            AuxoTextField(
-                value = form.brand,
-                onValueChange = actions::onBrandChange,
-                label = stringResource(R.string.editor_brand),
-                error = errors.fields[FormField.BRAND]?.let { stringResource(it.messageRes()) },
-                capitalization = KeyboardCapitalization.Words,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (form.category.usesBrand) {
+                AuxoTextField(
+                    value = form.brand,
+                    onValueChange = actions::onBrandChange,
+                    label = stringResource(R.string.editor_brand),
+                    error = errors.fields[FormField.BRAND]?.let { stringResource(it.messageRes()) },
+                    capitalization = KeyboardCapitalization.Words,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             if (form.category.usesMaterial) {
                 AuxoTextField(
                     value = form.material,

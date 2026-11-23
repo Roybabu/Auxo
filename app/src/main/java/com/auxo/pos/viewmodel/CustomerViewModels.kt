@@ -169,8 +169,8 @@ sealed interface CustomerDetailUiState {
         /** Ledger with running balance, newest first for display. */
         val statement: List<LedgerLine>,
         val invoices: List<InvoiceSummary>,
-        /** Sales put on the account and payments received, all time. */
-        val charged: Money,
+        /** Everything the customer has bought (bills less credit notes) and what they have paid for it, all time. */
+        val bought: Money,
         val paid: Money,
         /** Loyalty point entries, newest first. Empty if the customer never had any. */
         val pointsHistory: List<LedgerEntry> = emptyList(),
@@ -211,12 +211,12 @@ class CustomerDetailViewModel(
                 if (account == null) {
                     CustomerDetailUiState.NotFound
                 } else {
-                    val (charged, paid) = Ledger.totals(ledger)
+                    val (bought, paid) = Ledger.purchases(invoices, ledger)
                     CustomerDetailUiState.Ready(
                         account = account,
                         statement = Ledger.statement(ledger).asReversed(),
                         invoices = invoices,
-                        charged = charged,
+                        bought = bought,
                         paid = paid,
                         pointsHistory = Ledger.pointsHistory(ledger),
                         reminderShop = reminderShop,

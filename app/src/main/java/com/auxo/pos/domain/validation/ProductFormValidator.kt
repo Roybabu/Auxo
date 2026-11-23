@@ -111,10 +111,10 @@ object ProductFormValidator {
             name.length < NAME_MIN -> fieldErrors[FormField.NAME] = FieldError.TOO_SHORT
             name.length > NAME_MAX -> fieldErrors[FormField.NAME] = FieldError.TOO_LONG
         }
-        if (form.brand.trim().length > BRAND_MAX) fieldErrors[FormField.BRAND] = FieldError.TOO_LONG
+        if (form.category.usesBrand && form.brand.trim().length > BRAND_MAX) fieldErrors[FormField.BRAND] = FieldError.TOO_LONG
         if (form.description.trim().length > DESCRIPTION_MAX) fieldErrors[FormField.DESCRIPTION] = FieldError.TOO_LONG
         if (form.material.trim().length > MATERIAL_MAX) fieldErrors[FormField.MATERIAL] = FieldError.TOO_LONG
-        if (form.subcategory.trim().length > SUBCATEGORY_MAX) fieldErrors[FormField.SUBCATEGORY] = FieldError.TOO_LONG
+        if (form.category == ProductCategory.RESTAURANT && form.subcategory.trim().length > SUBCATEGORY_MAX) fieldErrors[FormField.SUBCATEGORY] = FieldError.TOO_LONG
         val warranty = form.warrantyMonths.trim()
         val warrantyMonths = if (form.category.usesWarranty && warranty.isNotEmpty()) {
             warranty.toIntOrNull()?.takeIf { it in 1..WARRANTY_MAX_MONTHS && warranty.all(Char::isDigit) }
@@ -186,7 +186,7 @@ object ProductFormValidator {
         val product = Product(
             id = form.productId,
             name = name,
-            brand = form.brand.trim().ifEmpty { null },
+            brand = form.brand.trim().ifEmpty { null }.takeIf { form.category.usesBrand },
             category = form.category,
             description = form.description.trim().ifEmpty { null },
             material = if (form.category.usesMaterial) form.material.trim().ifEmpty { null } else null,
@@ -198,7 +198,7 @@ object ProductFormValidator {
             } else {
                 validVariants
             },
-            subcategory = form.subcategory.trim().ifEmpty { null },
+            subcategory = form.subcategory.trim().ifEmpty { null }.takeIf { form.category == ProductCategory.RESTAURANT },
             categoryId = form.categoryId,
             available = form.available || form.category != ProductCategory.RESTAURANT,
             tracksStock = tracksStock,
