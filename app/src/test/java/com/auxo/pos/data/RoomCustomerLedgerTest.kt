@@ -236,4 +236,36 @@ class RoomCustomerLedgerTest {
         customers.setPromise(anita.id, null)
         assertEquals(null, customers.observeAccounts().first().single().promisedOn)
     }
+
+    private suspend fun earlierBonus(customer: Customer, daysAgo: Long) {
+        database.customerDao().insertEntry(
+            com.auxo.pos.data.local.entity.LedgerEntryEntity(
+                customerId = customer.id,
+                type = LedgerEntryType.POINTS_EARNED.name,
+                amountMinor = 0,
+                invoiceId = null,
+                method = null,
+                reference = null,
+                note = null,
+                createdAt = TestData.clock.millis() - daysAgo * 86_400_000L,
+                points = 25,
+            ),
+        )
+    }
+
+    @Test
+    fun theOnTimeBonus_isGivenAtMostOnceEvery30Days() = runTest {
+        database.customerDao().upsertLoyalty(com.auxo.pos.data.local.entity.LoyaltySettingsEntity(enabled = true, spendPerPointMinor = 10_000, pointValueMinor = 100))
+        val repo = RoomCustomerRepository(database, TestData.clock, onTimeBonus = { 25 })
+        val recent = newCustomer(opening = Money(10_000))
+        earlierBonus(recent, daysAgo = 10)
+        repo.receivePayment(recent.id, Money(10_000), PaymentMethod.CASH, null, null, "recent")
+        assertEquals(25, pointsOf(recent)) // only the earlier bonus: nothing new
+
+        val bala = (customers.saveCustomer(Customer(name = "Bala", phone = "9830099999"), Money(10_000)) as SaveCustomerResult.Saved).customerId
+        val old = customers.getCustomer(bala)!!
+        earlierBonus(old, daysAgo = 40)
+        repo.receivePayment(old.id, Money(10_000), PaymentMethod.CASH, null, null, "old")
+        assertEquals(50, pointsOf(old)) // the old bonus and a new one
+    }
 }

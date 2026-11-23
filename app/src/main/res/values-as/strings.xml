@@ -441,7 +441,7 @@
     <string name="shop_credit_rules_title">ধাৰৰ নিয়ম</string>
     <string name="shop_credit_hold_body">যিজন গ্ৰাহকে এই দিনৰ সংখ্যাতকৈ বেছি সময় ধৰি টকা বাকী ৰাখিছে, তেওঁক নতুন ধাৰ দিয়া বন্ধ কৰক। কেতিয়াও বন্ধ নকৰিবলৈ খালী ৰাখক।</string>
     <string name="shop_credit_hold_field">ইমান দিনৰ পিছত ধাৰ বন্ধ কৰক (দিন)</string>
-    <string name="shop_on_time_body">গ্ৰাহকে 30 দিনৰ ভিতৰত বাকী থকা সকলো পৰিশোধ কৰিলে লয়েল্টি পইণ্ট দিয়ক। লয়েল্টি পইণ্ট চালু থাকিব লাগিব। বোনাছ নিদিবলৈ খালী ৰাখক।</string>
+    <string name="shop_on_time_body">গ্ৰাহকে 30 দিনৰ ভিতৰত বাকী থকা সকলো পৰিশোধ কৰিলে লয়েল্টি পইণ্ট দিয়ক। লয়েল্টি পইণ্ট চালু থাকিব লাগিব। বোনাছ নিদিবলৈ খালী ৰাখক। এজন গ্ৰাহকে ইয়াক ৩০ দিনত সৰ্বাধিক এবাৰ পাব পাৰে।</string>
     <string name="shop_on_time_field">সময়মতে পৰিশোধৰ বোনাছ (পইণ্ট)</string>
     <string name="sale_completed">বিক্ৰী সংৰক্ষিত হ’ল: %1$s</string>
     <string name="sale_completed_change">বিক্ৰী সংৰক্ষিত হ’ল: %1$s। %2$s ভাঙনি ঘূৰাই দিয়ক।</string>

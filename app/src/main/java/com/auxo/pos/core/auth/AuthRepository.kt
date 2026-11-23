@@ -246,6 +246,11 @@ class LocalAuthRepository(
     private val lockSettings: LockSettingsStore = InMemoryLockSettings(),
     private val lockouts: LockoutStore = InMemoryLockoutStore(),
     private val sessions: SavedSessionVault = NoSavedSession,
+    /**
+     * The clock the "wait after wrong guesses" is counted on. On a phone this ticks from the device's start-up and ignores the date
+     * setting, so moving the phone's date forward does not skip the wait. It defaults to [clock] so tests can move time.
+     */
+    private val lockClock: Clock = clock,
 ) : AuthRepository {
 
     private val gate = Mutex()
@@ -283,7 +288,7 @@ class LocalAuthRepository(
         get() = lockouts.read(LockoutKind.PASSWORD).lockedUntilMillis.limited()
         set(value) = lockouts.write(LockoutKind.PASSWORD, lockouts.read(LockoutKind.PASSWORD).copy(lockedUntilMillis = value))
 
-    private fun Long.limited(): Long = min(this, clock.millis() + MAX_LOCK_MILLIS)
+    private fun Long.limited(): Long = min(this, lockClock.millis() + MAX_LOCK_MILLIS)
 
     private fun initialState(): AuthState = when (store.read()) {
         StoredAccounts.Missing -> AuthState.NeedsSetup
@@ -346,7 +351,7 @@ class LocalAuthRepository(
     }
 
     override suspend fun signIn(identifier: String, password: String): SignInResult = gate.withLock {
-        val now = clock.millis()
+        val now = lockClock.millis()
         if (now < lockedUntilMillis) {
             DebugLog.warn("Auth", "Sign-in refused: waiting after wrong passwords")
             return@withLock SignInResult.LockedOut(secondsLeft(now))
@@ -395,7 +400,7 @@ class LocalAuthRepository(
     private fun lockAfter(count: Int, current: Long): Long {
         if (count < FREE_ATTEMPTS) return current
         val delay = min(BASE_LOCK_MILLIS shl min(count - FREE_ATTEMPTS, 4), MAX_LOCK_MILLIS)
-        return clock.millis() + delay
+        return lockClock.millis() + delay
     }
 
     override fun forgetAccountsAfterRestore() {
@@ -572,7 +577,7 @@ class LocalAuthRepository(
         val admin = activeSuperAdmin() ?: return@withLock RecoveryStartResult.Denied
         // Straight after setup the person has only just typed the password; at any other time it is asked for again.
         if (_recoveryPrompt.value != RecoveryPrompt.Required) {
-            val now = clock.millis()
+            val now = lockClock.millis()
             if (now < lockedUntilMillis) return@withLock RecoveryStartResult.LockedOut(secondsLeft(now))
             val right = password != null && withContext(worker) { hasher.matches(password, admin) }
             if (!right) {
@@ -608,7 +613,7 @@ class LocalAuthRepository(
 
     override suspend fun resetPasswordWithRecoveryCode(code: String, password: String, confirm: String): RecoveryResetResult = gate.withLock {
         if (_state.value != AuthState.SignedOut) return@withLock RecoveryResetResult.Unavailable
-        val now = clock.millis()
+        val now = lockClock.millis()
         if (now < codeLockedUntilMillis) return@withLock RecoveryResetResult.LockedOut(secondsLeft(now, codeLockedUntilMillis))
         val admin = when (val stored = store.read()) {
             is StoredAccounts.Present -> stored.superAdmin ?: return@withLock RecoveryResetResult.Unavailable
@@ -703,7 +708,7 @@ class LocalAuthRepository(
 
     override suspend fun unlockWithPassword(password: String): UnlockResult = gate.withLock {
         val account = lockedAccount() ?: return@withLock UnlockResult.Unavailable
-        val now = clock.millis()
+        val now = lockClock.millis()
         if (now < lockedUntilMillis) return@withLock UnlockResult.LockedOut(secondsLeft(now))
         if (withContext(worker) { hasher.matches(password, account) }) {
             failures = 0
@@ -736,7 +741,7 @@ class LocalAuthRepository(
 
     /** Checks the password of [account], with the shared wait after wrong ones. Null means it was right. */
     private suspend fun checkPassword(account: UserAccount, password: String?): QuickUnlockChange? {
-        val now = clock.millis()
+        val now = lockClock.millis()
         if (now < lockedUntilMillis) return QuickUnlockChange.LockedOut(secondsLeft(now))
         if (password != null && withContext(worker) { hasher.matches(password, account) }) {
             failures = 0

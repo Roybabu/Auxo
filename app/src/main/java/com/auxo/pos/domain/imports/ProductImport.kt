@@ -483,7 +483,7 @@ object ProductImport {
 
         /** A money or quantity cell, with a rupee sign, "Rs" and thousands commas (1,250.50) removed. */
         fun number(row: CsvRow, column: ImportColumn): String {
-            val raw = text(row, column).removePrefix("₹").removePrefix("Rs.").removePrefix("Rs").trim()
+            val raw = text(row, column).replace(CURRENCY_PREFIX, "").trim()
             return if (THOUSANDS.matches(raw)) raw.replace(",", "") else raw
         }
 
@@ -494,7 +494,11 @@ object ProductImport {
         }
     }
 
-    private val THOUSANDS = Regex("""\d{1,3}(,\d{3})+(\.\d+)?""")
+    /** Thousands commas in either grouping: 1,250.50 and 12,500 (groups of three), or 1,00,000 and 12,50,000 (lakh style: the last three, then twos). */
+    private val THOUSANDS = Regex("""\d{1,3}(,\d{3})+(\.\d+)?|\d{1,2}(,\d{2})+,\d{3}(\.\d+)?""")
+
+    /** A rupee sign, "Rs", "Rs." or "INR" before an amount, in any capitals. */
+    private val CURRENCY_PREFIX = Regex("""^\s*(₹|rs\.?|inr)\s*""", RegexOption.IGNORE_CASE)
     private val WHOLE_DECIMAL = Regex("""\d+\.0+""")
 
     fun parseCategory(text: String): ProductCategory? = when (normalizeImportHeader(text)) {

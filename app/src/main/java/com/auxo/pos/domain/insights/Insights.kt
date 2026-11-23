@@ -87,40 +87,40 @@ class TimeBuckets private constructor(
     }
 
     companion object {
-        private fun dayName(date: LocalDate): String = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+        private fun dayName(date: LocalDate, locale: Locale): String = date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
 
         /** Steps for the line chart: two-hour slices today, days for a week or month, months for the year. */
-        fun trend(period: InsightsPeriod, today: LocalDate): TimeBuckets = when (period) {
+        fun trend(period: InsightsPeriod, today: LocalDate, locale: Locale = Locale.ENGLISH): TimeBuckets = when (period) {
             InsightsPeriod.TODAY -> TimeBuckets((0 until 24 step 2).map { String.format(Locale.ENGLISH, "%02d", it) }) { it.hour / 2 }
-            InsightsPeriod.LAST_7_DAYS -> days(today.minusDays(6), today)
+            InsightsPeriod.LAST_7_DAYS -> days(today.minusDays(6), today, locale)
             InsightsPeriod.THIS_MONTH -> TimeBuckets((1..today.dayOfMonth).map { it.toString() }) { it.dayOfMonth - 1 }
-            InsightsPeriod.THIS_YEAR -> months(today)
+            InsightsPeriod.THIS_YEAR -> months(today, locale)
         }
 
         /** Coarser steps for the two-series bars: one pair today, days for a week, weeks for a month, months for the year. */
-        fun comparison(period: InsightsPeriod, today: LocalDate): TimeBuckets = when (period) {
-            InsightsPeriod.TODAY -> TimeBuckets(listOf("Today")) { 0 }
-            InsightsPeriod.LAST_7_DAYS -> days(today.minusDays(6), today)
+        fun comparison(period: InsightsPeriod, today: LocalDate, locale: Locale = Locale.ENGLISH, todayLabel: String = "Today"): TimeBuckets = when (period) {
+            InsightsPeriod.TODAY -> TimeBuckets(listOf(todayLabel)) { 0 }
+            InsightsPeriod.LAST_7_DAYS -> days(today.minusDays(6), today, locale)
             InsightsPeriod.THIS_MONTH -> {
                 val weeks = (today.dayOfMonth + 6) / 7
                 val length = today.lengthOfMonth()
                 TimeBuckets((0 until weeks).map { week -> "${week * 7 + 1}–${minOf(week * 7 + 7, length)}" }) { (it.dayOfMonth - 1) / 7 }
             }
-            InsightsPeriod.THIS_YEAR -> months(today)
+            InsightsPeriod.THIS_YEAR -> months(today, locale)
         }
 
-        private fun days(start: LocalDate, end: LocalDate): TimeBuckets {
+        private fun days(start: LocalDate, end: LocalDate, locale: Locale): TimeBuckets {
             val count = ChronoUnit.DAYS.between(start, end).toInt() + 1
-            return TimeBuckets((0 until count).map { dayName(start.plusDays(it.toLong())) }) {
+            return TimeBuckets((0 until count).map { dayName(start.plusDays(it.toLong()), locale) }) {
                 ChronoUnit.DAYS.between(start, it.toLocalDate()).toInt()
             }
         }
 
         /** Months from April of the financial year containing [today] up to [today]'s month. */
-        private fun months(today: LocalDate): TimeBuckets {
+        private fun months(today: LocalDate, locale: Locale): TimeBuckets {
             val first = YearMonth.of(InvoiceNumbers.financialYearStart(today), 4)
             val count = ChronoUnit.MONTHS.between(first, YearMonth.from(today)).toInt() + 1
-            return TimeBuckets((0 until count).map { first.plusMonths(it.toLong()).month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }) {
+            return TimeBuckets((0 until count).map { first.plusMonths(it.toLong()).month.getDisplayName(TextStyle.SHORT, locale) }) {
                 ChronoUnit.MONTHS.between(first, YearMonth.from(it)).toInt()
             }
         }

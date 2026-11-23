@@ -256,7 +256,7 @@ private fun CustomerRow(account: CustomerAccount, onClick: () -> Unit, ageDays: 
                 }
                 val promised = account.promisedOn
                 if (ageDays != null && promised != null) {
-                    val missed = promised.isBefore(java.time.LocalDate.now())
+                    val missed = promised.isBefore(java.time.LocalDate.now(com.auxo.pos.domain.billing.BusinessTime.ZONE))
                     Text(
                         stringResource(if (missed) R.string.promise_missed else R.string.promise_set, promised.format(java.time.format.DateTimeFormatter.ofPattern("d MMM"))),
                         style = MaterialTheme.typography.labelMedium,

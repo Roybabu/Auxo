@@ -163,7 +163,7 @@ fun CustomerDetailContent(
     onRemind: (() -> Unit)? = null,
     onShareStatement: (() -> Unit)? = null,
     onSetPromise: ((java.time.LocalDate?) -> Unit)? = null,
-    today: java.time.LocalDate = java.time.LocalDate.now(),
+    today: java.time.LocalDate = java.time.LocalDate.now(com.auxo.pos.domain.billing.BusinessTime.ZONE),
 ) {
     val formatter = LocalMoneyFormatter.current
     val customer = state.account.customer

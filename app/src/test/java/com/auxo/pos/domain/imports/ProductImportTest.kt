@@ -453,4 +453,21 @@ class ProductImportTest {
         // Packaged food needs a net quantity, which the file does not have.
         assertEquals(FieldError.REQUIRED, result.invalid.single().issue(ImportColumn.NET_QUANTITY)!!.fieldError)
     }
+
+    @Test
+    fun amountsInIndianLakhGrouping_andAnyCapitalsOfRs_areRead() {
+        val result = preview(
+            table(
+                "name,category,size,colour,selling_price,mrp,opening_stock",
+                "Sofa,Garment,L,Black,\"Rs 1,00,000\",\"INR 12,50,000.50\",3",
+                "Lamp,Garment,M,Black,\"rs. 499\",\"RS 1,250\",3",
+            ),
+        )
+        val sofa = result.ready.first { it.product!!.name == "Sofa" }.product!!.variants.single()
+        assertEquals(Money(1_00_000_00), sofa.sellingPrice)
+        assertEquals(Money(12_50_000_50), sofa.mrp)
+        val lamp = result.ready.first { it.product!!.name == "Lamp" }.product!!.variants.single()
+        assertEquals(Money(499_00), lamp.sellingPrice)
+        assertEquals(Money(1_250_00), lamp.mrp)
+    }
 }
