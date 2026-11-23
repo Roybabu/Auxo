@@ -13,6 +13,8 @@
 <img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali-blue" alt="English, Hindi, Bengali">
 </p>
 
+<p align="center"><strong><a href="https://github.com/Roybabu/Auxo/releases/latest">Download the latest APK</a></strong> (Android 8.0 or newer)</p>
+
 **Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. It works offline, with no server and no monthly fee. The only time it uses the internet is to check for and download app updates. The name comes from the Greek *auxō*, "to increase or grow".
 
 Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
@@ -24,7 +26,8 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 - **Know your stock.** Sizes and colours, batches with expiry, reorder suggestions, purchase orders, stock counts, CSV import, product photos.
 - **Run a restaurant too.** Dishes sit beside your other products, with or without a stock count.
 - **See the numbers.** Twelve reports, day-end cash closing, a GST report, CSV export.
-- **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, activity log, backup and restore.
+- **Stay in control.** Owner and employee logins with per-person permissions, idle lock with PIN or fingerprint, recovery code, activity log.
+- **Never lose the books.** Every backup is locked with your own passphrase and saved on the phone, by hand or automatically (every 15 minutes up to every 7 days, or after a number of invoices). Restore on a new phone from the sign-in page. See [Backups](#backups).
 - **Print anywhere.** PDF, Android printing, or straight to a Bluetooth receipt printer (58, 76 or 80 mm).
 
 ## Screenshots
@@ -43,12 +46,6 @@ Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks
 
 Taken on a real Android phone.
 
-## Brand assets
-
-<img src="docs/branding/auxo-icon-transparent.png" alt="The Auxo app icon" width="72" align="left">
-The approved artwork is in `design/auxo/` (originals: `docs/branding/auxo-logo-reference.png`; the app icon is `docs/branding/auxo-icon-transparent.png`): the full logo, the symbol alone, a vertical logo, a version for dark backgrounds and a grey one. The launcher icon and the sign-in logo are cut from that same artwork by `tools/extract_auxo_logo.py`, nothing is redrawn.
-<br clear="left">
-
 ## One rule: the books must add up
 
 Money is stored in whole paise, never as decimals. A sale saves the invoice, payments, stock and customer account in a single transaction, so it either all happens or none of it does. Double taps can't save a bill twice. Thousands of random bills in the tests add up to the paisa.
@@ -57,7 +54,12 @@ Money is stored in whole paise, never as decimals. A sale saves the invoice, pay
 
 Download `Auxo-vX.Y.Z.apk` from the [latest release](https://github.com/Roybabu/Auxo/releases/latest) on your phone (Android 8.0 or newer) and open it. Android will ask you to allow installs from your browser or file manager the first time. Later versions are offered inside the app (More → Check for updates) and install over the old one. Google is introducing developer verification for apps on certified phones, so Android may show an extra warning for apps from outside Google Play. The app is signed with the project's own key; the privacy policy is in [docs/PRIVACY.md](docs/PRIVACY.md).
 
-**Publishing a release (maintainers).** Add the secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`, raise `versionCode` and `versionName` in `app/build.gradle.kts`, then either push a matching tag (`git tag v1.0.0 && git push origin v1.0.0`) or open Actions → Release → Run workflow and type the version. The Release workflow builds the signed APK and attaches it with `mapping.txt` (keep it to read crash traces).
+## Backups
+
+- **Always locked.** The first backup asks you to choose a passphrase (at least 10 characters; short and common ones are refused). Every backup is encrypted with it and saved as an `.auxobak` file. Auxo cannot recover the passphrase, so keep it safe. Unlocked `.zip` backups are not made and cannot be restored.
+- **Where.** Backups are saved in the Auxo folder inside Documents, which survives uninstalling the app. Keep another copy off the phone.
+- **Automatic backup.** In Backup, choose how often: every 15 or 30 minutes, 1, 2, 3, 6 or 12 hours, every day, every week, or after a number of invoices, and how many backups to keep. The first backup runs straight away. Android will not wake an app more often than every 15 minutes, so timing is approximate.
+- **Restore on a new phone.** On the sign-in page, choose the folder holding your backups, pick one, enter its passphrase, check the shop name shown, confirm, then set a new username and password. Restoring replaces everything on the phone, and sign-in details are never part of a backup.
 
 ## Get started
 
@@ -88,19 +90,6 @@ Before you commit, run `python3 .github/scripts/security_check.py` (the same sec
 
 Kotlin, Jetpack Compose, Material 3, Room, MVVM. Android 8.0 and newer. CI (`.github/workflows/android-ci.yml`) builds, tests, lints and runs device tests on an emulator.
 
-## Tech stack
-
-| Layer | Used |
-|---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose, Material 3, Navigation Compose |
-| Architecture | MVVM, with plain-Kotlin domain logic |
-| Database | Room (SQLite) locked with SQLCipher, with exported schemas |
-| Barcodes | Camera and hardware scanners, ZXing |
-| Printing | PDF, Android printing, Bluetooth receipt printers |
-| Languages | English, Hindi, Bengali |
-| CI | GitHub Actions: build, unit tests, lint, security check, emulator tests |
-
 ## Where things live
 
 ```
@@ -115,10 +104,6 @@ app/src/main/java/com/auxo/pos/
 ## Crash and problem reports
 
 If the app crashes, it saves a short report on the phone and offers, the next time you open it, to share it. **More → Send a diagnostic report** makes one on demand. Nothing is sent unless you choose to. A report holds the app and phone version, the error and where it happened, and the names of the last screens opened. It holds no customer, sales or shop details, and database keys, email addresses and long numbers are removed. You can share the file with the developer, or use **Report on GitHub**, which opens a new issue on this repository: anything you paste there is public.
-
-## Database upgrades
-
-The database starts at version 1, the first released version, and nothing older is supported. A test phone that still holds an older database should be uninstalled and reinstalled. From the next version on, every database change needs a migration, its test and its exported schema in `app/schemas`.
 
 ## Privacy and permissions
 
@@ -136,7 +121,7 @@ Permissions the app declares:
 | Internet | Check for and download app updates (above). Nothing else. |
 | Install unknown apps | Install a downloaded update, after you allow it. |
 | Bluetooth (connect) | Print receipts on a paired Bluetooth printer. No scanning and no location. |
-| Storage (Android 9 and older only) | Save backups in Documents/Auxo, where they survive uninstalling the app. |
+| Storage (Android 9 and older only) | Save backups, including automatic ones, in Documents/Auxo, where they survive uninstalling the app. |
 
 Things that happen outside the app's own network use: sending a customer a reminder opens WhatsApp or the messages app, which then does its own sending, and the barcode scanner is Google Play services' scanner, which Google may download once.
 

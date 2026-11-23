@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -161,25 +164,80 @@ fun UpdateCard(modifier: Modifier = Modifier) {
     }
 }
 
-/** Offers a newer version when the app opens. Shows nothing unless the quiet check on launch found one. */
+/**
+ * Offers a newer version when the app opens. Shows nothing unless the quiet check on launch found one. After Download is
+ * tapped the same popup shows the progress, then an Install button, so the update can be finished without leaving the screen.
+ */
 @Composable
 fun UpdatePrompt() {
     val updater = LocalContext.current.appUpdater()
     val state by updater.state.collectAsStateWithLifecycle()
-    val available = (state as? UpdateState.Available)?.update ?: return
+    var hidden by rememberSaveable { mutableStateOf(false) }
+    var started by rememberSaveable { mutableStateOf(false) }
+    var permissionHint by rememberSaveable { mutableStateOf(false) }
+    val install = rememberInstall(updater) { permissionHint = true }
+    val update = when (val s = state) {
+        is UpdateState.Available -> s.update
+        is UpdateState.Downloading -> s.update
+        is UpdateState.Ready -> s.update
+        else -> null
+    }
+    val failedAfterStart = started && state == UpdateState.Failed
+    if (hidden || (update == null && !failedAfterStart)) return
     AlertDialog(
-        onDismissRequest = updater::dismiss,
+        onDismissRequest = { if (state !is UpdateState.Downloading) { hidden = true; updater.dismiss() } },
         title = { Text(stringResource(R.string.update_prompt_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(R.string.update_available, available.version))
-                if (available.notes.isNotEmpty()) {
-                    Text(available.notes, style = MaterialTheme.typography.bodySmall, maxLines = 8)
+                when {
+                    failedAfterStart -> Text(stringResource(R.string.update_failed))
+                    else -> {
+                        Text(stringResource(R.string.update_available, update!!.version))
+                        (state as? UpdateState.Downloading)?.let {
+                            Text(stringResource(R.string.update_downloading, it.percent), style = MaterialTheme.typography.bodySmall)
+                            LinearProgressIndicator(progress = { it.percent / 100f }, modifier = Modifier.fillMaxWidth())
+                        }
+                        if (permissionHint) {
+                            Text(stringResource(R.string.update_permission_hint), style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (update.notes.isNotEmpty()) {
+                            Text(stringResource(R.string.update_whats_new), style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                update.notes.toPlainChangelog(),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .heightIn(max = 260.dp)
+                                    .verticalScroll(rememberScrollState())
+                                    .testTag("update_prompt_notes"),
+                            )
+                        }
+                    }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = updater::download) { Text(stringResource(R.string.update_download)) } },
-        dismissButton = { TextButton(onClick = updater::dismiss) { Text(stringResource(R.string.update_later)) } },
+        confirmButton = {
+            when {
+                failedAfterStart -> TextButton(onClick = { updater.checkForUpdate() }) { Text(stringResource(R.string.update_check)) }
+                state is UpdateState.Ready -> TextButton(onClick = install, modifier = Modifier.testTag("update_prompt_install")) {
+                    Text(stringResource(R.string.update_install))
+                }
+                state is UpdateState.Downloading -> Unit
+                else -> TextButton(onClick = { started = true; updater.download() }, modifier = Modifier.testTag("update_prompt_download")) {
+                    Text(stringResource(R.string.update_download))
+                }
+            }
+        },
+        dismissButton = {
+            if (state !is UpdateState.Downloading) {
+                TextButton(onClick = { hidden = true; updater.dismiss() }) { Text(stringResource(R.string.update_later)) }
+            }
+        },
         modifier = Modifier.testTag("update_prompt"),
     )
 }
+
+/** The release notes are Markdown; show them as plain lines with the heading marks and bold marks taken out. */
+internal fun String.toPlainChangelog(): String = lines().joinToString("\n") { line ->
+    line.trimEnd().replace(Regex("^#{1,6}\\s*"), "").replace("**", "").replace("`", "")
+        .replace(Regex("^[-*]\\s+"), "• ")
+}.replace(Regex("\\n{3,}"), "\n\n").trim()

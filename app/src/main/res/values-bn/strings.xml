@@ -1799,6 +1799,7 @@
     <string name="update_permission_hint">জিজ্ঞাসা করলে Auxo-কে অ্যাপ ইনস্টল করার অনুমতি দিন, তারপর আবার ইনস্টল চাপুন।</string>
     <string name="update_prompt_title">আপডেট পাওয়া যাচ্ছে</string>
     <string name="update_later">পরে</string>
+    <string name="update_whats_new">নতুন কী</string>
     <string name="category_loose">খোলা পণ্য</string>
     <string name="category_jewellery">গয়না</string>
     <string name="insights_dept_loose">খোলা পণ্য</string>

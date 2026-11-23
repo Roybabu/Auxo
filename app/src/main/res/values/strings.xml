@@ -1799,6 +1799,7 @@ in %2$s</string>
     <string name="update_permission_hint">Allow Auxo to install apps when asked, then tap Install again.</string>
     <string name="update_prompt_title">Update available</string>
     <string name="update_later">Later</string>
+    <string name="update_whats_new">What\'s new</string>
     <string name="category_loose">Loose goods</string>
     <string name="category_jewellery">Jewellery</string>
     <string name="insights_dept_loose">Loose goods</string>
