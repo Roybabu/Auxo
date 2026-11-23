@@ -125,6 +125,8 @@ class BackupManager(
                         shop?.let { put(PREF_SUPPLIERS, it.suppliers.value.toString()) }
                         shop?.let { put(PREF_CREDIT_HOLD_DAYS, it.creditHoldDays.value.toString()) }
                         shop?.let { put(PREF_ON_TIME_BONUS, it.onTimeBonusPoints.value.toString()) }
+                        shop?.let { put(PREF_METAL_RATES, it.metalRates.value.encode()) }
+                        shop?.let { put(PREF_TABLE_COUNT, it.tableCount.value.toString()) }
                     },
                 )
             }
@@ -186,6 +188,11 @@ class BackupManager(
             backup.preferences[PREF_SUPPLIERS]?.let { shop?.setSuppliers(it.toBoolean()) }
             backup.preferences[PREF_CREDIT_HOLD_DAYS]?.toIntOrNull()?.let { shop?.setCreditHoldDays(it) }
             backup.preferences[PREF_ON_TIME_BONUS]?.toIntOrNull()?.let { shop?.setOnTimeBonusPoints(it) }
+            // Older backups do not have these two; the shop then keeps whatever this phone already has.
+            backup.preferences[PREF_METAL_RATES]?.let { shop?.setMetalRates(com.auxo.pos.domain.jewellery.MetalRates.decode(it)) }
+            backup.preferences[PREF_TABLE_COUNT]?.toIntOrNull()
+                ?.takeIf { it in 1..com.auxo.pos.domain.billing.HeldBills.MAX_TABLES }
+                ?.let { shop?.setTableCount(it) }
 
             // The photos go with the data they belong to. A backup without photos clears the old ones, because the
             // restored products do not refer to them.
@@ -263,6 +270,8 @@ class BackupManager(
         const val PREF_SUPPLIERS = "suppliers"
         const val PREF_CREDIT_HOLD_DAYS = "credit_hold_days"
         const val PREF_ON_TIME_BONUS = "on_time_bonus_points"
+        const val PREF_METAL_RATES = "metal_rates"
+        const val PREF_TABLE_COUNT = "table_count"
         private val FILE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
     }
 }

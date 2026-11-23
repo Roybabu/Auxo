@@ -45,7 +45,7 @@ class AmountInWordsLanguagesTest {
 
     @Test
     fun theWordsForOneToNinetyNine_areAllFilledInAndDistinct() {
-        for (table in listOf(NumberWords.HINDI, NumberWords.BENGALI)) {
+        for (table in listOf(NumberWords.HINDI, NumberWords.BENGALI, NumberWords.ASSAMESE)) {
             val spelled = (1..99).map { table.belowHundred(it) }
             assertTrue(spelled.none { it.isBlank() })
             assertEquals(99, spelled.toSet().size)
@@ -55,5 +55,36 @@ class AmountInWordsLanguagesTest {
     @Test
     fun aNegativeAmount_isSpelledWithoutASign() {
         assertEquals(words(118_00, Language.HINDI), words(-118_00, Language.HINDI))
+    }
+
+    @Test
+    fun assamese_spellsAmountsWithLakhAndCrore() {
+        assertEquals("শূন্য টকা মাত্ৰ", words(0, Language.ASSAMESE))
+        assertEquals("এশ ওঠৰ টকা মাত্ৰ", words(118_00, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ পাঁচশ সাতাৱন্ন টকা মাত্ৰ", words(1_557_00, Language.ASSAMESE))
+        assertEquals("এক লাখ পাঁচশ টকা পঞ্চাশ পইচা মাত্ৰ", words(1_00_500_50, Language.ASSAMESE))
+        assertEquals(
+            "বাৰ কোটি চৌত্ৰিশ লাখ ছাপন্ন হাজাৰ সাতশ ঊননব্বৈ টকা মাত্ৰ",
+            words(12_34_56_789_00, Language.ASSAMESE),
+        )
+    }
+
+    @Test
+    fun assamese_paiseFollowTheRupeesWithNoAnd() {
+        assertEquals("শূন্য টকা পঞ্চাশ পইচা মাত্ৰ", words(50, Language.ASSAMESE))
+        assertEquals("এক টকা পঁচিশ পইচা মাত্ৰ", words(1_25, Language.ASSAMESE))
+        assertEquals("দহ টকা পঞ্চাশ পইচা মাত্ৰ", words(10_50, Language.ASSAMESE))
+        assertEquals("এশ পঁচিশ টকা মাত্ৰ", words(125_00, Language.ASSAMESE))
+        assertEquals("পাঁচ টকা পঁচাত্তৰ পইচা মাত্ৰ", words(5_75, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ টকা মাত্ৰ", words(1_000_00, Language.ASSAMESE))
+        assertEquals("এক হাজাৰ দুশ পঞ্চাশ টকা পঁচাত্তৰ পইচা মাত্ৰ", words(1_250_75, Language.ASSAMESE))
+    }
+
+    @Test
+    fun assamese_hasAWordForEachWholeHundred() {
+        val spelled = (1..9).map { words(it * 100_00, Language.ASSAMESE) }
+        assertEquals(9, spelled.toSet().size)
+        assertEquals("দুশ টকা মাত্ৰ", words(200_00, Language.ASSAMESE))
+        assertEquals("নশ টকা মাত্ৰ", words(900_00, Language.ASSAMESE))
     }
 }

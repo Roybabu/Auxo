@@ -297,6 +297,16 @@ class SettingsValidatorTest {
     }
 
     @Test
+    fun aStoreNameThatSetupAccepts_canAlwaysBeSavedInSettings() {
+        val longest = TestData.settings.copy(storeName = "N".repeat(70))
+        assertTrue(SettingsValidator.check(longest).isEmpty())
+        assertEquals(
+            SettingsError.TOO_LONG,
+            SettingsValidator.check(TestData.settings.copy(storeName = "N".repeat(71)))[SettingsField.STORE_NAME],
+        )
+    }
+
+    @Test
     fun fssaiIsOptional_butWhenGivenItMustBe14Digits() {
         val base = TestData.settings
         assertNull(SettingsValidator.check(base.copy(fssai = ""))[SettingsField.FSSAI])

@@ -10,7 +10,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.auxo.pos.core.appearance.AppAccent
 import com.auxo.pos.core.appearance.SharedPrefsAppearanceRepository
 import com.auxo.pos.data.local.AuxoDatabase
+import com.auxo.pos.core.shop.SharedPrefsShopPreferences
 import com.auxo.pos.data.repository.RoomInventoryRepository
+import com.auxo.pos.domain.jewellery.JewelleryMetal
+import com.auxo.pos.domain.jewellery.MetalRates
+import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.testutil.TestData
 import kotlinx.coroutines.flow.first
@@ -123,6 +127,26 @@ class BackupManagerTest {
         }
         assertEquals(AppAccent.VIOLET, appearance.settings.value.accent)
         assertTrue(appearance.settings.value.darkMode)
+    }
+
+    @Test
+    fun metalRatesAndTableCount_goIntoTheBackup_andComeBack() = runBlocking {
+        val shop = SharedPrefsShopPreferences(context.getSharedPreferences("backup_test_shop", Context.MODE_PRIVATE))
+        val withShop = BackupManager(context, database, appearance, storage, TestData.clock, shop = shop, passphrases = MemoryPassphrase(pass))
+        val rates = MetalRates().with(JewelleryMetal.GOLD_22K, Money(612_300)).with(JewelleryMetal.SILVER, Money(9_500))
+        shop.setMetalRates(rates)
+        shop.setTableCount(14)
+        val saved = withShop.backUp()
+        val backup = storage.files.getValue(saved.fileName)
+
+        // Later changes that the restore should undo.
+        shop.setMetalRates(MetalRates())
+        shop.setTableCount(3)
+
+        withShop.restoreFrom(ByteArrayInputStream(backup), pass)
+
+        assertEquals(rates.encode(), shop.metalRates.value.encode())
+        assertEquals(14, shop.tableCount.value)
     }
 
     @Test

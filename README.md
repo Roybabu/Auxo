@@ -10,14 +10,14 @@
 <img src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF" alt="Kotlin and Jetpack Compose">
 <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0 license">
 <img src="https://img.shields.io/badge/data-stays%20on%20device-informational" alt="Data stays on the device">
-<img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali-blue" alt="English, Hindi, Bengali">
+<img src="https://img.shields.io/badge/languages-English%20%C2%B7%20Hindi%20%C2%B7%20Bengali%20%C2%B7%20Assamese-blue" alt="English, Hindi, Bengali, Assamese">
 </p>
 
 <p align="center"><strong><a href="https://github.com/Roybabu/Auxo/releases/latest">Download the latest APK</a></strong> (Android 8.0 or newer)</p>
 
 **Auxo** is a whole shop in your pocket. Bill customers, track stock, keep the books straight and print the receipt, all from one Android app. It works offline, with no server and no monthly fee. The only time it uses the internet is to check for and download app updates. The name comes from the Greek *auxō*, "to increase or grow".
 
-Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi and Bengali.
+Built for small Indian shops (clothes, packaged food, drinks, cafés). It speaks GST, counts in paise, reads barcodes and works in English, Hindi, Bengali and Assamese.
 
 ## What it does
 
