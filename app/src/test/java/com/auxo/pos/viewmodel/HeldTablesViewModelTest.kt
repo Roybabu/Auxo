@@ -138,4 +138,48 @@ class HeldTablesViewModelTest {
         assertEquals(listOf(1, 2), held.all.map { it.summary.tokenNumber }.sortedBy { it })
         assertEquals(first, held.all.first { it.summary.tokenNumber == 1 }.summary.id)
     }
+
+    @Test
+    fun aBillForASavedCustomer_carriesTheirNameAndPhone_whichTheHoldDialogStartsWith_andKeepsThemWhenHeld() = runTest {
+        val vm = viewModel()
+        vm.addShirt()
+        vm.onCustomerQueryChange("anita")
+        vm.linkCustomer(vm.uiState.value.customerResults.single())
+
+        // The hold dialog reads these two as its starting name and phone.
+        assertEquals("Anita Das", vm.uiState.value.cart.customer.name)
+        assertEquals("9830012345", HeldBills.phoneDigits(vm.uiState.value.cart.customer.phone))
+
+        vm.holdBill("Anita Das", phone = "9830012345")
+
+        val parked = held.all.single()
+        assertEquals("Anita Das", parked.summary.label)
+        assertEquals("9830012345", parked.cart.customer.phone)
+        assertEquals(1L, parked.cart.customer.customerId)
+    }
+
+    @Test
+    fun aPhoneChangedInTheHoldDialog_isKeptOnTheParkedBill_evenForASavedCustomer() = runTest {
+        val vm = viewModel()
+        vm.addShirt()
+        vm.onCustomerQueryChange("anita")
+        vm.linkCustomer(vm.uiState.value.customerResults.single())
+
+        vm.holdBill("Anita Das", phone = "98300 99999")
+
+        assertEquals("9830099999", held.all.single().cart.customer.phone)
+    }
+
+    @Test
+    fun aWalkInBill_heldWithNoPhone_hasNoPhone_andAPhoneTypedForItIsKept() = runTest {
+        val vm = viewModel()
+        vm.addShirt()
+        assertEquals("", vm.uiState.value.cart.customer.phone)
+        vm.holdBill("")
+        assertEquals("", held.all.single().cart.customer.phone)
+
+        vm.addShirt()
+        vm.holdBill("", phone = "98300 12345")
+        assertEquals("9830012345", held.all.first { it.summary.tokenNumber == 2 }.cart.customer.phone)
+    }
 }

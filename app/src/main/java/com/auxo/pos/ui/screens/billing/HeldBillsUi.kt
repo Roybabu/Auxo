@@ -52,11 +52,14 @@ private val HELD_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM, 
 
 /**
  * Parks the bill being held. A bill with a restaurant dish must be put against a table; any other bill gets the next
- * free number from the app. The customer's name and phone are optional either way.
+ * free number from the app. The customer's name and phone are optional either way. When the bill is already for a
+ * customer, their name is [suggestion] and their saved phone is [suggestedPhone], so both show here ready to keep or
+ * change; with no phone on file the field shows its "optional" label.
  */
 @Composable
 fun HoldBillDialog(
     suggestion: String,
+    suggestedPhone: String = "",
     needsTable: Boolean,
     tableCount: Int,
     busyTables: Set<Int>,
@@ -65,7 +68,7 @@ fun HoldBillDialog(
     onDismiss: () -> Unit,
 ) {
     var label by rememberSaveable { mutableStateOf(suggestion) }
-    var phone by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf(HeldBills.phoneDigits(suggestedPhone)) }
     var table by rememberSaveable { mutableStateOf<Int?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,

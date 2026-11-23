@@ -170,9 +170,12 @@ private fun LoginScreenBody(
  * backups. With backups in it, they are listed to restore; with none (or if the picker is closed), the button
  * becomes "Set up a new shop".
  */
-/** Documents/Auxo on the phone's main storage, as a hint for where the folder picker should open. */
+/** Documents/Auxo (Documents/Auxo Debug in a debug build) on the phone's main storage, as a hint for where the folder picker should open. */
 private val AUXO_BACKUP_FOLDER: android.net.Uri =
-    android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:Documents/Auxo")
+    android.provider.DocumentsContract.buildDocumentUri(
+        "com.android.externalstorage.documents",
+        "primary:Documents/${com.auxo.pos.BuildConfig.BACKUP_FOLDER}",
+    )
 
 @Composable
 private fun BackupAwareLogin(onSetUpBusiness: () -> Unit, loginViewModel: LoginViewModel) {

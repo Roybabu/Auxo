@@ -6,8 +6,11 @@
     <cache-path name="capture" path="capture/" />
     <cache-path name="updates" path="updates/" />
     <external-files-path name="backups" path="Auxo/" />
+    <external-files-path name="backups_debug" path="Auxo Debug/" />
     <!-- Android 9 and older: backups saved in the public Documents/Auxo folder. -->
     <external-path name="documents_backups" path="Documents/Auxo/" />
+    <!-- The debug build keeps its backups in its own folder. -->
+    <external-path name="documents_backups_debug" path="Documents/Auxo Debug/" />
     <!-- Debug builds only write these; the folder does not exist in a release build. -->
     <external-files-path name="debuglogs" path="debug-logs/" />
     <files-path name="debuglogs_internal" path="debug-logs/" />

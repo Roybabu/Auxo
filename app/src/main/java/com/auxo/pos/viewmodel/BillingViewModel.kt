@@ -719,8 +719,9 @@ class BillingViewModel(
             if (!free) return
         }
         val table = tableNumber.takeIf { state.cart.needsTable }
-        val digits = phone.filter(Char::isDigit).takeLast(10)
-        val cart = if (digits.isNotEmpty() && state.cart.customer.phone.isBlank()) {
+        // The dialog starts with the customer's saved phone, so what comes back is what the person wants kept.
+        val digits = HeldBills.phoneDigits(phone)
+        val cart = if (digits.isNotEmpty()) {
             state.cart.copy(customer = state.cart.customer.copy(phone = digits))
         } else {
             state.cart

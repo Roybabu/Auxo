@@ -82,7 +82,7 @@ class AmountInWordsLanguagesTest {
 
     @Test
     fun assamese_hasAWordForEachWholeHundred() {
-        val spelled = (1..9).map { words(it * 100_00, Language.ASSAMESE) }
+        val spelled = (1L..9L).map { words(it * 100_00, Language.ASSAMESE) }
         assertEquals(9, spelled.toSet().size)
         assertEquals("দুশ টকা মাত্ৰ", words(200_00, Language.ASSAMESE))
         assertEquals("নশ টকা মাত্ৰ", words(900_00, Language.ASSAMESE))

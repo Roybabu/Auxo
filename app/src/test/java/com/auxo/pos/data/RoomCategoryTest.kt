@@ -89,6 +89,26 @@ class RoomCategoryTest {
     }
 
     @Test
+    fun aNewCategory_cannotTakeABuiltInCategorysName_inAnyCase() = runTest {
+        // A built-in category with no name of its own is shown under its default name, and that counts as taken.
+        assertEquals(CategoryResult.BadName(NameCheck.Taken), categories.addCategory("footwear", ProductCategory.FOOTWEAR))
+        assertEquals(CategoryResult.BadName(NameCheck.Taken), categories.addCategory("  CLOTHING ", ProductCategory.GARMENT))
+        assertEquals(CategoryResult.BadName(NameCheck.Taken), categories.addCategory("Packaged   Food", ProductCategory.GENERAL))
+    }
+
+    @Test
+    fun renaming_toAnotherCategorysName_isRefused_butKeepingYourOwnNameInAnyCaseIsFine() = runTest {
+        val sweets = (categories.addCategory("Sweets", ProductCategory.PACKAGED_FOOD) as CategoryResult.Done).id
+        val garment = categories.getCategories().first { it.profile == ProductCategory.GARMENT }
+
+        assertEquals(CategoryResult.BadName(NameCheck.Taken), categories.renameCategory(garment.id, "sweets"))
+        assertEquals(CategoryResult.BadName(NameCheck.Taken), categories.renameCategory(sweets, "Footwear"))
+        // The category's own name is not "another" category's name, so changing its case is allowed.
+        assertEquals(CategoryResult.Done(sweets), categories.renameCategory(sweets, "SWEETS"))
+        assertEquals(1, categories.getCategories().count { it.name.equals("sweets", ignoreCase = true) })
+    }
+
+    @Test
     fun aBuiltInCategory_canBeRenamedAndPutBack_butNotDeleted() = runTest {
         val garment = categories.getCategories().first { it.profile == ProductCategory.GARMENT }
         categories.renameCategory(garment.id, "Fashion")

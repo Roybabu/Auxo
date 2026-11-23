@@ -31,6 +31,9 @@ object HeldBills {
     const val DEFAULT_TABLES = 10
     const val MAX_TABLES = 99
 
+    /** The last 10 digits of a typed or saved phone number ("+91 98300 12345" becomes "9830012345"), or "" when it has none. */
+    fun phoneDigits(raw: String): String = raw.filter(Char::isDigit).takeLast(10)
+
     /** The smallest number from 1 that no parked bill is using, so a number freed by a finished bill is used again. */
     fun nextToken(used: Collection<Int>): Int = generateSequence(1) { it + 1 }.first { it !in used }
 

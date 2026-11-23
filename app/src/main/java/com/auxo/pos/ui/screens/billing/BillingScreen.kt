@@ -394,6 +394,7 @@ fun BillingScreen(
     if (showHold) {
         HoldBillDialog(
             suggestion = uiState.cart.customer.name,
+            suggestedPhone = uiState.cart.customer.phone,
             needsTable = uiState.cart.needsTable,
             tableCount = uiState.tableCount,
             busyTables = HeldBills.busyTables(uiState.heldBills, uiState.resumedHeldId),
