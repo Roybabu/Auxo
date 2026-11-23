@@ -193,6 +193,7 @@ fun BillingScreen(
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var showHold by rememberSaveable { mutableStateOf(false) }
     var showHeld by rememberSaveable { mutableStateOf(false) }
+    var showSplit by rememberSaveable { mutableStateOf(false) }
     var showQuotes by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -231,6 +232,7 @@ fun BillingScreen(
                 BillingEvent.FixCart -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_fix_cart))
                 BillingEvent.SaveFailed -> snackbarHostState.showSnackbar(resources.getString(R.string.error_generic))
                 BillingEvent.BillHeld -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_bill_held))
+                BillingEvent.BillSplitOff -> snackbarHostState.showSnackbar(resources.getString(R.string.split_done))
                 BillingEvent.HeldBillUnavailable -> snackbarHostState.showSnackbar(resources.getString(R.string.held_unavailable))
                 is BillingEvent.QuotationSaved -> snackbarHostState.showSnackbar(resources.getString(R.string.billing_quote_saved, event.number))
                 is BillingEvent.QuotationLoaded -> {
@@ -320,6 +322,7 @@ fun BillingScreen(
                     if (!inPayment) {
                         ActionIcon(R.drawable.ic_scan, stringResource(R.string.action_scan), scan)
                         if (uiState.canHold && !uiState.cart.isEmpty) {
+                            ActionIcon(R.drawable.ic_invoice, stringResource(R.string.split_icon), { showSplit = true }, Modifier.testTag("split_open"))
                             ActionIcon(
                                 R.drawable.ic_pause,
                                 stringResource(R.string.hold_icon),
@@ -333,7 +336,22 @@ fun BillingScreen(
                         }
                         if (uiState.canHold && (uiState.heldBills.isNotEmpty() || uiState.resumedHeldId != null)) {
                             IconButton(onClick = { showHeld = true }, modifier = Modifier.testTag("held_open")) {
-                                BadgedBox(badge = { Badge { Text(uiState.heldBills.size.toString()) } }) {
+                                // The badge turns red while any parked bill has waited too long.
+                                val clockNow by androidx.compose.runtime.produceState(System.currentTimeMillis()) {
+                                    while (true) {
+                                        kotlinx.coroutines.delay(60_000)
+                                        value = System.currentTimeMillis()
+                                    }
+                                }
+                                val anyStale = HeldBills.staleCount(uiState.heldBills, clockNow) > 0
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = if (anyStale) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.testTag("held_badge"),
+                                        ) { Text(uiState.heldBills.size.toString()) }
+                                    },
+                                ) {
                                     Icon(painterResource(R.drawable.ic_bookmark), contentDescription = stringResource(R.string.held_icon, uiState.heldBills.size))
                                 }
                             }
@@ -403,6 +421,17 @@ fun BillingScreen(
             onShare = viewModel::shareQuotation,
             onDelete = viewModel::deleteQuotation,
             onDismiss = { showQuotes = false },
+        )
+    }
+    if (showSplit) {
+        SplitBillDialog(
+            cart = uiState.cart,
+            total = uiState.totals.grandTotal,
+            onSplitOff = { quantities ->
+                showSplit = false
+                viewModel.splitOffBill(quantities, context.resources.getString(R.string.split_label))
+            },
+            onDismiss = { showSplit = false },
         )
     }
     if (showHeld) {

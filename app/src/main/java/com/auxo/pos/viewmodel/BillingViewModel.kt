@@ -34,7 +34,9 @@ import com.auxo.pos.domain.billing.CreditAccount
 import com.auxo.pos.domain.billing.CustomerDetails
 import com.auxo.pos.domain.billing.Discount
 import com.auxo.pos.domain.billing.HeldBillSummary
+import com.auxo.pos.domain.billing.BillSplit
 import com.auxo.pos.domain.billing.HeldBills
+import com.auxo.pos.domain.billing.SplitOutcome
 import com.auxo.pos.data.repository.QuotationRepository
 import com.auxo.pos.domain.billing.QuotationRepricing
 import com.auxo.pos.domain.billing.QuotationStatus
@@ -210,6 +212,9 @@ sealed interface BillingEvent {
     data object SaveFailed : BillingEvent
     data class CustomerSaved(val name: String) : BillingEvent
     data object BillHeld : BillingEvent
+
+    /** The chosen items were parked as a separate bill and the rest stays on the counter. */
+    data object BillSplitOff : BillingEvent
 
     /** The parked bill was finished or discarded meanwhile, or cannot be read. */
     data object HeldBillUnavailable : BillingEvent
@@ -727,6 +732,40 @@ class BillingViewModel(
             if (saved) {
                 clearCart()
                 eventChannel.send(BillingEvent.BillHeld)
+            } else {
+                eventChannel.send(BillingEvent.SaveFailed)
+            }
+        }
+    }
+
+    /**
+     * Splits the bill on the counter by item: the chosen [quantities] (units per line) are parked as their own bill
+     * under [label], and the rest stays here. If the bill on the counter came from a parked bill, that parked copy is
+     * updated too, so nothing is left in two places. Does nothing when the split is not allowed (see [BillSplit]).
+     */
+    fun splitOffBill(quantities: Map<Long, Int>, label: String) {
+        val store = heldBills ?: return
+        val state = _uiState.value
+        if (state.isSaving) return
+        val outcome = BillSplit.splitOff(state.cart, quantities) as? SplitOutcome.Ok ?: return
+        val settings = state.settings ?: StoreSettings()
+        val movedTotal = BillCalculator.calculate(outcome.moved, settings.taxModeFor(outcome.moved)).grandTotal
+        val restTotal = BillCalculator.calculate(outcome.remaining, settings.taxModeFor(outcome.remaining)).grandTotal
+        val resumed = state.heldBills.firstOrNull { it.id == state.resumedHeldId }
+        viewModelScope.launch {
+            val saved = runCatching {
+                store.hold(outcome.moved, movedTotal, HeldBills.cleanLabel(label), null, null)
+                if (resumed != null) store.hold(outcome.remaining, restTotal, resumed.label, resumed.id, resumed.tableNumber)
+            }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.isSuccess
+            if (saved) {
+                saleRequestId = UUID.randomUUID().toString()
+                recalculate { current ->
+                    current.copy(
+                        cart = outcome.remaining,
+                        lineDiscounts = outcome.remaining.lines.mapNotNull { line -> line.discount?.let { line.variantId to inputFor(it) } }.toMap(),
+                    )
+                }
+                eventChannel.send(BillingEvent.BillSplitOff)
             } else {
                 eventChannel.send(BillingEvent.SaveFailed)
             }
