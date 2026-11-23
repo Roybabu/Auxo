@@ -34,7 +34,7 @@ object FileExport {
 
     /** Keeps letters, digits, dot, dash and underscore, so the name is safe everywhere. */
     fun safeFileName(name: String): String =
-        name.replace(Regex("[^A-Za-z0-9._-]+"), "-").trim('-').ifEmpty { "export" }
+        name.replace(Regex("[^\\p{L}\\p{N}._-]+"), "-").trim('-').ifEmpty { "export" }
 
     /**
      * Writes [export] as UTF-8. CSV files start with a byte order mark so Excel

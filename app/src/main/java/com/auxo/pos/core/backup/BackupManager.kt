@@ -197,6 +197,9 @@ class BackupManager(
             // The photos go with the data they belong to. A backup without photos clears the old ones, because the
             // restored products do not refer to them.
             photos?.let { runCatching { it.replaceAll(backup.photos) } }
+
+            // The restore worked, so the old copy of the shop's data is no longer needed. Do not leave it on the phone.
+            safety.parentFile?.deleteRecursively()
         } finally {
             work.deleteRecursively()
         }

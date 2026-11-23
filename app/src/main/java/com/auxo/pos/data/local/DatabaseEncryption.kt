@@ -68,8 +68,23 @@ class KeystoreDatabaseKeyStore(context: Context) : DatabaseKeyStore {
     private fun save(key: String) {
         val cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, wrappingKey()) }
         val sealed = cipher.iv + cipher.doFinal(key.toByteArray(Charsets.US_ASCII))
-        // Written at once, not later: the database must never be locked with a key that has not been saved.
-        prefs.edit(commit = true) { putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP)) }
+        val previous = prefs.getString(KEY_BLOB, null)
+
+        // Written synchronously: never lock or restore a database with a key that was not persisted.
+        val saved = prefs.edit(commit = true) {
+            putString(KEY_BLOB, Base64.encodeToString(sealed, Base64.NO_WRAP))
+        }
+        if (saved) return
+
+        // SharedPreferences updates its in-memory map before reporting a disk failure. Put the last known key
+        // back so callers that catch this error cannot continue with a key that was not durably saved.
+        val rolledBack = prefs.edit(commit = true) {
+            if (previous == null) remove(KEY_BLOB) else putString(KEY_BLOB, previous)
+        }
+        if (!rolledBack) {
+            throw IllegalStateException("Could not save the database key or restore its previous value.")
+        }
+        throw IllegalStateException("Could not save the database key.")
     }
 
     private fun open(blob: String): String? = runCatching {
