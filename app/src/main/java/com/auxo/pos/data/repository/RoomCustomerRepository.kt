@@ -47,6 +47,8 @@ class RoomCustomerRepository(
         }
     }
 
+    override fun observeMoneyLedger(): Flow<List<LedgerEntry>> = dao.observeMoneyEntries().map { rows -> rows.map { it.toDomain() } }
+
     override fun observeAccount(customerId: Long): Flow<CustomerAccount?> = dao.observeAccount(customerId).map { it?.toDomain() }
 
     override suspend fun getCustomer(customerId: Long): Customer? = dao.getCustomer(customerId)?.toDomain()

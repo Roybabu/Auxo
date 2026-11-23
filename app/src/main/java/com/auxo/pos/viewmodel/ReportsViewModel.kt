@@ -53,6 +53,7 @@ val ReportType.requiredPermission: Permission?
     get() = when (this) {
         ReportType.PURCHASES -> Permission.MANAGE_PURCHASES
         ReportType.STOCK_MOVEMENTS, ReportType.WASTAGE, ReportType.EXPIRY -> Permission.VIEW_STOCK_RECORDS
+        ReportType.CUSTOMER_AGING -> Permission.MANAGE_CUSTOMERS
         else -> null
     }
 
@@ -181,6 +182,7 @@ class ReportsViewModel(
         ReportType.LOW_STOCK -> listOf(inventory.observeProducts(), purchasing.observeSuppliers().catch { emit(emptyList()) })
         ReportType.EXPIRY -> listOf(inventory.observeBatches())
         ReportType.CUSTOMER_BALANCES -> listOf(customers.observeAccounts())
+        ReportType.CUSTOMER_AGING -> listOf(customers.observeAccounts(), customers.observeMoneyLedger())
     }
 
     private suspend fun build(filters: ReportFilters, period: ReportPeriod, today: LocalDate): ReportTable {
@@ -205,6 +207,7 @@ class ReportsViewModel(
             ReportType.LOW_STOCK -> Reports.lowStock(inventory.observeProducts().first(), runCatching { purchasing.observeSuppliers().first() }.getOrDefault(emptyList()), withSupplier = shop?.suppliers?.value ?: true)
             ReportType.EXPIRY -> Reports.expiry(inventory.observeBatches().first(), today, filters.expiryWindow)
             ReportType.CUSTOMER_BALANCES -> Reports.customerBalances(customers.observeAccounts().first(), filters.onlyOutstanding)
+            ReportType.CUSTOMER_AGING -> Reports.customerAging(customers.observeAccounts().first(), customers.observeMoneyLedger().first(), clock.millis(), clock.zone)
         }
     }
 

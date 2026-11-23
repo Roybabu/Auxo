@@ -172,6 +172,11 @@ sealed interface CustomerDetailUiState {
         /** Everything the customer has bought (bills less credit notes) and what they have paid for it, all time. */
         val bought: Money,
         val paid: Money,
+        /** When the customer last bought something and what an average bill comes to; null before the first bill. */
+        val lastPurchaseMillis: Long? = null,
+        val averageBill: Money? = null,
+        /** What is still owed on each bill, by invoice id; bills that are paid in full are not listed. */
+        val billOwed: Map<Long, Money> = emptyMap(),
         /** Loyalty point entries, newest first. Empty if the customer never had any. */
         val pointsHistory: List<LedgerEntry> = emptyList(),
         /** What a dues reminder says about the shop; null until the settings are read. */
@@ -212,12 +217,16 @@ class CustomerDetailViewModel(
                     CustomerDetailUiState.NotFound
                 } else {
                     val (bought, paid) = Ledger.purchases(invoices, ledger)
+                    val lifetime = Ledger.lifetime(invoices)
                     CustomerDetailUiState.Ready(
                         account = account,
                         statement = Ledger.statement(ledger).asReversed(),
                         invoices = invoices,
                         bought = bought,
                         paid = paid,
+                        lastPurchaseMillis = lifetime.lastPurchaseMillis,
+                        averageBill = lifetime.averageBill,
+                        billOwed = Ledger.owedByInvoice(ledger),
                         pointsHistory = Ledger.pointsHistory(ledger),
                         reminderShop = reminderShop,
                     )

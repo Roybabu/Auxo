@@ -462,6 +462,39 @@ object Reports {
         )
     }
 
+    /** What each customer owes, split into 0–7, 8–30 and over 30 days old; settled accounts are left out. */
+    fun customerAging(accounts: List<CustomerAccount>, entries: List<com.auxo.pos.domain.model.LedgerEntry>, now: Long, zone: java.time.ZoneId): ReportTable {
+        val byCustomer = entries.groupBy { it.customerId }
+        val rows = accounts.filter { it.balance > Money.ZERO }.map { account ->
+            account to com.auxo.pos.domain.customers.Ledger.aging(byCustomer[account.customer.id].orEmpty(), now, zone)
+        }.sortedByDescending { (_, buckets) -> buckets.over30Days.minorUnits * 1_000_000_000L + buckets.upTo30Days.minorUnits }
+        return ReportTable(
+            title = "Customer aging",
+            columns = listOf(col("Customer"), col("Phone"), col("0-7 days", END), col("8-30 days", END), col("Over 30 days", END), col("Total owed", END)),
+            rows = rows.map { (account, b) ->
+                listOf(
+                    ReportValue.Text(account.customer.name),
+                    text(account.customer.phone),
+                    ReportValue.Amount(b.upTo7Days),
+                    ReportValue.Amount(b.upTo30Days),
+                    ReportValue.Amount(b.over30Days),
+                    ReportValue.Amount(b.total),
+                )
+            },
+            totals = if (rows.isEmpty()) {
+                null
+            } else {
+                listOf(
+                    ReportValue.Text("Total"), ReportValue.Empty,
+                    ReportValue.Amount(sum(rows.map { it.second.upTo7Days })),
+                    ReportValue.Amount(sum(rows.map { it.second.upTo30Days })),
+                    ReportValue.Amount(sum(rows.map { it.second.over30Days })),
+                    ReportValue.Amount(sum(rows.map { it.second.total })),
+                )
+            },
+        )
+    }
+
     fun ledgerTypeName(type: LedgerEntryType): String = when (type) {
         LedgerEntryType.OPENING_BALANCE -> "Opening balance"
         LedgerEntryType.SALE -> "Sale on account"

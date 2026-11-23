@@ -97,6 +97,7 @@ fun ReportType.labelRes(): Int = when (this) {
     ReportType.LOW_STOCK -> R.string.report_low_stock
     ReportType.EXPIRY -> R.string.report_expiry
     ReportType.CUSTOMER_BALANCES -> R.string.report_customer_balances
+    ReportType.CUSTOMER_AGING -> R.string.report_customer_aging
 }
 
 @StringRes

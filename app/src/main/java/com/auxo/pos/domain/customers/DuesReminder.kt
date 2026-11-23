@@ -20,6 +20,9 @@ data class ReminderShop(val shopName: String, val upiId: String?, val language: 
     }
 }
 
+/** How firmly a reminder is worded, by how long the money has been owed. */
+enum class ReminderTone { FRIENDLY, FIRM, URGENT }
+
 /** How a customer's dues are shown in the Owing list. */
 enum class OwingSort { AMOUNT, AGE }
 
@@ -29,11 +32,31 @@ object DuesReminder {
      * The reminder text. [body] has %1$s (customer), %2$s (shop) and %3$s (amount); [upiLine] has %1$s (UPI ID) and
      * is added only when the shop has a valid UPI ID. Nothing else is added: no link, no bank details.
      */
-    fun message(body: String, upiLine: String, customerName: String, shop: ReminderShop, amountText: String): String {
+    fun message(
+        body: String,
+        upiLine: String,
+        customerName: String,
+        shop: ReminderShop,
+        amountText: String,
+        payLinkLine: String = "",
+        payLink: String? = null,
+    ): String {
         val name = customerName.trim().ifEmpty { "-" }
         val text = String.format(java.util.Locale.ENGLISH, body, name, shop.shopName, amountText)
-        return if (shop.upiId == null) text else text + "\n" + String.format(java.util.Locale.ENGLISH, upiLine, shop.upiId)
+        if (shop.upiId == null) return text
+        val withUpi = text + "\n" + String.format(java.util.Locale.ENGLISH, upiLine, shop.upiId)
+        return if (payLink == null || payLinkLine.isEmpty()) withUpi else withUpi + "\n" + String.format(java.util.Locale.ENGLISH, payLinkLine, payLink)
     }
+
+    /** Friendly for the first week, firm up to a month, urgent after that. An unknown age is friendly. */
+    fun toneFor(ageDays: Int?): ReminderTone = when {
+        ageDays == null || ageDays < FIRM_FROM_DAYS -> ReminderTone.FRIENDLY
+        ageDays <= URGENT_AFTER_DAYS -> ReminderTone.FIRM
+        else -> ReminderTone.URGENT
+    }
+
+    private const val FIRM_FROM_DAYS = 8
+    private const val URGENT_AFTER_DAYS = 30
 
     /** The number WhatsApp wants: country code 91 and the 10-digit mobile, or null if [phone] is missing or not a mobile number. */
     fun whatsAppNumber(phone: String?): String? = phone?.let { IndianPhone.normalizeMobile(it) }?.let { "91$it" }

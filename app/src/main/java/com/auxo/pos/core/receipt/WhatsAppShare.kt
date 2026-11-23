@@ -99,6 +99,33 @@ object WhatsAppShare {
         }
     }
 
+    /** Opens WhatsApp with the PDF [file] attached and [caption] typed in, or the share sheet when WhatsApp is not installed. */
+    fun shareFile(context: Context, file: File, caption: String, chooserTitle: String): Boolean {
+        val uri = FileProvider.getUriForFile(context, ReceiptOutput.fileProviderAuthority(context), file)
+        fun send(packageName: String?) = Intent(Intent.ACTION_SEND).apply {
+            type = ReceiptOutput.PDF_MIME_TYPE
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TEXT, caption)
+            clipData = ClipData.newRawUri(file.name, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (packageName != null) setPackage(packageName)
+        }
+        for (pkg in PACKAGES) {
+            try {
+                start(context, send(pkg))
+                return true
+            } catch (e: ActivityNotFoundException) {
+                // Try the next WhatsApp.
+            }
+        }
+        return try {
+            start(context, Intent.createChooser(send(null), chooserTitle))
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
     /**
      * Writes the invoice PDF off the main thread and opens WhatsApp with it attached and [caption] typed in, or the
      * share sheet when WhatsApp is not installed. Returns false if the file could not be written or nothing could open.

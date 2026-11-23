@@ -298,6 +298,8 @@ class AuthorizedCustomerRepository(private val inner: CustomerRepository, privat
     override fun observeInvoices(customerId: Long): Flow<List<InvoiceSummary>> =
         auth.guarded(Permission.MANAGE_CUSTOMERS) { inner.observeInvoices(customerId) }
 
+    override fun observeMoneyLedger(): Flow<List<LedgerEntry>> = auth.guarded(Permission.MANAGE_CUSTOMERS) { inner.observeMoneyLedger() }
+
     override suspend fun receivePayment(
         customerId: Long,
         amount: Money,

@@ -103,7 +103,7 @@ class OwingUiTest {
         account = CustomerAccount(asha.customer, Money(balance)),
         statement = emptyList(),
         invoices = emptyList(),
-        charged = Money(500_00),
+        bought = Money(500_00),
         paid = Money.ZERO,
         reminderShop = shop,
     )
