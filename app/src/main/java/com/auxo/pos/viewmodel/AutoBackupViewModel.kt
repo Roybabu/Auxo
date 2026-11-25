@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 data class AutoBackupUiState(
     val settings: AutoBackupSettings = AutoBackupSettings(),
     val status: AutoBackupStatus = AutoBackupStatus.OFF,
+    val lastBackupMillis: Long? = null,
     /** What is typed in the two number boxes. A box that holds nothing usable is not saved. */
     val intervalText: String = AutoBackupSettings.DEFAULT_INVOICE_INTERVAL.toString(),
     val keepText: String = AutoBackupSettings.DEFAULT_KEEP.toString(),
@@ -41,6 +42,7 @@ class AutoBackupViewModel(
     /** Whether a backup passphrase exists. Automatic backups are always locked, so a schedule needs one. */
     private val hasPassphrase: () -> Boolean = { true },
     private val setPassphrase: (String) -> Unit = {},
+    private val lastBackupMillis: () -> Long? = { null },
 ) : ViewModel() {
 
     /** The schedule picked while the passphrase box was open; it is applied once a passphrase is saved. */
@@ -51,6 +53,7 @@ class AutoBackupViewModel(
         AutoBackupUiState(
             settings = first,
             status = AutoBackupPolicy.status(first, clock.millis()),
+            lastBackupMillis = runCatching { lastBackupMillis() }.getOrNull(),
             intervalText = first.invoiceInterval.toString(),
             keepText = first.keep.toString(),
         ),
@@ -63,6 +66,12 @@ class AutoBackupViewModel(
                 _uiState.update { it.copy(settings = settings, status = AutoBackupPolicy.status(settings, clock.millis())) }
             }
         }
+    }
+
+    /** Refresh time-dependent overdue status and the last manual or automatic backup. */
+    fun refreshStatus() {
+        val last = runCatching { lastBackupMillis() }.getOrNull()
+        _uiState.update { it.copy(status = AutoBackupPolicy.status(it.settings, clock.millis()), lastBackupMillis = last) }
     }
 
     fun onScheduleChange(schedule: BackupSchedule) {
@@ -126,7 +135,7 @@ class AutoBackupViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                AutoBackupViewModel(container.autoBackupService, container.clock, container.backupService::isProtected, container.backupService::setPassphrase)
+                AutoBackupViewModel(container.autoBackupService, container.clock, container.backupService::isProtected, container.backupService::setPassphrase, container.backupService::lastBackupMillis)
             }
         }
     }

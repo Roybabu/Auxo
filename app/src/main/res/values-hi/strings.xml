@@ -1988,4 +1988,13 @@
     <string name="profit_no_cost">अभी अनुमानित लाभ नहीं है। बेचे गए उत्पादों की लागत दर्ज करें।</string>
     <string name="profit_missing">%1$d बिल पंक्तियों की लागत उपलब्ध नहीं है (कर से पहले शुद्ध बिक्री %2$s); इन्हें शामिल नहीं किया गया है।</string>
     <string name="profit_explanation">अनुमान वर्तमान उत्पाद लागत और कर से पहले बिक्री पर आधारित है; रिटर्न घटाए गए हैं। इसमें खर्च शामिल नहीं हैं। लागत में कर या बाद में लागत बदलने से परिणाम अलग हो सकते हैं।</string>
+    <string name="backup_health_title">बैकअप स्थिति</string>
+    <string name="backup_health_pending">पहले स्वचालित बैकअप की प्रतीक्षा है</string>
+    <string name="backup_health_never">कभी नहीं</string>
+    <string name="backup_health_last">इस फ़ोन पर पिछला बैकअप: %1$s</string>
+    <string name="backup_health_schedule">स्वचालित बैकअप: %1$s</string>
+    <string name="backup_health_invoice_schedule">हर %1$d बिल के बाद</string>
+    <string name="backup_health_location">स्वचालित बैकअप फ़ोल्डर: Documents/%1$s</string>
+    <string name="backup_health_not_verified">सहेजा गया समय फ़ाइल की वर्तमान उपलब्धता की पुष्टि नहीं करता। एक प्रति फ़ोन के बाहर रखें।</string>
+    <string name="backup_health_manage">बैकअप प्रबंधित करें  ›</string>
 </resources>

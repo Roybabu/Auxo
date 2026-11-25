@@ -3,6 +3,7 @@
 
 package com.auxo.pos.ui.screens.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,18 +12,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.auxo.pos.BuildConfig
 import com.auxo.pos.R
 import com.auxo.pos.core.auth.Permission
 import com.auxo.pos.core.backup.auto.AutoBackupStatus
+import com.auxo.pos.core.backup.auto.BackupSchedule
 import com.auxo.pos.ui.can
 import com.auxo.pos.ui.format.DateFormats
 import com.auxo.pos.ui.screens.more.messageRes
+import com.auxo.pos.ui.screens.more.labelRes
+import kotlinx.coroutines.delay
 import com.auxo.pos.ui.theme.Spacing
 import com.auxo.pos.viewmodel.AutoBackupUiState
 import com.auxo.pos.viewmodel.AutoBackupViewModel
@@ -36,6 +42,12 @@ fun BackupStatusNotice(onOpenBackup: () -> Unit) {
     if (!can(Permission.BACKUP_AND_RESTORE)) return
     val viewModel: AutoBackupViewModel = viewModel(factory = AutoBackupViewModel.Factory)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        while (true) {
+            viewModel.refreshStatus()
+            delay(60_000L)
+        }
+    }
     BackupStatusCard(state, onOpenBackup)
 }
 
@@ -44,7 +56,7 @@ fun BackupStatusCard(state: AutoBackupUiState, onClick: () -> Unit, modifier: Mo
     val warn = state.status == AutoBackupStatus.FAILED || state.status == AutoBackupStatus.OVERDUE
     val title = when (state.status) {
         AutoBackupStatus.OFF -> R.string.home_backup_off_title
-        AutoBackupStatus.OK -> R.string.home_backup_ok_title
+        AutoBackupStatus.OK -> if (state.settings.lastSuccessMillis == null) R.string.backup_health_pending else R.string.home_backup_ok_title
         AutoBackupStatus.FAILED -> R.string.home_backup_failed_title
         AutoBackupStatus.OVERDUE -> R.string.home_backup_overdue_title
     }
@@ -53,8 +65,9 @@ fun BackupStatusCard(state: AutoBackupUiState, onClick: () -> Unit, modifier: Mo
         color = if (warn) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant,
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick).testTag("home_backup_status"),
     ) {
-        Column(modifier = Modifier.padding(Spacing.lg)) {
+        Column(modifier = Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             val content = if (warn) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            Text(stringResource(R.string.backup_health_title), style = MaterialTheme.typography.titleMedium, color = content)
             Text(stringResource(title), style = MaterialTheme.typography.titleSmall, color = content)
             val detail: String = when (state.status) {
                 AutoBackupStatus.OFF -> stringResource(R.string.home_backup_off_body)
@@ -64,6 +77,16 @@ fun BackupStatusCard(state: AutoBackupUiState, onClick: () -> Unit, modifier: Mo
                 AutoBackupStatus.OVERDUE -> state.settings.lastSuccessMillis?.let { stringResource(R.string.auto_backup_last, DateFormats.dateTime(it)) }.orEmpty()
             }
             Text(detail, style = MaterialTheme.typography.bodySmall, color = content, modifier = Modifier.testTag("home_backup_detail"))
+            val lastMillis = listOfNotNull(state.lastBackupMillis, state.settings.lastSuccessMillis).maxOrNull()
+            val last = lastMillis?.let { DateFormats.dateTime(it) } ?: stringResource(R.string.backup_health_never)
+            Text(stringResource(R.string.backup_health_last, last), style = MaterialTheme.typography.bodySmall, color = content, modifier = Modifier.testTag("backup_health_last"))
+            val schedule = if (state.settings.schedule == BackupSchedule.EVERY_N_INVOICES) {
+                stringResource(R.string.backup_health_invoice_schedule, state.settings.invoiceInterval)
+            } else stringResource(state.settings.schedule.labelRes())
+            Text(stringResource(R.string.backup_health_schedule, schedule), style = MaterialTheme.typography.bodySmall, color = content)
+            Text(stringResource(R.string.backup_health_location, BuildConfig.BACKUP_FOLDER), style = MaterialTheme.typography.bodySmall, color = content)
+            Text(stringResource(R.string.backup_health_not_verified), style = MaterialTheme.typography.bodySmall, color = content)
+            Text(stringResource(R.string.backup_health_manage), style = MaterialTheme.typography.labelLarge, color = content)
         }
     }
 }

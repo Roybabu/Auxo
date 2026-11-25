@@ -1988,4 +1988,13 @@ in %2$s</string>
     <string name="profit_no_cost">No estimated profit yet. Add cost prices to sold products.</string>
     <string name="profit_missing">%1$d invoice lines lack a cost (net sales before tax %2$s) and are excluded.</string>
     <string name="profit_explanation">Estimate uses today’s product costs and sales before tax, less returns. It excludes expenses and may differ if cost prices include tax or changed since sale.</string>
+    <string name="backup_health_title">Backup health</string>
+    <string name="backup_health_pending">Waiting for the first automatic backup</string>
+    <string name="backup_health_never">Never</string>
+    <string name="backup_health_last">Last backup on this device: %1$s</string>
+    <string name="backup_health_schedule">Automatic backup: %1$s</string>
+    <string name="backup_health_invoice_schedule">After every %1$d invoices</string>
+    <string name="backup_health_location">Automatic backup folder: Documents/%1$s</string>
+    <string name="backup_health_not_verified">The saved time does not verify that the file is still available. Keep a copy off this phone.</string>
+    <string name="backup_health_manage">Manage backups  ›</string>
 </resources>

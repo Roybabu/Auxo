@@ -1988,4 +1988,13 @@
     <string name="profit_no_cost">এখনও আনুমানিক লাভ নেই। বিক্রি হওয়া পণ্যের খরচ যোগ করুন।</string>
     <string name="profit_missing">%1$d বিলের লাইনে খরচ নেই (কর-পূর্ব নিট বিক্রয় %2$s); এগুলি বাদ দেওয়া হয়েছে।</string>
     <string name="profit_explanation">বর্তমান পণ্যের খরচ ও কর-পূর্ব বিক্রয় থেকে ফেরত বাদ দিয়ে অনুমান করা হয়। অন্যান্য খরচ বাদ; ক্রয়মূল্যে কর বা পরিবর্তন থাকলে ফল ভিন্ন হতে পারে।</string>
+    <string name="backup_health_title">ব্যাকআপের অবস্থা</string>
+    <string name="backup_health_pending">প্রথম স্বয়ংক্রিয় ব্যাকআপের অপেক্ষায়</string>
+    <string name="backup_health_never">কখনও নয়</string>
+    <string name="backup_health_last">এই ফোনে শেষ ব্যাকআপ: %1$s</string>
+    <string name="backup_health_schedule">স্বয়ংক্রিয় ব্যাকআপ: %1$s</string>
+    <string name="backup_health_invoice_schedule">প্রতি %1$d বিলের পর</string>
+    <string name="backup_health_location">স্বয়ংক্রিয় ব্যাকআপ ফোল্ডার: Documents/%1$s</string>
+    <string name="backup_health_not_verified">সংরক্ষিত সময় দিয়ে ফাইলটি এখনও আছে কি না নিশ্চিত করা যায় না। একটি কপি ফোনের বাইরে রাখুন।</string>
+    <string name="backup_health_manage">ব্যাকআপ পরিচালনা করুন  ›</string>
 </resources>

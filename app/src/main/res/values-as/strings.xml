@@ -1988,4 +1988,13 @@
     <string name="profit_no_cost">এতিয়াও আনুমানিক লাভ নাই। বিক্ৰী কৰা সামগ্ৰীৰ খৰচ যোগ কৰক।</string>
     <string name="profit_missing">%1$d বিলৰ শাৰীৰ খৰচ নাই (কৰৰ আগৰ নিট বিক্ৰী %2$s); সেইবোৰ বাদ দিয়া হৈছে।</string>
     <string name="profit_explanation">বৰ্তমানৰ সামগ্ৰীৰ খৰচ আৰু কৰৰ আগৰ বিক্ৰীৰ পৰা ঘূৰাই দিয়া সামগ্ৰী বাদ দি অনুমান কৰা হয়। অন্যান্য ব্যয় বাদ; খৰচত কৰ থাকিলে বা সলনি হ’লে ফল বেলেগ হ’ব পাৰে।</string>
+    <string name="backup_health_title">বেকআপৰ অৱস্থা</string>
+    <string name="backup_health_pending">প্ৰথম স্বয়ংক্ৰিয় বেকআপৰ বাবে অপেক্ষা কৰি আছে</string>
+    <string name="backup_health_never">কেতিয়াও নহয়</string>
+    <string name="backup_health_last">এই ফোনত শেষ বেকআপ: %1$s</string>
+    <string name="backup_health_schedule">স্বয়ংক্ৰিয় বেকআপ: %1$s</string>
+    <string name="backup_health_invoice_schedule">প্ৰতি %1$d খন বিলৰ পিছত</string>
+    <string name="backup_health_location">স্বয়ংক্ৰিয় বেকআপ ফোল্ডাৰ: Documents/%1$s</string>
+    <string name="backup_health_not_verified">সংৰক্ষিত সময়ে ফাইল এতিয়াও আছে নে নাই নিশ্চিত নকৰে। ফোনৰ বাহিৰত এটা প্ৰতিলিপি ৰাখক।</string>
+    <string name="backup_health_manage">বেকআপ পৰিচালনা কৰক  ›</string>
 </resources>

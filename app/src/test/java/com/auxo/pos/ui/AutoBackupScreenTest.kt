@@ -178,6 +178,14 @@ class AutoBackupScreenTest {
     }
 
     @Test
+    fun home_whenScheduledWithoutSuccess_showsPendingRatherThanWorking() {
+        notice(AutoBackupUiState(settings = withFolder.copy(lastSuccessMillis = null), status = AutoBackupStatus.OK))
+        composeRule.onNodeWithText("Waiting for the first automatic backup").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_backup_status").assertTextContains("Automatic backup folder: Documents/", substring = true)
+        composeRule.onNodeWithTag("home_backup_status").assertTextContains("does not verify", substring = true)
+    }
+
+    @Test
     fun home_whenOverdue_warns() {
         notice(AutoBackupUiState(settings = withFolder.copy(lastSuccessMillis = 1_700_000_000_000), status = AutoBackupStatus.OVERDUE))
         composeRule.onNodeWithText("A backup is overdue").assertIsDisplayed()
