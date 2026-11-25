@@ -16,6 +16,8 @@ import com.auxo.pos.domain.insights.Collected
 import com.auxo.pos.domain.insights.Insights
 import com.auxo.pos.domain.insights.InsightsBuilder
 import com.auxo.pos.domain.insights.InsightsPeriod
+import com.auxo.pos.domain.insights.ProfitBuilder
+import com.auxo.pos.domain.insights.ProfitEstimate
 import com.auxo.pos.domain.model.Product
 import com.auxo.pos.domain.model.ProductCategory
 import com.auxo.pos.domain.reports.PeriodPreset
@@ -41,6 +43,7 @@ data class InsightsUiState(
     val isLoading: Boolean = true,
     val failed: Boolean = false,
     val insights: Insights? = null,
+    val profit: ProfitEstimate? = null,
     /** Cash and UPI taken today for the header cards; null until loaded or if loading failed. */
     val collectedToday: Collected? = null,
 )
@@ -103,7 +106,7 @@ class HomeInsightsViewModel(
     private fun load() {
         loadJob?.cancel()
         val period = _uiState.value.period
-        _uiState.update { it.copy(isLoading = true, failed = false, insights = null) }
+        _uiState.update { it.copy(isLoading = true, failed = false, insights = null, profit = null) }
         loadJob = viewModelScope.launch {
             try {
                 // The period is counted back from today, which moves on at midnight.
@@ -116,16 +119,18 @@ class HomeInsightsViewModel(
                     ) { _, receipts, products -> receipts to products }
                         .collectLatest { (receipts, products) ->
                             val built = runCatching {
-                                InsightsBuilder.build(
+                                val invoices = billing.invoicesBetween(from, to)
+                                val insights = InsightsBuilder.build(
                                     period = period,
                                     today = today,
                                     zone = clock.zone,
-                                    invoices = billing.invoicesBetween(from, to),
+                                    invoices = invoices,
                                     receipts = receipts,
                                     categoryByVariant = categories(products),
                                 )
+                                insights to ProfitBuilder.build(invoices, products, clock.zone)
                             }.onFailure { if (it is CancellationException) throw it }.getOrNull()
-                            _uiState.update { it.copy(isLoading = false, failed = built == null, insights = built) }
+                            _uiState.update { it.copy(isLoading = false, failed = built == null, insights = built?.first, profit = built?.second) }
                         }
                 }
             } catch (e: CancellationException) {

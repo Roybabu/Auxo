@@ -37,6 +37,8 @@ import com.auxo.pos.domain.insights.CompactMoney
 import com.auxo.pos.domain.insights.Department
 import com.auxo.pos.domain.insights.Insights
 import com.auxo.pos.domain.insights.InsightsPeriod
+import com.auxo.pos.domain.insights.ProfitEstimate
+import com.auxo.pos.ui.screens.inventory.labelRes
 import com.auxo.pos.domain.inventory.InventorySummary
 import com.auxo.pos.domain.model.Money
 import com.auxo.pos.domain.model.PaymentMethod
@@ -79,7 +81,7 @@ fun InsightsSection(
             state.isLoading -> InsightsLoading()
             state.failed || insights == null -> InsightsError(onRetry)
             !insights.hasSales && (!insights.hasPurchases || !LocalSuppliersEnabled.current) -> MessageCard(stringResource(R.string.insights_empty), tag = "insights_empty")
-            else -> InsightsContent(insights, formatter)
+            else -> InsightsContent(insights, state.profit, formatter)
         }
         if (inventory.hasProducts) {
             Group(stringResource(R.string.insights_group_stock)) { StockHealthCard(inventory) }
@@ -169,8 +171,9 @@ private fun MessageCard(message: String, tag: String) {
 }
 
 @Composable
-private fun InsightsContent(insights: Insights, formatter: MoneyFormatter) {
+private fun InsightsContent(insights: Insights, profit: ProfitEstimate?, formatter: MoneyFormatter) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xl)) {
+        if (profit != null) Group(stringResource(R.string.profit_title)) { ProfitCard(profit, formatter) }
         Group(stringResource(R.string.insights_group_sales)) {
             TrendCard(insights, formatter)
             if (LocalSuppliersEnabled.current) ComparisonCard(insights, formatter)
@@ -185,6 +188,35 @@ private fun InsightsContent(insights: Insights, formatter: MoneyFormatter) {
                 ExpensesCard()
             }
         }
+    }
+}
+
+@Composable
+private fun ProfitCard(profit: ProfitEstimate, formatter: MoneyFormatter) {
+    ChartCard(title = stringResource(R.string.profit_estimate), modifier = Modifier.testTag("card_profit")) {
+        if (profit.knownLines == 0) {
+            Note(stringResource(R.string.profit_no_cost))
+        } else {
+            ProfitValue(stringResource(R.string.profit_estimate), formatter.format(profit.profit))
+            ProfitValue(stringResource(R.string.profit_sales), formatter.format(profit.sales))
+            ProfitValue(stringResource(R.string.profit_cost), formatter.format(profit.costs))
+            Text(stringResource(R.string.profit_products), style = MaterialTheme.typography.titleSmall)
+            profit.products.take(5).forEach { ProfitValue(it.name, formatter.format(it.amount)) }
+            Text(stringResource(R.string.profit_categories), style = MaterialTheme.typography.titleSmall)
+            profit.categories.forEach { ProfitValue(stringResource(it.category.labelRes()), formatter.format(it.amount)) }
+            Text(stringResource(R.string.profit_days), style = MaterialTheme.typography.titleSmall)
+            profit.days.takeLast(7).reversed().forEach { ProfitValue(DateFormats.date(it.date), formatter.format(it.amount)) }
+        }
+        if (profit.missingLines > 0) Note(stringResource(R.string.profit_missing, profit.missingLines, formatter.format(profit.missingSales)))
+        Note(stringResource(R.string.profit_explanation))
+    }
+}
+
+@Composable
+private fun ProfitValue(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

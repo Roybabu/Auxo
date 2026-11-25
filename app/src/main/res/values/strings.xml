@@ -1978,4 +1978,14 @@ in %2$s</string>
     <string name="wizard_review_fix">Fix</string>
     <string name="wizard_review_no_name">Name missing</string>
     <string name="wizard_review_tax">GST and HSN</string>
+    <string name="profit_title">Profit dashboard</string>
+    <string name="profit_estimate">Estimated gross profit</string>
+    <string name="profit_sales">Sales before tax (cost known)</string>
+    <string name="profit_cost">Estimated product cost</string>
+    <string name="profit_products">Profit by product</string>
+    <string name="profit_categories">Profit by category</string>
+    <string name="profit_days">Profit by day (latest 7)</string>
+    <string name="profit_no_cost">No estimated profit yet. Add cost prices to sold products.</string>
+    <string name="profit_missing">%1$d invoice lines lack a cost (net sales before tax %2$s) and are excluded.</string>
+    <string name="profit_explanation">Estimate uses today’s product costs and sales before tax, less returns. It excludes expenses and may differ if cost prices include tax or changed since sale.</string>
 </resources>

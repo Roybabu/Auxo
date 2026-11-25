@@ -1978,4 +1978,14 @@
     <string name="wizard_review_fix">ठीक करें</string>
     <string name="wizard_review_no_name">नाम नहीं है</string>
     <string name="wizard_review_tax">GST और HSN</string>
+    <string name="profit_title">लाभ डैशबोर्ड</string>
+    <string name="profit_estimate">अनुमानित सकल लाभ</string>
+    <string name="profit_sales">कर से पहले बिक्री (लागत उपलब्ध)</string>
+    <string name="profit_cost">अनुमानित उत्पाद लागत</string>
+    <string name="profit_products">उत्पाद के अनुसार लाभ</string>
+    <string name="profit_categories">श्रेणी के अनुसार लाभ</string>
+    <string name="profit_days">दिन के अनुसार लाभ (पिछले 7)</string>
+    <string name="profit_no_cost">अभी अनुमानित लाभ नहीं है। बेचे गए उत्पादों की लागत दर्ज करें।</string>
+    <string name="profit_missing">%1$d बिल पंक्तियों की लागत उपलब्ध नहीं है (कर से पहले शुद्ध बिक्री %2$s); इन्हें शामिल नहीं किया गया है।</string>
+    <string name="profit_explanation">अनुमान वर्तमान उत्पाद लागत और कर से पहले बिक्री पर आधारित है; रिटर्न घटाए गए हैं। इसमें खर्च शामिल नहीं हैं। लागत में कर या बाद में लागत बदलने से परिणाम अलग हो सकते हैं।</string>
 </resources>

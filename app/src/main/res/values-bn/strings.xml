@@ -1978,4 +1978,14 @@
     <string name="wizard_review_fix">ঠিক করুন</string>
     <string name="wizard_review_no_name">নাম নেই</string>
     <string name="wizard_review_tax">GST ও HSN</string>
+    <string name="profit_title">লাভের ড্যাশবোর্ড</string>
+    <string name="profit_estimate">আনুমানিক মোট লাভ</string>
+    <string name="profit_sales">কর-পূর্ব বিক্রয় (খরচ জানা)</string>
+    <string name="profit_cost">আনুমানিক পণ্যের খরচ</string>
+    <string name="profit_products">পণ্য অনুযায়ী লাভ</string>
+    <string name="profit_categories">বিভাগ অনুযায়ী লাভ</string>
+    <string name="profit_days">দিন অনুযায়ী লাভ (সাম্প্রতিক ৭)</string>
+    <string name="profit_no_cost">এখনও আনুমানিক লাভ নেই। বিক্রি হওয়া পণ্যের খরচ যোগ করুন।</string>
+    <string name="profit_missing">%1$d বিলের লাইনে খরচ নেই (কর-পূর্ব নিট বিক্রয় %2$s); এগুলি বাদ দেওয়া হয়েছে।</string>
+    <string name="profit_explanation">বর্তমান পণ্যের খরচ ও কর-পূর্ব বিক্রয় থেকে ফেরত বাদ দিয়ে অনুমান করা হয়। অন্যান্য খরচ বাদ; ক্রয়মূল্যে কর বা পরিবর্তন থাকলে ফল ভিন্ন হতে পারে।</string>
 </resources>

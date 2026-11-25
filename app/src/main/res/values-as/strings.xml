@@ -1978,4 +1978,14 @@
     <string name="wizard_review_fix">শুদ্ধ কৰক</string>
     <string name="wizard_review_no_name">নাম নাই</string>
     <string name="wizard_review_tax">GST আৰু HSN</string>
+    <string name="profit_title">লাভৰ ডেশ্বব’ৰ্ড</string>
+    <string name="profit_estimate">আনুমানিক মুঠ লাভ</string>
+    <string name="profit_sales">কৰৰ আগৰ বিক্ৰী (খৰচ জনা)</string>
+    <string name="profit_cost">আনুমানিক সামগ্ৰীৰ খৰচ</string>
+    <string name="profit_products">সামগ্ৰী অনুসৰি লাভ</string>
+    <string name="profit_categories">শ্ৰেণী অনুসৰি লাভ</string>
+    <string name="profit_days">দিন অনুসৰি লাভ (শেহতীয়া ৭)</string>
+    <string name="profit_no_cost">এতিয়াও আনুমানিক লাভ নাই। বিক্ৰী কৰা সামগ্ৰীৰ খৰচ যোগ কৰক।</string>
+    <string name="profit_missing">%1$d বিলৰ শাৰীৰ খৰচ নাই (কৰৰ আগৰ নিট বিক্ৰী %2$s); সেইবোৰ বাদ দিয়া হৈছে।</string>
+    <string name="profit_explanation">বৰ্তমানৰ সামগ্ৰীৰ খৰচ আৰু কৰৰ আগৰ বিক্ৰীৰ পৰা ঘূৰাই দিয়া সামগ্ৰী বাদ দি অনুমান কৰা হয়। অন্যান্য ব্যয় বাদ; খৰচত কৰ থাকিলে বা সলনি হ’লে ফল বেলেগ হ’ব পাৰে।</string>
 </resources>
